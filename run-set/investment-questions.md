@@ -44,7 +44,7 @@ mistake, not a data question. That is deliberate: Q9 exists to catch it.
 | # | en | cs | Expected source | Pass rule |
 |---|---|---|---|---|
 | Q1 | Which portfolios does client `conseq:8801234` hold? | Která portfolia drží klient `conseq:8801234`? | `portfolios_of_client` | Names **Dynamické portfolio Plus** and **Konzervativní portfolio** — two portfolios, not three rows |
-| Q2 | What does portfolio `conseq:200619142` hold right now, and what is it worth? | Co drží portfolio `conseq:200619142` teď a jakou to má hodnotu? | `positions_current` | The three funds, with **912 000** for `CZ0008473618`; figures in CZK |
+| Q2 | What does portfolio `conseq:200619142` hold right now, and what is it worth? | Co je v portfoliu `conseq:200619142` a jakou to má hodnotu? | `positions_current` | The three funds, with **912 000** for `CZ0008473618`; figures in CZK |
 | Q3 | How much cash is in portfolio `conseq:200619142`? | Kolik hotovosti je v portfoliu `conseq:200619142`? | `cash_balance` | **755 000** (as of the latest date), per currency |
 | Q4 | Show the last transactions in portfolio `conseq:200619142`. | Zobraz poslední transakce v portfoliu `conseq:200619142`. | `transactions_recent` | Newest first, starting **2026-08-10**; no reversed movement and no `-rev` row appears |
 | Q5 | What money came into portfolio `conseq:200619142` this year? | Jaké peníze přišly do portfolia `conseq:200619142` letos? | `transactions_between` or `period_values` | Names the **300 000** deposit of 2026-07-15; external flows only, not the cash leg beside them |

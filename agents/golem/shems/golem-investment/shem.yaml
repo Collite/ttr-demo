@@ -93,7 +93,7 @@ overlay:
       - "How much cash is in portfolio conseq:100003369, per currency?"
     cs:
       - "Která portfolia drží klient conseq:200791223?"
-      - "Co drží portfolio conseq:100003369 právě teď?"
+      - "Co je v portfoliu conseq:100003369 právě teď?"
       - "Jak se portfolio conseq:100003369 vyvíjelo čtvrtletí po čtvrtletí za poslední rok?"
       - "Jaké pohyby byly v portfoliu conseq:100003369 od 1. dubna?"
       - "Kolik hotovosti je v portfoliu conseq:100003369, po měnách?"

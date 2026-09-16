@@ -18,7 +18,7 @@ model er
 def entity transaction {
     description: {
         en: "The ledger — every movement in a portfolio: purchases, sales, transfers of units in and out, payouts, cash credits and debits, deposits and withdrawals. There is no separate fee movement: a fee the provider charges arrives as a withdrawal. Append-only: a correction appears as a reversal plus a replacement, never as an edit.",
-        cs: "Kniha pohybů — každý pohyb v portfoliu: nákupy, prodeje, převody jednotek dovnitř a ven, výplaty, připsání a odepsání hotovosti, vklady a výběry. Samostatný pohyb pro poplatek neexistuje: poplatek účtovaný poskytovatelem přichází jako výběr. Pouze se přidává: oprava se objeví jako storno plus náhrada, nikdy jako přepis."
+        cs: "Pohyby, tedy transakce — každý pohyb v portfoliu: nákupy, prodeje, převody jednotek dovnitř a ven, výplaty, připsání a odepsání hotovosti, vklady a výběry. Samostatný pohyb pro poplatek neexistuje: poplatek účtovaný poskytovatelem přichází jako výběr. Pouze se přidává: oprava se objeví jako storno plus náhrada, nikdy jako přepis."
     }
     labelPlural: "Transactions"
     codeAttribute: external_id
@@ -108,7 +108,7 @@ def entity transaction {
 def entity position {
     description: {
         en: "Valued holdings — what a portfolio held in an instrument on a given day, and what it was worth. Restated valuations for the same day supersede one another rather than adding up.",
-        cs: "Oceněné držby — co portfolio drželo v daném nástroji k danému dni a jakou to mělo hodnotu. Přepočtená ocenění téhož dne se navzájem nahrazují, nesčítají se."
+        cs: "Pozice — co portfolio drželo v daném nástroji k danému dni a jakou to mělo hodnotu. Přepočtená ocenění téhož dne se navzájem nahrazují, nesčítají se."
     }
     labelPlural: "Positions"
     codeAttribute: portfolio

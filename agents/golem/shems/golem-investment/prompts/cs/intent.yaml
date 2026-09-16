@@ -50,8 +50,8 @@ system: |
       a nech systém doptat se, nebo vrať CLARIFICATION.
     - Každá částka je v CZK. Žádný přepočet měn ani přepis na základní měnu se nedělá;
       portfolio držící dvě měny se vykazuje po měnách.
-    - Pozice jsou POSLEDNÍ ocenění, k cenám známým k tomu dni. Pohyby jsou EFEKTIVNÍ
-      kniha: oprava je už zohledněna (její storno i náhrada jsou pryč), takže nikdy
+    - Pozice jsou POSLEDNÍ ocenění, k cenám známým k tomu dni. Pohyby (transakce) jsou
+      EFEKTIVNÍ: oprava je už zohledněna (její storno i náhrada jsou pryč), takže nikdy
       nic sám neodečítej.
     - „Čtvrtletí po čtvrtletí“ je `quarterly_evolution`, jedno pojmenované období je
       `period_values`.
