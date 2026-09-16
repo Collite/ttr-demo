@@ -1,0 +1,36 @@
+# Renders the golem-investment Shem overlay + prompt bundle into the `golem-investment-shem`
+# ConfigMap for GitOps deploy — the olymp `hartland-golems` ApplicationSet applies this as one source
+# and the golem chart mounts the result at GOLEM_SHEM_DIR (`shem.configMapName:
+# golem-investment-shem`).
+#
+# The en+cs prompt bundle is packed alongside shem.yaml. ConfigMap keys can't contain '/', so each
+# prompt file gets a flat key (`prompts-<locale>-intent.yaml`); the golem chart re-nests them into
+# `prompts/<locale>/intent.yaml` at mount time via `shem.items` (olymp
+# clusters/hartland/golems/_values.yaml → chart _volumes.tpl). golem's PromptStore then loads
+# `prompts/<locale>/intent.yaml` (PROMPT_NAMES=intent), so the mounted investment prompt replaces the
+# generic classpath fallback.
+#
+# ⚑ Only `intent` is live (PlanComposer fetches that name and no other); free-sql/chip-topup have no
+# live kotlin consumer, so they are deliberately NOT packed here — same rule the golem-hartland
+# bundle states, and the reason kantheon's copies of them are recorded as dead weight
+# (IE-P4·S4.1·D5). Adding a key here without adding it to the shared `shem.items` would put the file
+# in the ConfigMap and leave it absent from the pod.
+#
+# ⚑ THE AUTHORING COPY IS IN KANTHEON (`agents/golem/shems/golem-investment/`), where
+# `GolemInvestmentBundleSpec` + `GolemInvestmentRegistrationSpec` assert it against the live
+# `ShemOverlayParser` and `ShemAssembler`. This is the DEPLOYED copy, because the appset reads Shem
+# bundles from this repo (IE-P4·S4.2·D1, ruled by Bora 2026-09-16). `agents/tests/shems.test.mjs`
+# guards the two against drift — change one side and copy it in the same commit.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+configMapGenerator:
+  - name: golem-investment-shem
+    files:
+      - shem.yaml
+      - prompts-en-intent.yaml=prompts/en/intent.yaml
+      - prompts-cs-intent.yaml=prompts/cs/intent.yaml
+generatorOptions:
+  # Stable name — the golem chart references `golem-investment-shem` by a fixed
+  # `shem.configMapName` (injected per-instance by the appset as `{{.shem}}-shem`).
+  disableNameSuffixHash: true
