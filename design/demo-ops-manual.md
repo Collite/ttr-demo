@@ -270,17 +270,19 @@ Never inside the freeze window (§7.5).
 ### 7.2b A ConfigMap sync is not a vocabulary reload (lexicon)
 
 `lex-matcher` (the `fuzzy` deployment) loads the compiled lexicon archive **at boot** and
-re-checks it on `refreshIntervalSeconds` — default **3600**, overridable by
+re-checks it on `refreshIntervalSeconds` — service default **3600**, overridable by
 `FUZZY_REFRESH_INTERVAL_SECONDS`; a value `<= 0` means manual-only, with no background loop at
-all. An ArgoCD sync that replaces the archive ConfigMap therefore changes nothing the matcher
-is serving: the new vocabulary is on disk and the old one is still in memory.
+all. **This cluster sets 600** (olymp `clusters/hartland/apps/fuzzy/values.yaml`), so the window
+is at most ten minutes rather than an hour. An ArgoCD sync that replaces the archive ConfigMap
+therefore changes nothing the matcher is serving until then: the new vocabulary is on disk and the
+old one is still in memory.
 
 After any lexicon change, do one of:
 
-1. wait out the hour;
+1. wait out the refresh interval — up to **ten minutes** on this cluster;
 2. `POST /refresh` on lex-matcher — admin-gated, a caller without the admin role gets 403;
 3. **`kubectl --context hartland -n ttr-server rollout restart deploy/fuzzy`** — deterministic,
-   and the one to use before a show.
+   and still the one to use before a show: the shorter interval bounds the window, it does not close it.
 
 The record, because it is what makes this worth a section: on **2026-08-13** fuzzy loaded
 **307 entries at 06:37**, ArgoCD synced the **351**-entry archive at **08:49**, and the next
@@ -332,7 +334,7 @@ too.
 |---|---|
 | Answer comes back "0 rows" | quirks §0 — pull `ttr-server/query-*` log by `correlation_id`; it's almost never the data |
 | Golem serves stale/old SQL after a model push | you forgot the golem rollout restart — §7.2 / quirks §1.2 |
-| New lexicon term still not matching after an ArgoCD sync | §7.2b — a ConfigMap sync is not a vocabulary reload; fuzzy re-reads hourly |
+| New lexicon term still not matching after an ArgoCD sync | §7.2b — a ConfigMap sync is not a vocabulary reload; fuzzy re-reads every 10 min here |
 | Query fails parse in veles but runs in psql | Calcite is stricter — quirks §2 (reserved words, alias GROUP BY, `{brace}` params only) |
 | Series truncated at N rows | validator TopN ceiling — `VALIDATE_DEFAULT_TOP_N` (=100 on hartland), quirks §4.1 |
 | Text param matches nothing ("Marketplace") | case-sensitivity — phrase the utterance lowercase until the CaseFoldingParams release lands (quirks §3.3) |
