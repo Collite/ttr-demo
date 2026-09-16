@@ -8,6 +8,13 @@ def entity inventory {
     description: "Weekly warehouse-level on-hand snapshots per warehouse and item."
     roles: [fact]
     displayLabel: { en: "Inventory Snapshots", cs: "Stavy zásob" }
+    // MS: the mention facet. ⚠ `last`, NOT the bare-id default `sum` (Bora, 2026-09-16):
+    // this fact is only semi-additive — see as_of_date, "stock levels MUST NOT be added
+    // across snapshots" — so a bare `quantity_on_hand` would declare precisely the
+    // aggregation the model forbids. The per-measure `aggregation:` here is the measure's
+    // own (semantics vocabulary v3); it is neither the def-level `aggregation:` property
+    // nor md's, which are separate surfaces by design.
+    semantics { measures: [{ attribute: quantity_on_hand, aggregation: last }] }
     attributes: [
         def attribute as_of_date       { type: int, isKey: true, description: "Weekly snapshot date. This entity is only semi-additive - stock levels MUST NOT be added across snapshots." },
         def attribute item             { type: int, isKey: true, description: "Item primary key (the 'sk' attribute of the Item entity)" },

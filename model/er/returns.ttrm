@@ -13,6 +13,9 @@ def entity store_returns {
     labelPlural: "Store Returns"
     roles: [fact]
     displayLabel: { en: "Store Returns", cs: "Reklamace z prodejen" }
+    // MS: the mention facet. return_amt FIRST — a bare "reklamace" asks about the
+    // refunded value, and the rate beat divides it by ext_sales_price.
+    semantics { measures: [ return_amt, return_quantity ] }
     attributes: [
         def attribute item            { type: int, isKey: true, description: "Returned product — FK to the 'sk' attribute of the Product (item) entity." },
         def attribute ticket_number   { type: int, isKey: true, description: "Original sales ticket number — pairs this return with its sale." },
@@ -30,6 +33,8 @@ def entity web_returns {
     labelPlural: "Web Returns"
     roles: [fact]
     displayLabel: { en: "Web Returns", cs: "Reklamace z webu" }
+    // MS: the mention facet — the three returns entities stay symmetric here too.
+    semantics { measures: [ return_amt, return_quantity ] }
     attributes: [
         def attribute item            { type: int, isKey: true, description: "Returned product — FK to the 'sk' attribute of the Product (item) entity." },
         def attribute order_number    { type: int, isKey: true, description: "Original web order number — pairs this return with its sale." },
@@ -46,6 +51,9 @@ def entity catalog_returns {
     labelPlural: "Marketplace Returns"
     roles: [fact]
     displayLabel: { en: "Marketplace Returns", cs: "Reklamace z tržiště" }
+    // MS: the mention facet — S3's paired signal is asked about by value, so return_amt
+    // leads here as it does on the other two channels.
+    semantics { measures: [ return_amt, return_quantity ] }
     attributes: [
         def attribute item            { type: int, isKey: true, description: "Returned product — FK to the 'sk' attribute of the Product (item) entity." },
         def attribute order_number    { type: int, isKey: true, description: "Original marketplace order number — pairs this return with its sale." },

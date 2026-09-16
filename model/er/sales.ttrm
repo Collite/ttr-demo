@@ -38,6 +38,9 @@ def entity web_sales {
     labelPlural: "Web Orders"
     roles: [fact]
     displayLabel: { en: "Web Orders", cs: "Webové objednávky" }
+    // MS: the mention facet, same shape and same reason as store_sales above —
+    // ext_sales_price FIRST, so revenue is the default measure of a bare "tržby z webu".
+    semantics { measures: [ ext_sales_price, quantity ] }
     attributes: [
         def attribute item           { type: int, isKey: true, description: "Sold product — FK to the 'sk' attribute of the Product (item) entity." },
         def attribute order_number   { type: int, isKey: true, description: "Web order number; one order = one basket. Part of the primary key." },
@@ -55,6 +58,13 @@ def entity catalog_sales {
     labelPlural: "Marketplace Orders"
     roles: [fact]
     displayLabel: { en: "Marketplace Orders", cs: "Objednávky z tržiště" }
+    // MS: the mention facet. ⛑ Its absence is what made the estate's OWN advertised
+    // questions unanswerable: without it this entity compiles to `entity` rather than
+    // `entity_with_measures`, FrameRoles R2 never fires, so "tržba z tržiště" came back
+    // SUBJECT (not MEASURE) and its modifier "tržiště" took FILTER through R5 — and the
+    // query door refuses a subject it has no column to read. This is the channel the
+    // demo's headline beats ask about, so it was the most visible entity to omit.
+    semantics { measures: [ ext_sales_price, quantity ] }
     attributes: [
         def attribute item           { type: int, isKey: true, description: "Sold product — FK to the 'sk' attribute of the Product (item) entity." },
         def attribute order_number   { type: int, isKey: true, description: "Marketplace order number; one order = one basket. Part of the primary key." },
