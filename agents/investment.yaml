@@ -1,0 +1,20 @@
+# Agent "Investment Q&A" — the ai-models-analog agent def for the investment estate
+# (IE-P4·S4.2·T3). Mirrors agents/hartland.yaml field-for-field, and for the same reason:
+# BM-9 makes this repo self-contained, so the agent def lives beside the model it names
+# rather than in ai-models. `apiVersion` is Kantheon/Collite's own schema instance.
+#
+# ⚑ Nothing READS repo/agentDef at runtime: the Golem asks Veles `ResolveArea(investment)`
+# and Veles resolves areas from the SERVED GIT TREE — this repo's `model/investment/er/area.ttrm`
+# in the synced copy (IE-P0 V5). So this file documents the onboarding path the estate
+# exercises; `ShemAssembler` reads only `source.id`, `source.label` and `source.areas`.
+
+apiVersion: agents.kantheon/v1
+kind: golem
+id: investment
+label: "Investment Q&A"
+enabled: true
+environments: [test]
+shem:
+  # `def area investment` (model/investment/er/area.ttrm) resolves to the single
+  # `investment` package: six er entities + the nine curated q.investment.* queries.
+  areas: [investment]

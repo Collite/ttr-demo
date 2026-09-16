@@ -38,6 +38,10 @@ const agentDef = await loadYaml('agents/hartland.yaml');
 const mainShem = await loadYaml('agents/golem/shems/golem-hartland/shem.yaml');
 const financeShem = await loadYaml('agents/golem/shems/golem-hartland-finance/shem.yaml');
 
+// IE-P4·S4.2 — the investment estate's Shem, deployed from this repo (D1, ruled 2026-09-16).
+const investmentDef = await loadYaml('agents/investment.yaml');
+const investmentShem = await loadYaml('agents/golem/shems/golem-investment/shem.yaml');
+
 test('T6.a — agents/hartland.yaml parses and matches the ai-models agent-def shape', () => {
   assert.equal(agentDef.kind, 'golem');
   assert.equal(agentDef.id, 'hartland');
@@ -95,6 +99,132 @@ test('T6.f — finance Shem preferred_query_subset is a subset of the 15 q.hartl
   for (const name of financeShem.overlay.preferred_query_subset) {
     assert.ok(queryNames.has(name), `finance Shem references unknown query '${name}'`);
   }
+});
+
+// ── IE-P4·S4.2 — the investment Shem ────────────────────────────────────────────────────────────
+
+test('IE — agents/investment.yaml parses and matches the agent-def shape', () => {
+  assert.equal(investmentDef.kind, 'golem');
+  assert.equal(investmentDef.id, 'investment');
+  assert.ok(investmentDef.label?.length > 0 && investmentDef.label.length <= 40, 'label must be 1-40 chars');
+  assert.ok(!investmentDef.label.includes("'"), "label must not contain a single quote (env.js passthrough)");
+  assert.deepEqual(investmentDef.shem.areas, ['investment']);
+});
+
+test('IE — the investment overlay is self-contained in THIS repo (BM-9), on area investment', () => {
+  assert.equal(investmentShem.kind, 'golem-shem');
+  assert.equal(investmentShem.source.repo, 'hartland');
+  assert.equal(investmentShem.source.agentDef, 'agents/investment.yaml');
+  assert.equal(investmentShem.source.id, 'investment');
+  assert.equal(investmentShem.source.label, 'Investment Q&A');
+  assert.deepEqual(investmentShem.source.areas, ['investment']);
+  assert.deepEqual(investmentShem.overlay.visibility_roles, ['kantheon-area-investment']);
+});
+
+test('IE — ⚑IE-9: the overlay declares NO capability refs, and names no midas tool', () => {
+  // Midas-core is not deployable on this estate, and a ref here rides the REGISTERED manifest —
+  // so declaring one advertises a capability that fails when used.
+  assert.deepEqual(investmentShem.overlay.capability_refs, []);
+  assert.ok(
+    !JSON.stringify(investmentShem).toLowerCase().includes('midas'),
+    'no "midas" may appear anywhere in the investment overlay (⚑IE-9)',
+  );
+});
+
+test('IE — the router text and examples describe THIS book, in both locales', () => {
+  const router = investmentShem.overlay.description_for_router;
+  assert.ok(router.includes('query door'), 'the router text must say how it reads the book');
+  for (const field of ['example_questions', 'counter_examples']) {
+    const value = investmentShem.overlay[field];
+    assert.ok(value?.en?.length > 0, `overlay.${field}.en is empty`);
+    assert.ok(value?.cs?.length > 0, `overlay.${field}.cs is empty`);
+  }
+  // Every example is answerable, so each must carry an id shape the curated queries take.
+  for (const q of investmentShem.overlay.example_questions.en) {
+    assert.ok(q.includes('conseq:'), `example question names no conseq: id — "${q}"`);
+  }
+  // Returns/fees are unanswerable here, so they may be NAMED as counter-examples and must never be
+  // ADVERTISED as example questions. The scan is the example lists only, deliberately: the router
+  // text says "the book records no dividend or fee movement", which is the honest sentence for it
+  // to carry — a whole-overlay scan would forbid the Golem from describing its own limits.
+  const advertised = JSON.stringify(investmentShem.overlay.example_questions).toLowerCase();
+  for (const token of ['ytd', 'dividend', 'fee', 'aapl', 'return']) {
+    assert.ok(!advertised.includes(token), `'${token}' is advertised as an example question`);
+  }
+});
+
+test('IE — prompts/{en,cs}/intent.yaml are mounted, and free-sql/chip-topup are NOT packed', async () => {
+  for (const locale of ['en', 'cs']) {
+    const has = await dirNonEmpty(`agents/golem/shems/golem-investment/prompts/${locale}`);
+    assert.ok(has, `prompts/${locale} is empty or missing`);
+    const intent = await readFile(
+      path.join(hartlandRoot, `agents/golem/shems/golem-investment/prompts/${locale}/intent.yaml`),
+      'utf-8',
+    );
+    // The estate's id shapes and its only currency live in the prompt or nowhere.
+    for (const token of ['conseq:', 'ISIN', 'CZK']) {
+      assert.ok(intent.includes(token), `prompts/${locale}/intent.yaml does not state ${token}`);
+    }
+  }
+  // The GENERATED KEYS, not the file text: the kustomization's own comment explains why free-sql and
+  // chip-topup are absent, and a naive substring scan reads that explanation as a violation.
+  const kustomization = yaml.load(
+    await readFile(
+      path.join(hartlandRoot, 'agents/golem/shems/golem-investment/kustomization.yaml'),
+      'utf-8',
+    ),
+  );
+  const packed = kustomization.configMapGenerator.flatMap((g) => g.files ?? []);
+  assert.deepEqual(
+    packed,
+    ['shem.yaml', 'prompts-en-intent.yaml=prompts/en/intent.yaml', 'prompts-cs-intent.yaml=prompts/cs/intent.yaml'],
+    'the bundle packs shem.yaml + both intent prompts and nothing else — free-sql/chip-topup have no ' +
+      'live consumer, and an unmounted key is a file in the ConfigMap and absent from the pod',
+  );
+});
+
+// ⛔ THE DRIFT GUARD. This bundle is DEPLOYED from here and AUTHORED in kantheon, where the Kotest
+// specs assert it against the real parser and assembler. Two copies with no compiler between them is
+// how S1.5·D14 happened — an olymp commit restored the pre-review body of two files and nothing
+// noticed. So: change one side and copy it in the same commit. Two differences are sanctioned and
+// listed below; anything else is drift and fails here.
+test('IE — the deployed overlay matches kantheon\'s authoring copy, bar the two sanctioned differences', async (t) => {
+  const kantheonShem = path.resolve(
+    hartlandRoot,
+    '../kantheon/agents/golem/shems/golem-investment/shem.yaml',
+  );
+  let authored;
+  try {
+    authored = yaml.load(await readFile(kantheonShem, 'utf-8'));
+  } catch {
+    // Loud skip, the render-app convention: no sibling checkout must never read as a pass.
+    t.skip(`no kantheon sibling at ${kantheonShem} — THE DRIFT CHECK DID NOT RUN.`);
+    return;
+  }
+
+  // (1) BM-9 self-containment: kantheon names ai-models, this repo names itself.
+  assert.equal(authored.source.repo, 'ai-models', 'kantheon copy changed its source.repo — re-read this guard');
+  // (2) BM-6 per-locale lists here; kantheon authors them flat.
+  assert.ok(Array.isArray(authored.overlay.example_questions), 'kantheon copy is no longer flat');
+
+  const normalise = (shem) => ({
+    ...shem,
+    source: { ...shem.source, repo: undefined, agentDef: undefined },
+    overlay: { ...shem.overlay, example_questions: undefined, counter_examples: undefined },
+  });
+  assert.deepEqual(
+    normalise(investmentShem),
+    normalise(authored),
+    'the deployed overlay and kantheon\'s authoring copy have drifted — copy the change across in ' +
+      'the same commit (only source.repo/agentDef and the example/counter lists may differ)',
+  );
+
+  // The English example questions must be the same set, whatever their shape.
+  assert.deepEqual(
+    investmentShem.overlay.example_questions.en,
+    authored.overlay.example_questions,
+    'the en example questions differ between the deployed and authored copies',
+  );
 });
 
 test('T6.g — no profit/margin anywhere in either Shem overlay (D-6a)', () => {

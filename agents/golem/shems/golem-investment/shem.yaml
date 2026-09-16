@@ -1,0 +1,128 @@
+# Golem-investment Shem — the investment-Q&A Golem ("Investment") over package `investment`.
+#
+# CONVERGED DESIGN (2026-06-25), mirrors golem-ucetnictvi. A Golem's capabilities/v1
+# AgentCapability is ASSEMBLED at boot — this overlay is the thin per-agent residue:
+#
+#   (1) ai-models agent definition  → identity + model slice (areas → packages)
+#   (2) Veles model (by package)  → area_entities / preferred_queries / area_terminology
+#   (3) THIS overlay                → the per-agent residue kantheon owns
+#   (4) Golem-template constants    → agent_kind, intent_kinds, capability_refs, hitl, endpoint
+#
+# Prompts belong to the Shem (./prompts), NOT to the model.
+#
+# Vocabulary: "area" (subject area), not "domain" — domain is now a TTR value concept.
+# This file applies the AREA_QA rename (overview §0): agent_kind/area_name/area_entities/
+# area_terminology are NOT authored here — they are template constants / Veles-derived.
+
+apiVersion: kantheon.shem/v1
+kind: golem-shem
+
+# ── (1) Identity + model slice — sourced from the ai-models agent definition ──
+# Golem asks Veles ResolveArea(investment) → packages; GetModel(packages) supplies the model.
+# On this estate that is the `er` layer of package `investment` (IE-P2·S2.1): the six entities
+# client / portfolio / asset / price / transaction / position, and the nine curated
+# `q.investment.*` queries. ⚑ Veles resolves the area from the SERVED GIT TREE — hartland's veles
+# reads `Collite/ttr-demo` `model/` — so `er/area.ttrm` in the synced copy is what a question
+# resolves against, and NO ai-models delta is needed (IE-P0 V5).
+source:
+  # BM-9: this repo is the ai-models-analog and self-contained — the agent def lives here,
+  # beside the model it names (agents/investment.yaml), exactly as golem-hartland's does.
+  repo: hartland
+  agentDef: agents/investment.yaml
+  id: investment                 # ai-models agent id → kantheon agent_id = golem-investment
+  label: "Investment Q&A"        # ai-models label → display_name
+  areas: [investment]            # Veles ResolveArea → investment packages
+
+# ── Derived / constant (DO NOT author — shown for reference only) ──
+#   agent_id          golem-investment      (golem-<id>)
+#   display_name      "Investment Q&A"      (ai-models label)
+#   agent_kind        AREA_QA               (template constant for kind: golem)
+#   intent_kinds      [PROCEDURAL]          (template constant; RCA/FORECAST/SIMULATION → Pythia)
+#   service_endpoint  http://golem-investment.kantheon.svc.cluster.local:7420
+#   health_check_path /health
+#   capability_refs / preferred_capabilities  query.query, query.compile, render.table, render.chart
+#   hitl_default      INTERACTIVE
+#   area_entities / preferred_queries / area_terminology  from the Veles model — NOT listed here
+#     ⛔ There is no `preferred_queries` key on this overlay and adding one is SILENT: the parser
+#     sets FAIL_ON_UNKNOWN_PROPERTIES=false, so it would parse, be dropped, and look authored
+#     forever (IE-P4·S4.1·D1). The nine query ids reach the manifest from `model.patternQueries`.
+#     The vocabulary a question is answered with — what a movement's `leg` means, that a fee
+#     arrives as a withdrawal, the `conseq:` id shapes — is authored as entity and attribute
+#     descriptions in `packages/investment/model/er/`, and travels with the model.
+
+# ── (3) Overlay — the per-agent residue kantheon owns ──
+overlay:
+  # Entitlement: a Keycloak realm role. Empty list = visible to every authenticated caller.
+  # Convention: kantheon-area-<area>.
+  visibility_roles:
+    - kantheon-area-investment
+
+  # Per-Shem tool capability refs, appended to the template refs (query.query/compile,
+  # render.table/chart) by the assembler.
+  #
+  # ⛔ EMPTY, and that is the decision: ⚑IE-9 ruled Midas-core NOT deployable on this estate, so the
+  # five `midas.*:v1` calc refs this Shem used to declare named tools no caller can reach. A ref in
+  # this list rides the REGISTERED manifest, so declaring one the estate lacks advertises a
+  # capability that fails when used. This Golem reaches the book the way every other Golem does:
+  # the template's query/compile + render refs, through the query door.
+  capability_refs: []
+
+  # OPTIONAL router seed. If omitted, description_for_router is seeded from the area's
+  # description + tags served by Veles.
+  # ⚑ The router READS this and `example_questions` out of the registered manifest, so a word here
+  # that the estate cannot deliver attracts exactly the questions this Golem must refuse. It
+  # previously promised returns, dividends, fees and FX via Midas-core calc tools: none of those is
+  # answerable on this book (⚑IE-9 · S4.1·D3).
+  description_for_router: |
+    Investment portfolio Q&A over the Conseq distributor's book, read through the query door:
+    which portfolios a client holds, what a portfolio holds now or held on a given day, its cash
+    balance per currency, its movements over a window, and its value quarter by quarter. Figures
+    are CZK. Returns are NOT modelled (no time- or money-weighted return), and the book records
+    no dividend or fee movements — a provider fee arrives as a withdrawal. NOT root-cause
+    analysis / forecasting / simulation (→ Pythia), nor other subject areas (HR, Sales).
+
+  # OPTIONAL routing examples. PER-LOCALE here, the ttr-demo standard for a bilingual Shem
+  # (golem-hartland precedent, BM-6; `agents/tests/shems.test.mjs` T6.e requires both halves).
+  # Every one of these is answerable by a curated query, with this estate's id shapes.
+  example_questions:
+    en:
+      - "Which portfolios does client conseq:200791223 hold?"
+      - "What does portfolio conseq:100003369 hold right now?"
+      - "How did portfolio conseq:100003369 develop quarter by quarter over the last year?"
+      - "What movements were there in portfolio conseq:100003369 since 1 April?"
+      - "How much cash is in portfolio conseq:100003369, per currency?"
+    cs:
+      - "Která portfolia drží klient conseq:200791223?"
+      - "Co drží portfolio conseq:100003369 právě teď?"
+      - "Jak se portfolio conseq:100003369 vyvíjelo čtvrtletí po čtvrtletí za poslední rok?"
+      - "Jaké pohyby byly v portfoliu conseq:100003369 od 1. dubna?"
+      - "Kolik hotovosti je v portfoliu conseq:100003369, po měnách?"
+  # Deliberately unanswerable — they route away, or (the last two) name a figure this book
+  # does not hold, so the Golem must say so rather than substitute one.
+  counter_examples:
+    en:
+      - "Show me HR headcount."                        # → Golem-HR
+      - "What's our pipeline this quarter?"            # → Golem-Sales
+      - "Why did the system latency spike?"            # RCA → Pythia
+      - "What was our return last year?"               # ⚑IE-9 — returns are not modelled
+      - "How much did we pay in fees last year?"       # a fee arrives as a withdrawal
+    cs:
+      - "Zobraz počet zaměstnanců."                    # → Golem-HR
+      - "Jaký máme pipeline v tomto kvartálu?"         # → Golem-Sales
+      - "Proč vyskočila latence systému?"              # RCA → Pythia
+      - "Jaký jsme měli loni výnos?"                   # ⚑IE-9 — výnosy nejsou modelovány
+      - "Kolik jsme loni zaplatili na poplatcích?"     # poplatek přichází jako výběr
+
+  # OPTIONAL locale defaults. If omitted, template defaults apply. v1: en + cs.
+  locale_defaults:
+    # ⚑ CZK in both locales: this estate's book is CZK throughout (the report prints CZK, and the
+    # fingerprint's five quarter rows are CZK). `EUR` here was the pre-estate default and would have
+    # had an English-speaking caller told the wrong currency for every figure.
+    - locale: en
+      greeting: "Hi, how can I help with your portfolios?"
+      date_format: "yyyy-MM-dd"
+      currency: "CZK"
+    - locale: cs-CZ
+      greeting: "Dobrý den, jak vám mohu pomoci s portfolii?"
+      date_format: "dd.MM.yyyy"
+      currency: "CZK"
