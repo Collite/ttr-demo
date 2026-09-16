@@ -9,6 +9,14 @@
 #   just check-investment-model   model/investment/ matches its SYNCED-FROM stamp (hash, no symlinks)
 #   just verify-model             the same check, then every model/agents/lexicon suite
 #   just check-model              generated/resolved-packages.json is not stale
+#   just check-lexicon            generated/lexicon.tar.zst is not stale — ADDED 2026-09-16, and it
+#                                 is the gate this repo most needed: the archive was last rebuilt
+#                                 2026-09-04, model/investment landed 2026-09-09, and nothing
+#                                 noticed. The estate therefore served a lexicon with no word for
+#                                 a portfolio, a client or a position, so every investment question
+#                                 came back as "I don't recognise …" — a model that was live and
+#                                 unaskable. `check-model` already guards the other generated
+#                                 artifact; this is its missing twin.
 #   node --test …                 the investment drill's suite and the price-history suite
 #                                 (a stub BFF and a fake psql — no estate, no database)
 #
@@ -57,6 +65,19 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm --filter "@tatrman/migrate..." --filter "@tatrman/lint..." --filter "@tatrman/semantics..." build
 
+      # The lexicon compiler is KOTLIN (RV-P1.2's (a3) ruling), so it is not covered by the pnpm
+      # build above — `just check-lexicon` borrows `installDist`'s binary from ../tatrman exactly
+      # as a side-by-side local checkout does.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build the lexicon CLI the recipes borrow
+        working-directory: tatrman
+        run: ./gradlew :packages:kotlin:ttr-lexicon-cli:installDist
+
       - name: model/investment matches its stamp
         working-directory: hartland
         run: just check-investment-model
@@ -68,6 +89,13 @@ jobs:
       - name: resolved-packages.json is not stale
         working-directory: hartland
         run: just check-model
+
+      # ⚑ A stale archive is not a warning: the vocabulary a question is matched against IS this
+      # file, so a model change that does not reach it leaves the estate able to serve the model
+      # and unable to understand a question about it.
+      - name: lexicon.tar.zst is not stale
+        working-directory: hartland
+        run: just check-lexicon
 
       - name: Script suites
         working-directory: hartland
