@@ -84,15 +84,21 @@ overlay:
   # OPTIONAL routing examples. PER-LOCALE here, the ttr-demo standard for a bilingual Shem
   # (golem-hartland precedent, BM-6; `agents/tests/shems.test.mjs` T6.e requires both halves).
   # Every one of these is answerable by a curated query, with this estate's id shapes.
+  #
+  # ⛔ NO CLIENT-KEYED EXAMPLE, by ruling (2026-09-18). THIS REPOSITORY IS PUBLIC, so an answerable
+  # "which portfolios does client X hold?" would mean publishing a real `CsqClientId`. The
+  # capability is still advertised in `description_for_router`. A placeholder id was rejected too:
+  # an advertised example that returns nothing is exactly the defect this replaced — until this
+  # date the first example named `conseq:200791223` as a client, which is a ContractId (a
+  # PORTFOLIO), so it matched no client row in either locale. `agents/tests/shems.test.mjs`
+  # declares each id's kind and refuses both mistakes.
   example_questions:
     en:
-      - "Which portfolios does client conseq:200791223 hold?"
       - "What does portfolio conseq:100003369 hold right now?"
       - "How did portfolio conseq:100003369 develop quarter by quarter over the last year?"
       - "What movements were there in portfolio conseq:100003369 since 1 April?"
       - "How much cash is in portfolio conseq:100003369, per currency?"
     cs:
-      - "Která portfolia drží klient conseq:200791223?"
       - "Co je v portfoliu conseq:100003369 právě teď?"
       - "Jak se portfolio conseq:100003369 vyvíjelo čtvrtletí po čtvrtletí za poslední rok?"
       - "Jaké pohyby byly v portfoliu conseq:100003369 od 1. dubna?"
