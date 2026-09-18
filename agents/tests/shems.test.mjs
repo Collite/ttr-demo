@@ -139,9 +139,52 @@ test('IE — the router text and examples describe THIS book, in both locales', 
     assert.ok(value?.en?.length > 0, `overlay.${field}.en is empty`);
     assert.ok(value?.cs?.length > 0, `overlay.${field}.cs is empty`);
   }
-  // Every example is answerable, so each must carry an id shape the curated queries take.
-  for (const q of investmentShem.overlay.example_questions.en) {
-    assert.ok(q.includes('conseq:'), `example question names no conseq: id — "${q}"`);
+  // ⛔ Every example must carry an id of the right KIND, not merely an id-shaped string.
+  //
+  // 2026-09-18: the first example advertised "client conseq:200791223" — and that number is a
+  // ContractId, i.e. a PORTFOLIO (the drill's default portfolio, and the one named in the report
+  // fingerprint's own filename). It matched no client row, so the estate's own advertised question
+  // could only ever return nothing, in either locale. The assertion that stood here checked
+  // `includes('conseq:')` — the id's SPELLING, never its referent — which is exactly how it shipped.
+  //
+  // A CsqClientId and a ContractId are both `conseq:<digits>` and no pattern can tell them apart,
+  // so the kinds are DECLARED. Adding an id to an example means adding it here.
+  const ID_KIND = {
+    'conseq:200791223': 'portfolio',
+    'conseq:100003369': 'portfolio',
+  };
+  // ⛔ And no example may be CLIENT-keyed at all (ruled 2026-09-18). A client id is a real
+  // `CsqClientId` and THIS REPOSITORY IS PUBLIC, so an answerable client question cannot be
+  // advertised here; a placeholder one is worse, because an advertised example that returns
+  // nothing is the defect this guard exists to stop. The capability stays advertised in
+  // `description_for_router`, and the real client id lives only in the private eval sheet.
+  const CLIENT_KEYED_IS_FORBIDDEN = true;
+  // The word in front of the id says what the id is meant to be — "client conseq:…",
+  // "portfolio conseq:…", "klient conseq:…", "v portfoliu conseq:…".
+  const kindOfWord = (w) => {
+    const lower = w.toLowerCase();
+    if (lower.startsWith('client') || lower.startsWith('klient')) return 'client';
+    if (lower.startsWith('portfoli')) return 'portfolio';
+    return null;
+  };
+  for (const [locale, questions] of Object.entries(investmentShem.overlay.example_questions)) {
+    for (const q of questions) {
+      assert.ok(/conseq:\d+/.test(q), `[${locale}] example question names no conseq: id — "${q}"`);
+      for (const [, word, id] of q.matchAll(/(\S+)\s+(conseq:\d+)/g)) {
+        const expected = kindOfWord(word);
+        assert.ok(expected, `[${locale}] the word before ${id} must name its kind — "${q}"`);
+        assert.ok(
+          !(CLIENT_KEYED_IS_FORBIDDEN && expected === 'client'),
+          `[${locale}] a client-keyed example needs a real CsqClientId and this repo is PUBLIC — "${q}"`,
+        );
+        assert.ok(ID_KIND[id], `[${locale}] undeclared id ${id}: add it to ID_KIND — "${q}"`);
+        assert.equal(
+          ID_KIND[id],
+          expected,
+          `[${locale}] ${id} is a ${ID_KIND[id]}, but this question asks about a ${expected} — "${q}"`,
+        );
+      }
+    }
   }
   // Returns/fees are unanswerable here, so they may be NAMED as counter-examples and must never be
   // ADVERTISED as example questions. The scan is the example lists only, deliberately: the router
