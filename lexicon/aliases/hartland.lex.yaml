@@ -81,6 +81,8 @@
 #   "returns", never "marketplace units". Inventing one to dodge RG-LEX-006 would put words
 #   in users' mouths, which is the one thing this area's discipline forbids. They wait for
 #   the same md/modelling exercise as the bare words above.
+#   ✅ UNITS SOLD landed 2026-09-24 on `channel_sales.quantity` (the modelling exercise). RETURNED
+#   AMOUNT still waits: returns are three entities with no all-channel view yet.
 # `return rate` / `míra vrácení` — a RATIO of `return_amt` to `ext_sales_price`, which live
 #   on two different entities. The door refuses a two-object question, so a word for it
 #   would resolve into a refusal. It belongs to a pattern query, not to this layer.
@@ -174,6 +176,36 @@ entries:
       - { text: "channel", lang: en }
       - { text: "channels", lang: en }
     target: er.entity.channel_sales.channel
+
+  # ── Units sold → er.entity.channel_sales.quantity ───────────────────────────────────
+  # 2026-09-24. The second measure of the all-channel fact, and the "UNITS SOLD" the header
+  # listed as waiting for the same modelling exercise. Asked live on hartland ("Show units sold
+  # by channel for 2025"): the `local` rung reached the model and still asked back — a measure
+  # with no declared word is a guess the ladder rightly refuses to make alone.
+  # Sourcing: the model's own descriptions ("units sold = quantity" on every sales entity,
+  # "Units sold on this line"). ⚑ The Czech rows are the bilingual Shem's MIRROR, authored rather
+  # than attested — the corpus has no Czech units phrase. Strike them if that bar is not met.
+  - terms:
+      - { text: "units sold", lang: en, method: TOKENS }
+      - { text: "sold units", lang: en, method: TOKENS }
+      - { text: "prodané kusy", method: TOKENS }
+      - { text: "prodaných kusů", method: TOKENS }
+    target: er.entity.channel_sales.quantity
+
+  # ══ PRODUCT CATEGORY → er.entity.item.category ═══════════════════════════════════════
+  # 2026-09-24. `item.category` had no declared word, so "revenue by category" gapped (G1) on
+  # the grouping. With channel_sales → item (`rel_channel_sales_item`) the fast path can now
+  # group ANY channel's revenue by category; `category_revenue` stays the one-channel pattern.
+  # Sourcing: `category_revenue` ("Revenue by product category"), the Shem example "Which
+  # categories drove the H2 2025 drop?" / "Které kategorie způsobily propad…", and the demo
+  # transcript (category ×176, categories ×39, kategorie ×7).
+  - terms:
+      - { text: "category", lang: en }
+      - { text: "categories", lang: en }
+      - { text: "product category", lang: en, method: TOKENS }
+      - { text: "kategorie" }
+      - { text: "kategorií" }
+    target: er.entity.item.category
 
   # ══ CALENDAR GRAIN → er.entity.date_dim.{month,year,quarter,week_seq} ═════════════
   # RV-P6.6. These are what make *"…by month"* and *"…for 2025"* land on a COLUMN instead of
