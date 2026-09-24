@@ -69,6 +69,11 @@ def entity catalog_returns {
 def entity reason {
     description: "Return reasons — \"Did not get it on time\" is the incident's late-delivery signal."
     labelPlural: "Return Reasons"
+    // LP-P3·T1 (LP contracts §2.1) — the mention facet a quoted literal attributes to:
+    // `"..."` on this head lands on `name`, a code-shaped literal on `code`. Without it the
+    // literal is headless (G3) and the fast path refuses. The legacy properties below are
+    // kept for the same reason store's are (readers before producers).
+    semantics { name: reason_desc, code: reason_id }
     nameAttribute: reason_desc
     codeAttribute: reason_id
     roles: [dimension]

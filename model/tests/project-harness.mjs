@@ -60,8 +60,11 @@ export const ACCEPTED_RESIDUAL_CODES = new Set([
   // ACCEPTED rather than fixed, deliberately — READERS BEFORE PRODUCERS. Veles reads the
   // semantics mention keys only from MS-P2 on; dropping the legacy properties while the
   // serving estate still runs an older veles would blank EntityDetail.name_attribute for
-  // every dimension at once, silently. `store` (model/er/parties.ttrm) declares BOTH, which
-  // is the intended migration step and is itself one of the five 218s ("both, agreeing").
+  // every dimension at once, silently. Seven heads now declare BOTH — `store` (MS) and the
+  // six LP-P3·T1 added: `item`, `promotion`, `call_center`, `warehouse`, `customer_address`,
+  // `reason` (plus `customer`, code only, which has no name attribute to point at). That is
+  // the intended migration step; declaring the facet does not ADD a 218, only dropping the
+  // legacy property beside it would clear one.
   // Remove this entry — and the legacy properties — once hartland's veles is on an MS-P2
   // image and the chain has been seen serving name/code from the semantics block.
   'TTR-SEM-218',

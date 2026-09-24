@@ -72,13 +72,73 @@ It is committed anyway, for two reasons that outweigh it at this size:
 - **`resolved-packages.json` set the precedent**, and the reviewable part of this artifact is not
   its bytes but its **id** and per-class counts, both printed by the build and recorded below.
 
-It measured **8,845 bytes** at the counts below. If it grows past roughly a hundred kilobytes the
+It measured **9,431 bytes** at the counts below. If it grows past roughly a hundred kilobytes the
 trade flips and the archive should move to a CI-built artifact — the drift gate would then be a CI
 step rather than a local recipe.
 
 ## What is in the artifact today
 
-From `just build-lexicon`, **2026-09-04** (rebuilt on the toolchain's provenance-path fix):
+From `just build-lexicon`, **2026-09-24** (LP-P3·T1 — the mention facet on seven more heads):
+
+| | |
+|---|---|
+| archive id | `sha256:ed9a39efb92322e861de6903ca71588e44af89f7b2a8b8953926c66ae7cf00d7` |
+| model id | `sha256:18230c666eb104e54d98854a7cbe44c5ee24a3e2036652c33ad7478169038fc4` |
+| schema | `ttr-lexicon-compiled/v4` |
+| entries | **418** |
+| — `MODEL_OBJECT` | 151 (78 DECLARED, 73 METADATA) |
+| — `MEMBER` | **100** (0 DECLARED, 100 METADATA `valueLabels`) |
+| — `OPERATOR` | 35 (the six stdlib operators' triggers) |
+| — `GROUNDING_TRIGGER` | 98 (72 stdlib + 26 from `grounding/hartland.lex.yaml`) |
+| — `STRING_PREDICATE` | **34** (the LP-P2a `pred:` stdlib slice — all five refs, cs + en) |
+| operators | 6 |
+| build warnings | **2** (both `RG-LEXC-004`, MH T1 — see below) |
+| md-targeted rows | **100, all `METADATA`** |
+| targets with a mention facet | **8 of 36** (was 1) |
+| size | 9,431 bytes |
+
+**No entry changed.** The 418-row table is identical to the previous archive; what moved is the
+**`targets` map**, which since schema v4 carries `nameRef`/`codeRef`/`codeFormat` per target. Seven
+more heads now declare `semantics { name: · code: }` and so become somewhere a quoted literal can
+attribute to (LP contracts §2.1):
+
+```
+er.entity.call_center       name | call_center_id
+er.entity.customer          —    | customer_id      (code only: no name column in this cut)
+er.entity.customer_address  city | address_id
+er.entity.item              product_name | item_id
+er.entity.promotion         promo_name   | promo_id
+er.entity.reason            reason_desc  | reason_id
+er.entity.store             store_name   | store_id  (MS, already there)
+er.entity.warehouse         warehouse_name | warehouse_id
+```
+
+⚑ **That is every eligible hartland head.** Of the 28 targets still without a facet, 10 are
+attributes and measures (a member has no name column — it IS one, `Mention.NONE` by
+construction), 8 are facts (`entity_with_measures` — a fact is not a thing you name), 3 declare
+neither a name nor a code (`customer_demographics`, `household_demographics`, `income_band`), and
+`date_dim`'s name is a date and its code the internal sequence key, so attributing a typed string
+to either would be wrong. The remaining **6 are the investment area** (`asset`, `client`,
+`portfolio`, `position`, `price`, `transaction`), which is **not authored here** —
+`model/investment/` is synced out of kantheon (`just sync-investment-model`), so its facet is a
+change in that repo.
+
+⚠ **The previous archive was never recorded.** `7fc8c36` (*"lexicon: rebuild with the current CLI
+— 418 entries incl. LP-P2a STRING_PREDICATE"*) shipped archive
+`sha256:0b620056587414f3c99f13d5069e409b15f908fe808828dd472de181c71d2325` over model
+`sha256:ea15b2b776faa3de411a1c1159b4cee9a10a45c9f944fd4007a5c1b73e0f22f3`, and left the 2026-09-04
+table below in place — so between then and now the table described neither the archive in the tree
+nor the one on the cluster. The rule in *Adding a word* step 5 is the one that was missed; this
+table is a fact about the estate only if it is rewritten with the archive.
+
+⚑ And the id moves on **comments**, not only on vocabulary: every `METADATA` row records the line
+it was harvested from, so inserting a four-line note above an entity shifts its provenance and the
+archive id with it. `just check-lexicon` is therefore a real gate on any `model/` edit, including
+one that changes no words at all.
+
+### Previously (2026-09-04, on the toolchain's provenance-path fix)
+
+From `just build-lexicon`:
 
 | | |
 |---|---|
