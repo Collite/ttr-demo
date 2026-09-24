@@ -7,6 +7,7 @@ def area hartland {
     entities: [
         er.entity.store_sales,
         er.entity.web_sales,
-        er.entity.catalog_sales
+        er.entity.catalog_sales,
+        er.entity.channel_sales
     ]
 }

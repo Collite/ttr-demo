@@ -175,3 +175,12 @@ def er2db_attribute date_dim_week_seq_map   { attribute: er.entity.date_dim.week
 def er2db_attribute date_dim_day_name_map   { attribute: er.entity.date_dim.day_name,   target: { column: db.dbo.date_dim.d_day_name } }
 def er2db_attribute date_dim_holiday_map    { attribute: er.entity.date_dim.holiday,    target: { column: db.dbo.date_dim.d_holiday } }
 def er2db_attribute date_dim_weekend_map    { attribute: er.entity.date_dim.weekend,    target: { column: db.dbo.date_dim.d_weekend } }
+
+// ===== channel_sales (all channels) → the VIEW db.dbo.channel_sales =====
+def er2db_entity channel_sales_map { entity: er.entity.channel_sales, target: { view: db.dbo.channel_sales } }
+def er2db_attribute channel_sales_channel_map         { attribute: er.entity.channel_sales.channel,         target: { column: db.dbo.channel_sales.channel } }
+def er2db_attribute channel_sales_sold_date_map       { attribute: er.entity.channel_sales.sold_date,       target: { column: db.dbo.channel_sales.sold_date_sk } }
+def er2db_attribute channel_sales_item_map            { attribute: er.entity.channel_sales.item,            target: { column: db.dbo.channel_sales.item_sk } }
+def er2db_attribute channel_sales_customer_map        { attribute: er.entity.channel_sales.customer,        target: { column: db.dbo.channel_sales.customer_sk } }
+def er2db_attribute channel_sales_quantity_map        { attribute: er.entity.channel_sales.quantity,        target: { column: db.dbo.channel_sales.quantity } }
+def er2db_attribute channel_sales_ext_sales_price_map { attribute: er.entity.channel_sales.ext_sales_price, target: { column: db.dbo.channel_sales.ext_sales_price } }

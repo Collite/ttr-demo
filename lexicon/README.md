@@ -44,6 +44,13 @@ lexicon/
 > anyway, which the door refuses regardless ("spans more than one object"), so those stay on the
 > pattern path in `model/queries/q_hartland.ttrm` exactly as before. Restoring them on the fast
 > path is an md exercise or a channel-labelled-view modelling exercise — not a lexicon change.
+>
+> ✅ **The modelling exercise landed 2026-09-24.** `er.entity.channel_sales` is backed by the view
+> `data/views/channel_sales.sql` (UNION ALL of the three facts, channel as a column), so the bare
+> words have ONE target: `revenue`/`tržby`/`obrat` → `channel_sales.ext_sales_price`,
+> `channel`/`kanál*` → `channel_sales.channel` (`aliases/hartland.lex.yaml`). *"Revenue by channel
+> for 2025 by month"* now binds on the fast path; the channel-qualified rows keep their
+> single-channel targets, and the curated patterns stay for what the fast path cannot do.
 
 Each data file's own header carries its sourcing — which line of `design/demo-transcript.md`,
 which `search { patterns }` block in `model/queries/q_hartland.ttrm`, which
