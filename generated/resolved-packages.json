@@ -33,6 +33,11 @@
       "schema": "er"
     },
     {
+      "qname": "hartland.er.entity.channel_sales",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
       "qname": "hartland.er.entity.customer",
       "package": "hartland",
       "schema": "er"
@@ -151,6 +156,7 @@
       ],
       "resolvedEntities": [
         "hartland.er.entity.catalog_sales",
+        "hartland.er.entity.channel_sales",
         "hartland.er.entity.store_sales",
         "hartland.er.entity.web_sales"
       ]

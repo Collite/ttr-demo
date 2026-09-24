@@ -6,10 +6,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadHartlandProject, ACCEPTED_RESIDUAL_CODES, isOwnModelFile, isSyncedModelFile } from '../../tests/project-harness.mjs';
 
-// D-5 roster (05-d-ttrm-spec.md) — exactly 19, no D-5-Out entity (time_dim, web_site,
-// web_page, catalog_page, ship_mode, dbgen_version).
+// D-5 roster (05-d-ttrm-spec.md) — the 19 D-5 entities, no D-5-Out entity (time_dim, web_site,
+// web_page, catalog_page, ship_mode, dbgen_version) — plus `channel_sales` (2026-09-24), the
+// all-channel view-backed fact that lets "revenue by channel" be asked on the fast path.
 const EXPECTED_ENTITIES = [
-  'store_sales', 'web_sales', 'catalog_sales',
+  'store_sales', 'web_sales', 'catalog_sales', 'channel_sales',
   'store_returns', 'web_returns', 'catalog_returns',
   'inventory', 'date_dim', 'item', 'customer', 'customer_address',
   'customer_demographics', 'household_demographics', 'income_band',
@@ -53,7 +54,7 @@ test('T6.1 — parse-clean: every model/er + model/binding file parses with zero
   assert.deepEqual(offenders, [], `parse errors: ${offenders.join('; ')}`);
 });
 
-test('T6.2 — exactly the 19 D-5 entities are declared, no D-5-Out entity', () => {
+test('T6.2 — exactly the D-5 entities (+ channel_sales) are declared, no D-5-Out entity', () => {
   const entities = allDefsOfKind('entity').map((e) => e.def.name);
   const missing = EXPECTED_ENTITIES.filter((e) => !entities.includes(e));
   const stray = D5_OUT.filter((e) => entities.includes(e));

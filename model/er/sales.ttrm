@@ -78,3 +78,27 @@ def entity catalog_sales {
         def attribute ext_sales_price { type: { type: decimal, length: 10, precision: 2 }, description: "Extended sales price of the line (unit price × quantity) — the revenue amount; SUM this for revenue/sales." }
     ]
 }
+
+// ===== channel_sales — the three channels as ONE object =====
+// The question the three entities above cannot answer on the fast path: *"revenue by channel"*.
+// There the channel is which ENTITY a row lives in, so a bare "revenue" names three columns and
+// "channel" names nothing. `channel_sales` is backed by the physical view
+// `db.dbo.channel_sales` (data/views/channel_sales.sql — UNION ALL of the three facts), which makes
+// the channel a COLUMN and revenue ONE measure. The per-channel entities stay: *"marketplace
+// revenue"* still means catalog_sales, and every existing question keeps its object.
+def entity channel_sales {
+    description: "All-channel sales lines — store, web and marketplace sales in one object, labelled by channel. Revenue (sales) = SUM(ext_sales_price), units sold = quantity, dated by sold_date; group by channel to compare the channels."
+    labelPlural: "All-Channel Sales"
+    roles: [fact]
+    displayLabel: { en: "All-Channel Sales", cs: "Prodeje napříč kanály" }
+    // MS: revenue FIRST — the default measure of a bare "revenue"/"tržby" — then units sold.
+    semantics { measures: [ ext_sales_price, quantity ] }
+    attributes: [
+        def attribute channel         { type: text, description: "Sales channel of the line — 'store', 'web' or 'marketplace'." },
+        def attribute sold_date       { type: int, description: "Sale date — FK to the 'sk' attribute of the Calendar (date_dim) entity." },
+        def attribute item            { type: int, description: "Sold product — FK to the 'sk' attribute of the Product (item) entity." },
+        def attribute customer        { type: int, description: "Buying customer — FK to the 'sk' attribute of the Customer entity." },
+        def attribute quantity        { type: int, description: "Units sold on this line." },
+        def attribute ext_sales_price { type: { type: decimal, length: 10, precision: 2 }, description: "Extended sales price of the line (unit price × quantity) — the revenue amount; SUM this for revenue/sales, in any channel." }
+    ]
+}

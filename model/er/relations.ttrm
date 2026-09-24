@@ -63,3 +63,8 @@ def relation rel_customer_hdemo { from: er.entity.customer, to: er.entity.househ
 
 // -- household_demographics -> income_band --
 def relation rel_household_demographics_income_band { from: er.entity.household_demographics, to: er.entity.income_band, cardinality: { from: "0..*", to: "1" }, binding: { fk: db.dbo.fk_hd_income } }
+
+// -- channel_sales (all channels, view-backed) --
+def relation rel_channel_sales_date     { from: er.entity.channel_sales, to: er.entity.date_dim, cardinality: { from: "0..*", to: "1" }, binding: { fk: db.dbo.fk_chs_date } }
+def relation rel_channel_sales_item     { from: er.entity.channel_sales, to: er.entity.item,     cardinality: { from: "0..*", to: "1" }, binding: { fk: db.dbo.fk_chs_item } }
+def relation rel_channel_sales_customer { from: er.entity.channel_sales, to: er.entity.customer, cardinality: { from: "0..*", to: "1" }, binding: { fk: db.dbo.fk_chs_customer } }

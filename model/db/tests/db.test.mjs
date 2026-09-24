@@ -93,15 +93,16 @@ test('T6.3 — every table declares a primaryKey', async () => {
   assert.deepEqual(withoutPk, [], `tables missing primaryKey: ${withoutPk.join(', ')}`);
 });
 
-test('T6.4 — every def fk from/to column resolves to a declared table.column', async () => {
+test('T6.4 — every def fk from/to column resolves to a declared table.column or view.column', async () => {
   const files = await ttrmFiles(dbDir);
   const parsed = await parseAll(files);
 
-  // table -> Set(column names)
+  // table/view -> Set(column names). A view (views.ttrm) carries no constraints in the database,
+  // but the model may declare logical keys on its columns — the same joins its source tables carry.
   const columnsByTable = new Map();
   for (const { result } of parsed) {
     for (const def of result.ast?.definitions ?? []) {
-      if (def.kind !== 'table') continue;
+      if (def.kind !== 'table' && def.kind !== 'view') continue;
       columnsByTable.set(def.name, new Set((def.columns ?? []).map((c) => c.name)));
     }
   }

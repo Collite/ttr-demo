@@ -63,3 +63,10 @@ def fk fk_c_hdemo { from: [db.dbo.customer.c_current_hdemo_sk], to: [db.dbo.hous
 
 // -- household_demographics -> income_band --
 def fk fk_hd_income { from: [db.dbo.household_demographics.hd_income_band_sk], to: [db.dbo.income_band.ib_income_band_sk] }
+
+// -- channel_sales (a VIEW — data/views/channel_sales.sql) --
+// Logical keys: a view carries no constraints in the database, but the join the model declares
+// is the same one each underlying fact's own FK declares, column for column.
+def fk fk_chs_date     { from: [db.dbo.channel_sales.sold_date_sk], to: [db.dbo.date_dim.d_date_sk] }
+def fk fk_chs_item     { from: [db.dbo.channel_sales.item_sk],      to: [db.dbo.item.i_item_sk] }
+def fk fk_chs_customer { from: [db.dbo.channel_sales.customer_sk],  to: [db.dbo.customer.c_customer_sk] }

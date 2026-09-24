@@ -57,6 +57,10 @@
 # object carries all three). It is not a lexicon change, and it should not be forced into
 # one.
 #
+# ✅ 2026-09-24 — the modelling one landed: `er.entity.channel_sales`, a view-backed fact (see
+# the "REVENUE and CHANNEL — all channels" section below). Everything above stays true of the
+# three per-channel entities; the bare words now point at the one object that carries all three.
+#
 # ── Sourcing ─────────────────────────────────────────────────────────────────────────
 # Every term is attested. The `search { patterns }` blocks in
 # `model/queries/q_hartland.ttrm` are the densest source and are cited per entry; the rest
@@ -138,6 +142,38 @@ entries:
       - { text: "store revenue", lang: en, method: TOKENS }
       - { text: "retail revenue", lang: en, method: TOKENS }
     target: er.entity.store_sales.ext_sales_price
+
+  # ══ REVENUE and CHANNEL — all channels → er.entity.channel_sales ═════════════════════
+  # 2026-09-24. The bare words the header explains away now have ONE target each: the
+  # view-backed `channel_sales` (data/views/channel_sales.sql · model/er/sales.ttrm) — the
+  # "modelling exercise" the header names. On it the channel is a COLUMN and revenue is ONE
+  # measure, so RG-LEX-006 has nothing to object to and *"revenue by channel for 2025 by month"*
+  # binds deterministically: `revenue` → the measure (MS: first in `semantics { measures }`),
+  # `channel` → the grouping, `by month` / `2025` → the calendar via `rel_channel_sales_date`.
+  # The channel-QUALIFIED rows above keep their single-channel targets — *"marketplace revenue"*
+  # still means catalog_sales; the longer span wins.
+  #
+  # Sourcing: `revenue`/`channel` — the `channel_revenue_monthly` / `channel_revenue_yoy` patterns
+  # and examples ("Monthly revenue by channel", "revenue by channel over time"); `tržby`/`tržeb`/
+  # `kanálu` — "(měsíční) tržby (podle|dle) kanálu", "vývoj tržeb (podle|dle) kanálu";
+  # `tržba`/`obrat`/`kanál`/`kanály` — the demo transcript and both Shems' example questions.
+  - terms:
+      - { text: "tržby" }
+      - { text: "tržba" }
+      - { text: "tržeb" }
+      - { text: "obrat" }
+      - { text: "revenue", lang: en }
+      - { text: "revenues", lang: en }
+    target: er.entity.channel_sales.ext_sales_price
+
+  - terms:
+      - { text: "kanál" }
+      - { text: "kanálu" }
+      - { text: "kanály" }
+      - { text: "kanálů" }
+      - { text: "channel", lang: en }
+      - { text: "channels", lang: en }
+    target: er.entity.channel_sales.channel
 
   # ══ CALENDAR GRAIN → er.entity.date_dim.{month,year,quarter,week_seq} ═════════════
   # RV-P6.6. These are what make *"…by month"* and *"…for 2025"* land on a COLUMN instead of

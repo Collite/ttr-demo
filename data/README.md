@@ -9,6 +9,10 @@ Phase 1):
 3. `catalog/` — the bilingual per-item catalog: taxonomy + generator → `catalog/{us,cz}` UPDATEs.
 4. `seed/` — `02-seed-incident` — Memphis DC (us) / Brno DC (cz) meltdown S1–S4.
 5. `recon/` — the recon battery + committed baselines; R0 freeze; `pg_dump` → staging.
+6. `views/` — derived views the model binds to (`channel_sales.sql`: the three sales facts as one
+   relation, labelled by channel). Idempotent (`CREATE OR REPLACE`); run in both worlds as the
+   tables' owner. Views read the facts live, so they need no re-run after a data rebuild — only
+   after a DROP.
 
 All scripts idempotent + hash-keyed (deterministic). Item keys + category assignments are
 invariants (the seeds key on warehouse×week, not item).
@@ -28,6 +32,7 @@ snapshot-guarded:
    `seed/02-seed-incident/{s1,s2,s3}-*.sql` (guarded via `_seed_meta` — S2 is genuinely
    non-idempotent by nature, deletion, so the guard is load-bearing there).
 6. `recon/run-recon.sh dsk <db>` → diff against `data/recon/R0.md`.
+7. `views/channel_sales.sql` (both worlds, as `hartland`) — `er.entity.channel_sales` reads it.
 
 **Retained snapshots** (`data/dr-snapshots.md`): the US pre-catalog dump (Stage 1.2 T1) is a
 physical rollback point in `tpcds-staging/hartland/us/`. The CZ pre-seed state was **not**
