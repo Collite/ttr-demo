@@ -42,9 +42,26 @@ jobs:
         with:
           path: hartland
 
+      # ⛔ PINNED, and the pin is load-bearing — do not drop it to "latest".
+      #
+      # `just check-lexicon` compares the COMMITTED archive against one this toolchain compiles, so
+      # an unpinned toolchain makes the gate report the toolchain rather than the estate. That is
+      # not hypothetical: on 2026-09-24 master went red twenty minutes after MV-T0 landed in
+      # ttr-core, on a merge that touched neither the model nor the archive, because the compiler
+      # had moved from `ttr-lexicon-compiled/v4` to `v5`.
+      #
+      # And the obvious "fix" for that red is the dangerous one. Committing whatever the newest
+      # toolchain compiles ships a v5 archive to readers built for v4, and a reader that meets an
+      # unknown schema decodes to an EMPTY vocabulary on a WARNING — a live estate that answers
+      # nothing while every manifest looks healthy. Readers before producers (LP contracts §8.1).
+      #
+      # So this tag tracks the toolchain THE SERVING IMAGES WERE BUILT AGAINST. Bump it in the same
+      # change that rolls the readers, never before, and rebuild `generated/lexicon.tar.zst` with
+      # the same tag in the same commit.
       - uses: actions/checkout@v4
         with:
           repository: Collite/ttr-core
+          ref: grammar/v0.13.5
           path: tatrman
 
       - uses: pnpm/action-setup@v4

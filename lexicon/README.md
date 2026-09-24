@@ -72,21 +72,24 @@ It is committed anyway, for two reasons that outweigh it at this size:
 - **`resolved-packages.json` set the precedent**, and the reviewable part of this artifact is not
   its bytes but its **id** and per-class counts, both printed by the build and recorded below.
 
-It measured **9,431 bytes** at the counts below. If it grows past roughly a hundred kilobytes the
+It measured **9,594 bytes** at the counts below. If it grows past roughly a hundred kilobytes the
 trade flips and the archive should move to a CI-built artifact — the drift gate would then be a CI
 step rather than a local recipe.
 
 ## What is in the artifact today
 
-From `just build-lexicon`, **2026-09-24** (LP-P3·T1 — the mention facet on seven more heads):
+From `just build-lexicon`, **2026-09-24** (LP-P3·T1 — the mention facet on seven more heads),
+built with the **pinned** toolchain `grammar/v0.13.5`, which is what `.github/workflows/model-gate.yml`
+checks out and what the serving images were built against:
 
 | | |
 |---|---|
-| archive id | `sha256:ed9a39efb92322e861de6903ca71588e44af89f7b2a8b8953926c66ae7cf00d7` |
+| archive id | `sha256:b5c5290eed8fb8c709dd621162fc82903853cb37575e2fd5870759ac78d3fb43` |
 | model id | `sha256:18230c666eb104e54d98854a7cbe44c5ee24a3e2036652c33ad7478169038fc4` |
 | schema | `ttr-lexicon-compiled/v4` |
-| entries | **418** |
-| — `MODEL_OBJECT` | 151 (78 DECLARED, 73 METADATA) |
+| toolchain | `Collite/ttr-core` **`grammar/v0.13.5`** (= `9bbec48f`) |
+| entries | **427** |
+| — `MODEL_OBJECT` | 160 (87 DECLARED, 73 METADATA) |
 | — `MEMBER` | **100** (0 DECLARED, 100 METADATA `valueLabels`) |
 | — `OPERATOR` | 35 (the six stdlib operators' triggers) |
 | — `GROUNDING_TRIGGER` | 98 (72 stdlib + 26 from `grounding/hartland.lex.yaml`) |
@@ -94,10 +97,11 @@ From `just build-lexicon`, **2026-09-24** (LP-P3·T1 — the mention facet on se
 | operators | 6 |
 | build warnings | **2** (both `RG-LEXC-004`, MH T1 — see below) |
 | md-targeted rows | **100, all `METADATA`** |
-| targets with a mention facet | **8 of 36** (was 1) |
-| size | 9,431 bytes |
+| targets with a mention facet | **8 of 38** (was 1) |
+| size | 9,594 bytes |
 
-**No entry changed.** The 418-row table is identical to the previous archive; what moved is the
+**No entry of LP's changed.** The 9 rows added since the last table are PR #35's
+(`"units sold"` → `channel_sales.quantity`, `"category"` → `item.category`); what LP moved is the
 **`targets` map**, which since schema v4 carries `nameRef`/`codeRef`/`codeFormat` per target. Seven
 more heads now declare `semantics { name: · code: }` and so become somewhere a quoted literal can
 attribute to (LP contracts §2.1):
@@ -113,7 +117,7 @@ er.entity.store             store_name   | store_id  (MS, already there)
 er.entity.warehouse         warehouse_name | warehouse_id
 ```
 
-⚑ **That is every eligible hartland head.** Of the 28 targets still without a facet, 10 are
+⚑ **That is every eligible hartland head.** Of the 30 targets still without a facet, 12 are
 attributes and measures (a member has no name column — it IS one, `Mention.NONE` by
 construction), 8 are facts (`entity_with_measures` — a fact is not a thing you name), 3 declare
 neither a name nor a code (`customer_demographics`, `household_demographics`, `income_band`), and
@@ -135,6 +139,23 @@ table is a fact about the estate only if it is rewritten with the archive.
 it was harvested from, so inserting a four-line note above an entity shifts its provenance and the
 archive id with it. `just check-lexicon` is therefore a real gate on any `model/` edit, including
 one that changes no words at all.
+
+⛔ **The id also moves on the TOOLCHAIN, and that is the one that has bitten this repo twice.** PRs
+#35 and #36 landed within four minutes of each other; #35 rebuilt the archive, #36's merge resolved
+the binary conflict by keeping master's copy, and the estate then served a model whose facets were
+in the `.ttrm` files and not in the artifact anyone reads. Nothing was wrong on either branch — the
+gate that would have caught it is the one that runs on the MERGE RESULT, and by then ttr-core master
+had also moved to a `v5` compiler, so the gate was failing for a second, unrelated reason and its
+red told nobody anything.
+
+Two rules come out of it, and they are why `model-gate.yml` now pins `ref: grammar/v0.13.5`:
+
+1. **`generated/` is a build output with a source, so never resolve a conflict in it by picking a
+   side.** Take either, then rebuild and re-record — the bytes are not reviewable, so "ours" and
+   "theirs" are both guesses.
+2. **The toolchain is an input to the id.** Pin it to the tag the serving images were built
+   against, bump it in the change that rolls the readers, and rebuild in that same commit. An
+   unpinned compiler turns a drift gate into a rumour about someone else's repository.
 
 ### Previously (2026-09-04, on the toolchain's provenance-path fix)
 
