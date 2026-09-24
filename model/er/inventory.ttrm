@@ -25,6 +25,11 @@ def entity inventory {
 
 def entity warehouse {
     description: "Distribution Centers"
+    // LP-P3·T1 (LP contracts §2.1) — the mention facet a quoted literal attributes to:
+    // `"..."` on this head lands on `name`, a code-shaped literal on `code`. Without it the
+    // literal is headless (G3) and the fast path refuses. The legacy properties below are
+    // kept for the same reason store's are (readers before producers).
+    semantics { name: warehouse_name, code: warehouse_id }
     nameAttribute: warehouse_name
     codeAttribute: warehouse_id
     roles: [dimension]

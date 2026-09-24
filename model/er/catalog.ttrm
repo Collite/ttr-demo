@@ -19,6 +19,11 @@ def entity item {
         cs: "Produkty — členění podle kategorie a značky; dvojjazyčný katalog je rozsvítil (fáze 1)."
     }
     labelPlural: "Products"
+    // LP-P3·T1 (LP contracts §2.1) — the mention facet a quoted literal attributes to:
+    // `"..."` on this head lands on `name`, a code-shaped literal on `code`. Without it the
+    // literal is headless (G3) and the fast path refuses. The legacy properties below are
+    // kept for the same reason store's are (readers before producers).
+    semantics { name: product_name, code: item_id }
     nameAttribute: product_name
     codeAttribute: item_id
     roles: [dimension]
@@ -41,6 +46,11 @@ def entity promotion {
         en: "Promotions — the promo-dying branch (promo participation stays dense every year).",
         cs: "Akce — větev doznívajících promo akcí (účast v akcích zůstává každý rok hustá)."
     }
+    // LP-P3·T1 (LP contracts §2.1) — the mention facet a quoted literal attributes to:
+    // `"..."` on this head lands on `name`, a code-shaped literal on `code`. Without it the
+    // literal is headless (G3) and the fast path refuses. The legacy properties below are
+    // kept for the same reason store's are (readers before producers).
+    semantics { name: promo_name, code: promo_id }
     nameAttribute: promo_name
     codeAttribute: promo_id
     roles: [dimension]
@@ -57,6 +67,11 @@ def entity call_center {
         en: "Seller support centers — Marketplace lore.",
         cs: "Centra podpory prodejců — příběh tržiště."
     }
+    // LP-P3·T1 (LP contracts §2.1) — the mention facet a quoted literal attributes to:
+    // `"..."` on this head lands on `name`, a code-shaped literal on `code`. Without it the
+    // literal is headless (G3) and the fast path refuses. The legacy properties below are
+    // kept for the same reason store's are (readers before producers).
+    semantics { name: name, code: call_center_id }
     nameAttribute: name
     codeAttribute: call_center_id
     roles: [dimension]
