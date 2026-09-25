@@ -64,7 +64,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: Collite/ttr-core
-          ref: grammar/v0.13.5
+          ref: grammar/v0.13.7
           path: tatrman
 
       - uses: pnpm/action-setup@v4
