@@ -11,7 +11,7 @@ def entity customer {
     // customer name (TPC-DS keeps first/last name out of the hartland cut), so a quoted
     // literal on this head attributes only when it is code-shaped. A plain quoted word stays
     // headless (G3) and the fast path refuses — correctly, and visibly.
-    semantics { code: customer_id }
+    semantics { code: customer_id, code_pattern: "^[A-P]{16}$" }
     codeAttribute: customer_id
     roles: [master, dimension]
     displayLabel: { en: "Customer", cs: "Zákazník" }
@@ -32,7 +32,7 @@ def entity customer_address {
     // `"..."` on this head lands on `name`, a code-shaped literal on `code`. Without it the
     // literal is headless (G3) and the fast path refuses. The legacy properties below are
     // kept for the same reason store's are (readers before producers).
-    semantics { name: city, code: address_id }
+    semantics { name: city, code: address_id, code_pattern: "^[A-P]{16}$" }
     nameAttribute: city
     codeAttribute: address_id
     roles: [dimension]
@@ -95,7 +95,7 @@ def entity store {
     // properties before the serving estate runs that build would blank
     // EntityDetail.name_attribute for this dimension. Delete them once hartland's veles
     // is on an MS-P2 image, not before.
-    semantics { name: store_name, code: store_id }
+    semantics { name: store_name, code: store_id, code_pattern: "^[A-P]{16}$" }
     nameAttribute: store_name
     codeAttribute: store_id
     roles: [dimension]
