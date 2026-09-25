@@ -23,7 +23,7 @@ def entity item {
     // `"..."` on this head lands on `name`, a code-shaped literal on `code`. Without it the
     // literal is headless (G3) and the fast path refuses. The legacy properties below are
     // kept for the same reason store's are (readers before producers).
-    semantics { name: product_name, code: item_id }
+    semantics { name: product_name, code: item_id, code_pattern: "^[A-P]{16}$" }
     nameAttribute: product_name
     codeAttribute: item_id
     roles: [dimension]
@@ -50,7 +50,7 @@ def entity promotion {
     // `"..."` on this head lands on `name`, a code-shaped literal on `code`. Without it the
     // literal is headless (G3) and the fast path refuses. The legacy properties below are
     // kept for the same reason store's are (readers before producers).
-    semantics { name: promo_name, code: promo_id }
+    semantics { name: promo_name, code: promo_id, code_pattern: "^[A-P]{16}$" }
     nameAttribute: promo_name
     codeAttribute: promo_id
     roles: [dimension]
@@ -71,7 +71,7 @@ def entity call_center {
     // `"..."` on this head lands on `name`, a code-shaped literal on `code`. Without it the
     // literal is headless (G3) and the fast path refuses. The legacy properties below are
     // kept for the same reason store's are (readers before producers).
-    semantics { name: name, code: call_center_id }
+    semantics { name: name, code: call_center_id, code_pattern: "^[A-P]{16}$" }
     nameAttribute: name
     codeAttribute: call_center_id
     roles: [dimension]

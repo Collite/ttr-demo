@@ -73,7 +73,7 @@ def entity reason {
     // `"..."` on this head lands on `name`, a code-shaped literal on `code`. Without it the
     // literal is headless (G3) and the fast path refuses. The legacy properties below are
     // kept for the same reason store's are (readers before producers).
-    semantics { name: reason_desc, code: reason_id }
+    semantics { name: reason_desc, code: reason_id, code_pattern: "^[A-P]{16}$" }
     nameAttribute: reason_desc
     codeAttribute: reason_id
     roles: [dimension]
