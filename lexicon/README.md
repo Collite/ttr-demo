@@ -78,6 +78,60 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-09-28**: member vocabularies on four more name attributes. Built
+with the **pinned** toolchain `grammar/v0.13.7`, the `ref:` in `.github/workflows/model-gate.yml`:
+
+| | |
+|---|---|
+| archive id | `sha256:87b447260095ca40506499edc2aca4482a936310523711f4b12562add2d919e0` |
+| model id | `sha256:93cdbca3ffa73fe247e32de7b0cbbbc5fbfcbe00ccaf5c4ce84c4f4bba7f0373` |
+| schema | `ttr-lexicon-compiled/v5` |
+| toolchain | `Collite/ttr-core` **`grammar/v0.13.7`** (= `efd99dd`) |
+| entries | **491** (unchanged) |
+| — `MODEL_OBJECT` | 160 (87 DECLARED, 73 METADATA) |
+| — `MEMBER` | 100 (0 DECLARED, 100 METADATA `valueLabels`) |
+| — `OPERATOR` | 35 |
+| — `GROUNDING_TRIGGER` | 98 |
+| — `STRING_PREDICATE` | 98 |
+| build warnings | **2** (both `RG-LEXC-004`, as before) |
+| targets | **46** (was 42), 15 with a mention facet |
+| targets with a member vocabulary | **8** (was 4) |
+| size | 10,335 bytes |
+
+**No entry changed.** A member vocabulary is not an entry: it is the `memberVocabulary` flag on the
+attribute's target. The lexicon matcher then loads that attribute's values from the warehouse, and
+the resolver registers the attribute as a place a value can be looked up. Four name attributes now
+declare `search { searchable method: TOKENS }`, so each becomes a target of its own:
+
+```
+er.entity.item.product_name        TOKENS   18 000 rows, 17 952 names (the bilingual catalogue)
+er.entity.warehouse.warehouse_name TOKENS   5   (Memphis DC, Columbus DC, …)
+er.entity.reason.reason_desc       TOKENS   35  (Found a better price, …)
+er.entity.call_center.name         TOKENS   3   (NY Metro, Mid Atlantic, North Midwest)
+—— unchanged ——
+er.entity.store.store_name         TYPOS(1) 6
+er.entity.store.state · warehouse.state · customer_address.state   EXACT
+```
+
+TOKENS because a name is several words and a user types one: «Memphis» finds `Memphis DC`, and
+products «Voltaic» finds every `Voltaic …`. `store_name` stays TYPOS(1): each store name is a
+single city word. Two name heads are deliberately left out:
+
+- **`promotion.promo_name`** still holds the benchmark's generated syllables. Its 10 values over
+  300 rows include `able`, `bar` and `ought`, which are ordinary English words and would become
+  members.
+- **`customer_address.city`** has 695 cities over 50 000 addresses. Several are also store or
+  warehouse names (`Franklin`, `Memphis`), and a place-shaped span is claimed as a place before any
+  vocabulary sees it
+  ([ttr-server#118](https://github.com/Collite/ttr-server/issues/118)).
+
+⚠ **The archive in master before this change was never recorded either.** The toolchain bump to
+`grammar/v0.13.7` (#39) rebuilt it as `sha256:2012d23af9176d14067ace86c038acf4c7eba47235437594c7073c9e37642f03`
+(reproduced byte-for-byte from a clean export of `62b9e09`) and left the 2026-09-24 table below in
+place.
+
+### Previously (2026-09-24, LP-P3·T1 — the mention facet on seven more heads)
+
 From `just build-lexicon`, **2026-09-24** (LP-P3·T1 — the mention facet on seven more heads),
 built with the **pinned** toolchain `grammar/v0.13.5`, which is what `.github/workflows/model-gate.yml`
 checks out and what the serving images were built against:
