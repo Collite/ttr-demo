@@ -37,7 +37,8 @@ def entity warehouse {
     attributes: [
         def attribute sk              { type: int, isKey: true, description: "Warehouse primary key. Internal sequence key only." },
         def attribute warehouse_id    { type: text, description: "Warehouse ID (unique code)" },
-        def attribute warehouse_name  { type: text, description: "Warehouse name, the human-readable label" },
+        // Member vocabulary, TOKENS: five names (`Memphis DC` …) — «Memphis» alone finds the DC.
+        def attribute warehouse_name  { type: text, description: "Warehouse name, the human-readable label", search { searchable method: TOKENS } },
         def attribute city            { type: text, description: "The city the warehouse is located in" },
         // MH-P3 tier M — one of the three attributes holding a `TN`. The value alone cannot
         // say which; the GOVERNOR does ("warehouses in TN"), and that only works if the value

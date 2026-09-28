@@ -81,6 +81,7 @@ def entity reason {
     attributes: [
         def attribute sk          { type: int, isKey: true, description: "Sequence key. Internal primary key only." },
         def attribute reason_id   { type: text, description: "Return reason identifier (code)." },
-        def attribute reason_desc { type: text, description: "Return reason text, the human-readable label — e.g. 'Did not get it on time'." }
+        // Member vocabulary, TOKENS: 35 reasons, each a short phrase — «better price» finds 'Found a better price'.
+        def attribute reason_desc { type: text, description: "Return reason text, the human-readable label — e.g. 'Did not get it on time'.", search { searchable method: TOKENS } }
     ]
 }
