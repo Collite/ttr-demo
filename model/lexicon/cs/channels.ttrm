@@ -31,3 +31,16 @@ def term store_channel_cs {
     // ttr-disable-next-line lexicon-form-collides-with-name
     forms: ["prodejna", "kamenná prodejna", "obchod"]
 }
+
+def term store_dimension_cs {
+    description: "prodejna — the six-store dimension"
+    for: er.entity.store
+    // LP-P3·T9 (2026-09-28): on hartland Czech `prodejny` bound ONLY the `store_sales` channel
+    // term (store_channel_cs above), never this dimension, because `displayLabel.cs: "Prodejna"`
+    // is not a mention term — so «prodejny začínající na „abl“» had no head to attribute the
+    // quoted literal to. This term gives the dimension its own Czech form. The word is claimed
+    // by both refs ON PURPOSE (MH-D6): the MH resolver decides from the sentence, and the
+    // channel term keeps its meaning. Only the bare word; no invented synonyms.
+    // ttr-disable-next-line lexicon-form-collides-with-name
+    forms: ["prodejna"]
+}
