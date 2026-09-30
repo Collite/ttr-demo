@@ -868,3 +868,899 @@ def query portfolio_header {
         { name: portfolio_id, type: text, label: "Portfolio id (conseq:<ContractId>)" }
     ]
 }
+
+// ════════════════════════════════════════════════════════════════════════════════════════════════
+// IA-P3·S3.1 — the ten Browse programs (contracts IA-C35 … IA-C42, v1.6). The Studio's Markets, Asset,
+// Portfolio, Client and Search pages read these through the door; the Golem may offer them too.
+//
+// Three rules hold for all ten (contracts v1.6 §5, ruled by Bora 2026-09-30, S3.1·D1–D3):
+//   (1) "now" is the PROVIDER'S VALUATION — units, values, holders and weights read each portfolio's
+//       latest valuation on or before `as_of`, in CZK (the provider converts). The ledger rebuild
+//       matches it for 54 of hartland's 119 portfolios, because the ledger does not reach back to
+//       every contract's inception;
+//   (2) history is the LEDGER REBUILD, per currency — until IA-P3b brings rates and entered history;
+//   (3) a month-end price is the latest price on or before that month-end (on or before `as_of` for
+//       the last point), NULL before an instrument's first price.
+//
+// The month-end grid is `tests/month-grid.cte.sql`, carried VERBATIM (T1.20) — read its header for
+// why it is integers and string-built dates. Two more door rules these programs follow, both measured
+// with the door probe (`just probe-investment-door`): the two inputs of a join never share a column
+// name (every derived table renames its columns, `gp_*`, `pf_*`, …), and computed money is CAST to
+// FLOAT (S2.3·D19).
+
+def query assets_overview {
+    description: "Every instrument in the latest valuations as of a day: its price then and at the previous month-end, the month-on-month and twelve-month change, who holds it, how many units and what they are worth in CZK, and its last twelve month-end prices."
+    language: SQL
+    sourceText: """
+        WITH month_grid AS (
+          SELECT g.i,
+                 CASE
+                   WHEN g.i = 0 THEN x.as_of_date
+                   ELSE CAST(CAST(CAST((x.as_of_idx - g.i - 1) / 12 AS INTEGER) AS VARCHAR) || '-'
+                             || SUBSTRING(CAST(101 + MOD(x.as_of_idx - g.i - 1, 12) AS VARCHAR), 2, 2) || '-'
+                             || CAST(CASE MOD(x.as_of_idx - g.i - 1, 12) + 1
+                                       WHEN 2 THEN CASE WHEN MOD(CAST((x.as_of_idx - g.i - 1) / 12 AS INTEGER), 4) = 0
+                                                        THEN 29 ELSE 28 END
+                                       WHEN 4 THEN 30 WHEN 6 THEN 30 WHEN 9 THEN 30 WHEN 11 THEN 30
+                                       ELSE 31
+                                     END AS VARCHAR) AS DATE)
+                 END AS period_end
+          FROM (VALUES (0), (1), (2), (3), (4), (5), (6), (7), (8), (9), (10), (11),
+                       (12), (13), (14), (15), (16), (17), (18), (19), (20), (21), (22), (23)) AS g (i)
+          CROSS JOIN (SELECT CAST(COALESCE({as_of}, MAX(xp.price_date)) AS DATE) AS as_of_date,
+                             CAST(EXTRACT(YEAR FROM COALESCE({as_of}, MAX(xp.price_date))) * 12
+                                  + EXTRACT(MONTH FROM COALESCE({as_of}, MAX(xp.price_date))) AS INTEGER) AS as_of_idx
+                        FROM investment_asset_price xp) x
+        )
+        , valued AS (
+          -- rule (1) — "now" is the provider's valuation: each portfolio's LATEST valuation <= as_of (a
+          -- whole-portfolio pull on one date, so the latest date is taken per PORTFOLIO — positions_current's
+          -- review-089 ⑶), open rows only. Its market_value is CZK: the provider converts.
+          SELECT v.portfolio_ref AS v_portfolio, v.asset_ref AS v_asset, v.quantity AS v_units, v.market_value AS v_value
+          FROM investment_position v
+          JOIN (SELECT l.portfolio_ref AS l_portfolio, MAX(l.valuation_date) AS l_date
+                  FROM investment_position l
+                 WHERE l.valid_to IS NULL
+                   AND l.valuation_date <= {as_of}
+                 GROUP BY l.portfolio_ref) lv
+            ON lv.l_portfolio = v.portfolio_ref
+           AND lv.l_date = v.valuation_date
+          WHERE v.valid_to IS NULL
+        ), held AS (
+          SELECT v_asset AS h_asset,
+                 COUNT(DISTINCT v_portfolio) AS h_holders,
+                 CAST(SUM(v_units) AS FLOAT) AS h_units,
+                 CAST(SUM(v_value) AS FLOAT) AS h_value
+          FROM valued
+          GROUP BY v_asset
+        ), grid_price AS (
+          -- rule (3): the latest price <= each grid point, per instrument — a grouped MAX joined back (no
+          -- LATERAL, no correlated MAX: both refused by the door), with every column of the two join inputs
+          -- named apart (`gp_*`), because a join whose inputs share a column name fails the door's unparse
+          -- (`field [isin0] not found` — measured).
+          SELECT lp.gp_i, lp.gp_isin, ap.price AS gp_price, ap.currency AS gp_currency
+          FROM (SELECT m2.i AS gp_i, p2.isin AS gp_isin, MAX(p2.price_date) AS gp_price_date
+                  FROM month_grid m2
+                  JOIN investment_asset_price p2
+                    ON p2.price_date <= m2.period_end
+                 WHERE p2.isin IN (SELECT h_asset FROM held)
+                 GROUP BY m2.i, p2.isin) lp
+          JOIN investment_asset_price ap
+            ON ap.isin = lp.gp_isin
+           AND ap.price_date = lp.gp_price_date
+        )
+        , series AS (
+          -- one row per instrument: the grid pivoted. `gp_i = 0` is the as_of point, 1 the previous month-end,
+          -- 12 the month-end a year before it; s01 … s12 are points 11 … 0, oldest first — twelve numeric
+          -- columns because the door has no STRING_AGG to build one text sparkline with.
+          SELECT gp_isin AS s_asset,
+                 MAX(CASE WHEN gp_i = 0  THEN gp_currency END) AS s_currency,
+                 MAX(CASE WHEN gp_i = 0  THEN CAST(gp_price AS FLOAT) END) AS s_now,
+                 MAX(CASE WHEN gp_i = 1  THEN CAST(gp_price AS FLOAT) END) AS s_prev,
+                 MAX(CASE WHEN gp_i = 12 THEN CAST(gp_price AS FLOAT) END) AS s_year,
+                 MAX(CASE WHEN gp_i = 11 THEN CAST(gp_price AS FLOAT) END) AS s01,
+                 MAX(CASE WHEN gp_i = 10 THEN CAST(gp_price AS FLOAT) END) AS s02,
+                 MAX(CASE WHEN gp_i = 9  THEN CAST(gp_price AS FLOAT) END) AS s03,
+                 MAX(CASE WHEN gp_i = 8  THEN CAST(gp_price AS FLOAT) END) AS s04,
+                 MAX(CASE WHEN gp_i = 7  THEN CAST(gp_price AS FLOAT) END) AS s05,
+                 MAX(CASE WHEN gp_i = 6  THEN CAST(gp_price AS FLOAT) END) AS s06,
+                 MAX(CASE WHEN gp_i = 5  THEN CAST(gp_price AS FLOAT) END) AS s07,
+                 MAX(CASE WHEN gp_i = 4  THEN CAST(gp_price AS FLOAT) END) AS s08,
+                 MAX(CASE WHEN gp_i = 3  THEN CAST(gp_price AS FLOAT) END) AS s09,
+                 MAX(CASE WHEN gp_i = 2  THEN CAST(gp_price AS FLOAT) END) AS s10,
+                 MAX(CASE WHEN gp_i = 1  THEN CAST(gp_price AS FLOAT) END) AS s11,
+                 MAX(CASE WHEN gp_i = 0  THEN CAST(gp_price AS FLOAT) END) AS s12
+          FROM grid_price
+          GROUP BY gp_isin
+        )
+        -- ⛔ A LEFT join to the instrument: X is valued and has no asset row. It is named by its ISIN.
+        SELECT h.h_asset AS asset_id,
+               COALESCE(a.name, h.h_asset) AS name,
+               a.asset_class AS kind,
+               COALESCE(s.s_currency, a.currency) AS currency,
+               s.s_now AS price_as_of,
+               s.s_prev AS price_prev_month_end,
+               (s.s_now / NULLIF(s.s_prev, 0) - 1) * 100 AS chg_mom_pct,
+               (s.s_now / NULLIF(s.s_year, 0) - 1) * 100 AS chg_12m_pct,
+               h.h_holders AS holders,
+               h.h_units AS units_held,
+               h.h_value AS value_held_czk,
+               s.s01, s.s02, s.s03, s.s04, s.s05, s.s06, s.s07, s.s08, s.s09, s.s10, s.s11, s.s12
+        FROM held h
+        LEFT JOIN investment_asset a
+          ON a.isin = h.h_asset
+        LEFT JOIN series s
+          ON s.s_asset = h.h_asset
+        ORDER BY asset_id
+    """
+    search {
+        patterns: [
+            "(overview|list) of (all )?(instruments|assets|funds)",
+            "(which|what) (funds|instruments) (do we|does the book) hold",
+            "prehled (fondu|instrumentu|aktiv)",
+            "(ktere|jake) fondy drzime"
+        ],
+        examples: [
+            "Give me an overview of all instruments we hold",
+            "Jaký je přehled všech fondů v držení?"
+        ]
+    }
+    parameters: [
+        { name: as_of, type: date, label: "As of date" }
+    ]
+}
+
+def query asset_price_series {
+    description: "One instrument's price at each month-end, oldest first, for up to 24 months back from a day — the last point is the latest price on or before that day; a month-end before the instrument's first price has no price."
+    language: SQL
+    sourceText: """
+        WITH month_grid AS (
+          SELECT g.i,
+                 CASE
+                   WHEN g.i = 0 THEN x.as_of_date
+                   ELSE CAST(CAST(CAST((x.as_of_idx - g.i - 1) / 12 AS INTEGER) AS VARCHAR) || '-'
+                             || SUBSTRING(CAST(101 + MOD(x.as_of_idx - g.i - 1, 12) AS VARCHAR), 2, 2) || '-'
+                             || CAST(CASE MOD(x.as_of_idx - g.i - 1, 12) + 1
+                                       WHEN 2 THEN CASE WHEN MOD(CAST((x.as_of_idx - g.i - 1) / 12 AS INTEGER), 4) = 0
+                                                        THEN 29 ELSE 28 END
+                                       WHEN 4 THEN 30 WHEN 6 THEN 30 WHEN 9 THEN 30 WHEN 11 THEN 30
+                                       ELSE 31
+                                     END AS VARCHAR) AS DATE)
+                 END AS period_end
+          FROM (VALUES (0), (1), (2), (3), (4), (5), (6), (7), (8), (9), (10), (11),
+                       (12), (13), (14), (15), (16), (17), (18), (19), (20), (21), (22), (23)) AS g (i)
+          CROSS JOIN (SELECT CAST(COALESCE({as_of}, MAX(xp.price_date)) AS DATE) AS as_of_date,
+                             CAST(EXTRACT(YEAR FROM COALESCE({as_of}, MAX(xp.price_date))) * 12
+                                  + EXTRACT(MONTH FROM COALESCE({as_of}, MAX(xp.price_date))) AS INTEGER) AS as_of_idx
+                        FROM investment_asset_price xp) x
+        )
+        , last_price AS (
+          SELECT m2.i AS lp_i, MAX(p2.price_date) AS lp_date
+          FROM month_grid m2
+          JOIN investment_asset_price p2
+            ON p2.price_date <= m2.period_end
+           AND p2.isin = {asset_id}
+          GROUP BY m2.i
+        )
+        -- Every grid point is a row (NULL price before the first one), so 24 is the bound by construction.
+        -- The price comes in as a renamed derived table (never two inputs of a join sharing a column name);
+        -- the instrument's own currency, for a point with no price, as a scalar subquery — a LEFT JOIN to it
+        -- `ON 1 = 1` fails the door's unparse (`field [isin] not found`, measured).
+        SELECT m.period_end,
+               CAST(pr.pr_price AS FLOAT) AS price,
+               COALESCE(pr.pr_currency, (SELECT a.currency FROM investment_asset a WHERE a.isin = {asset_id})) AS currency
+        FROM month_grid m
+        LEFT JOIN last_price lp
+          ON lp.lp_i = m.i
+        LEFT JOIN (SELECT p3.price_date AS pr_date, p3.price AS pr_price, p3.currency AS pr_currency
+                     FROM investment_asset_price p3
+                    WHERE p3.isin = {asset_id}) pr
+          ON pr.pr_date = lp.lp_date
+        WHERE m.i < {months}
+        ORDER BY period_end
+    """
+    search {
+        patterns: [
+            "price (history|series|development) of",
+            "(month-end|monthly) prices (of|for)",
+            "vyvoj ceny (fondu|instrumentu)",
+            "mesicni ceny (fondu|instrumentu)"
+        ],
+        examples: [
+            "Show the month-end price history of this fund",
+            "Jak se vyvíjela cena tohoto fondu po měsících?"
+        ]
+    }
+    parameters: [
+        { name: asset_id, type: text, label: "Instrument ISIN" },
+        { name: months, type: int, label: "Months back (at most 24)" },
+        { name: as_of, type: date, label: "As of date" }
+    ]
+}
+
+def query holders_of_asset {
+    description: "Who holds an instrument as of a day: each portfolio whose latest valuation holds it, its owner, the units, their value in CZK and their share of that portfolio's valued total."
+    language: SQL
+    sourceText: """
+        WITH valued AS (
+          -- rule (1): each portfolio's latest valuation <= as_of — see assets_overview.
+          SELECT v.portfolio_ref AS v_portfolio, v.asset_ref AS v_asset, v.quantity AS v_units, v.market_value AS v_value
+          FROM investment_position v
+          JOIN (SELECT l.portfolio_ref AS l_portfolio, MAX(l.valuation_date) AS l_date
+                  FROM investment_position l
+                 WHERE l.valid_to IS NULL
+                   AND l.valuation_date <= {as_of}
+                 GROUP BY l.portfolio_ref) lv
+            ON lv.l_portfolio = v.portfolio_ref
+           AND lv.l_date = v.valuation_date
+          WHERE v.valid_to IS NULL
+        ), portfolio_total AS (
+          SELECT v_portfolio AS t_portfolio, SUM(v_value) AS t_value
+          FROM valued
+          GROUP BY v_portfolio
+        )
+        -- avg_cost and unrealized are NULL here by design (IA-C37): the page fills them from the cost-basis
+        -- assembly (IA-C54), which needs every movement in order — nothing SQL can do without LAG.
+        SELECT h.v_portfolio AS portfolio_id,
+               COALESCE(pf.pf_label, h.v_portfolio) AS portfolio_name,
+               cl.cl_name AS client_name,
+               h.v_units AS units,
+               h.v_value AS value_czk,
+               CAST(h.v_value AS FLOAT) / NULLIF(CAST(t.t_value AS FLOAT), 0) * 100 AS weight_pct,
+               CAST(NULL AS FLOAT) AS avg_cost,
+               CAST(NULL AS FLOAT) AS unrealized
+        FROM valued h
+        JOIN portfolio_total t
+          ON t.t_portfolio = h.v_portfolio
+        LEFT JOIN (SELECT p.external_id AS pf_id, p.label AS pf_label, p.client_ref AS pf_client
+                     FROM investment_portfolio p
+                    WHERE p.valid_to IS NULL) pf
+          ON pf.pf_id = h.v_portfolio
+        LEFT JOIN (SELECT c.external_id AS cl_id, c.name AS cl_name
+                     FROM investment_client c
+                    WHERE c.valid_to IS NULL) cl
+          ON cl.cl_id = pf.pf_client
+        WHERE h.v_asset = {asset_id}
+        ORDER BY value_czk DESC, portfolio_id
+    """
+    search {
+        patterns: [
+            "who (holds|owns) (this|the) (fund|instrument|asset)",
+            "(holders|owners) of (the )?(fund|instrument)",
+            "kdo drzi (tento )?fond",
+            "drzitele (fondu|instrumentu)"
+        ],
+        examples: [
+            "Who holds this fund?",
+            "Kdo drží tento fond?"
+        ]
+    }
+    parameters: [
+        { name: asset_id, type: text, label: "Instrument ISIN" },
+        { name: as_of, type: date, label: "As of date" }
+    ]
+}
+
+def query transactions_of_asset {
+    description: "Every effective movement of one instrument across all portfolios in a closed date window, oldest first, with the portfolio it happened in."
+    language: SQL
+    sourceText: """
+        WITH effective_ledger AS (
+          SELECT t.*,
+                 CASE
+                   WHEN t.leg = 'security' AND t.operation IN ('buy', 'transfer-in', 'reversal-of-sell')
+                     THEN  COALESCE(abs(t.quantity), 0)
+                   WHEN t.leg = 'security' AND t.operation IN ('sell', 'transfer-out', 'payout', 'reversal-of-buy')
+                     THEN -COALESCE(abs(t.quantity), 0)
+                   ELSE 0
+                 END AS qty_signed,
+                 CASE
+                   WHEN t.leg = 'cash'          AND t.operation = 'credit'     THEN  COALESCE(abs(t.amount), 0)
+                   WHEN t.leg = 'cash'          AND t.operation = 'debit'      THEN -COALESCE(abs(t.amount), 0)
+                   WHEN t.leg = 'external-flow' AND t.operation = 'deposit'    THEN  COALESCE(abs(t.amount), 0)
+                   WHEN t.leg = 'external-flow' AND t.operation = 'withdrawal' THEN -COALESCE(abs(t.amount), 0)
+                   ELSE 0
+                 END AS amt_signed
+          FROM investment_transaction t
+          WHERE t.reversal_of IS NULL
+            AND NOT EXISTS (SELECT 1 FROM investment_transaction r WHERE r.reversal_of = t.external_id)
+        )
+        -- transactions_between's columns, then the portfolio. Its name is the open version's label, else its
+        -- id: the ledger can name a portfolio the book has no row for.
+        SELECT e.external_id AS transaction_id,
+               e.trade_date,
+               e.leg,
+               e.operation,
+               e.asset_ref AS isin,
+               e.quantity,
+               e.qty_signed,
+               e.amount,
+               e.amt_signed,
+               e.currency,
+               e.portfolio_ref AS portfolio_id,
+               COALESCE(pf.pf_label, e.portfolio_ref) AS portfolio_name
+        FROM effective_ledger e
+        LEFT JOIN (SELECT p.external_id AS pf_id, p.label AS pf_label
+                     FROM investment_portfolio p
+                    WHERE p.valid_to IS NULL) pf
+          ON pf.pf_id = e.portfolio_ref
+        WHERE e.asset_ref = {asset_id}
+          AND e.trade_date >= {from_date}
+          AND e.trade_date <= {to_date}
+        ORDER BY e.trade_date, e.external_id
+    """
+    search {
+        patterns: [
+            "(transactions|trades|movements) (in|of) (this|the) (fund|instrument)",
+            "who (bought|sold) (this|the) fund",
+            "obchody (s|v) (timto )?fondem",
+            "transakce fondu (za|mezi)"
+        ],
+        examples: [
+            "Which trades in this fund happened this year?",
+            "Jaké obchody s tímto fondem proběhly letos?"
+        ]
+    }
+    parameters: [
+        { name: asset_id, type: text, label: "Instrument ISIN" },
+        { name: from_date, type: date, label: "From date (inclusive)" },
+        { name: to_date, type: date, label: "To date (inclusive)" }
+    ]
+}
+
+def query portfolio_value_series {
+    description: "A portfolio's value at each month-end, currency by currency and oldest first, rebuilt from its ledger: the holdings at the latest price then, the cash it held, and how many holdings were priced and unpriced."
+    language: SQL
+    sourceText: """
+        WITH effective_ledger AS (
+          SELECT t.*,
+                 CASE
+                   WHEN t.leg = 'security' AND t.operation IN ('buy', 'transfer-in', 'reversal-of-sell')
+                     THEN  COALESCE(abs(t.quantity), 0)
+                   WHEN t.leg = 'security' AND t.operation IN ('sell', 'transfer-out', 'payout', 'reversal-of-buy')
+                     THEN -COALESCE(abs(t.quantity), 0)
+                   ELSE 0
+                 END AS qty_signed,
+                 CASE
+                   WHEN t.leg = 'cash'          AND t.operation = 'credit'     THEN  COALESCE(abs(t.amount), 0)
+                   WHEN t.leg = 'cash'          AND t.operation = 'debit'      THEN -COALESCE(abs(t.amount), 0)
+                   WHEN t.leg = 'external-flow' AND t.operation = 'deposit'    THEN  COALESCE(abs(t.amount), 0)
+                   WHEN t.leg = 'external-flow' AND t.operation = 'withdrawal' THEN -COALESCE(abs(t.amount), 0)
+                   ELSE 0
+                 END AS amt_signed
+          FROM investment_transaction t
+          WHERE t.reversal_of IS NULL
+            AND NOT EXISTS (SELECT 1 FROM investment_transaction r WHERE r.reversal_of = t.external_id)
+        )
+        , month_grid AS (
+          SELECT g.i,
+                 CASE
+                   WHEN g.i = 0 THEN x.as_of_date
+                   ELSE CAST(CAST(CAST((x.as_of_idx - g.i - 1) / 12 AS INTEGER) AS VARCHAR) || '-'
+                             || SUBSTRING(CAST(101 + MOD(x.as_of_idx - g.i - 1, 12) AS VARCHAR), 2, 2) || '-'
+                             || CAST(CASE MOD(x.as_of_idx - g.i - 1, 12) + 1
+                                       WHEN 2 THEN CASE WHEN MOD(CAST((x.as_of_idx - g.i - 1) / 12 AS INTEGER), 4) = 0
+                                                        THEN 29 ELSE 28 END
+                                       WHEN 4 THEN 30 WHEN 6 THEN 30 WHEN 9 THEN 30 WHEN 11 THEN 30
+                                       ELSE 31
+                                     END AS VARCHAR) AS DATE)
+                 END AS period_end
+          FROM (VALUES (0), (1), (2), (3), (4), (5), (6), (7), (8), (9), (10), (11),
+                       (12), (13), (14), (15), (16), (17), (18), (19), (20), (21), (22), (23)) AS g (i)
+          CROSS JOIN (SELECT CAST(COALESCE({as_of}, MAX(xp.price_date)) AS DATE) AS as_of_date,
+                             CAST(EXTRACT(YEAR FROM COALESCE({as_of}, MAX(xp.price_date))) * 12
+                                  + EXTRACT(MONTH FROM COALESCE({as_of}, MAX(xp.price_date))) AS INTEGER) AS as_of_idx
+                        FROM investment_asset_price xp) x
+        )
+        , holding AS (
+          -- rule (2) — history is the ledger rebuild: units per month-end per instrument, IE-C30's rule.
+          SELECT m.i AS h_i, m.period_end AS h_period_end, e.asset_ref AS h_asset, SUM(e.qty_signed) AS h_units
+          FROM month_grid m
+          JOIN effective_ledger e
+            ON e.trade_date <= m.period_end
+          WHERE e.portfolio_ref = {portfolio_id}
+            AND e.leg = 'security'
+            AND m.i < {months}
+          GROUP BY m.i, m.period_end, e.asset_ref
+          HAVING SUM(e.qty_signed) <> 0
+        ), grid_price AS (
+          -- rule (3): the latest price <= each grid point, per instrument — a grouped MAX joined back (no
+          -- LATERAL, no correlated MAX: both refused by the door), with every column of the two join inputs
+          -- named apart (`gp_*`), because a join whose inputs share a column name fails the door's unparse
+          -- (`field [isin0] not found` — measured).
+          SELECT lp.gp_i, lp.gp_isin, ap.price AS gp_price, ap.currency AS gp_currency
+          FROM (SELECT m2.i AS gp_i, p2.isin AS gp_isin, MAX(p2.price_date) AS gp_price_date
+                  FROM month_grid m2
+                  JOIN investment_asset_price p2
+                    ON p2.price_date <= m2.period_end
+                 WHERE p2.isin IN (SELECT h_asset FROM holding)
+                 GROUP BY m2.i, p2.isin) lp
+          JOIN investment_asset_price ap
+            ON ap.isin = lp.gp_isin
+           AND ap.price_date = lp.gp_price_date
+        )
+        , lines AS (
+          -- a holding, in its PRICE's currency (never priced: counted, valued 0, in the instrument's own
+          -- currency, else XXX — period_values' rule); the cash leg to the month-end in ITS currency. No
+          -- conversion: the book has no rates until IA-P3b (contracts §10), and adding currencies is wrong.
+          SELECT h.h_period_end AS l_period_end,
+                 COALESCE(gp.gp_currency, a.currency, 'XXX') AS l_currency,
+                 CAST(COALESCE(h.h_units * gp.gp_price, 0) AS FLOAT) AS l_value,
+                 CAST(0 AS FLOAT) AS l_cash,
+                 CASE WHEN gp.gp_price IS NULL THEN 0 ELSE 1 END AS l_priced,
+                 CASE WHEN gp.gp_price IS NULL THEN 1 ELSE 0 END AS l_unpriced
+          FROM holding h
+          LEFT JOIN grid_price gp
+            ON gp.gp_i = h.h_i
+           AND gp.gp_isin = h.h_asset
+          LEFT JOIN investment_asset a
+            ON a.isin = h.h_asset
+          UNION ALL
+          SELECT m.period_end, e.currency, CAST(0 AS FLOAT), CAST(e.amt_signed AS FLOAT), 0, 0
+          FROM month_grid m
+          JOIN effective_ledger e
+            ON e.trade_date <= m.period_end
+          WHERE e.portfolio_ref = {portfolio_id}
+            AND e.leg = 'cash'
+            AND e.currency IS NOT NULL
+            AND m.i < {months}
+        )
+        SELECT l.l_period_end AS period_end,
+               l.l_currency AS currency,
+               SUM(l.l_value) AS market_value,
+               SUM(l.l_cash) AS cash,
+               SUM(l.l_priced) AS priced_instruments,
+               SUM(l.l_unpriced) AS unpriced_instruments
+        FROM lines l
+        GROUP BY l.l_period_end, l.l_currency
+        ORDER BY period_end, currency
+    """
+    search {
+        patterns: [
+            "(value|worth) of (the )?portfolio (over time|by month|month by month)",
+            "portfolio (value )?(history|development)",
+            "vyvoj hodnoty portfolia",
+            "hodnota portfolia po mesicich"
+        ],
+        examples: [
+            "How did the portfolio's value develop month by month?",
+            "Jak se vyvíjela hodnota portfolia po měsících?"
+        ]
+    }
+    parameters: [
+        { name: portfolio_id, type: text, label: "Portfolio id (conseq:<ContractId>)" },
+        { name: months, type: int, label: "Months back (at most 24)" },
+        { name: as_of, type: date, label: "As of date" }
+    ]
+}
+
+def query portfolio_holdings {
+    description: "A portfolio's holdings at its latest valuation as of a day: units, value in CZK and weight as the provider values them, the instrument's last price by then, the money the ledger says went into each holding, and the units the ledger says it holds."
+    language: SQL
+    sourceText: """
+        WITH effective_ledger AS (
+          SELECT t.*,
+                 CASE
+                   WHEN t.leg = 'security' AND t.operation IN ('buy', 'transfer-in', 'reversal-of-sell')
+                     THEN  COALESCE(abs(t.quantity), 0)
+                   WHEN t.leg = 'security' AND t.operation IN ('sell', 'transfer-out', 'payout', 'reversal-of-buy')
+                     THEN -COALESCE(abs(t.quantity), 0)
+                   ELSE 0
+                 END AS qty_signed,
+                 CASE
+                   WHEN t.leg = 'cash'          AND t.operation = 'credit'     THEN  COALESCE(abs(t.amount), 0)
+                   WHEN t.leg = 'cash'          AND t.operation = 'debit'      THEN -COALESCE(abs(t.amount), 0)
+                   WHEN t.leg = 'external-flow' AND t.operation = 'deposit'    THEN  COALESCE(abs(t.amount), 0)
+                   WHEN t.leg = 'external-flow' AND t.operation = 'withdrawal' THEN -COALESCE(abs(t.amount), 0)
+                   ELSE 0
+                 END AS amt_signed
+          FROM investment_transaction t
+          WHERE t.reversal_of IS NULL
+            AND NOT EXISTS (SELECT 1 FROM investment_transaction r WHERE r.reversal_of = t.external_id)
+        )
+        , valued AS (
+          -- rule (1): the portfolio's latest valuation <= as_of — see assets_overview.
+          SELECT v.asset_ref AS v_asset, v.valuation_date AS v_date, v.quantity AS v_units, v.market_value AS v_value
+          FROM investment_position v
+          JOIN (SELECT l.portfolio_ref AS l_portfolio, MAX(l.valuation_date) AS l_date
+                  FROM investment_position l
+                 WHERE l.valid_to IS NULL
+                   AND l.valuation_date <= {as_of}
+                   AND l.portfolio_ref = {portfolio_id}
+                 GROUP BY l.portfolio_ref) lv
+            ON lv.l_portfolio = v.portfolio_ref
+           AND lv.l_date = v.valuation_date
+          WHERE v.valid_to IS NULL
+        ), valued_total AS (
+          SELECT SUM(v_value) AS t_value
+          FROM valued
+        ), price_on_date AS (
+          -- the latest price on or before the VALUATION date — the price the provider's value was struck at
+          SELECT ap.isin AS pd_asset, ap.price AS pd_price, ap.price_date AS pd_date, ap.currency AS pd_currency
+          FROM investment_asset_price ap
+          JOIN (SELECT p2.isin AS mx_isin, MAX(p2.price_date) AS mx_date
+                  FROM investment_asset_price p2
+                  JOIN valued v2
+                    ON v2.v_asset = p2.isin
+                   AND p2.price_date <= v2.v_date
+                 GROUP BY p2.isin) mx
+            ON mx.mx_isin = ap.isin
+           AND mx.mx_date = ap.price_date
+        ), ledger_view AS (
+          -- what the LEDGER says, to the same valuation date (S3.1·D3): its units, and the net money settled
+          -- into the holding. The direction is the sign of qty_signed — the CTE's own operation vocabulary,
+          -- not a second copy of it — and a movement with no amount (an in-kind transfer) adds nothing.
+          -- ⛔ S3.1·D4: a sum is only a sum in ONE currency. hartland settles some EUR funds in CZK and some in
+          -- EUR, so the currency is reported beside it and two currencies make both NULL rather than a
+          -- number that adds euros to crowns.
+          SELECT e.asset_ref AS lg_asset,
+                 SUM(e.qty_signed) AS lg_units,
+                 SUM(CASE WHEN e.qty_signed > 0 THEN COALESCE(abs(e.amount), 0)
+                          WHEN e.qty_signed < 0 THEN -COALESCE(abs(e.amount), 0)
+                          ELSE 0 END) AS lg_invested,
+                 MIN(e.currency) AS lg_ccy_min,
+                 MAX(e.currency) AS lg_ccy_max
+          FROM effective_ledger e
+          JOIN valued v3
+            ON v3.v_asset = e.asset_ref
+           AND e.trade_date <= v3.v_date
+          WHERE e.portfolio_ref = {portfolio_id}
+            AND e.leg = 'security'
+          GROUP BY e.asset_ref
+        )
+        SELECT v.v_asset AS asset_id,
+               COALESCE(a.name, v.v_asset) AS name,
+               a.asset_class AS kind,
+               COALESCE(pd.pd_currency, a.currency) AS currency,
+               v.v_units AS units,
+               CAST(pd.pd_price AS FLOAT) AS price,
+               pd.pd_date AS price_date,
+               v.v_value AS value_czk,
+               CAST(v.v_value AS FLOAT) / NULLIF(CAST(t.t_value AS FLOAT), 0) * 100 AS weight_pct,
+               CASE WHEN lg.lg_ccy_min = lg.lg_ccy_max THEN CAST(lg.lg_invested AS FLOAT) END AS net_invested,
+               CASE WHEN lg.lg_ccy_min = lg.lg_ccy_max THEN lg.lg_ccy_min END AS net_invested_currency,
+               CAST(COALESCE(lg.lg_units, 0) AS FLOAT) AS ledger_units
+        FROM valued v
+        CROSS JOIN valued_total t
+        LEFT JOIN investment_asset a
+          ON a.isin = v.v_asset
+        LEFT JOIN price_on_date pd
+          ON pd.pd_asset = v.v_asset
+        LEFT JOIN ledger_view lg
+          ON lg.lg_asset = v.v_asset
+        ORDER BY value_czk DESC, asset_id
+    """
+    search {
+        patterns: [
+            "(holdings|composition) of (the )?portfolio",
+            "what does the portfolio (hold|consist of)",
+            "slozeni portfolia",
+            "co portfolio obsahuje"
+        ],
+        examples: [
+            "What does the portfolio hold and how much is each holding worth?",
+            "Z čeho se skládá portfolio a kolik má každá položka váhu?"
+        ]
+    }
+    parameters: [
+        { name: portfolio_id, type: text, label: "Portfolio id (conseq:<ContractId>)" },
+        { name: as_of, type: date, label: "As of date" }
+    ]
+}
+
+def query client_overview {
+    description: "A client's open portfolios as of a day: each one's state and base currency, its value at its latest valuation in CZK, the cash it held in its base currency, and the day it first opened."
+    language: SQL
+    sourceText: """
+        WITH effective_ledger AS (
+          SELECT t.*,
+                 CASE
+                   WHEN t.leg = 'security' AND t.operation IN ('buy', 'transfer-in', 'reversal-of-sell')
+                     THEN  COALESCE(abs(t.quantity), 0)
+                   WHEN t.leg = 'security' AND t.operation IN ('sell', 'transfer-out', 'payout', 'reversal-of-buy')
+                     THEN -COALESCE(abs(t.quantity), 0)
+                   ELSE 0
+                 END AS qty_signed,
+                 CASE
+                   WHEN t.leg = 'cash'          AND t.operation = 'credit'     THEN  COALESCE(abs(t.amount), 0)
+                   WHEN t.leg = 'cash'          AND t.operation = 'debit'      THEN -COALESCE(abs(t.amount), 0)
+                   WHEN t.leg = 'external-flow' AND t.operation = 'deposit'    THEN  COALESCE(abs(t.amount), 0)
+                   WHEN t.leg = 'external-flow' AND t.operation = 'withdrawal' THEN -COALESCE(abs(t.amount), 0)
+                   ELSE 0
+                 END AS amt_signed
+          FROM investment_transaction t
+          WHERE t.reversal_of IS NULL
+            AND NOT EXISTS (SELECT 1 FROM investment_transaction r WHERE r.reversal_of = t.external_id)
+        )
+        , client_portfolio AS (
+          SELECT px.external_id AS cp_portfolio
+          FROM investment_portfolio px
+          WHERE px.valid_to IS NULL
+            AND px.client_ref = {client_id}
+        ), valued AS (
+          -- rule (1): each portfolio's latest valuation <= as_of — see assets_overview.
+          SELECT v.portfolio_ref AS v_portfolio, v.market_value AS v_value
+          FROM investment_position v
+          JOIN (SELECT l.portfolio_ref AS l_portfolio, MAX(l.valuation_date) AS l_date
+                  FROM investment_position l
+                 WHERE l.valid_to IS NULL
+                   AND l.valuation_date <= {as_of}
+                   AND l.portfolio_ref IN (SELECT cp_portfolio FROM client_portfolio)
+                 GROUP BY l.portfolio_ref) lv
+            ON lv.l_portfolio = v.portfolio_ref
+           AND lv.l_date = v.valuation_date
+          WHERE v.valid_to IS NULL
+        ), value_by_portfolio AS (
+          SELECT v_portfolio AS vp_portfolio, CAST(SUM(v_value) AS FLOAT) AS vp_value
+          FROM valued
+          GROUP BY v_portfolio
+        ), cash_by_portfolio AS (
+          -- the cash leg ALONE (never the external-flow leg beside it), per currency; the answer keeps the
+          -- base currency's — other currencies are on the Portfolio page's Cash tab (IA-C41)
+          SELECT e.portfolio_ref AS cb_portfolio, e.currency AS cb_currency, SUM(e.amt_signed) AS cb_cash
+          FROM effective_ledger e
+          WHERE e.leg = 'cash'
+            AND e.trade_date <= {as_of}
+            AND e.portfolio_ref IN (SELECT cp_portfolio FROM client_portfolio)
+          GROUP BY e.portfolio_ref, e.currency
+        )
+        -- market_value and cash are NULL, not 0, for a portfolio with no valuation / no base-currency cash row:
+        -- nothing is known, and a zero would read as "empty".
+        SELECT p.external_id AS portfolio_id,
+               p.label AS portfolio_name,
+               p.state,
+               p.base_currency,
+               vp.vp_value AS market_value,
+               CAST(cb.cb_cash AS FLOAT) AS cash,
+               (SELECT min(f.valid_from)
+                  FROM investment_portfolio f
+                 WHERE f.external_id = p.external_id) AS since
+        FROM investment_portfolio p
+        LEFT JOIN value_by_portfolio vp
+          ON vp.vp_portfolio = p.external_id
+        LEFT JOIN cash_by_portfolio cb
+          ON cb.cb_portfolio = p.external_id
+         AND cb.cb_currency = p.base_currency
+        WHERE p.valid_to IS NULL
+          AND p.client_ref = {client_id}
+        ORDER BY portfolio_id
+    """
+    search {
+        patterns: [
+            "(overview|summary) of (the )?client",
+            "how much (is|does) (the )?client('s)? (worth|hold)",
+            "prehled klienta",
+            "kolik ma klient celkem"
+        ],
+        examples: [
+            "Give me an overview of this client's portfolios",
+            "Jaký je přehled portfolií tohoto klienta?"
+        ]
+    }
+    parameters: [
+        { name: client_id, type: text, label: "Client id (conseq:<CsqClientId>)" },
+        { name: as_of, type: date, label: "As of date" }
+    ]
+}
+
+def query client_allocation {
+    description: "How a client's money is split by kind of instrument as of a day: the value in CZK of each asset class across the latest valuations of all the client's portfolios, and its share of the total."
+    language: SQL
+    sourceText: """
+        WITH valued AS (
+          -- rule (1): each of the client's portfolios at its latest valuation <= as_of — see assets_overview.
+          SELECT v.asset_ref AS v_asset, v.market_value AS v_value
+          FROM investment_position v
+          JOIN (SELECT l.portfolio_ref AS l_portfolio, MAX(l.valuation_date) AS l_date
+                  FROM investment_position l
+                 WHERE l.valid_to IS NULL
+                   AND l.valuation_date <= {as_of}
+                   AND l.portfolio_ref IN (SELECT px.external_id
+                                             FROM investment_portfolio px
+                                            WHERE px.valid_to IS NULL
+                                              AND px.client_ref = {client_id})
+                 GROUP BY l.portfolio_ref) lv
+            ON lv.l_portfolio = v.portfolio_ref
+           AND lv.l_date = v.valuation_date
+          WHERE v.valid_to IS NULL
+        ), by_kind AS (
+          -- an instrument with no asset row has no class: its value is kept, under a NULL kind
+          SELECT a.asset_class AS k_kind, SUM(vv.v_value) AS k_value
+          FROM valued vv
+          LEFT JOIN investment_asset a
+            ON a.isin = vv.v_asset
+          GROUP BY a.asset_class
+        ), allocation_total AS (
+          SELECT SUM(k_value) AS t_value
+          FROM by_kind
+        )
+        SELECT k.k_kind AS kind,
+               CAST(k.k_value AS FLOAT) AS value_czk,
+               CAST(k.k_value AS FLOAT) / NULLIF(CAST(t.t_value AS FLOAT), 0) * 100 AS share_pct
+        FROM by_kind k
+        CROSS JOIN allocation_total t
+        ORDER BY value_czk DESC, kind
+    """
+    search {
+        patterns: [
+            "(allocation|split|breakdown) of (the )?client('s)? (money|assets|portfolio)",
+            "how is (the )?client('s)? money (split|allocated)",
+            "rozlozeni majetku klienta",
+            "alokace klienta podle (typu|druhu)"
+        ],
+        examples: [
+            "How is the client's money split by asset class?",
+            "Jak je majetek klienta rozložený podle typu fondů?"
+        ]
+    }
+    parameters: [
+        { name: client_id, type: text, label: "Client id (conseq:<CsqClientId>)" },
+        { name: as_of, type: date, label: "As of date" }
+    ]
+}
+
+def query search_book {
+    description: "Find clients, portfolios and instruments by a piece of a name, a portfolio id or an ISIN — ignoring case and Czech or Slovak accents — at most fifty of them, grouped by kind."
+    language: SQL
+    sourceText: """
+        -- ⛔ S3.1·D5: case AND accents are folded EXPLICITLY on both sides — TRANSLATE maps the Czech and
+        -- Slovak accented letters of both cases to plain lower case, LOWER does the rest. `ILIKE` is not an
+        -- option (the door emits a case-SENSITIVE LIKE for it, measured), and LOWER alone is not enough:
+        -- hartland's `entry` database is C-locale, where LOWER('Č') is 'Č'. The fold does not depend on the
+        -- database's locale. Ids and ISINs are ASCII and need LOWER only.
+        -- `kind` is CAST to VARCHAR: a union of string literals of different lengths comes back through the
+        -- door padded to the longest (`'asset '`, measured).
+        -- ⚑ S3.1·D6: named `search_book`, not IA-C42's `search` — `search` is a TTR keyword (the block below).
+        SELECT x.kind, x.id, x.label, x.sub
+        FROM (
+          SELECT CAST('client' AS VARCHAR) AS kind, c.external_id AS id, c.name AS label, c.external_id AS sub
+          FROM investment_client c
+          WHERE c.valid_to IS NULL
+            AND CHAR_LENGTH({q}) >= 2
+            AND TRANSLATE(LOWER(c.name), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') LIKE '%' || TRANSLATE(LOWER({q}), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') || '%'
+          UNION ALL
+          SELECT CAST('portfolio' AS VARCHAR), p.external_id, COALESCE(p.label, p.external_id), COALESCE(ow.ow_name, p.client_ref)
+          FROM investment_portfolio p
+          LEFT JOIN (SELECT o.external_id AS ow_id, o.name AS ow_name
+                       FROM investment_client o
+                      WHERE o.valid_to IS NULL) ow
+            ON ow.ow_id = p.client_ref
+          WHERE p.valid_to IS NULL
+            AND CHAR_LENGTH({q}) >= 2
+            AND (TRANSLATE(LOWER(p.label), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') LIKE '%' || TRANSLATE(LOWER({q}), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') || '%'
+                 OR LOWER(p.external_id) LIKE '%' || TRANSLATE(LOWER({q}), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') || '%')
+          UNION ALL
+          SELECT CAST('asset' AS VARCHAR), a.isin, COALESCE(a.name, a.isin), a.isin
+          FROM investment_asset a
+          WHERE CHAR_LENGTH({q}) >= 2
+            AND (TRANSLATE(LOWER(a.name), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') LIKE '%' || TRANSLATE(LOWER({q}), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') || '%'
+                 OR LOWER(a.isin) LIKE '%' || TRANSLATE(LOWER({q}), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') || '%')
+        ) x
+        ORDER BY kind, label, id
+        LIMIT 50
+    """
+    search {
+        patterns: [
+            "(find|search|look up) (a |the )?(client|portfolio|fund|instrument)",
+            "(where|who) is .* (client|portfolio)",
+            "najdi (klienta|portfolio|fond)",
+            "vyhledej (klienta|portfolio|fond)"
+        ],
+        examples: [
+            "Find the client Novák",
+            "Najdi klienta Černý"
+        ]
+    }
+    parameters: [
+        { name: q, type: text, label: "Search text (two characters or more)" }
+    ]
+}
+
+def query price_matrix {
+    description: "The month-end price sheet: every instrument in the latest valuations as of a day, with its price at each of the last 24 month-ends in one row — the as-of day last, and nothing before an instrument's first price."
+    language: SQL
+    sourceText: """
+        WITH month_grid AS (
+          SELECT g.i,
+                 CASE
+                   WHEN g.i = 0 THEN x.as_of_date
+                   ELSE CAST(CAST(CAST((x.as_of_idx - g.i - 1) / 12 AS INTEGER) AS VARCHAR) || '-'
+                             || SUBSTRING(CAST(101 + MOD(x.as_of_idx - g.i - 1, 12) AS VARCHAR), 2, 2) || '-'
+                             || CAST(CASE MOD(x.as_of_idx - g.i - 1, 12) + 1
+                                       WHEN 2 THEN CASE WHEN MOD(CAST((x.as_of_idx - g.i - 1) / 12 AS INTEGER), 4) = 0
+                                                        THEN 29 ELSE 28 END
+                                       WHEN 4 THEN 30 WHEN 6 THEN 30 WHEN 9 THEN 30 WHEN 11 THEN 30
+                                       ELSE 31
+                                     END AS VARCHAR) AS DATE)
+                 END AS period_end
+          FROM (VALUES (0), (1), (2), (3), (4), (5), (6), (7), (8), (9), (10), (11),
+                       (12), (13), (14), (15), (16), (17), (18), (19), (20), (21), (22), (23)) AS g (i)
+          CROSS JOIN (SELECT CAST(COALESCE({as_of}, MAX(xp.price_date)) AS DATE) AS as_of_date,
+                             CAST(EXTRACT(YEAR FROM COALESCE({as_of}, MAX(xp.price_date))) * 12
+                                  + EXTRACT(MONTH FROM COALESCE({as_of}, MAX(xp.price_date))) AS INTEGER) AS as_of_idx
+                        FROM investment_asset_price xp) x
+        )
+        , valued AS (
+          -- the instruments of assets_overview (rule (1)). NOT the price table's: hartland prices 2 019 ISINs
+          -- and values 63 (2026-09-30).
+          SELECT DISTINCT v.asset_ref AS v_asset
+          FROM investment_position v
+          JOIN (SELECT l.portfolio_ref AS l_portfolio, MAX(l.valuation_date) AS l_date
+                  FROM investment_position l
+                 WHERE l.valid_to IS NULL
+                   AND l.valuation_date <= {as_of}
+                 GROUP BY l.portfolio_ref) lv
+            ON lv.l_portfolio = v.portfolio_ref
+           AND lv.l_date = v.valuation_date
+          WHERE v.valid_to IS NULL
+        ), grid_price AS (
+          -- rule (3): the latest price <= each grid point, per instrument — a grouped MAX joined back (no
+          -- LATERAL, no correlated MAX: both refused by the door), with every column of the two join inputs
+          -- named apart (`gp_*`), because a join whose inputs share a column name fails the door's unparse
+          -- (`field [isin0] not found` — measured).
+          SELECT lp.gp_i, lp.gp_isin, ap.price AS gp_price, ap.currency AS gp_currency
+          FROM (SELECT m2.i AS gp_i, p2.isin AS gp_isin, MAX(p2.price_date) AS gp_price_date
+                  FROM month_grid m2
+                  JOIN investment_asset_price p2
+                    ON p2.price_date <= m2.period_end
+                 WHERE p2.isin IN (SELECT v_asset FROM valued)
+                   AND m2.i < {months}
+                 GROUP BY m2.i, p2.isin) lp
+          JOIN investment_asset_price ap
+            ON ap.isin = lp.gp_isin
+           AND ap.price_date = lp.gp_price_date
+        )
+        -- Anchored at the as_of: m24 is the as_of point and m01 the month-end 23 months before it, so
+        -- `months` < 24 leaves the OLDEST columns NULL (the price-sheet renderer keeps the last min(months, 24)).
+        SELECT v.v_asset AS asset_id,
+               COALESCE(a.name, v.v_asset) AS name,
+               COALESCE(MAX(gp.gp_currency), a.currency) AS currency,
+               MAX(CASE WHEN gp.gp_i = 23 THEN CAST(gp.gp_price AS FLOAT) END) AS m01,
+               MAX(CASE WHEN gp.gp_i = 22 THEN CAST(gp.gp_price AS FLOAT) END) AS m02,
+               MAX(CASE WHEN gp.gp_i = 21 THEN CAST(gp.gp_price AS FLOAT) END) AS m03,
+               MAX(CASE WHEN gp.gp_i = 20 THEN CAST(gp.gp_price AS FLOAT) END) AS m04,
+               MAX(CASE WHEN gp.gp_i = 19 THEN CAST(gp.gp_price AS FLOAT) END) AS m05,
+               MAX(CASE WHEN gp.gp_i = 18 THEN CAST(gp.gp_price AS FLOAT) END) AS m06,
+               MAX(CASE WHEN gp.gp_i = 17 THEN CAST(gp.gp_price AS FLOAT) END) AS m07,
+               MAX(CASE WHEN gp.gp_i = 16 THEN CAST(gp.gp_price AS FLOAT) END) AS m08,
+               MAX(CASE WHEN gp.gp_i = 15 THEN CAST(gp.gp_price AS FLOAT) END) AS m09,
+               MAX(CASE WHEN gp.gp_i = 14 THEN CAST(gp.gp_price AS FLOAT) END) AS m10,
+               MAX(CASE WHEN gp.gp_i = 13 THEN CAST(gp.gp_price AS FLOAT) END) AS m11,
+               MAX(CASE WHEN gp.gp_i = 12 THEN CAST(gp.gp_price AS FLOAT) END) AS m12,
+               MAX(CASE WHEN gp.gp_i = 11 THEN CAST(gp.gp_price AS FLOAT) END) AS m13,
+               MAX(CASE WHEN gp.gp_i = 10 THEN CAST(gp.gp_price AS FLOAT) END) AS m14,
+               MAX(CASE WHEN gp.gp_i = 9  THEN CAST(gp.gp_price AS FLOAT) END) AS m15,
+               MAX(CASE WHEN gp.gp_i = 8  THEN CAST(gp.gp_price AS FLOAT) END) AS m16,
+               MAX(CASE WHEN gp.gp_i = 7  THEN CAST(gp.gp_price AS FLOAT) END) AS m17,
+               MAX(CASE WHEN gp.gp_i = 6  THEN CAST(gp.gp_price AS FLOAT) END) AS m18,
+               MAX(CASE WHEN gp.gp_i = 5  THEN CAST(gp.gp_price AS FLOAT) END) AS m19,
+               MAX(CASE WHEN gp.gp_i = 4  THEN CAST(gp.gp_price AS FLOAT) END) AS m20,
+               MAX(CASE WHEN gp.gp_i = 3  THEN CAST(gp.gp_price AS FLOAT) END) AS m21,
+               MAX(CASE WHEN gp.gp_i = 2  THEN CAST(gp.gp_price AS FLOAT) END) AS m22,
+               MAX(CASE WHEN gp.gp_i = 1  THEN CAST(gp.gp_price AS FLOAT) END) AS m23,
+               MAX(CASE WHEN gp.gp_i = 0  THEN CAST(gp.gp_price AS FLOAT) END) AS m24
+        FROM valued v
+        LEFT JOIN investment_asset a
+          ON a.isin = v.v_asset
+        LEFT JOIN grid_price gp
+          ON gp.gp_isin = v.v_asset
+        GROUP BY v.v_asset, a.name, a.currency
+        ORDER BY asset_id
+    """
+    search {
+        patterns: [
+            "(month-end )?price (sheet|matrix|table)",
+            "prices of all (funds|instruments) (by|per) month",
+            "cenik fondu po mesicich",
+            "tabulka mesicnich cen"
+        ],
+        examples: [
+            "Give me the month-end price sheet for all funds",
+            "Připrav tabulku měsíčních cen všech fondů"
+        ]
+    }
+    parameters: [
+        { name: months, type: int, label: "Months back (at most 24)" },
+        { name: as_of, type: date, label: "As of date" }
+    ]
+}
