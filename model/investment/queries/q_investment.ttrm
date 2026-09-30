@@ -1146,7 +1146,7 @@ def query holders_of_asset {
 }
 
 def query transactions_of_asset {
-    description: "Every effective movement of one instrument across all portfolios in a closed date window, oldest first, with the portfolio it happened in."
+    description: "Every effective movement of one instrument across all portfolios in a closed date window, newest first, with the portfolio it happened in."
     language: SQL
     sourceText: """
         WITH effective_ledger AS (
@@ -1191,7 +1191,9 @@ def query transactions_of_asset {
         WHERE e.asset_ref = {asset_id}
           AND e.trade_date >= {from_date}
           AND e.trade_date <= {to_date}
-        ORDER BY e.trade_date, e.external_id
+        -- IA-P3 review round R20: NEWEST first, as the portfolio ledger reads (S3.3·D4) — the Studio pages this
+        -- 200 at a time, and a busy instrument must not open on its oldest movements. Still a total order.
+        ORDER BY e.trade_date DESC, e.external_id DESC
     """
     search {
         patterns: [
@@ -1397,13 +1399,19 @@ def query portfolio_holdings {
           -- ⛔ S3.1·D4: a sum is only a sum in ONE currency. hartland settles some EUR funds in CZK and some in
           -- EUR, so the currency is reported beside it and two currencies make both NULL rather than a
           -- number that adds euros to crowns.
+          -- IA-P3 review round R6: the currency is read off the MONEY-BEARING rows only — an amount, and units
+          -- that move. An in-kind transfer carries a currency (hartland's carry EUR) and settles nothing, so
+          -- it must not make a CZK holding "two currencies"; a holding with no money-bearing row has no
+          -- currency at all, and so no net invested (NULL, not 0 — IA-C40 v1.8 "none ⇒ both NULL"). A
+          -- money-bearing row with NO currency is summed into a number whose currency nobody knows: NULL too.
           SELECT e.asset_ref AS lg_asset,
                  SUM(e.qty_signed) AS lg_units,
                  SUM(CASE WHEN e.qty_signed > 0 THEN COALESCE(abs(e.amount), 0)
                           WHEN e.qty_signed < 0 THEN -COALESCE(abs(e.amount), 0)
                           ELSE 0 END) AS lg_invested,
-                 MIN(e.currency) AS lg_ccy_min,
-                 MAX(e.currency) AS lg_ccy_max
+                 MIN(CASE WHEN e.amount IS NOT NULL AND e.qty_signed <> 0 THEN e.currency END) AS lg_ccy_min,
+                 MAX(CASE WHEN e.amount IS NOT NULL AND e.qty_signed <> 0 THEN e.currency END) AS lg_ccy_max,
+                 SUM(CASE WHEN e.amount IS NOT NULL AND e.qty_signed <> 0 AND e.currency IS NULL THEN 1 ELSE 0 END) AS lg_ccy_unknown
           FROM effective_ledger e
           JOIN valued v3
             ON v3.v_asset = e.asset_ref
@@ -1421,8 +1429,8 @@ def query portfolio_holdings {
                pd.pd_date AS price_date,
                v.v_value AS value_czk,
                CAST(v.v_value AS FLOAT) / NULLIF(CAST(t.t_value AS FLOAT), 0) * 100 AS weight_pct,
-               CASE WHEN lg.lg_ccy_min = lg.lg_ccy_max THEN CAST(lg.lg_invested AS FLOAT) END AS net_invested,
-               CASE WHEN lg.lg_ccy_min = lg.lg_ccy_max THEN lg.lg_ccy_min END AS net_invested_currency,
+               CASE WHEN lg.lg_ccy_min = lg.lg_ccy_max AND lg.lg_ccy_unknown = 0 THEN CAST(lg.lg_invested AS FLOAT) END AS net_invested,
+               CASE WHEN lg.lg_ccy_min = lg.lg_ccy_max AND lg.lg_ccy_unknown = 0 THEN lg.lg_ccy_min END AS net_invested_currency,
                CAST(COALESCE(lg.lg_units, 0) AS FLOAT) AS ledger_units
         FROM valued v
         CROSS JOIN valued_total t
@@ -1611,7 +1619,7 @@ def query client_allocation {
 }
 
 def query search_book {
-    description: "Find clients, portfolios and instruments by a piece of a name, a portfolio id or an ISIN — ignoring case and Czech or Slovak accents — at most fifty of them, grouped by kind."
+    description: "Find clients, portfolios and instruments by a piece of a name, a portfolio id or an ISIN — ignoring case and Czech or Slovak accents — at most fifty of them, clients first, then portfolios, then instruments."
     language: SQL
     sourceText: """
         -- ⛔ S3.1·D5: case AND accents are folded EXPLICITLY on both sides — TRANSLATE maps the Czech and
@@ -1622,15 +1630,24 @@ def query search_book {
         -- `kind` is CAST to VARCHAR: a union of string literals of different lengths comes back through the
         -- door padded to the longest (`'asset '`, measured).
         -- ⚑ S3.1·D6: named `search_book`, not IA-C42's `search` — `search` is a TTR keyword (the block below).
-        SELECT x.kind, x.id, x.label, x.sub
+        -- IA-P3 review round R18: `%` and `_` in q are characters to FIND, not LIKE wildcards — the folded q
+        -- escapes them (and the escape character `!` itself) and every LIKE names `ESCAPE '!'`. Without it
+        -- `__` matched every row (defeating the two-character floor) and `n_v` found "Novák". `!`, not a
+        -- backslash: PostgreSQL's default LIKE escape is the backslash and Calcite has none, so an escape
+        -- both are TOLD is the only portable one (probed through the door, `just probe-investment-door`).
+        -- R5: clients, then portfolios, then instruments — `kind_order` (1, 2, 3), the order the Studio shows
+        -- the groups in. Sorting on `kind` put 'asset' first, and fifty matching funds (every hartland fund is
+        -- "Conseq …") pushed every client out of the fifty. It is the LAST column: the door adds a sort key
+        -- the answer does not carry to the answer anyway (cf. `positions_at`'s `line_rank`).
+        SELECT x.kind, x.id, x.label, x.sub, x.kind_order
         FROM (
-          SELECT CAST('client' AS VARCHAR) AS kind, c.external_id AS id, c.name AS label, c.external_id AS sub
+          SELECT CAST('client' AS VARCHAR) AS kind, c.external_id AS id, c.name AS label, c.external_id AS sub, 1 AS kind_order
           FROM investment_client c
           WHERE c.valid_to IS NULL
             AND CHAR_LENGTH({q}) >= 2
-            AND TRANSLATE(LOWER(c.name), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') LIKE '%' || TRANSLATE(LOWER({q}), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') || '%'
+            AND TRANSLATE(LOWER(c.name), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') LIKE '%' || REPLACE(REPLACE(REPLACE(TRANSLATE(LOWER({q}), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz'), '!', '!!'), '%', '!%'), '_', '!_') || '%' ESCAPE '!'
           UNION ALL
-          SELECT CAST('portfolio' AS VARCHAR), p.external_id, COALESCE(p.label, p.external_id), COALESCE(ow.ow_name, p.client_ref)
+          SELECT CAST('portfolio' AS VARCHAR), p.external_id, COALESCE(p.label, p.external_id), COALESCE(ow.ow_name, p.client_ref), 2
           FROM investment_portfolio p
           LEFT JOIN (SELECT o.external_id AS ow_id, o.name AS ow_name
                        FROM investment_client o
@@ -1638,16 +1655,16 @@ def query search_book {
             ON ow.ow_id = p.client_ref
           WHERE p.valid_to IS NULL
             AND CHAR_LENGTH({q}) >= 2
-            AND (TRANSLATE(LOWER(p.label), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') LIKE '%' || TRANSLATE(LOWER({q}), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') || '%'
-                 OR LOWER(p.external_id) LIKE '%' || TRANSLATE(LOWER({q}), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') || '%')
+            AND (TRANSLATE(LOWER(p.label), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') LIKE '%' || REPLACE(REPLACE(REPLACE(TRANSLATE(LOWER({q}), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz'), '!', '!!'), '%', '!%'), '_', '!_') || '%' ESCAPE '!'
+                 OR LOWER(p.external_id) LIKE '%' || REPLACE(REPLACE(REPLACE(TRANSLATE(LOWER({q}), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz'), '!', '!!'), '%', '!%'), '_', '!_') || '%' ESCAPE '!')
           UNION ALL
-          SELECT CAST('asset' AS VARCHAR), a.isin, COALESCE(a.name, a.isin), a.isin
+          SELECT CAST('asset' AS VARCHAR), a.isin, COALESCE(a.name, a.isin), a.isin, 3
           FROM investment_asset a
           WHERE CHAR_LENGTH({q}) >= 2
-            AND (TRANSLATE(LOWER(a.name), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') LIKE '%' || TRANSLATE(LOWER({q}), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') || '%'
-                 OR LOWER(a.isin) LIKE '%' || TRANSLATE(LOWER({q}), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') || '%')
+            AND (TRANSLATE(LOWER(a.name), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz') LIKE '%' || REPLACE(REPLACE(REPLACE(TRANSLATE(LOWER({q}), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz'), '!', '!!'), '%', '!%'), '_', '!_') || '%' ESCAPE '!'
+                 OR LOWER(a.isin) LIKE '%' || REPLACE(REPLACE(REPLACE(TRANSLATE(LOWER({q}), 'áäčďéěíĺľňóôŕřšťúůýžÁÄČĎÉĚÍĹĽŇÓÔŔŘŠŤÚŮÝŽ', 'aacdeeillnoorrstuuyzaacdeeillnoorrstuuyz'), '!', '!!'), '%', '!%'), '_', '!_') || '%' ESCAPE '!')
         ) x
-        ORDER BY kind, label, id
+        ORDER BY kind_order, label, id
         LIMIT 50
     """
     search {
