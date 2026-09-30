@@ -120,7 +120,7 @@ test('T6.7 — the synced investment package brings its nineteen, and they are n
   // `portfolio_header` joined the seven. Nineteen since IA-P3·S3.1: the ten Browse programs
   // (kantheon contracts IA-C35 … IA-C42).
   const synced = allQueriesAnywhere().filter(({ uri }) => isSyncedModelFile(uri)).map(({ def }) => def.name);
-  assert.equal(synced.length, 19, `the 19 q.investment.* programs, got ${synced.length}: ${synced.join(', ')}`);
+  assert.equal(synced.length, 20, `the 20 q.investment.* programs, got ${synced.length}: ${synced.join(', ')}`);
   assert.ok(!synced.some((n) => EXPECTED_QUERIES.includes(n)), 'a name collides with the D-2 roster');
   assert.equal(allQueries().length + synced.length, allQueriesAnywhere().length, 'every query is one or the other');
 });

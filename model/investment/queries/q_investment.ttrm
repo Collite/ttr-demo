@@ -834,16 +834,20 @@ def query period_values {
 }
 
 def query portfolio_header {
-    description: "The name of a portfolio, its client and its base currency, as they stand now — the title block of a report about it."
+    description: "The name of a portfolio, its client and its base currency, as they stand now — the title block of a report about it — and the client's id."
     language: SQL
     sourceText: """
         -- A LEFT join: a portfolio whose client row is missing still has a name. And a portfolio the
         -- book holds NO row for answers nothing at all — the ledger can name a portfolio the valuation
         -- leg never described — so the report names it by its id rather than failing.
+        -- IA-P3·S3.3 (v1.9): `client_id` last, from the portfolio's own `client_ref` — the Studio's breadcrumb
+        -- links to the client page with it, and it is there even when the client row is not. The renderer
+        -- reads this answer by column name, so an added column changes nothing for the report.
         SELECT p.external_id   AS portfolio_id,
                p.label         AS portfolio_name,
                c.name          AS client_name,
-               p.base_currency
+               p.base_currency,
+               p.client_ref    AS client_id
         FROM investment_portfolio p
         LEFT JOIN investment_client c
           ON c.external_id = p.client_ref
@@ -1449,7 +1453,7 @@ def query portfolio_holdings {
 }
 
 def query client_overview {
-    description: "A client's open portfolios as of a day: each one's state and base currency, its value at its latest valuation in CZK, the cash it held in its base currency, and the day it first opened."
+    description: "A client's open portfolios as of a day: each one's state and base currency, its value at its latest valuation in CZK, the cash it held in its base currency, the day it first opened, and the client's name."
     language: SQL
     sourceText: """
         WITH effective_ledger AS (
@@ -1514,13 +1518,20 @@ def query client_overview {
                CAST(cb.cb_cash AS FLOAT) AS cash,
                (SELECT min(f.valid_from)
                   FROM investment_portfolio f
-                 WHERE f.external_id = p.external_id) AS since
+                 WHERE f.external_id = p.external_id) AS since,
+               ow.ow_name AS client_name
         FROM investment_portfolio p
         LEFT JOIN value_by_portfolio vp
           ON vp.vp_portfolio = p.external_id
         LEFT JOIN cash_by_portfolio cb
           ON cb.cb_portfolio = p.external_id
          AND cb.cb_currency = p.base_currency
+        -- IA-P3·S3.3 (v1.9): the client's name on every row — the Client page's title, without a second
+        -- program. Its columns renamed: the door refuses a join whose two inputs share a column name.
+        LEFT JOIN (SELECT o.external_id AS ow_id, o.name AS ow_name
+                     FROM investment_client o
+                    WHERE o.valid_to IS NULL) ow
+          ON ow.ow_id = p.client_ref
         WHERE p.valid_to IS NULL
           AND p.client_ref = {client_id}
         ORDER BY portfolio_id
@@ -1761,6 +1772,66 @@ def query price_matrix {
     }
     parameters: [
         { name: months, type: int, label: "Months back (at most 24)" },
+        { name: as_of, type: date, label: "As of date" }
+    ]
+}
+
+// IA-P3·S3.3 — the Clients section's list (S3.3·D1). `search_book` cannot be that list: it answers nothing
+// under two characters and at most fifty rows of every kind together, so a book's clients could not be
+// browsed, only found.
+def query clients_list {
+    description: "Every client of the book as of a day, by name: how many open portfolios each has, and what those portfolios are worth together at their latest valuations in CZK."
+    language: SQL
+    sourceText: """
+        -- rule (1): each portfolio's latest valuation <= as_of — see assets_overview. A client none of whose
+        -- portfolios is valued yet has a NULL value, not 0: nothing is known, and a zero would read as "empty".
+        -- ≤ 200 rows is the door's TopN cap, not the SQL's (S3.1·D8): the Studio pages on the total order.
+        WITH valued AS (
+          SELECT v.portfolio_ref AS v_portfolio, v.market_value AS v_value
+          FROM investment_position v
+          JOIN (SELECT l.portfolio_ref AS l_portfolio, MAX(l.valuation_date) AS l_date
+                  FROM investment_position l
+                 WHERE l.valid_to IS NULL
+                   AND l.valuation_date <= {as_of}
+                 GROUP BY l.portfolio_ref) lv
+            ON lv.l_portfolio = v.portfolio_ref
+           AND lv.l_date = v.valuation_date
+          WHERE v.valid_to IS NULL
+        ), value_by_portfolio AS (
+          SELECT v_portfolio AS vp_portfolio, SUM(v_value) AS vp_value
+          FROM valued
+          GROUP BY v_portfolio
+        ), by_client AS (
+          SELECT p.client_ref AS bc_client, COUNT(*) AS bc_portfolios, SUM(vp.vp_value) AS bc_value
+          FROM investment_portfolio p
+          LEFT JOIN value_by_portfolio vp
+            ON vp.vp_portfolio = p.external_id
+          WHERE p.valid_to IS NULL
+          GROUP BY p.client_ref
+        )
+        SELECT c.external_id AS client_id,
+               c.name,
+               COALESCE(bc.bc_portfolios, 0) AS portfolios,
+               CAST(bc.bc_value AS FLOAT) AS value_czk
+        FROM investment_client c
+        LEFT JOIN by_client bc
+          ON bc.bc_client = c.external_id
+        WHERE c.valid_to IS NULL
+        ORDER BY name, client_id
+    """
+    search {
+        patterns: [
+            "(list|show) (all )?(the |our )?clients",
+            "(which|what) clients (do we have|are (there|in the book))",
+            "prehled (vsech )?klientu",
+            "kolik (mame|je) klientu"
+        ],
+        examples: [
+            "List all our clients and what their portfolios are worth",
+            "Jaké klienty máme a kolik mají v portfoliích?"
+        ]
+    }
+    parameters: [
         { name: as_of, type: date, label: "As of date" }
     ]
 }
