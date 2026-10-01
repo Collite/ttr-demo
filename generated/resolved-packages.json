@@ -128,7 +128,22 @@
       "schema": "er"
     },
     {
+      "qname": "investment.er.entity.estate_setting",
+      "package": "investment",
+      "schema": "er"
+    },
+    {
+      "qname": "investment.er.entity.exchange_rate",
+      "package": "investment",
+      "schema": "er"
+    },
+    {
       "qname": "investment.er.entity.portfolio",
+      "package": "investment",
+      "schema": "er"
+    },
+    {
+      "qname": "investment.er.entity.portfolio_setting",
       "package": "investment",
       "schema": "er"
     },

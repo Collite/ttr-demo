@@ -97,3 +97,51 @@ def relation rel_price_asset {
     from: er.entity.price, to: er.entity.asset,
     cardinality: { from: "0..*", to: "1" }
 }
+
+// ── IA-P3b·S3b.1 — the rate model (IA-C66) ─────────────────────────────────────────────────────
+//
+// ⚑ THE QUOTE DIRECTION IS THE ONE FACT A READER CANNOT GUESS, so every description below states it:
+// `units` of `currency` = `rate` of the HOME currency (`estate_setting.home_currency`). Read the other
+// way round, every converted figure is off by a factor of the rate squared. A bank quotes a few
+// currencies per 100 — hence `units`, which a conversion divides by.
+
+def entity exchange_rate {
+    description: {
+        en: "Exchange rates — what a foreign currency was worth in the home currency on a given day. One row is one currency on one date: `units` of `currency` = `rate` of the home currency. An amount in that currency on a day converts at the latest rate on or before that day, divided by `units`; with no such rate the amount stays unconverted — it is never converted at a guessed or a later rate.",
+        cs: "Směnné kurzy — kolik měla cizí měna k danému dni hodnotu v domácí měně. Jeden řádek je jedna měna k jednomu datu: `units` jednotek měny `currency` = `rate` domácí měny. Částka v této měně k danému dni se přepočte posledním kurzem k tomuto dni nebo před ním, vyděleným `units`; bez takového kurzu zůstane částka nepřepočtená — nikdy se nepřepočítá odhadnutým ani pozdějším kurzem."
+    }
+    labelPlural: "Exchange rates"
+    codeAttribute: currency
+    roles: [fact]
+    displayLabel: { en: "Exchange rate", cs: "Směnný kurz" }
+    attributes: [
+        def attribute currency {
+            type: text, isKey: true,
+            description: {
+                en: "The foreign currency quoted, ISO 4217 — for example `EUR` or `USD`. Never the home currency itself: that one converts at 1 and has no rows here.",
+                cs: "Kótovaná cizí měna, ISO 4217 — například `EUR` nebo `USD`. Nikdy ne domácí měna sama: ta se přepočítává kurzem 1 a nemá zde žádné řádky."
+            }
+        },
+        def attribute rate_date {
+            type: date, isKey: true,
+            description: {
+                en: "The day the rate is FOR — the bank's fixing day. A conversion on a day with no fixing (a weekend, a holiday) uses the latest earlier one.",
+                cs: "Den, ke kterému kurz PLATÍ — den fixingu banky. Přepočet ke dni bez fixingu (víkend, svátek) použije poslední dřívější."
+            }
+        },
+        def attribute rate {
+            type: decimal,
+            description: {
+                en: "What `units` of the currency were worth in the home currency that day — for example 25.30 for one EUR in CZK. Always positive.",
+                cs: "Kolik mělo `units` jednotek měny ten den hodnotu v domácí měně — například 25,30 za jedno EUR v CZK. Vždy kladné."
+            }
+        },
+        def attribute units {
+            type: int,
+            description: {
+                en: "How many units of the currency the rate is quoted for — 1 for most currencies, 100 where a bank quotes per hundred (the Czech National Bank quotes the Japanese yen and the Hungarian forint per 100). A conversion divides by it.",
+                cs: "Pro kolik jednotek měny je kurz kótován — u většiny měn 1, 100 tam, kde banka kótuje za sto jednotek (Česká národní banka kótuje japonský jen a maďarský forint za 100). Přepočet jím dělí."
+            }
+        }
+    ]
+}
