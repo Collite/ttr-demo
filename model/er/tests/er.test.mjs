@@ -63,16 +63,20 @@ test('T6.2 — exactly the D-5 entities (+ channel_sales) are declared, no D-5-O
   assert.equal(entities.length, EXPECTED_ENTITIES.length, `expected exactly ${EXPECTED_ENTITIES.length} entities, got ${entities.length}: ${entities.join(', ')}`);
 });
 
-test('T6.2b — and the synced investment package is there, separately, with its own nine', () => {
+test('T6.2b — and the synced investment package is there, separately, with its own ten', () => {
   // The other side of T6.2's scoping. If the sync broke, or if the filter started swallowing
   // hartland's own files, this is what notices — a scoped roster that nothing checks the scope of
   // would go green on an empty tree.
   const synced = allDefsAnywhere('entity').filter(({ uri }) => isSyncedModelFile(uri));
   assert.deepEqual(
     synced.map(({ def }) => def.name).sort(),
-    // IE-C23's six + IA-P3b·S3b.1's rate model (IA-C65–C67): exchange_rate, estate_setting, portfolio_setting.
-    ['asset', 'client', 'estate_setting', 'exchange_rate', 'portfolio', 'portfolio_setting', 'position', 'price', 'transaction'],
-    'the synced investment package must contribute exactly nine er entities (IE-C23\'s six + the rate model)',
+    // IE-C23's six + IA-P3b·S3b.1's rate model (IA-C65–C67): exchange_rate, estate_setting, portfolio_setting
+    // + IA-P3b·S3b.3's provider valuation history (IA-C73): portfolio_valuation.
+    [
+      'asset', 'client', 'estate_setting', 'exchange_rate', 'portfolio', 'portfolio_setting', 'portfolio_valuation',
+      'position', 'price', 'transaction',
+    ],
+    'the synced investment package must contribute exactly ten er entities (IE-C23\'s six + the rate model + the valuation history)',
   );
   const own = allDefsOfKind('entity');
   assert.equal(own.length + synced.length, allDefsAnywhere('entity').length, 'every entity is one or the other');

@@ -72,6 +72,11 @@ def er2db_entity estate_setting_map    { entity: er.entity.estate_setting,    ta
 def er2db_entity portfolio_setting_map { entity: er.entity.portfolio_setting, target: { table: db.dbo.investment_portfolio_setting } }
 def er2db_attribute portfolio_setting_portfolio_map { attribute: er.entity.portfolio_setting.portfolio, target: { column: db.dbo.investment_portfolio_setting.portfolio_ref } }
 
+// ===== the provider's valuation history (IA-P3b·S3b.3, IA-C73) =====
+// Same name in both layers; only the portfolio ref is renamed, as on every other er entity.
+def er2db_entity portfolio_valuation_map { entity: er.entity.portfolio_valuation, target: { table: db.dbo.investment_portfolio_valuation } }
+def er2db_attribute portfolio_valuation_portfolio_map { attribute: er.entity.portfolio_valuation.portfolio, target: { column: db.dbo.investment_portfolio_valuation.portfolio_ref } }
+
 // ===== relations =====
 // Explicit maps rather than an inline `binding: { fk: … }` on each relation: the lint treats having
 // both as an error on both (`ported-duplicate-mapping`), and one of the two forms had to win. This
@@ -88,3 +93,4 @@ def er2db_relation transaction_asset_rel     { relation: er.relation.rel_transac
 def er2db_relation position_portfolio_rel    { relation: er.relation.rel_position_portfolio,    fk: db.dbo.fk_position_portfolio }
 def er2db_relation position_asset_rel        { relation: er.relation.rel_position_asset,        fk: db.dbo.fk_position_asset }
 def er2db_relation portfolio_setting_portfolio_rel { relation: er.relation.rel_portfolio_setting_portfolio, fk: db.dbo.fk_portfolio_setting_portfolio }
+def er2db_relation portfolio_valuation_portfolio_rel { relation: er.relation.rel_portfolio_valuation_portfolio, fk: db.dbo.fk_portfolio_valuation_portfolio }
