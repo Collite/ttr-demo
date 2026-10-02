@@ -339,6 +339,51 @@ report-fingerprint *ARGS:
 verify-report-fingerprint:
     node --test scripts/tests/report-fingerprint.test.mjs
 
+# IA-P4·S4.2 — `investment-evolution:v2` held against the book (IA-C51): the workbook rendered through studio-bff as
+# the Studio's Evolution tab downloads it, and the same period evolution computed ON THE BOOK by
+# `scripts/sql/evolution-reference.sql` (plain PostgreSQL, average cost) — Periods and Summary, cell by cell.
+#
+#   IE_FP_BFF=… IE_FP_DSN=… IE_FP_PORTFOLIO=conseq:… just fingerprint-evolution [--save]
+#   (IE_FP_FROM, IE_FP_AS_OF, IE_FP_GRAIN=month|quarter; the bearer as for report-fingerprint)
+#   In the cluster: just drill-in-cluster fingerprint investment-evolution:v2
+# The v2 evolution workbook held against the book, cell by cell.
+fingerprint-evolution *ARGS:
+    ./scripts/fingerprint-evolution.sh {{ARGS}}
+
+# Its suite, with no estate: the renderer's OWN workbooks (fixtures/evolution/, kantheon over its hand fixture) against
+# the reference's saved answers on that fixture — the local fingerprint — then every check failing on purpose.
+# The evolution fingerprint's suite (no estate).
+verify-evolution-fingerprint:
+    node --test scripts/tests/evolution-fingerprint.test.mjs
+
+# The reference itself, RUN on PostgreSQL 16 against the hand fixture and held to the hand answers: a throwaway
+# container (`evolution-ref-pg`, C locale as hartland's `entry`), left running for inspection —
+# `just verify-evolution-reference-down` removes it. `--write` rewrites the saved answers the suite above reads.
+EVOLUTION_REF_PORT := "55436"
+
+# The evolution reference on PostgreSQL 16, held to the hand answers [--write].
+verify-evolution-reference *ARGS:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    write=0
+    for a in {{ARGS}}; do
+        case "$a" in --write) write=1 ;; *) echo "unknown argument '$a' (--write)" >&2; exit 2 ;; esac
+    done
+    if ! docker inspect evolution-ref-pg >/dev/null 2>&1; then
+        docker run -d --name evolution-ref-pg -e POSTGRES_PASSWORD=evolution -e POSTGRES_DB=entry \
+            -e POSTGRES_INITDB_ARGS="--locale=C --encoding=UTF8" \
+            -p 127.0.0.1:{{EVOLUTION_REF_PORT}}:5432 postgres:16 >/dev/null
+    fi
+    docker start evolution-ref-pg >/dev/null 2>&1 || true
+    # readiness over TCP, the way the host psql connects (the init server listens on the socket only)
+    for i in $(seq 1 60); do docker exec evolution-ref-pg pg_isready -q -h 127.0.0.1 -U postgres -d entry && break; sleep 1; done
+    EVOLUTION_REF_DSN="postgresql://postgres:evolution@127.0.0.1:{{EVOLUTION_REF_PORT}}/entry" \
+    EVOLUTION_REF_WRITE="$write" node --test scripts/tests/evolution-reference.test.mjs
+
+# Remove the reference's PostgreSQL container.
+verify-evolution-reference-down:
+    docker rm -f evolution-ref-pg >/dev/null 2>&1 || true
+
 # IE-P3·S3.3 — run a drill FROM INSIDE the cluster: no port-forward (this estate's drop mid-run, which
 # is how S3.0·T7 failed twice), and no copied bearer (the Job mints its own from `estate-drill`).
 #

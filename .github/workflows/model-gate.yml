@@ -17,7 +17,7 @@
 #                                 came back as "I don't recognise …" — a model that was live and
 #                                 unaskable. `check-model` already guards the other generated
 #                                 artifact; this is its missing twin.
-#   node --test …                 the investment drill's suite and the price-history suite
+#   node --test …                 the investment drill's suite, the price-history suite and the evolution fingerprint's
 #                                 (a stub BFF and a fake psql — no estate, no database)
 #
 # What it cannot run: `just check-investment-model-source` and `just verify-investment-sync` need a
@@ -119,4 +119,4 @@ jobs:
 
       - name: Script suites
         working-directory: hartland
-        run: node --test scripts/tests/investment-dod.test.mjs scripts/tests/price-history.test.mjs
+        run: node --test scripts/tests/investment-dod.test.mjs scripts/tests/price-history.test.mjs scripts/tests/evolution-fingerprint.test.mjs
