@@ -886,14 +886,31 @@ def query portfolio_header {
 //   (3) a month-end price is the latest price on or before that month-end (on or before `as_of` for
 //       the last point), NULL before an instrument's first price.
 //
+// IA-P3b·S3b.4 (contracts IA-C66/C67/C70) changes (1) and (2) for every value program:
+//   · each answers `reporting_currency` and converted (`*_rc`) figures beside the provider's own, with
+//     `unconverted` (how many amounts had no rate) and `missing_rate` (whose rate was missing). A
+//     portfolio's own pages are in its reporting currency (`portfolio_setting`, else home); anything
+//     wider — Markets, an instrument's holders, a client — in the home currency (`estate_setting`);
+//   · a provider value (`market_value`, the BaseValuation) is in its portfolio's BASE currency — CZK on
+//     hartland, which is all the old `*_czk` names ever meant;
+//   · a figure converts at the day it stands for — a month-end at that month-end's rates, a "now" figure
+//     at the as_of's — by `tests/fx-rate.cte.sql`, carried VERBATIM (T1.21): latest rate ≤ the day,
+//     ÷ units, the home currency at 1; no rate ⇒ NULL and counted, never guessed;
+//   · `portfolio_value_series` reads the provider's valuation history (IA-C73) where it has a point on or
+//     before the month-end (`basis = valuation`), the ledger rebuild otherwise (`basis = ledger`), one row
+//     per month-end.
+//
 // The month-end grid is `tests/month-grid.cte.sql`, carried VERBATIM (T1.20) — read its header for
 // why it is integers and string-built dates. Two more door rules these programs follow, both measured
 // with the door probe (`just probe-investment-door`): the two inputs of a join never share a column
 // name (every derived table renames its columns, `gp_*`, `pf_*`, …), and computed money is CAST to
-// FLOAT (S2.3·D19).
+// FLOAT (S2.3·D19). S3b.4 measured three more: `value` is a reserved word (quoted, `pv."value"`); two
+// one-row aggregates CROSS JOINed fail the unparse (one aggregate over a UNION ALL instead); and a
+// correlated scalar subquery in a SELECT with many joins decorrelates into `IS NOT DISTINCT FROM`
+// (a grouped derived table joined back instead).
 
 def query assets_overview {
-    description: "Every instrument in the latest valuations as of a day: its price then and at the previous month-end, the month-on-month and twelve-month change, who holds it, how many units and what they are worth in CZK, and its last twelve month-end prices."
+    description: "Every instrument in the latest valuations as of a day: its price then and at the previous month-end, the month-on-month and twelve-month change, who holds it, how many units and what they are worth — as the provider values them, and converted into the estate's home currency on that day — and its last twelve month-end prices."
     language: SQL
     sourceText: """
         WITH month_grid AS (
@@ -919,7 +936,8 @@ def query assets_overview {
         , valued AS (
           -- rule (1) — "now" is the provider's valuation: each portfolio's LATEST valuation <= as_of (a
           -- whole-portfolio pull on one date, so the latest date is taken per PORTFOLIO — positions_current's
-          -- review-089 ⑶), open rows only. Its market_value is CZK: the provider converts.
+          -- review-089 ⑶), open rows only. Its market_value is in the portfolio's BASE currency: the provider
+          -- converts (it is the BaseValuation) — CZK on hartland, which is why `value_held_czk` is named so.
           SELECT v.portfolio_ref AS v_portfolio, v.asset_ref AS v_asset, v.quantity AS v_units, v.market_value AS v_value
           FROM investment_position v
           JOIN (SELECT l.portfolio_ref AS l_portfolio, MAX(l.valuation_date) AS l_date
@@ -977,6 +995,74 @@ def query assets_overview {
           FROM grid_price
           GROUP BY gp_isin
         )
+        , rate_day AS (
+          -- IA-P3b·S3b.4: the day a "now" figure stands for — the as_of (IA-C70). COALESCE types the parameter, as
+          -- the grid's does (the door strips a bare CAST of it); the MAX only gives it a date-typed partner and the
+          -- derived table one row.
+          SELECT CAST(COALESCE({as_of}, MAX(xr.rate_date)) AS DATE) AS rd_day
+          FROM investment_fx_rate xr
+        )
+        , day_rate AS (
+          SELECT lr.dr_day, lr.dr_currency, CAST(fr.rate AS FLOAT) / fr.units AS dr_rate
+          FROM (SELECT d1.rd_day AS dr_day, r1.currency AS dr_currency, MAX(r1.rate_date) AS dr_date
+                  FROM rate_day d1
+                  JOIN investment_fx_rate r1
+                    ON r1.rate_date <= d1.rd_day
+                  LEFT JOIN investment_estate_setting h1
+                    ON h1.home_currency = r1.currency
+                 WHERE h1.home_currency IS NULL
+                 GROUP BY d1.rd_day, r1.currency) lr
+          JOIN investment_fx_rate fr
+            ON fr.currency = lr.dr_currency
+           AND fr.rate_date = lr.dr_date
+          UNION ALL
+          SELECT d2.rd_day, h2.home_currency, CAST(1 AS FLOAT)
+          FROM rate_day d2
+          CROSS JOIN investment_estate_setting h2
+          GROUP BY d2.rd_day, h2.home_currency
+        )
+        , reporting AS (
+          -- IA-C67: an answer wider than one portfolio is in the HOME currency — here with its rate on the as_of
+          -- (1 while the estate declares a home currency; with none, nothing converts)
+          SELECT rh.rh_currency AS rc_currency, rr.dr_rate AS rc_rate
+          FROM (SELECT MAX(hs.home_currency) AS rh_currency
+                  FROM investment_estate_setting hs) rh
+          LEFT JOIN day_rate rr
+            ON rr.dr_currency = rh.rh_currency
+        )
+        , held_currency AS (
+          -- IA-P3b·S3b.4 (IA-C70): each instrument's provider values summed per BASE currency of the portfolios
+          -- holding it, so that each currency is converted once
+          SELECT v.v_asset AS hc_asset, pb.pb_currency AS hc_currency, SUM(v.v_value) AS hc_value
+          FROM valued v
+          LEFT JOIN (SELECT pb0.external_id AS pb_portfolio, pb0.base_currency AS pb_currency
+                       FROM investment_portfolio pb0
+                      WHERE pb0.valid_to IS NULL) pb
+            ON pb.pb_portfolio = v.v_portfolio
+          GROUP BY v.v_asset, pb.pb_currency
+        ), held_converted AS (
+          -- IA-C66: on the as_of, F → home (× rate(F) ÷ rate(home)); an amount already in the home currency, or
+          -- zero, needs no rate. `hv_missing` names the currency whose rate is missing, NULL when converted.
+          SELECT hc.hc_asset AS hv_asset,
+                 CASE WHEN hc.hc_currency = rc.rc_currency OR hc.hc_value = 0 THEN CAST(hc.hc_value AS FLOAT)
+                      ELSE hc.hc_value * f.dr_rate / rc.rc_rate END AS hv_value,
+                 CASE WHEN hc.hc_value IS NULL OR hc.hc_value = 0 OR hc.hc_currency = rc.rc_currency THEN NULL
+                      WHEN f.dr_rate IS NULL THEN COALESCE(hc.hc_currency, 'XXX')
+                      WHEN rc.rc_rate IS NULL THEN COALESCE(rc.rc_currency, 'XXX') END AS hv_missing
+          FROM held_currency hc
+          CROSS JOIN reporting rc
+          LEFT JOIN day_rate f
+            ON f.dr_currency = hc.hc_currency
+        ), held_rc AS (
+          -- the currencies added; one with no rate is counted, and the instrument's total is NULL — a partial
+          -- total is a wrong number (IA-C66: never a guessed rate)
+          SELECT hv.hv_asset AS hr_asset,
+                 CASE WHEN SUM(CASE WHEN hv.hv_missing IS NULL THEN 0 ELSE 1 END) = 0 THEN SUM(hv.hv_value) END AS hr_value,
+                 SUM(CASE WHEN hv.hv_missing IS NULL THEN 0 ELSE 1 END) AS hr_unconverted,
+                 MIN(hv.hv_missing) AS hr_missing
+          FROM held_converted hv
+          GROUP BY hv.hv_asset
+        )
         -- ⛔ A LEFT join to the instrument: X is valued and has no asset row. It is named by its ISIN.
         SELECT h.h_asset AS asset_id,
                COALESCE(a.name, h.h_asset) AS name,
@@ -989,12 +1075,19 @@ def query assets_overview {
                h.h_holders AS holders,
                h.h_units AS units_held,
                h.h_value AS value_held_czk,
-               s.s01, s.s02, s.s03, s.s04, s.s05, s.s06, s.s07, s.s08, s.s09, s.s10, s.s11, s.s12
+               s.s01, s.s02, s.s03, s.s04, s.s05, s.s06, s.s07, s.s08, s.s09, s.s10, s.s11, s.s12,
+               rc.rc_currency AS reporting_currency,
+               hr.hr_value AS value_held_rc,
+               hr.hr_unconverted AS unconverted,
+               hr.hr_missing AS missing_rate
         FROM held h
         LEFT JOIN investment_asset a
           ON a.isin = h.h_asset
         LEFT JOIN series s
           ON s.s_asset = h.h_asset
+        LEFT JOIN held_rc hr
+          ON hr.hr_asset = h.h_asset
+        CROSS JOIN reporting rc
         ORDER BY asset_id
     """
     search {
@@ -1083,7 +1176,7 @@ def query asset_price_series {
 }
 
 def query holders_of_asset {
-    description: "Who holds an instrument as of a day: each portfolio whose latest valuation holds it, its owner, the units, their value in CZK and their share of that portfolio's valued total."
+    description: "Who holds an instrument as of a day: each portfolio whose latest valuation holds it, its owner, the units, their value as the provider gives it and converted into the estate's home currency on that day, and their share of that portfolio's valued total."
     language: SQL
     sourceText: """
         WITH valued AS (
@@ -1103,6 +1196,41 @@ def query holders_of_asset {
           FROM valued
           GROUP BY v_portfolio
         )
+        , rate_day AS (
+          -- IA-P3b·S3b.4: the day a "now" figure stands for — the as_of (IA-C70). COALESCE types the parameter, as
+          -- the grid's does (the door strips a bare CAST of it); the MAX only gives it a date-typed partner and the
+          -- derived table one row.
+          SELECT CAST(COALESCE({as_of}, MAX(xr.rate_date)) AS DATE) AS rd_day
+          FROM investment_fx_rate xr
+        )
+        , day_rate AS (
+          SELECT lr.dr_day, lr.dr_currency, CAST(fr.rate AS FLOAT) / fr.units AS dr_rate
+          FROM (SELECT d1.rd_day AS dr_day, r1.currency AS dr_currency, MAX(r1.rate_date) AS dr_date
+                  FROM rate_day d1
+                  JOIN investment_fx_rate r1
+                    ON r1.rate_date <= d1.rd_day
+                  LEFT JOIN investment_estate_setting h1
+                    ON h1.home_currency = r1.currency
+                 WHERE h1.home_currency IS NULL
+                 GROUP BY d1.rd_day, r1.currency) lr
+          JOIN investment_fx_rate fr
+            ON fr.currency = lr.dr_currency
+           AND fr.rate_date = lr.dr_date
+          UNION ALL
+          SELECT d2.rd_day, h2.home_currency, CAST(1 AS FLOAT)
+          FROM rate_day d2
+          CROSS JOIN investment_estate_setting h2
+          GROUP BY d2.rd_day, h2.home_currency
+        )
+        , reporting AS (
+          -- IA-C67: an answer wider than one portfolio is in the HOME currency — here with its rate on the as_of
+          -- (1 while the estate declares a home currency; with none, nothing converts)
+          SELECT rh.rh_currency AS rc_currency, rr.dr_rate AS rc_rate
+          FROM (SELECT MAX(hs.home_currency) AS rh_currency
+                  FROM investment_estate_setting hs) rh
+          LEFT JOIN day_rate rr
+            ON rr.dr_currency = rh.rh_currency
+        )
         -- avg_cost and unrealized are NULL here by design (IA-C37): the page fills them from the cost-basis
         -- assembly (IA-C54), which needs every movement in order — nothing SQL can do without LAG.
         SELECT h.v_portfolio AS portfolio_id,
@@ -1112,11 +1240,22 @@ def query holders_of_asset {
                h.v_value AS value_czk,
                CAST(h.v_value AS FLOAT) / NULLIF(CAST(t.t_value AS FLOAT), 0) * 100 AS weight_pct,
                CAST(NULL AS FLOAT) AS avg_cost,
-               CAST(NULL AS FLOAT) AS unrealized
+               CAST(NULL AS FLOAT) AS unrealized,
+               -- IA-P3b·S3b.4 (IA-C70): the value is in the holder's BASE currency (the provider's BaseValuation);
+               -- an instrument's holders are listed side by side, so in the home currency (IA-C67), on the as_of
+               rc.rc_currency AS reporting_currency,
+               CASE WHEN pf.pf_currency = rc.rc_currency OR h.v_value = 0 THEN CAST(h.v_value AS FLOAT)
+                    ELSE h.v_value * f.dr_rate / rc.rc_rate END AS value_rc,
+               CASE WHEN h.v_value IS NULL OR h.v_value = 0 OR pf.pf_currency = rc.rc_currency THEN 0
+                    WHEN f.dr_rate IS NULL OR rc.rc_rate IS NULL THEN 1 ELSE 0 END AS unconverted,
+               CASE WHEN h.v_value IS NULL OR h.v_value = 0 OR pf.pf_currency = rc.rc_currency THEN NULL
+                    WHEN f.dr_rate IS NULL THEN COALESCE(pf.pf_currency, 'XXX')
+                    WHEN rc.rc_rate IS NULL THEN COALESCE(rc.rc_currency, 'XXX') END AS missing_rate
         FROM valued h
         JOIN portfolio_total t
           ON t.t_portfolio = h.v_portfolio
-        LEFT JOIN (SELECT p.external_id AS pf_id, p.label AS pf_label, p.client_ref AS pf_client
+        LEFT JOIN (SELECT p.external_id AS pf_id, p.label AS pf_label, p.client_ref AS pf_client,
+                          p.base_currency AS pf_currency
                      FROM investment_portfolio p
                     WHERE p.valid_to IS NULL) pf
           ON pf.pf_id = h.v_portfolio
@@ -1124,6 +1263,9 @@ def query holders_of_asset {
                      FROM investment_client c
                     WHERE c.valid_to IS NULL) cl
           ON cl.cl_id = pf.pf_client
+        CROSS JOIN reporting rc
+        LEFT JOIN day_rate f
+          ON f.dr_currency = pf.pf_currency
         WHERE h.v_asset = {asset_id}
         ORDER BY value_czk DESC, portfolio_id
     """
@@ -1215,7 +1357,7 @@ def query transactions_of_asset {
 }
 
 def query portfolio_value_series {
-    description: "A portfolio's value at each month-end, currency by currency and oldest first, rebuilt from its ledger: the holdings at the latest price then, the cash it held, and how many holdings were priced and unpriced."
+    description: "A portfolio's value at each month-end, oldest first, in its reporting currency: the provider's valuation on or before that day and the money put in by then where the provider has a history, otherwise rebuilt from its ledger — the holdings at the latest price then and the cash it held — with how many holdings were priced, and how many amounts had no exchange rate."
     language: SQL
     sourceText: """
         WITH effective_ledger AS (
@@ -1258,6 +1400,51 @@ def query portfolio_value_series {
                                   + EXTRACT(MONTH FROM COALESCE({as_of}, MAX(xp.price_date))) AS INTEGER) AS as_of_idx
                         FROM investment_asset_price xp) x
         )
+        , rate_day AS (
+          -- IA-P3b·S3b.4: the days this answer's figures stand for — its points (IA-C70: "at the month-end rate";
+          -- the last point at the as_of's)
+          SELECT m6.period_end AS rd_day
+          FROM month_grid m6
+          WHERE m6.i < {months}
+        )
+        , day_rate AS (
+          SELECT lr.dr_day, lr.dr_currency, CAST(fr.rate AS FLOAT) / fr.units AS dr_rate
+          FROM (SELECT d1.rd_day AS dr_day, r1.currency AS dr_currency, MAX(r1.rate_date) AS dr_date
+                  FROM rate_day d1
+                  JOIN investment_fx_rate r1
+                    ON r1.rate_date <= d1.rd_day
+                  LEFT JOIN investment_estate_setting h1
+                    ON h1.home_currency = r1.currency
+                 WHERE h1.home_currency IS NULL
+                 GROUP BY d1.rd_day, r1.currency) lr
+          JOIN investment_fx_rate fr
+            ON fr.currency = lr.dr_currency
+           AND fr.rate_date = lr.dr_date
+          UNION ALL
+          SELECT d2.rd_day, h2.home_currency, CAST(1 AS FLOAT)
+          FROM rate_day d2
+          CROSS JOIN investment_estate_setting h2
+          GROUP BY d2.rd_day, h2.home_currency
+        )
+        , reporting AS (
+          -- IA-C67: the portfolio's reporting currency — its setting; no row, or a NULL in it, is the home
+          -- currency. ONE ungrouped aggregate over a union, so ONE row even when a table is empty (two one-row
+          -- aggregates CROSS JOINed fail the door's unparse — measured).
+          SELECT COALESCE(MAX(rp.rp_setting), MAX(rp.rp_home)) AS rc_currency
+          FROM (SELECT ps.reporting_currency AS rp_setting, CAST(NULL AS VARCHAR) AS rp_home
+                  FROM investment_portfolio_setting ps
+                 WHERE ps.portfolio_ref = {portfolio_id}
+                UNION ALL
+                SELECT CAST(NULL AS VARCHAR), hs.home_currency
+                  FROM investment_estate_setting hs) rp
+        ), reporting_rate AS (
+          -- the reporting currency's own rate on each point; none on a day it had no rate by — and then
+          -- nothing in another currency converts that day
+          SELECT rr.dr_day AS rr_day, rr.dr_rate AS rr_rate
+          FROM day_rate rr
+          JOIN reporting rc0
+            ON rc0.rc_currency = rr.dr_currency
+        )
         , holding AS (
           -- rule (2) — history is the ledger rebuild: units per month-end per instrument, IE-C30's rule.
           SELECT m.i AS h_i, m.period_end AS h_period_end, e.asset_ref AS h_asset, SUM(e.qty_signed) AS h_units
@@ -1287,8 +1474,8 @@ def query portfolio_value_series {
         )
         , lines AS (
           -- a holding, in its PRICE's currency (never priced: counted, valued 0, in the instrument's own
-          -- currency, else XXX — period_values' rule); the cash leg to the month-end in ITS currency. No
-          -- conversion: the book has no rates until IA-P3b (contracts §10), and adding currencies is wrong.
+          -- currency, else XXX — period_values' rule); the cash leg to the month-end in ITS currency. Nothing
+          -- is added across currencies here: ledger_month converts each one first (IA-P3b·S3b.4).
           SELECT h.h_period_end AS l_period_end,
                  COALESCE(gp.gp_currency, a.currency, 'XXX') AS l_currency,
                  CAST(COALESCE(h.h_units * gp.gp_price, 0) AS FLOAT) AS l_value,
@@ -1311,15 +1498,111 @@ def query portfolio_value_series {
             AND e.currency IS NOT NULL
             AND m.i < {months}
         )
-        SELECT l.l_period_end AS period_end,
-               l.l_currency AS currency,
-               SUM(l.l_value) AS market_value,
-               SUM(l.l_cash) AS cash,
-               SUM(l.l_priced) AS priced_instruments,
-               SUM(l.l_unpriced) AS unpriced_instruments
-        FROM lines l
-        GROUP BY l.l_period_end, l.l_currency
-        ORDER BY period_end, currency
+        , ledger_currency AS (
+          -- rule (2), IA-P3's answer: one row per month-end per currency, before any conversion
+          SELECT l.l_period_end AS lc_period_end,
+                 l.l_currency AS lc_currency,
+                 SUM(l.l_value) AS lc_value,
+                 SUM(l.l_cash) AS lc_cash,
+                 SUM(l.l_priced) AS lc_priced,
+                 SUM(l.l_unpriced) AS lc_unpriced
+          FROM lines l
+          GROUP BY l.l_period_end, l.l_currency
+        ), ledger_converted AS (
+          -- each currency converted at ITS month-end's rates (IA-C66: × rate(F) ÷ rate(R)); an amount already in
+          -- R, or zero, needs no rate. `lv_missing` names the currency whose rate is missing, NULL when converted.
+          SELECT c.lc_period_end AS lv_period_end,
+                 c.lc_priced AS lv_priced,
+                 c.lc_unpriced AS lv_unpriced,
+                 CASE WHEN c.lc_currency = rc.rc_currency OR c.lc_value = 0 THEN c.lc_value
+                      ELSE c.lc_value * f.dr_rate / r.rr_rate END AS lv_value,
+                 CASE WHEN c.lc_currency = rc.rc_currency OR c.lc_cash = 0 THEN c.lc_cash
+                      ELSE c.lc_cash * f.dr_rate / r.rr_rate END AS lv_cash,
+                 CASE WHEN c.lc_currency = rc.rc_currency OR (c.lc_value = 0 AND c.lc_cash = 0) THEN NULL
+                      WHEN f.dr_rate IS NULL THEN c.lc_currency
+                      WHEN r.rr_rate IS NULL THEN COALESCE(rc.rc_currency, 'XXX') END AS lv_missing
+          FROM ledger_currency c
+          CROSS JOIN reporting rc
+          LEFT JOIN day_rate f
+            ON f.dr_day = c.lc_period_end
+           AND f.dr_currency = c.lc_currency
+          LEFT JOIN reporting_rate r
+            ON r.rr_day = c.lc_period_end
+        ), ledger_month AS (
+          -- the currencies added. One with no rate is counted, and every sum it is part of is NULL — a partial
+          -- sum is a wrong number (IA-C66: never a guessed rate)
+          SELECT lv.lv_period_end AS lm_period_end,
+                 CASE WHEN SUM(CASE WHEN lv.lv_value IS NULL THEN 1 ELSE 0 END) = 0 THEN SUM(lv.lv_value) END AS lm_market_value,
+                 CASE WHEN SUM(CASE WHEN lv.lv_cash IS NULL THEN 1 ELSE 0 END) = 0 THEN SUM(lv.lv_cash) END AS lm_cash,
+                 SUM(lv.lv_priced) AS lm_priced,
+                 SUM(lv.lv_unpriced) AS lm_unpriced,
+                 SUM(CASE WHEN lv.lv_missing IS NULL THEN 0 ELSE 1 END) AS lm_unconverted,
+                 MIN(lv.lv_missing) AS lm_missing
+          FROM ledger_converted lv
+          GROUP BY lv.lv_period_end
+        ), valuation_point AS (
+          -- IA-C70 v1.12: where the provider has a valuation history (IA-C73), a month-end's figure is the
+          -- portfolio's latest point on or before it — a grouped MAX joined back, as every "latest ≤" here is.
+          -- `"value"` is quoted: VALUE is a reserved word to the door's parser (measured with the door probe).
+          SELECT vl.vl_period_end AS vp_period_end, pv."value" AS vp_value, pv.net_contributions AS vp_invested,
+                 pv.currency AS vp_currency
+          FROM (SELECT m7.period_end AS vl_period_end, MAX(v7.valuation_date) AS vl_date
+                  FROM month_grid m7
+                  JOIN investment_portfolio_valuation v7
+                    ON v7.valuation_date <= m7.period_end
+                 WHERE v7.portfolio_ref = {portfolio_id}
+                   AND m7.i < {months}
+                 GROUP BY m7.period_end) vl
+          JOIN investment_portfolio_valuation pv
+            ON pv.valuation_date = vl.vl_date
+          WHERE pv.portfolio_ref = {portfolio_id}
+        ), valuation_month AS (
+          -- the point in its own currency, converted at the MONTH-END's rates like every figure of the series;
+          -- the provider's total and its net contributions (the chart's "invested", IA-C70 v1.12) share one
+          -- currency and one day, so they convert — or fail — together
+          SELECT p.vp_period_end AS vm_period_end,
+                 CASE WHEN p.vp_currency = rc.rc_currency OR p.vp_value = 0 THEN CAST(p.vp_value AS FLOAT)
+                      ELSE p.vp_value * f.dr_rate / r.rr_rate END AS vm_value,
+                 CASE WHEN p.vp_currency = rc.rc_currency OR p.vp_invested = 0 THEN CAST(p.vp_invested AS FLOAT)
+                      ELSE p.vp_invested * f.dr_rate / r.rr_rate END AS vm_invested,
+                 CASE WHEN p.vp_currency = rc.rc_currency OR (p.vp_value = 0 AND COALESCE(p.vp_invested, 0) = 0) THEN NULL
+                      WHEN f.dr_rate IS NULL THEN p.vp_currency
+                      WHEN r.rr_rate IS NULL THEN COALESCE(rc.rc_currency, 'XXX') END AS vm_missing
+          FROM valuation_point p
+          CROSS JOIN reporting rc
+          LEFT JOIN day_rate f
+            ON f.dr_day = p.vp_period_end
+           AND f.dr_currency = p.vp_currency
+          LEFT JOIN reporting_rate r
+            ON r.rr_day = p.vp_period_end
+        )
+        -- ONE row per month-end that has either a valuation point or a ledger line (≤ 24 by construction — the
+        -- grid's), on the basis that month has (IA-C70): `valuation` where a point on or before it exists — the
+        -- provider's total, holdings + cash, and its net contributions as `invested_rc` —, else `ledger` — the
+        -- rebuild's holdings and cash, and no "invested" (the ledger's flows would each need their own day's
+        -- rate). `basis` is CAST to VARCHAR: two string literals of different lengths come back through the
+        -- door padded to the longer.
+        SELECT g.period_end,
+               CASE WHEN vm.vm_period_end IS NULL THEN CAST('ledger' AS VARCHAR) ELSE CAST('valuation' AS VARCHAR) END AS basis,
+               rc.rc_currency AS reporting_currency,
+               CASE WHEN vm.vm_period_end IS NULL THEN lm.lm_market_value + lm.lm_cash ELSE vm.vm_value END AS value_rc,
+               vm.vm_invested AS invested_rc,
+               CASE WHEN vm.vm_period_end IS NULL THEN lm.lm_market_value END AS market_value_rc,
+               CASE WHEN vm.vm_period_end IS NULL THEN lm.lm_cash END AS cash_rc,
+               CASE WHEN vm.vm_period_end IS NULL THEN lm.lm_priced END AS priced_instruments,
+               CASE WHEN vm.vm_period_end IS NULL THEN lm.lm_unpriced END AS unpriced_instruments,
+               CASE WHEN vm.vm_period_end IS NULL THEN lm.lm_unconverted
+                    WHEN vm.vm_missing IS NULL THEN 0 ELSE 1 END AS unconverted,
+               CASE WHEN vm.vm_period_end IS NULL THEN lm.lm_missing ELSE vm.vm_missing END AS missing_rate
+        FROM month_grid g
+        CROSS JOIN reporting rc
+        LEFT JOIN valuation_month vm
+          ON vm.vm_period_end = g.period_end
+        LEFT JOIN ledger_month lm
+          ON lm.lm_period_end = g.period_end
+        WHERE g.i < {months}
+          AND (vm.vm_period_end IS NOT NULL OR lm.lm_period_end IS NOT NULL)
+        ORDER BY period_end
     """
     search {
         patterns: [
@@ -1341,7 +1624,7 @@ def query portfolio_value_series {
 }
 
 def query portfolio_holdings {
-    description: "A portfolio's holdings at its latest valuation as of a day: units, value in CZK and weight as the provider values them, the instrument's last price by then, the money the ledger says went into each holding, and the units the ledger says it holds."
+    description: "A portfolio's holdings at its latest valuation as of a day: units, value and weight as the provider values them, the value converted into the portfolio's reporting currency on that day, the instrument's last price by then, the money the ledger says went into each holding, and the units the ledger says it holds."
     language: SQL
     sourceText: """
         WITH effective_ledger AS (
@@ -1420,6 +1703,65 @@ def query portfolio_holdings {
             AND e.leg = 'security'
           GROUP BY e.asset_ref
         )
+        , rate_day AS (
+          -- IA-P3b·S3b.4: the day a "now" figure stands for — the as_of (IA-C70). COALESCE types the parameter, as
+          -- the grid's does (the door strips a bare CAST of it); the MAX only gives it a date-typed partner and the
+          -- derived table one row.
+          SELECT CAST(COALESCE({as_of}, MAX(xr.rate_date)) AS DATE) AS rd_day
+          FROM investment_fx_rate xr
+        )
+        , day_rate AS (
+          SELECT lr.dr_day, lr.dr_currency, CAST(fr.rate AS FLOAT) / fr.units AS dr_rate
+          FROM (SELECT d1.rd_day AS dr_day, r1.currency AS dr_currency, MAX(r1.rate_date) AS dr_date
+                  FROM rate_day d1
+                  JOIN investment_fx_rate r1
+                    ON r1.rate_date <= d1.rd_day
+                  LEFT JOIN investment_estate_setting h1
+                    ON h1.home_currency = r1.currency
+                 WHERE h1.home_currency IS NULL
+                 GROUP BY d1.rd_day, r1.currency) lr
+          JOIN investment_fx_rate fr
+            ON fr.currency = lr.dr_currency
+           AND fr.rate_date = lr.dr_date
+          UNION ALL
+          SELECT d2.rd_day, h2.home_currency, CAST(1 AS FLOAT)
+          FROM rate_day d2
+          CROSS JOIN investment_estate_setting h2
+          GROUP BY d2.rd_day, h2.home_currency
+        )
+        , reporting AS (
+          -- IA-C67: the portfolio's reporting currency — its setting; no row, or a NULL in it, is the home
+          -- currency — and the currency its provider values are in: its BASE currency (`market_value` is the
+          -- BaseValuation). ONE ungrouped aggregate over a union, so ONE row even when a table is empty (two
+          -- one-row aggregates CROSS JOINed fail the door's unparse — measured).
+          SELECT COALESCE(MAX(rp.rp_setting), MAX(rp.rp_home)) AS rc_currency, MAX(rp.rp_base) AS rc_base
+          FROM (SELECT ps.reporting_currency AS rp_setting, CAST(NULL AS VARCHAR) AS rp_home, CAST(NULL AS VARCHAR) AS rp_base
+                  FROM investment_portfolio_setting ps
+                 WHERE ps.portfolio_ref = {portfolio_id}
+                UNION ALL
+                SELECT CAST(NULL AS VARCHAR), hs.home_currency, CAST(NULL AS VARCHAR)
+                  FROM investment_estate_setting hs
+                UNION ALL
+                SELECT CAST(NULL AS VARCHAR), CAST(NULL AS VARCHAR), pb.base_currency
+                  FROM investment_portfolio pb
+                 WHERE pb.valid_to IS NULL
+                   AND pb.external_id = {portfolio_id}) rp
+        ), conversion AS (
+          -- ONE factor turns every provider value of this answer into the reporting currency on the as_of —
+          -- rate(base) ÷ rate(reporting), both through the home currency (IA-C66); 1 when they are the same
+          -- currency, NULL when either has no rate by then. `cv_missing` names the one that has none.
+          SELECT rc.rc_currency AS cv_currency,
+                 CASE WHEN rc.rc_base = rc.rc_currency THEN CAST(1 AS FLOAT) ELSE fb.dr_rate / fr.fr_rate END AS cv_factor,
+                 CASE WHEN rc.rc_base = rc.rc_currency THEN NULL
+                      WHEN fb.dr_rate IS NULL THEN COALESCE(rc.rc_base, 'XXX')
+                      WHEN fr.fr_rate IS NULL THEN COALESCE(rc.rc_currency, 'XXX') END AS cv_missing
+          FROM reporting rc
+          LEFT JOIN day_rate fb
+            ON fb.dr_currency = rc.rc_base
+          LEFT JOIN (SELECT r0.dr_currency AS fr_currency, r0.dr_rate AS fr_rate
+                       FROM day_rate r0) fr
+            ON fr.fr_currency = rc.rc_currency
+        )
         SELECT v.v_asset AS asset_id,
                COALESCE(a.name, v.v_asset) AS name,
                a.asset_class AS kind,
@@ -1431,9 +1773,16 @@ def query portfolio_holdings {
                CAST(v.v_value AS FLOAT) / NULLIF(CAST(t.t_value AS FLOAT), 0) * 100 AS weight_pct,
                CASE WHEN lg.lg_ccy_min = lg.lg_ccy_max AND lg.lg_ccy_unknown = 0 THEN CAST(lg.lg_invested AS FLOAT) END AS net_invested,
                CASE WHEN lg.lg_ccy_min = lg.lg_ccy_max AND lg.lg_ccy_unknown = 0 THEN lg.lg_ccy_min END AS net_invested_currency,
-               CAST(COALESCE(lg.lg_units, 0) AS FLOAT) AS ledger_units
+               CAST(COALESCE(lg.lg_units, 0) AS FLOAT) AS ledger_units,
+               -- IA-P3b·S3b.4 (IA-C70): the provider's value in the portfolio's reporting currency, on the as_of
+               cv.cv_currency AS reporting_currency,
+               CASE WHEN v.v_value = 0 THEN CAST(0 AS FLOAT) ELSE v.v_value * cv.cv_factor END AS value_rc,
+               CASE WHEN v.v_value IS NULL OR v.v_value = 0 OR cv.cv_factor IS NOT NULL THEN 0 ELSE 1 END AS unconverted,
+               CASE WHEN v.v_value IS NULL OR v.v_value = 0 OR cv.cv_factor IS NOT NULL THEN NULL
+                    ELSE cv.cv_missing END AS missing_rate
         FROM valued v
         CROSS JOIN valued_total t
+        CROSS JOIN conversion cv
         LEFT JOIN investment_asset a
           ON a.isin = v.v_asset
         LEFT JOIN price_on_date pd
@@ -1461,7 +1810,7 @@ def query portfolio_holdings {
 }
 
 def query client_overview {
-    description: "A client's open portfolios as of a day: each one's state and base currency, its value at its latest valuation in CZK, the cash it held in its base currency, the day it first opened, and the client's name."
+    description: "A client's open portfolios as of a day: each one's state and base currency, its value at its latest valuation, the cash it held in its base currency, the day it first opened and the client's name — and, in the estate's home currency, that value, all of its cash, the provider's total then and at the previous quarter end, and the change between the two."
     language: SQL
     sourceText: """
         WITH effective_ledger AS (
@@ -1483,6 +1832,26 @@ def query client_overview {
           FROM investment_transaction t
           WHERE t.reversal_of IS NULL
             AND NOT EXISTS (SELECT 1 FROM investment_transaction r WHERE r.reversal_of = t.external_id)
+        )
+        , month_grid AS (
+          SELECT g.i,
+                 CASE
+                   WHEN g.i = 0 THEN x.as_of_date
+                   ELSE CAST(CAST(CAST((x.as_of_idx - g.i - 1) / 12 AS INTEGER) AS VARCHAR) || '-'
+                             || SUBSTRING(CAST(101 + MOD(x.as_of_idx - g.i - 1, 12) AS VARCHAR), 2, 2) || '-'
+                             || CAST(CASE MOD(x.as_of_idx - g.i - 1, 12) + 1
+                                       WHEN 2 THEN CASE WHEN MOD(CAST((x.as_of_idx - g.i - 1) / 12 AS INTEGER), 4) = 0
+                                                        THEN 29 ELSE 28 END
+                                       WHEN 4 THEN 30 WHEN 6 THEN 30 WHEN 9 THEN 30 WHEN 11 THEN 30
+                                       ELSE 31
+                                     END AS VARCHAR) AS DATE)
+                 END AS period_end
+          FROM (VALUES (0), (1), (2), (3), (4), (5), (6), (7), (8), (9), (10), (11),
+                       (12), (13), (14), (15), (16), (17), (18), (19), (20), (21), (22), (23)) AS g (i)
+          CROSS JOIN (SELECT CAST(COALESCE({as_of}, MAX(xp.price_date)) AS DATE) AS as_of_date,
+                             CAST(EXTRACT(YEAR FROM COALESCE({as_of}, MAX(xp.price_date))) * 12
+                                  + EXTRACT(MONTH FROM COALESCE({as_of}, MAX(xp.price_date))) AS INTEGER) AS as_of_idx
+                        FROM investment_asset_price xp) x
         )
         , client_portfolio AS (
           SELECT px.external_id AS cp_portfolio
@@ -1515,6 +1884,132 @@ def query client_overview {
             AND e.trade_date <= {as_of}
             AND e.portfolio_ref IN (SELECT cp_portfolio FROM client_portfolio)
           GROUP BY e.portfolio_ref, e.currency
+        ), quarter_end AS (
+          -- IA-P3b·S3b.4 (IA-C70): the last quarter end BEFORE the as_of — the grid point i = 1 + (month − 1) mod 3:
+          -- 06-30 for an as_of of 09-15 (i = 3), and for 09-30 too (a quarter end compares with the one before
+          -- it, never with itself); 09-30 for 10-02 (i = 1)
+          SELECT q.period_end AS qe_day
+          FROM month_grid q
+          CROSS JOIN (SELECT g0.period_end AS q0_day
+                        FROM month_grid g0
+                       WHERE g0.i = 0) q0
+          WHERE q.i = 1 + MOD(CAST(EXTRACT(MONTH FROM q0.q0_day) AS INTEGER) - 1, 3)
+        ), rate_day AS (
+          -- the two days this answer's figures stand for: the as_of (the grid's point 0) and that quarter end
+          SELECT g1.period_end AS rd_day
+          FROM month_grid g1
+          WHERE g1.i = 0
+          UNION ALL
+          SELECT qe.qe_day
+          FROM quarter_end qe
+        )
+        , day_rate AS (
+          SELECT lr.dr_day, lr.dr_currency, CAST(fr.rate AS FLOAT) / fr.units AS dr_rate
+          FROM (SELECT d1.rd_day AS dr_day, r1.currency AS dr_currency, MAX(r1.rate_date) AS dr_date
+                  FROM rate_day d1
+                  JOIN investment_fx_rate r1
+                    ON r1.rate_date <= d1.rd_day
+                  LEFT JOIN investment_estate_setting h1
+                    ON h1.home_currency = r1.currency
+                 WHERE h1.home_currency IS NULL
+                 GROUP BY d1.rd_day, r1.currency) lr
+          JOIN investment_fx_rate fr
+            ON fr.currency = lr.dr_currency
+           AND fr.rate_date = lr.dr_date
+          UNION ALL
+          SELECT d2.rd_day, h2.home_currency, CAST(1 AS FLOAT)
+          FROM rate_day d2
+          CROSS JOIN investment_estate_setting h2
+          GROUP BY d2.rd_day, h2.home_currency
+        )
+        , as_of_rate AS (
+          -- every currency's rate on the as_of
+          SELECT f0.dr_currency AS ar_currency, f0.dr_rate AS ar_rate
+          FROM day_rate f0
+          JOIN (SELECT g2.period_end AS a_day
+                  FROM month_grid g2
+                 WHERE g2.i = 0) a
+            ON a.a_day = f0.dr_day
+        ), reporting AS (
+          -- IA-C67: a client is wider than one portfolio, so the answer is in the HOME currency — with its rate
+          -- on the as_of (1 while the estate declares a home currency; with none, nothing converts)
+          SELECT rh.rh_currency AS rc_currency, ar.ar_rate AS rc_rate
+          FROM (SELECT MAX(hs.home_currency) AS rh_currency
+                  FROM investment_estate_setting hs) rh
+          LEFT JOIN as_of_rate ar
+            ON ar.ar_currency = rh.rh_currency
+        ), cash_rc AS (
+          -- ALL of the cash leg — every currency converted on the as_of and added (`cash` beside it stays the
+          -- base currency's alone, IA-C41). A currency whose non-zero balance has no rate is counted, and the
+          -- total is NULL: a partial total is a wrong number.
+          SELECT cv.cv_portfolio AS cr_portfolio,
+                 CASE WHEN SUM(CASE WHEN cv.cv_missing IS NULL THEN 0 ELSE 1 END) = 0 THEN SUM(cv.cv_cash) END AS cr_cash,
+                 SUM(CASE WHEN cv.cv_missing IS NULL THEN 0 ELSE 1 END) AS cr_unconverted,
+                 MIN(cv.cv_missing) AS cr_missing
+          FROM (SELECT cb.cb_portfolio AS cv_portfolio,
+                       CASE WHEN cb.cb_currency = rc.rc_currency OR cb.cb_cash = 0 THEN CAST(cb.cb_cash AS FLOAT)
+                            ELSE cb.cb_cash * fc.ar_rate / rc.rc_rate END AS cv_cash,
+                       CASE WHEN cb.cb_cash IS NULL OR cb.cb_cash = 0 OR cb.cb_currency = rc.rc_currency THEN NULL
+                            WHEN fc.ar_rate IS NULL THEN COALESCE(cb.cb_currency, 'XXX')
+                            WHEN rc.rc_rate IS NULL THEN COALESCE(rc.rc_currency, 'XXX') END AS cv_missing
+                  FROM cash_by_portfolio cb
+                  CROSS JOIN reporting rc
+                  LEFT JOIN as_of_rate fc
+                    ON fc.ar_currency = cb.cb_currency) cv
+          GROUP BY cv.cv_portfolio
+        ), valuation_point AS (
+          -- the provider's TOTAL (holdings + cash, IA-C73) of each of the client's portfolios at its latest point
+          -- on or before each of the two days — a grouped MAX joined back, as every "latest ≤" here is.
+          -- `"value"` is quoted: VALUE is a reserved word to the door's parser (measured with the door probe).
+          SELECT lp.lp_portfolio AS pt_portfolio, lp.lp_day AS pt_day, pv."value" AS pt_value, pv.currency AS pt_currency
+          FROM (SELECT v4.portfolio_ref AS lp_portfolio, d4.rd_day AS lp_day, MAX(v4.valuation_date) AS lp_date
+                  FROM rate_day d4
+                  JOIN investment_portfolio_valuation v4
+                    ON v4.valuation_date <= d4.rd_day
+                 WHERE v4.portfolio_ref IN (SELECT cp_portfolio FROM client_portfolio)
+                 GROUP BY v4.portfolio_ref, d4.rd_day) lp
+          JOIN investment_portfolio_valuation pv
+            ON pv.portfolio_ref = lp.lp_portfolio
+           AND pv.valuation_date = lp.lp_date
+        ), valuation_rc AS (
+          -- each point converted at ITS day's rates (IA-C66): × rate(F) ÷ rate(home)
+          SELECT p.pt_portfolio AS vr_portfolio, p.pt_day AS vr_day,
+                 CASE WHEN p.pt_currency = rc.rc_currency OR p.pt_value = 0 THEN CAST(p.pt_value AS FLOAT)
+                      ELSE p.pt_value * f.dr_rate / r.r_rate END AS vr_value,
+                 CASE WHEN p.pt_value = 0 OR p.pt_currency = rc.rc_currency THEN NULL
+                      WHEN f.dr_rate IS NULL THEN p.pt_currency
+                      WHEN r.r_rate IS NULL THEN COALESCE(rc.rc_currency, 'XXX') END AS vr_missing
+          FROM valuation_point p
+          CROSS JOIN reporting rc
+          LEFT JOIN day_rate f
+            ON f.dr_day = p.pt_day
+           AND f.dr_currency = p.pt_currency
+          LEFT JOIN (SELECT r0.dr_day AS r_day, r0.dr_rate AS r_rate
+                       FROM day_rate r0
+                       JOIN reporting rc0
+                         ON rc0.rc_currency = r0.dr_currency) r
+            ON r.r_day = p.pt_day
+        ), first_version AS (
+          -- `since` = the portfolio's FIRST version's valid_from, every version read (a closed one is the point) —
+          -- a grouped MIN joined back. It was a correlated scalar subquery in the SELECT list, which the door
+          -- decorrelates into `IS NOT DISTINCT FROM` (not in the plan.v1 wire format) once the outer query
+          -- carries the joins below — measured with the door probe, IA-P3b·S3b.4.
+          SELECT f.external_id AS fv_portfolio, MIN(f.valid_from) AS fv_since
+          FROM investment_portfolio f
+          WHERE f.external_id IN (SELECT cp_portfolio FROM client_portfolio)
+          GROUP BY f.external_id
+        ), valuation_now AS (
+          SELECT w.vr_portfolio AS vn_portfolio, w.vr_value AS vn_value, w.vr_missing AS vn_missing
+          FROM valuation_rc w
+          JOIN (SELECT g3.period_end AS n_day
+                  FROM month_grid g3
+                 WHERE g3.i = 0) n
+            ON n.n_day = w.vr_day
+        ), valuation_prev AS (
+          SELECT w2.vr_portfolio AS vq_portfolio, w2.vr_value AS vq_value, w2.vr_missing AS vq_missing
+          FROM valuation_rc w2
+          JOIN quarter_end q2
+            ON q2.qe_day = w2.vr_day
         )
         -- market_value and cash are NULL, not 0, for a portfolio with no valuation / no base-currency cash row:
         -- nothing is known, and a zero would read as "empty".
@@ -1524,10 +2019,28 @@ def query client_overview {
                p.base_currency,
                vp.vp_value AS market_value,
                CAST(cb.cb_cash AS FLOAT) AS cash,
-               (SELECT min(f.valid_from)
-                  FROM investment_portfolio f
-                 WHERE f.external_id = p.external_id) AS since,
-               ow.ow_name AS client_name
+               fv.fv_since AS since,
+               ow.ow_name AS client_name,
+               -- IA-P3b·S3b.4 (IA-C70), in the home currency: the valuation's value (its base currency → home, on
+               -- the as_of), ALL the cash, and — on the VALUATION basis (IA-C73: the provider's total, holdings +
+               -- cash) — the total now and at the previous quarter end, and the change between them. No point on
+               -- or before a day ⇒ NULL, and no change.
+               rc.rc_currency AS reporting_currency,
+               CASE WHEN p.base_currency = rc.rc_currency OR vp.vp_value = 0 THEN vp.vp_value
+                    ELSE vp.vp_value * mb.ar_rate / rc.rc_rate END AS market_value_rc,
+               cr.cr_cash AS cash_rc,
+               vn.vn_value AS value_rc,
+               vq.vq_value AS value_prev_quarter_end,
+               (vn.vn_value / NULLIF(vq.vq_value, 0) - 1) * 100 AS chg_qoq_pct,
+               CASE WHEN vp.vp_value IS NULL OR vp.vp_value = 0 OR p.base_currency = rc.rc_currency
+                         OR (mb.ar_rate IS NOT NULL AND rc.rc_rate IS NOT NULL) THEN 0 ELSE 1 END
+                 + COALESCE(cr.cr_unconverted, 0)
+                 + CASE WHEN vn.vn_missing IS NULL THEN 0 ELSE 1 END
+                 + CASE WHEN vq.vq_missing IS NULL THEN 0 ELSE 1 END AS unconverted,
+               COALESCE(CASE WHEN vp.vp_value IS NULL OR vp.vp_value = 0 OR p.base_currency = rc.rc_currency THEN NULL
+                             WHEN mb.ar_rate IS NULL THEN COALESCE(p.base_currency, 'XXX')
+                             WHEN rc.rc_rate IS NULL THEN COALESCE(rc.rc_currency, 'XXX') END,
+                        cr.cr_missing, vn.vn_missing, vq.vq_missing) AS missing_rate
         FROM investment_portfolio p
         LEFT JOIN value_by_portfolio vp
           ON vp.vp_portfolio = p.external_id
@@ -1540,6 +2053,17 @@ def query client_overview {
                      FROM investment_client o
                     WHERE o.valid_to IS NULL) ow
           ON ow.ow_id = p.client_ref
+        LEFT JOIN first_version fv
+          ON fv.fv_portfolio = p.external_id
+        CROSS JOIN reporting rc
+        LEFT JOIN as_of_rate mb
+          ON mb.ar_currency = p.base_currency
+        LEFT JOIN cash_rc cr
+          ON cr.cr_portfolio = p.external_id
+        LEFT JOIN valuation_now vn
+          ON vn.vn_portfolio = p.external_id
+        LEFT JOIN valuation_prev vq
+          ON vq.vq_portfolio = p.external_id
         WHERE p.valid_to IS NULL
           AND p.client_ref = {client_id}
         ORDER BY portfolio_id
@@ -1563,12 +2087,12 @@ def query client_overview {
 }
 
 def query client_allocation {
-    description: "How a client's money is split by kind of instrument as of a day: the value in CZK of each asset class across the latest valuations of all the client's portfolios, and its share of the total."
+    description: "How a client's money is split by kind of instrument as of a day: the value of each asset class across the latest valuations of all the client's portfolios, as the provider gives it and converted into the estate's home currency on that day, and its share of the total."
     language: SQL
     sourceText: """
         WITH valued AS (
           -- rule (1): each of the client's portfolios at its latest valuation <= as_of — see assets_overview.
-          SELECT v.asset_ref AS v_asset, v.market_value AS v_value
+          SELECT v.portfolio_ref AS v_portfolio, v.asset_ref AS v_asset, v.market_value AS v_value
           FROM investment_position v
           JOIN (SELECT l.portfolio_ref AS l_portfolio, MAX(l.valuation_date) AS l_date
                   FROM investment_position l
@@ -1582,22 +2106,89 @@ def query client_allocation {
             ON lv.l_portfolio = v.portfolio_ref
            AND lv.l_date = v.valuation_date
           WHERE v.valid_to IS NULL
-        ), by_kind AS (
-          -- an instrument with no asset row has no class: its value is kept, under a NULL kind
-          SELECT a.asset_class AS k_kind, SUM(vv.v_value) AS k_value
+        ), by_kind_currency AS (
+          -- an instrument with no asset row has no class: its value is kept, under a NULL kind. IA-P3b·S3b.4:
+          -- summed per BASE currency too — the provider values each portfolio in its own (`market_value` is
+          -- the BaseValuation) — so that each currency is converted once
+          SELECT a.asset_class AS kc_kind, pb.pb_currency AS kc_currency, SUM(vv.v_value) AS kc_value
           FROM valued vv
           LEFT JOIN investment_asset a
             ON a.isin = vv.v_asset
-          GROUP BY a.asset_class
+          LEFT JOIN (SELECT pb0.external_id AS pb_portfolio, pb0.base_currency AS pb_currency
+                       FROM investment_portfolio pb0
+                      WHERE pb0.valid_to IS NULL) pb
+            ON pb.pb_portfolio = vv.v_portfolio
+          GROUP BY a.asset_class, pb.pb_currency
+        )
+        , rate_day AS (
+          -- IA-P3b·S3b.4: the day a "now" figure stands for — the as_of (IA-C70). COALESCE types the parameter, as
+          -- the grid's does (the door strips a bare CAST of it); the MAX only gives it a date-typed partner and the
+          -- derived table one row.
+          SELECT CAST(COALESCE({as_of}, MAX(xr.rate_date)) AS DATE) AS rd_day
+          FROM investment_fx_rate xr
+        )
+        , day_rate AS (
+          SELECT lr.dr_day, lr.dr_currency, CAST(fr.rate AS FLOAT) / fr.units AS dr_rate
+          FROM (SELECT d1.rd_day AS dr_day, r1.currency AS dr_currency, MAX(r1.rate_date) AS dr_date
+                  FROM rate_day d1
+                  JOIN investment_fx_rate r1
+                    ON r1.rate_date <= d1.rd_day
+                  LEFT JOIN investment_estate_setting h1
+                    ON h1.home_currency = r1.currency
+                 WHERE h1.home_currency IS NULL
+                 GROUP BY d1.rd_day, r1.currency) lr
+          JOIN investment_fx_rate fr
+            ON fr.currency = lr.dr_currency
+           AND fr.rate_date = lr.dr_date
+          UNION ALL
+          SELECT d2.rd_day, h2.home_currency, CAST(1 AS FLOAT)
+          FROM rate_day d2
+          CROSS JOIN investment_estate_setting h2
+          GROUP BY d2.rd_day, h2.home_currency
+        )
+        , reporting AS (
+          -- IA-C67: an answer wider than one portfolio is in the HOME currency — here with its rate on the as_of
+          -- (1 while the estate declares a home currency; with none, nothing converts)
+          SELECT rh.rh_currency AS rc_currency, rr.dr_rate AS rc_rate
+          FROM (SELECT MAX(hs.home_currency) AS rh_currency
+                  FROM investment_estate_setting hs) rh
+          LEFT JOIN day_rate rr
+            ON rr.dr_currency = rh.rh_currency
+        )
+        , by_kind AS (
+          -- one row per kind (NULL included — GROUP BY keeps it, a join on it would not): the provider's sum,
+          -- and the same converted into the home currency on the as_of (IA-C66). A currency with no rate is
+          -- counted, and the kind's converted total is NULL — a partial total is a wrong number.
+          SELECT kc.kc_kind AS k_kind,
+                 SUM(kc.kc_value) AS k_value,
+                 CASE WHEN SUM(CASE WHEN kc.kc_value IS NULL OR kc.kc_value = 0 OR kc.kc_currency = rc.rc_currency THEN 0
+                                    WHEN f.dr_rate IS NULL OR rc.rc_rate IS NULL THEN 1 ELSE 0 END) = 0
+                      THEN SUM(CASE WHEN kc.kc_currency = rc.rc_currency OR kc.kc_value = 0 THEN CAST(kc.kc_value AS FLOAT)
+                                    ELSE kc.kc_value * f.dr_rate / rc.rc_rate END) END AS k_value_rc,
+                 SUM(CASE WHEN kc.kc_value IS NULL OR kc.kc_value = 0 OR kc.kc_currency = rc.rc_currency THEN 0
+                          WHEN f.dr_rate IS NULL OR rc.rc_rate IS NULL THEN 1 ELSE 0 END) AS k_unconverted,
+                 MIN(CASE WHEN kc.kc_value IS NULL OR kc.kc_value = 0 OR kc.kc_currency = rc.rc_currency THEN NULL
+                          WHEN f.dr_rate IS NULL THEN COALESCE(kc.kc_currency, 'XXX')
+                          WHEN rc.rc_rate IS NULL THEN COALESCE(rc.rc_currency, 'XXX') END) AS k_missing
+          FROM by_kind_currency kc
+          CROSS JOIN reporting rc
+          LEFT JOIN day_rate f
+            ON f.dr_currency = kc.kc_currency
+          GROUP BY kc.kc_kind
         ), allocation_total AS (
           SELECT SUM(k_value) AS t_value
           FROM by_kind
         )
         SELECT k.k_kind AS kind,
                CAST(k.k_value AS FLOAT) AS value_czk,
-               CAST(k.k_value AS FLOAT) / NULLIF(CAST(t.t_value AS FLOAT), 0) * 100 AS share_pct
+               CAST(k.k_value AS FLOAT) / NULLIF(CAST(t.t_value AS FLOAT), 0) * 100 AS share_pct,
+               rc.rc_currency AS reporting_currency,
+               k.k_value_rc AS value_rc,
+               k.k_unconverted AS unconverted,
+               k.k_missing AS missing_rate
         FROM by_kind k
         CROSS JOIN allocation_total t
+        CROSS JOIN reporting rc
         ORDER BY value_czk DESC, kind
     """
     search {
