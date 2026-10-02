@@ -1,0 +1,71 @@
+package investment
+
+model er
+
+// The interpreted face: SETTINGS — the estate's home currency (IA-C65) and a portfolio's reporting
+// currency (IA-C67), IA-P3b·S3b.1. Not provider data: a person (or the runbook) sets these, through
+// the entry door like every other write.
+//
+// ⚑ Neither is named in `def area investment` and no program reads them in v1 (er-layer T1.5 says
+// what that does and does not mean for the Golem). S3b.4's converted programs are where they start
+// to matter: every money figure of a portfolio converted into its reporting currency, everything
+// wider in the home currency.
+
+def entity estate_setting {
+    description: {
+        en: "The estate's settings — one row, read by every program that converts money. Today it holds one fact: the home currency.",
+        cs: "Nastavení celé evidence — jeden řádek, který čte každý program přepočítávající peníze. Dnes nese jediný údaj: domácí měnu."
+    }
+    labelPlural: "Estate settings"
+    codeAttribute: setting_key
+    roles: [dimension]
+    displayLabel: { en: "Estate setting", cs: "Nastavení evidence" }
+    attributes: [
+        def attribute setting_key {
+            type: text, isKey: true,
+            description: {
+                en: "Always `estate`: the key that makes this a single row. There is nothing to filter by — the table has one row.",
+                cs: "Vždy `estate`: klíč, díky kterému je tabulka jednořádková. Není podle čeho filtrovat — tabulka má jediný řádek."
+            }
+        },
+        def attribute home_currency {
+            type: text,
+            description: {
+                en: "The estate's home currency, ISO 4217 — `CZK` here. The ledger is kept in it, every exchange rate is quoted against it, and an amount already in it converts at 1.",
+                cs: "Domácí měna evidence, ISO 4217 — zde `CZK`. Vede se v ní kniha, každý směnný kurz je kótován vůči ní a částka, která v ní již je, se přepočítává kurzem 1."
+            }
+        }
+    ]
+}
+
+def entity portfolio_setting {
+    description: {
+        en: "A portfolio's settings, chosen by its owner — kept apart from the portfolio itself, which the provider's snapshots overwrite. Today it holds one fact: the reporting currency.",
+        cs: "Nastavení portfolia, která volí jeho vlastník — vedená odděleně od portfolia samotného, které přepisují snímky od poskytovatele. Dnes nese jediný údaj: měnu výkaznictví."
+    }
+    labelPlural: "Portfolio settings"
+    codeAttribute: portfolio
+    roles: [dimension]
+    displayLabel: { en: "Portfolio setting", cs: "Nastavení portfolia" }
+    attributes: [
+        def attribute portfolio {
+            type: text, isKey: true,
+            description: {
+                en: "The portfolio the setting is for, held as its `conseq:` contract identifier.",
+                cs: "Portfolio, pro které nastavení platí, vedené svým identifikátorem smlouvy `conseq:`."
+            }
+        },
+        def attribute reporting_currency {
+            type: text,
+            description: {
+                en: "The currency the owner wants this portfolio shown in, ISO 4217. Empty, or no row at all, means the home currency. The portfolio's own figures are converted into it; anything wider than one portfolio — a client, the whole book — stays in the home currency.",
+                cs: "Měna, ve které chce vlastník portfolio vidět, ISO 4217. Prázdná hodnota nebo žádný řádek znamená domácí měnu. Do ní se přepočítávají údaje samotného portfolia; cokoli širšího než jedno portfolio — klient, celá kniha — zůstává v domácí měně."
+            }
+        }
+    ]
+}
+
+def relation rel_portfolio_setting_portfolio {
+    from: er.entity.portfolio_setting, to: er.entity.portfolio,
+    cardinality: { from: "0..1", to: "1" }
+}

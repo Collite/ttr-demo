@@ -3,8 +3,9 @@ package investment
 model db schema dbo
 
 // The PHYSICAL face of the investment book, transcribed from `model/entry/investment-schema-v1.sql`
-// (IE-C22). Seven tables, and the seven the estate actually has — `db-ddl-parity.test.mjs` asserts
-// the (table, column) sets and the primary keys both ways, on every run.
+// (IE-C22) and `investment-schema-v2.sql` (IA-P3b·S3b.1, the rate model — IA-C65–C67; S3b.3, the
+// provider's valuation history — IA-C73). Eleven tables, and the eleven the estate actually has — `db-ddl-parity.test.mjs` asserts the (table, column) sets and the
+// primary keys both ways, on every run, over v1 and v2 read together.
 //
 // ⛔ WHY THIS FILE EXISTS AT ALL. An `er2db_entity` target is a `db.<schema>.<table>` qname, so the
 // binding needs a `db` layer to point at, and it cannot point at the package's OTHER model — the
@@ -141,6 +142,51 @@ def table investment_position {
     ]
 }
 
+// ── settings and rates (v2, IA-P3b·S3b.1) ──────────────────────────────────────────────────────
+
+def table investment_estate_setting {
+    description: "The estate's settings — ONE row (IA-C65). The key may only ever be `estate`; a second row is a constraint violation, not a second opinion."
+    primaryKey: [setting_key]
+    columns: [
+        def column setting_key   { type: text, isKey: true, description: "Constant key, always `estate` (DEFAULT + CHECK) — what makes this a one-row table." },
+        def column home_currency { type: { type: char, length: 3 }, description: "The estate's home (ledger) currency, ISO 4217 — `CZK` on hartland. Every rate in investment_fx_rate is quoted against it, and it converts at 1." }
+    ]
+}
+
+def table investment_portfolio_setting {
+    description: "A portfolio's settings, keyed by the portfolio (IA-C67). Its own table, not a column of investment_portfolio: the connector writes a new SCD2 version of the portfolio from each provider snapshot, and a preference stored there would be lost at the next version."
+    primaryKey: [portfolio_ref]
+    columns: [
+        def column portfolio_ref      { type: text, isKey: true, description: "NATURAL-key reference to investment_portfolio.external_id." },
+        def column reporting_currency { type: { type: char, length: 3 }, optional: true, description: "The currency the owner wants the portfolio shown in, ISO 4217. No row, or NULL, means the home currency." }
+    ]
+}
+
+def table investment_fx_rate {
+    description: "Exchange rates against the home currency, keyed on (currency, rate_date) (IA-C66). `units` of `currency` = `rate` of the home currency. A conversion takes the latest rate on or before the amount's day; no such rate leaves the amount unconverted."
+    primaryKey: [currency, rate_date]
+    columns: [
+        def column currency  { type: { type: char, length: 3 }, isKey: true, description: "The foreign currency quoted, ISO 4217." },
+        def column rate_date { type: date, isKey: true, description: "The day the rate is FOR." },
+        def column rate      { type: { type: decimal, length: 18, precision: 8 }, description: "Home-currency amount `units` of `currency` are worth on `rate_date`. CHECK > 0." },
+        def column units     { type: int, description: "How many units of `currency` the rate is quoted for — 1, or 100 where a bank quotes per 100. DEFAULT 1, CHECK > 0." }
+    ]
+}
+
+// ── the provider's valuation history (v2, IA-P3b·S3b.3) ──────────────────────────────────────────
+
+def table investment_portfolio_valuation {
+    description: "A portfolio's valuation history, keyed on (portfolio_ref, valuation_date) (IA-C73) — the provider's total and the cumulative net contributions on that day. Weekly points from the contract's start (DistrInfo valuationHistoryByContract)."
+    primaryKey: [portfolio_ref, valuation_date]
+    columns: [
+        def column portfolio_ref     { type: text, isKey: true, description: "NATURAL-key reference to investment_portfolio.external_id." },
+        def column valuation_date    { type: date, isKey: true, description: "The day being valued." },
+        def column value             { type: { type: decimal, length: 18, precision: 2 }, description: "The provider's total value of the portfolio that day — every holding plus the cash lines — in `currency`. May be negative. NOT NULL." },
+        def column currency          { type: { type: char, length: 3 }, description: "The currency `value` and `net_contributions` are in, ISO 4217 — the portfolio's base currency as the provider reports it. NOT NULL." },
+        def column net_contributions { type: { type: decimal, length: 18, precision: 2 }, optional: true, description: "Money put into the portfolio less money taken out, cumulative up to that day, in `currency`." }
+    ]
+}
+
 // ── joins ──────────────────────────────────────────────────────────────────────────────────────
 //
 // ⚑ EVERY ONE OF THESE IS A NATURAL-KEY JOIN, AND NONE OF THEM IS A DATABASE CONSTRAINT.
@@ -161,3 +207,5 @@ def fk fk_transaction_asset     { from: [db.dbo.investment_transaction.asset_ref
 def fk fk_price_asset           { from: [db.dbo.investment_asset_price.isin],          to: [db.dbo.investment_asset.isin] }
 def fk fk_position_portfolio    { from: [db.dbo.investment_position.portfolio_ref],    to: [db.dbo.investment_portfolio.external_id] }
 def fk fk_position_asset        { from: [db.dbo.investment_position.asset_ref],        to: [db.dbo.investment_asset.isin] }
+def fk fk_portfolio_setting_portfolio { from: [db.dbo.investment_portfolio_setting.portfolio_ref], to: [db.dbo.investment_portfolio.external_id] }
+def fk fk_portfolio_valuation_portfolio { from: [db.dbo.investment_portfolio_valuation.portfolio_ref], to: [db.dbo.investment_portfolio.external_id] }

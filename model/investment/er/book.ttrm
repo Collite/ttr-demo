@@ -153,6 +153,54 @@ def entity position {
     ]
 }
 
+def entity portfolio_valuation {
+    description: {
+        en: "A portfolio's valuation history — what the whole portfolio was worth on a day, as the provider valued it, beside the money put into it up to that day. One point a week from the contract's start (some month and quarter ends too); there is no history per instrument. Read the latest point on or before a day for that day's value; never sum points.",
+        cs: "Historie ocenění portfolia — jakou hodnotu mělo celé portfolio k danému dni podle ocenění poskytovatele, vedle peněz do něj do toho dne vložených. Jeden bod týdně od počátku smlouvy (některé konce měsíců a čtvrtletí navíc); historie po jednotlivých nástrojích neexistuje. Hodnotu k určitému dni čtěte z posledního bodu k tomuto dni nebo před ním; body nikdy nesčítejte."
+    }
+    labelPlural: "Portfolio valuations"
+    codeAttribute: portfolio
+    roles: [fact]
+    displayLabel: { en: "Portfolio valuation", cs: "Ocenění portfolia" }
+    attributes: [
+        def attribute portfolio {
+            type: text, isKey: true,
+            description: {
+                en: "The portfolio valued, held as its `conseq:` contract identifier.",
+                cs: "Oceňované portfolio, vedené svým identifikátorem smlouvy `conseq:`."
+            }
+        },
+        def attribute valuation_date {
+            type: date, isKey: true,
+            description: {
+                en: "The day being valued — mostly Fridays. Part of the identity of the point, not a stamp of when it was computed.",
+                cs: "Den, ke kterému se oceňuje — většinou pátek. Součást identity bodu, nikoli razítko okamžiku výpočtu."
+            }
+        },
+        def attribute value {
+            type: decimal,
+            description: {
+                en: "The portfolio's total value that day as the provider valued it — every holding plus uninvested cash, converted into `currency`. It can be negative: the provider reports what it holds, even a debit balance.",
+                cs: "Celková hodnota portfolia k danému dni podle ocenění poskytovatele — všechny držby plus neinvestovaná hotovost, přepočtené do `currency`. Může být záporná: poskytovatel uvádí, co eviduje, i záporný zůstatek."
+            }
+        },
+        def attribute currency {
+            type: text,
+            description: {
+                en: "The currency of `value` and `net_contributions`, ISO 4217 — the portfolio's base currency as the provider reports it (`CZK` here).",
+                cs: "Měna hodnot `value` a `net_contributions`, ISO 4217 — základní měna portfolia, jak ji uvádí poskytovatel (zde `CZK`)."
+            }
+        },
+        def attribute net_contributions {
+            type: decimal,
+            description: {
+                en: "Money put into the portfolio less money taken out, from its start up to that day, in `currency` — the amount the value is compared with to see the gain. Empty when the provider reports no flows.",
+                cs: "Peníze do portfolia vložené minus peníze z něj vybrané, od počátku do daného dne, v měně `currency` — částka, se kterou se hodnota porovnává, aby byl vidět zisk. Prázdné, pokud poskytovatel toky neuvádí."
+            }
+        }
+    ]
+}
+
 def relation rel_transaction_portfolio {
     from: er.entity.transaction, to: er.entity.portfolio,
     cardinality: { from: "0..*", to: "1" }
@@ -170,5 +218,10 @@ def relation rel_position_portfolio {
 
 def relation rel_position_asset {
     from: er.entity.position, to: er.entity.asset,
+    cardinality: { from: "0..*", to: "1" }
+}
+
+def relation rel_portfolio_valuation_portfolio {
+    from: er.entity.portfolio_valuation, to: er.entity.portfolio,
     cardinality: { from: "0..*", to: "1" }
 }

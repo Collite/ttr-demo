@@ -62,6 +62,21 @@ def er2db_entity position_map { entity: er.entity.position, target: { table: db.
 def er2db_attribute position_portfolio_map { attribute: er.entity.position.portfolio, target: { column: db.dbo.investment_position.portfolio_ref } }
 def er2db_attribute position_asset_map     { attribute: er.entity.position.asset,     target: { column: db.dbo.investment_position.asset_ref } }
 
+// ===== the rate model (IA-P3b·S3b.1, IA-C65–C67) =====
+// `exchange_rate` is the er name for `investment_fx_rate` — the second entity whose er and table names
+// differ on purpose (after `price`): a person asks for an exchange rate; the estate's table and the
+// entry target say fx_rate. The two settings keep their names; only the portfolio ref is renamed, to
+// match every other er entity's `portfolio`.
+def er2db_entity exchange_rate_map     { entity: er.entity.exchange_rate,     target: { table: db.dbo.investment_fx_rate } }
+def er2db_entity estate_setting_map    { entity: er.entity.estate_setting,    target: { table: db.dbo.investment_estate_setting } }
+def er2db_entity portfolio_setting_map { entity: er.entity.portfolio_setting, target: { table: db.dbo.investment_portfolio_setting } }
+def er2db_attribute portfolio_setting_portfolio_map { attribute: er.entity.portfolio_setting.portfolio, target: { column: db.dbo.investment_portfolio_setting.portfolio_ref } }
+
+// ===== the provider's valuation history (IA-P3b·S3b.3, IA-C73) =====
+// Same name in both layers; only the portfolio ref is renamed, as on every other er entity.
+def er2db_entity portfolio_valuation_map { entity: er.entity.portfolio_valuation, target: { table: db.dbo.investment_portfolio_valuation } }
+def er2db_attribute portfolio_valuation_portfolio_map { attribute: er.entity.portfolio_valuation.portfolio, target: { column: db.dbo.investment_portfolio_valuation.portfolio_ref } }
+
 // ===== relations =====
 // Explicit maps rather than an inline `binding: { fk: … }` on each relation: the lint treats having
 // both as an error on both (`ported-duplicate-mapping`), and one of the two forms had to win. This
@@ -77,3 +92,5 @@ def er2db_relation transaction_portfolio_rel { relation: er.relation.rel_transac
 def er2db_relation transaction_asset_rel     { relation: er.relation.rel_transaction_asset,     fk: db.dbo.fk_transaction_asset }
 def er2db_relation position_portfolio_rel    { relation: er.relation.rel_position_portfolio,    fk: db.dbo.fk_position_portfolio }
 def er2db_relation position_asset_rel        { relation: er.relation.rel_position_asset,        fk: db.dbo.fk_position_asset }
+def er2db_relation portfolio_setting_portfolio_rel { relation: er.relation.rel_portfolio_setting_portfolio, fk: db.dbo.fk_portfolio_setting_portfolio }
+def er2db_relation portfolio_valuation_portfolio_rel { relation: er.relation.rel_portfolio_valuation_portfolio, fk: db.dbo.fk_portfolio_valuation_portfolio }
