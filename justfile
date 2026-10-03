@@ -356,6 +356,25 @@ fingerprint-evolution *ARGS:
 verify-evolution-fingerprint:
     node --test scripts/tests/evolution-fingerprint.test.mjs
 
+# IA-P4·S4.3 — the five overview workbooks held against the book (IA-C51): each rendered through studio-bff as the
+# Studio's download buttons render it, and its tables compared with the same figures computed ON THE BOOK by
+# `scripts/sql/{statement,overview,price-sheet,sync-run-changes}-reference.sql` (the statement's Evolution sheet by
+# `evolution-reference.sql`).
+#
+#   IE_FP_BFF=… IE_FP_DSN=… IE_FP_PORTFOLIO=conseq:… just fingerprint-overview portfolio-statement:v1
+#   IE_FP_CLIENT=conseq:…  … client-overview:v1 · … distributor-overview:v1 · IE_FP_MONTHS=24 … price-sheet:v1
+#   IE_FP_RUN=<a committed run> IE_FP_JOURNAL_DSN=<a journal reader> … sync-run-changes:v1
+#   In the cluster: just drill-in-cluster fingerprint <template>
+# An overview workbook held against the book.
+fingerprint-overview template:
+    ./scripts/fingerprint-overview.sh {{template}}
+
+# Its suite, with no estate: the renderer's OWN workbooks (fixtures/overview/) against the references' saved answers on
+# the hand fixture, the script end to end against a stub studio-bff — then every check failing on purpose.
+# The overview fingerprints' suite (no estate).
+verify-overview-fingerprint:
+    node --test scripts/tests/overview-fingerprint.test.mjs
+
 # The reference itself, RUN on PostgreSQL 16 against the hand fixture and held to the hand answers: a throwaway
 # container (`evolution-ref-pg`, C locale as hartland's `entry`), left running for inspection —
 # `just verify-evolution-reference-down` removes it. `--write` rewrites the saved answers the suite above reads.
@@ -383,6 +402,26 @@ verify-evolution-reference *ARGS:
 # Remove the reference's PostgreSQL container.
 verify-evolution-reference-down:
     docker rm -f evolution-ref-pg >/dev/null 2>&1 || true
+
+# IA-P4·S4.3·T6 — the four overview references (statement · client/distributor · price sheet · run changes) on the SAME
+# PostgreSQL 16 container, held to answers computed from the hand fixture [--write rewrites fixtures/overview/reference-*].
+# The overview references on PostgreSQL 16, held to answers from the hand fixture [--write].
+verify-overview-reference *ARGS:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    write=0
+    for a in {{ARGS}}; do
+        case "$a" in --write) write=1 ;; *) echo "unknown argument '$a' (--write)" >&2; exit 2 ;; esac
+    done
+    if ! docker inspect evolution-ref-pg >/dev/null 2>&1; then
+        docker run -d --name evolution-ref-pg -e POSTGRES_PASSWORD=evolution -e POSTGRES_DB=entry \
+            -e POSTGRES_INITDB_ARGS="--locale=C --encoding=UTF8" \
+            -p 127.0.0.1:{{EVOLUTION_REF_PORT}}:5432 postgres:16 >/dev/null
+    fi
+    docker start evolution-ref-pg >/dev/null 2>&1 || true
+    for i in $(seq 1 60); do docker exec evolution-ref-pg pg_isready -q -h 127.0.0.1 -U postgres -d entry && break; sleep 1; done
+    OVERVIEW_REF_DSN="postgresql://postgres:evolution@127.0.0.1:{{EVOLUTION_REF_PORT}}/entry" \
+    OVERVIEW_REF_WRITE="$write" node --test scripts/tests/overview-reference.test.mjs
 
 # IE-P3·S3.3 — run a drill FROM INSIDE the cluster: no port-forward (this estate's drop mid-run, which
 # is how S3.0·T7 failed twice), and no copied bearer (the Job mints its own from `estate-drill`).

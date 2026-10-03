@@ -149,15 +149,17 @@ def _table(rows: list[dict[str, str]], columns: list[tuple[str, str]], sheet: st
     return out
 
 
-def read_workbook(path: str, portfolio: str) -> dict:
+def read_workbook(path: str, portfolio: str, sheet: str = "Periods") -> dict:
+    """v2's workbook: its Periods, its Summary and its Notes' facts. With another [sheet] — `portfolio-statement:v1`'s
+    Evolution, which IS v2's Periods (IA-P4·S4.3) — the periods and the facts only: that workbook's Summary is its own."""
     with zipfile.ZipFile(path) as zf:
         strings = _shared_strings(zf)
-        periods = _cells(zf, _sheet_path(zf, "Periods"), strings)
-        summary = _cells(zf, _sheet_path(zf, "Summary"), strings)
+        periods = _cells(zf, _sheet_path(zf, sheet), strings)
+        summary = _cells(zf, _sheet_path(zf, "Summary"), strings) if sheet == "Periods" else None
         notes = _cells(zf, _sheet_path(zf, "Notes"), strings)
 
     rows = []
-    for r in _table(periods, PERIODS, "Periods", "period_start"):
+    for r in _table(periods, PERIODS, sheet, "period_start"):
         if r["portfolio_id"] != portfolio:
             continue
         for k in DATES:
@@ -165,11 +167,13 @@ def read_workbook(path: str, portfolio: str) -> dict:
             r[k] = (EXCEL_EPOCH + timedelta(days=int(Decimal(r[k])))).isoformat()
         rows.append(r)
     if not rows:
-        raise SystemExit(f"the Periods sheet holds no row of {portfolio}")
+        raise SystemExit(f"the {sheet} sheet holds no row of {portfolio}")
 
-    mine = [r for r in _table(summary, SUMMARY, "Summary", "net_contributions") if r["portfolio_id"] == portfolio]
-    if len(mine) != 1:
-        raise SystemExit(f"the Summary sheet holds {len(mine)} rows of {portfolio}, not one")
+    mine = [None]
+    if summary is not None:
+        mine = [r for r in _table(summary, SUMMARY, "Summary", "net_contributions") if r["portfolio_id"] == portfolio]
+        if len(mine) != 1:
+            raise SystemExit(f"the Summary sheet holds {len(mine)} rows of {portfolio}, not one")
 
     # the Notes' facts: Item | Value, under their header, until the first row that is not a pair
     facts: dict[str, str] = {}
@@ -264,6 +268,9 @@ def compare(workbook: dict, reference: dict, tolerance: Decimal, return_toleranc
                     problems.append(f"{a['period']} {k}: workbook {x}, reference {y}")
 
     ws, rs = workbook["summary"], reference["summary"]
+    if ws is None:
+        # a statement's Evolution sheet: v2's Periods, without v2's Summary (IA-P4·S4.3)
+        return problems
     for k in SUMMARY_MONEY:
         x, y = cents(dec(ws.get(k))), cents(dec(rs.get(k)))
         if x is None or y is None or abs(x - y) > tolerance:
@@ -301,6 +308,7 @@ def main(argv: list[str]) -> int:
     s = sub.add_parser("sheet")
     s.add_argument("workbook")
     s.add_argument("portfolio")
+    s.add_argument("--sheet", default="Periods", help="the sheet v2's Periods are printed on (a statement's: Evolution)")
     s = sub.add_parser("reference")
     s.add_argument("csv")
     s = sub.add_parser("compare")
@@ -317,7 +325,7 @@ def main(argv: list[str]) -> int:
     a = ap.parse_args(argv)
 
     if a.cmd == "sheet":
-        json.dump(read_workbook(a.workbook, a.portfolio), sys.stdout, indent=1)
+        json.dump(read_workbook(a.workbook, a.portfolio, a.sheet), sys.stdout, indent=1)
         return 0
     if a.cmd == "reference":
         json.dump(read_reference(a.csv), sys.stdout, indent=1)
@@ -328,7 +336,7 @@ def main(argv: list[str]) -> int:
         with open(a.reference) as f:
             r = json.load(f)
         problems = compare(w, r, Decimal(a.tolerance), Decimal(a.return_tolerance))
-        label = f"{len(w['rows'])} periods × {len(COMPARED)} columns + the Summary"
+        label = f"{len(w['rows'])} periods × {len(COMPARED)} columns" + (" + the Summary" if w["summary"] is not None else "")
     else:
         with open(a.reference) as f:
             r = json.load(f)

@@ -18,6 +18,9 @@
 #   just drill-in-cluster dod                 # the read drill (IE_DOD_MODE=readonly)
 #   just drill-in-cluster fingerprint         # render the report and hold it against the book
 #   just drill-in-cluster fingerprint investment-evolution:v2   # the period evolution against the book (IA-P4·S4.2)
+#   just drill-in-cluster fingerprint portfolio-statement:v1    # …and the five overviews (IA-P4·S4.3):
+#   just drill-in-cluster fingerprint client-overview:v1        #    client-overview:v1 · distributor-overview:v1 ·
+#                                                               #    price-sheet:v1 · sync-run-changes:v1
 #
 # Env (all optional except where the drill itself requires one):
 #   IE_CTX          kube context           (default: hartland)
@@ -26,6 +29,11 @@
 #   IE_AS_OF        the fingerprint's as-of date (default: today; v1 refuses a quarter end, S3.1·D2)
 #   IE_FROM         v2's first month (default: 11 months before IE_AS_OF)
 #   IE_GRAIN        v2's grain, month | quarter (default: month)
+#   IE_CLIENT       client-overview's client (no default — name it)
+#   IE_MONTHS       price-sheet's month-ends back (default: 24)
+#   IE_RUN          sync-run-changes' run (no default — a COMMITTED run). ⚑ Its reference reads the substrate's
+#                   journal, which the drill's read-only role does not see: the run is refused, naming why, unless the
+#                   Job is given a journal-reader DSN (not by default — no such credential is mounted here).
 #   IE_TOP_N        the estate's row cap   (default: 200)
 #   IE_IMAGE        the runner image       (default: postgres:16-alpine — psql, plus apk for the rest)
 #   IE_KEEP         1 to leave the Job and its ConfigMap behind for inspection
@@ -75,6 +83,10 @@ case "${1:-}" in
     investment-evolution:v1)
         PASSTHROUGH="${PASSTHROUGH# investment-evolution:v1}"
         ;;
+    # IA-P4·S4.3: the template stays the script's first argument
+    portfolio-statement:v1 | client-overview:v1 | distributor-overview:v1 | price-sheet:v1 | sync-run-changes:v1)
+        FINGERPRINT="fingerprint-overview.sh"
+        ;;
 esac
 case "$DRILL" in
     dod)         COMMAND="bash /drill/investment-dod.sh$PASSTHROUGH" ;;
@@ -91,10 +103,16 @@ kubectl --context "$CTX" -n "$NS" create configmap estate-drill-scripts \
     --from-file="$HERE/investment-dod.sh" \
     --from-file="$HERE/report-fingerprint.sh" \
     --from-file="$HERE/fingerprint-evolution.sh" \
+    --from-file="$HERE/fingerprint-overview.sh" \
     --from-file=estate-token.sh="$HERE/lib/estate-token.sh" \
     --from-file=fingerprint.py="$HERE/lib/fingerprint.py" \
     --from-file=evolution_fingerprint.py="$HERE/lib/evolution_fingerprint.py" \
+    --from-file=overview_fingerprint.py="$HERE/lib/overview_fingerprint.py" \
     --from-file=evolution-reference.sql="$HERE/sql/evolution-reference.sql" \
+    --from-file=statement-reference.sql="$HERE/sql/statement-reference.sql" \
+    --from-file=overview-reference.sql="$HERE/sql/overview-reference.sql" \
+    --from-file=price-sheet-reference.sql="$HERE/sql/price-sheet-reference.sql" \
+    --from-file=sync-run-changes-reference.sql="$HERE/sql/sync-run-changes-reference.sql" \
     --dry-run=client -o yaml | kubectl --context "$CTX" -n "$NS" apply -f - >/dev/null
 
 # The model file the fingerprint lifts the reference query out of (the SYNCED one, which is what the
@@ -116,7 +134,7 @@ spec:
       containers:
         - name: drill
           image: $IMAGE
-          command: ["sh", "-c", "apk add -q --no-cache bash curl jq python3 && mkdir -p /drill/lib /drill/sql && cp /scripts/estate-token.sh /scripts/fingerprint.py /scripts/evolution_fingerprint.py /drill/lib/ && cp /scripts/evolution-reference.sql /drill/sql/ && cp /scripts/*.sh /drill/ && $COMMAND"]
+          command: ["sh", "-c", "apk add -q --no-cache bash curl jq python3 && mkdir -p /drill/lib /drill/sql && cp /scripts/estate-token.sh /scripts/fingerprint.py /scripts/evolution_fingerprint.py /scripts/overview_fingerprint.py /drill/lib/ && cp /scripts/*.sql /drill/sql/ && cp /scripts/*.sh /drill/ && $COMMAND"]
           env:
             - { name: IE_DOD_MODE, value: readonly }
             - { name: IE_DOD_PORTFOLIO, value: "$PORTFOLIO" }
@@ -131,6 +149,9 @@ spec:
             - { name: IE_FP_AS_OF, value: "$AS_OF" }
             - { name: IE_FP_FROM, value: "${IE_FROM:-}" }
             - { name: IE_FP_GRAIN, value: "${IE_GRAIN:-month}" }
+            - { name: IE_FP_CLIENT, value: "${IE_CLIENT:-}" }
+            - { name: IE_FP_MONTHS, value: "${IE_MONTHS:-24}" }
+            - { name: IE_FP_RUN, value: "${IE_RUN:-}" }
             - { name: IE_FP_BFF, value: "http://studio-bff.kantheon.svc.cluster.local:7330" }
             - { name: IE_FP_DSN, value: "host=postgres-rw.data.svc.cluster.local port=5432 dbname=entry user=entry_readonly" }
             - { name: IE_FP_MODEL, value: /model/q_investment.ttrm }

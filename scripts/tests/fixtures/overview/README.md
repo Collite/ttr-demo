@@ -1,0 +1,28 @@
+# The overview fingerprints' fixture (IA-P4·S4.3)
+
+Everything here is SYNTHETIC — the same two invented portfolios of an invented client as `../evolution/` — and the
+workbooks were written by kantheon, not here:
+
+| File | What it is | Written by |
+|---|---|---|
+| `workbook-statement.xlsx` | `portfolio-statement:v1` of conseq:200900001, 2025-07-01 … 2026-06-15 | kantheon report-renderer, through its fixture door |
+| `workbook-client-overview.xlsx` | `client-overview:v1` of conseq:8809001 as of 2026-06-15 | the same |
+| `workbook-distributor-overview.xlsx` | `distributor-overview:v1` as of 2026-06-15 | the same |
+| `workbook-price-sheet.xlsx` | `price-sheet:v1`, six month-ends to 2026-06-15 | the same |
+| `workbook-sync-run-changes.xlsx` | `sync-run-changes:v1` of `run-20260930-0530`, over kantheon's fixture change stream | the same, through a stub studio-bff |
+| `reference-*.csv` | `scripts/sql/{statement,overview,price-sheet,sync-run-changes}-reference.sql` run with psql on the fixture loaded into PostgreSQL 16 | `just verify-overview-reference --write` |
+| `overview-schema.sql` | the tables the references read beyond `../evolution/book-schema.sql` (clients, portfolios, the provider's valuation points, the substrate's journal) | — |
+| `journal.sql` | a synthetic journal: the fixture run committed whole, and a run with a batch still held | — |
+
+The fixture book is `../evolution/fixture-ledger.json` — since IA-P4·S4.3 it carries the provider's own figures the
+overviews read (`market_values` per valuation, `valuation_points`), and kantheon's fixture door answers
+`client_overview` from them by the program's rules.
+
+Three sides that share no code: the answers `overview-reference.test.mjs` computes in JavaScript from that JSON, the
+reference SQL on PostgreSQL, and the renderer's workbooks. `overview-fingerprint.test.mjs` holds the workbooks to the
+saved references (no database; in CI); `overview-reference.test.mjs` re-runs the references and holds them to the
+JavaScript answers.
+
+Regenerate a workbook when the renderer's template or its fixture door changes, a reference when its SQL does:
+
+    just verify-overview-reference --write     # re-runs the references and rewrites reference-*.csv
