@@ -1003,7 +1003,7 @@ def query assets_overview {
           FROM investment_fx_rate xr
         )
         , day_rate AS (
-          SELECT lr.dr_day, lr.dr_currency, CAST(fr.rate AS FLOAT) / fr.units AS dr_rate
+          SELECT lr.dr_day, lr.dr_currency, fr.rate / CAST(fr.units AS FLOAT) AS dr_rate
           FROM (SELECT d1.rd_day AS dr_day, r1.currency AS dr_currency, MAX(r1.rate_date) AS dr_date
                   FROM rate_day d1
                   JOIN investment_fx_rate r1
@@ -1204,7 +1204,7 @@ def query holders_of_asset {
           FROM investment_fx_rate xr
         )
         , day_rate AS (
-          SELECT lr.dr_day, lr.dr_currency, CAST(fr.rate AS FLOAT) / fr.units AS dr_rate
+          SELECT lr.dr_day, lr.dr_currency, fr.rate / CAST(fr.units AS FLOAT) AS dr_rate
           FROM (SELECT d1.rd_day AS dr_day, r1.currency AS dr_currency, MAX(r1.rate_date) AS dr_date
                   FROM rate_day d1
                   JOIN investment_fx_rate r1
@@ -1408,7 +1408,7 @@ def query portfolio_value_series {
           WHERE m6.i < {months}
         )
         , day_rate AS (
-          SELECT lr.dr_day, lr.dr_currency, CAST(fr.rate AS FLOAT) / fr.units AS dr_rate
+          SELECT lr.dr_day, lr.dr_currency, fr.rate / CAST(fr.units AS FLOAT) AS dr_rate
           FROM (SELECT d1.rd_day AS dr_day, r1.currency AS dr_currency, MAX(r1.rate_date) AS dr_date
                   FROM rate_day d1
                   JOIN investment_fx_rate r1
@@ -1711,7 +1711,7 @@ def query portfolio_holdings {
           FROM investment_fx_rate xr
         )
         , day_rate AS (
-          SELECT lr.dr_day, lr.dr_currency, CAST(fr.rate AS FLOAT) / fr.units AS dr_rate
+          SELECT lr.dr_day, lr.dr_currency, fr.rate / CAST(fr.units AS FLOAT) AS dr_rate
           FROM (SELECT d1.rd_day AS dr_day, r1.currency AS dr_currency, MAX(r1.rate_date) AS dr_date
                   FROM rate_day d1
                   JOIN investment_fx_rate r1
@@ -1904,7 +1904,7 @@ def query client_overview {
           FROM quarter_end qe
         )
         , day_rate AS (
-          SELECT lr.dr_day, lr.dr_currency, CAST(fr.rate AS FLOAT) / fr.units AS dr_rate
+          SELECT lr.dr_day, lr.dr_currency, fr.rate / CAST(fr.units AS FLOAT) AS dr_rate
           FROM (SELECT d1.rd_day AS dr_day, r1.currency AS dr_currency, MAX(r1.rate_date) AS dr_date
                   FROM rate_day d1
                   JOIN investment_fx_rate r1
@@ -2128,7 +2128,7 @@ def query client_allocation {
           FROM investment_fx_rate xr
         )
         , day_rate AS (
-          SELECT lr.dr_day, lr.dr_currency, CAST(fr.rate AS FLOAT) / fr.units AS dr_rate
+          SELECT lr.dr_day, lr.dr_currency, fr.rate / CAST(fr.units AS FLOAT) AS dr_rate
           FROM (SELECT d1.rd_day AS dr_day, r1.currency AS dr_currency, MAX(r1.rate_date) AS dr_date
                   FROM rate_day d1
                   JOIN investment_fx_rate r1
@@ -2468,7 +2468,7 @@ def query conversion_rates {
           FROM investment_fx_rate xr
         )
         , day_rate AS (
-          SELECT lr.dr_day, lr.dr_currency, CAST(fr.rate AS FLOAT) / fr.units AS dr_rate
+          SELECT lr.dr_day, lr.dr_currency, fr.rate / CAST(fr.units AS FLOAT) AS dr_rate
           FROM (SELECT d1.rd_day AS dr_day, r1.currency AS dr_currency, MAX(r1.rate_date) AS dr_date
                   FROM rate_day d1
                   JOIN investment_fx_rate r1
