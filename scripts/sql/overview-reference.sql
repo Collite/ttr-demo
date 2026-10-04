@@ -4,7 +4,10 @@
 --
 -- ## What it mirrors (contracts IA-C41 v1.9, IA-C67, IA-C70, IA-C73) — written from the rules, not from the program
 --
---   * a portfolio is its OPEN version (`valid_to IS NULL`) — of one client, or every client's for the whole book;
+--   * a portfolio is its OPEN version (`valid_to IS NULL`) — of one client, or for the whole book every OPEN client's
+--     (a client is its open version too): the book is its open clients, each with its open portfolios. An open client
+--     with no open portfolio still counts among the book's clients (`open_clients`, the same on every row); an open
+--     portfolio whose client has no open version is not on the book (IA-P4 review R14);
 --   * market value: the provider's latest position valuation on or before the as_of, summed, converted from the
 --     portfolio's base currency into the home currency at the as_of's rate;
 --   * cash: the effective ledger's cash leg (the substrate's reversal pairs dropped) to the as_of, EVERY currency,
@@ -21,7 +24,8 @@
 --   psql "$DSN" -X -q --csv -v ON_ERROR_STOP=1 -v client=conseq:… -v as_of=YYYY-MM-DD -f scripts/sql/overview-reference.sql
 --   psql "$DSN" -X -q --csv -v ON_ERROR_STOP=1 -v client= -v as_of=YYYY-MM-DD -f …   # the whole book
 --
--- One read-only statement (the drill's session is a read-only one). One row per open portfolio, UNROUNDED.
+-- One read-only statement (the drill's session is a read-only one). One row per open portfolio, UNROUNDED, each
+-- carrying `open_clients` — the book's open clients, counted whether or not they hold an open portfolio.
 
 WITH prm AS (
     SELECT CAST(:'as_of' AS DATE) AS as_of,
@@ -37,7 +41,11 @@ WITH prm AS (
     SELECT p.external_id AS pid, p.client_ref AS client_id, p.base_currency AS base
       FROM investment_portfolio p, prm
      WHERE p.valid_to IS NULL
-       AND (prm.client IS NULL OR p.client_ref = prm.client)
+       AND (CASE WHEN prm.client IS NULL
+                 THEN p.client_ref IN (SELECT c.external_id FROM investment_client c WHERE c.valid_to IS NULL)
+                 ELSE p.client_ref = prm.client END)
+), open_clients AS (
+    SELECT COUNT(DISTINCT c.external_id) AS n FROM investment_client c WHERE c.valid_to IS NULL
 ), rate AS (
     -- what one unit of `cur` is worth in the home currency on each day; the home currency at 1
     SELECT d.d, c.cur,
@@ -94,7 +102,8 @@ SELECT p.client_id,
        cr.cash_rc,
        vn.v AS value_rc,
        vq.v AS value_prev_quarter_end,
-       (vn.v / NULLIF(vq.v, 0) - 1) * 100 AS chg_qoq_pct
+       (vn.v / NULLIF(vq.v, 0) - 1) * 100 AS chg_qoq_pct,
+       (SELECT n FROM open_clients) AS open_clients
   FROM portfolio p
   LEFT JOIN market m ON m.pid = p.pid
   LEFT JOIN rate rb ON rb.d = 'now' AND rb.cur = p.base

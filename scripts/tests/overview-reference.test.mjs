@@ -80,9 +80,12 @@ const quarterBefore = (day) => {
   return monthEnd(first === 1 ? y - 1 : y, first === 1 ? 12 : first - 1);
 };
 
+// the fixture's clients are all open versions (loaded with no valid_to) — the book is its open clients' portfolios
+const openClients = new Set(book.clients.map((c) => c.client_id));
+
 function expectedOverview(client) {
   return book.portfolios
-    .filter((p) => !client || p.client_id === client)
+    .filter((p) => (client ? p.client_id === client : openClients.has(p.client_id)))
     .map((p) => {
       const mv = p.valuation && p.valuation.valuation_date <= AS_OF ? Object.values(p.valuation.market_values).filter((v) => v !== null).reduce((a, v) => a + Number(v), 0) : null;
       const cash = {};
@@ -201,10 +204,35 @@ for (const [name, client] of [['client-overview', CLIENT], ['distributor-overvie
       assert.equal(r.client_id, w.client_id);
       for (const k of ['market_value_rc', 'cash_rc', 'value_rc', 'value_prev_quarter_end']) close(r[k], w[k], 0.005, `${w.portfolio_id} ${k}`);
       close(r.chg_qoq_pct, w.chg_qoq_pct, 1e-6, `${w.portfolio_id} chg_qoq_pct`);
+      assert.equal(r.open_clients, String(openClients.size), `${w.portfolio_id} open_clients`);
     }
     save(`reference-${name}.csv`, csv);
   });
 }
+
+test('distributor-overview: the book is its OPEN clients — one with no open portfolio still counts, a portfolio of a closed or unknown client is not on it', () => {
+  ready();
+  // edge rows inside one session, rolled back — the saved references above stay the fixture's own
+  const edges = [
+    "INSERT INTO investment_client (external_id, name, valid_from) VALUES ('conseq:8809002', 'Edge: open, no portfolio', '2024-01-01');",
+    "INSERT INTO investment_client (external_id, name, valid_from, valid_to) VALUES ('conseq:8809003', 'Edge: closed', '2024-01-01', '2025-12-31');",
+    "INSERT INTO investment_portfolio (external_id, label, client_ref, base_currency, state, valid_from) VALUES " +
+      "('conseq:200900003', 'Edge: of a closed client', 'conseq:8809003', 'CZK', 'active', '2024-01-01'), " +
+      "('conseq:200900004', 'Edge: of no client', 'conseq:8809004', 'CZK', 'active', '2024-01-01');",
+  ];
+  const within = (client) =>
+    rows(
+      execFileSync('psql', [DSN, '-X', '-q', '--csv', '-v', 'ON_ERROR_STOP=1', '-v', `client=${client}`, '-v', `as_of=${AS_OF}`], {
+        encoding: 'utf8',
+        input: ['BEGIN;', ...edges, `\\i ${path.join(SQL, 'overview-reference.sql')}`, 'ROLLBACK;', ''].join('\n'),
+      }),
+    );
+  const whole = within('');
+  assert.deepEqual(whole.map((r) => r.portfolio_id), expectedOverview('').map((w) => w.portfolio_id));
+  assert.ok(whole.every((r) => r.open_clients === String(openClients.size + 1)), JSON.stringify(whole.map((r) => r.open_clients)));
+  // a client's own overview reads that client's open portfolios, whatever the client's state — as client_overview does
+  assert.deepEqual(within('conseq:8809003').map((r) => r.portfolio_id), ['conseq:200900003']);
+});
 
 test('sync-run-changes: a committed run’s changed rows per target, from its entry records', () => {
   ready();

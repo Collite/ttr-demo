@@ -150,6 +150,19 @@ test('distributor-overview: a portfolio the workbook does not list — the key a
   assert.match(r.out, /Book: open portfolios: workbook 2 · book 3/);
 });
 
+test('distributor-overview: the Book’s Clients is every open client — one with no open portfolio counts too', () => {
+  const c = reference(CASES['distributor-overview:v1']);
+  const r = compareWith('distributor-overview:v1', edited(c, (rows) => rows.forEach((x) => (x.open_clients = '2'))));
+  assert.equal(r.code, 1, r.out);
+  assert.match(r.out, /Book: clients: workbook 1 · book 2/);
+  // a reference without the count is not this one's answer
+  const lines = readFileSync(c, 'utf8').trimEnd().split('\n');
+  const at = lines[0].split(',').indexOf('open_clients');
+  const old = compareWith('distributor-overview:v1', `${lines.map((l) => l.split(',').filter((_, i) => i !== at).join(',')).join('\n')}\n`);
+  assert.equal(old.code, 2, old.out);
+  assert.match(old.out, /no open_clients column/);
+});
+
 test('sync-run-changes: a changed count off by one is named; a run the reference refuses is not compared', () => {
   const c = reference(CASES['sync-run-changes:v1']);
   let r = compareWith('sync-run-changes:v1', edited(c, (rows) => (rows.find((x) => x.target === 'investment.transaction').changed = '4')));

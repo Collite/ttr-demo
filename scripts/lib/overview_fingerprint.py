@@ -185,10 +185,17 @@ def distributor_overview(wb: Workbook, ref: list[dict[str, str]], d: Diff) -> st
             if header in ("Market value", "Cash"):
                 continue  # the book's Portfolios sheet prints the value and its quarter-on-quarter change
             d.num(f"{p} {key}", got[p][header], want[p][key], kind)
+    # the book's clients are its OPEN clients, whether or not one holds an open portfolio (IA-P4 review R14) — the
+    # reference counts them on every row, so the count does not depend on which clients have portfolios
+    if not ref:
+        raise Refused("the book holds no open portfolio of an open client — there is nothing to hold")
+    if "open_clients" not in ref[0]:
+        raise Refused("the reference carries no open_clients column — not overview-reference.sql's answer")
+    clients = ref[0]["open_clients"]
     book = wb.facts("Book")
-    d.num("Book: clients", book.get("Clients", {}).get("Count"), str(len({r["client_id"] for r in ref})), "count")
+    d.num("Book: clients", book.get("Clients", {}).get("Count"), clients, "count")
     d.num("Book: open portfolios", book.get("Open portfolios", {}).get("Count"), str(len(ref)), "count")
-    return f"{len(got)} portfolios of {len({r['client_id'] for r in ref})} clients"
+    return f"{len(got)} portfolios of {clients} open clients"
 
 
 def price_sheet(wb: Workbook, ref: list[dict[str, str]], d: Diff, months: int | None) -> str:
