@@ -1,3 +1,3 @@
-target,batches,committed,changed,refused
-investment.asset_price,1,1,61,
-investment.transaction,2,2,3,
+target,batches,committed,undetailed,changed,refused
+investment.asset_price,1,1,0,61,
+investment.transaction,2,2,0,3,

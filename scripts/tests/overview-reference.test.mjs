@@ -213,8 +213,36 @@ test('sync-run-changes: a committed run’s changed rows per target, from its en
   assert.equal(got['investment.transaction'].changed, '3');
   assert.equal(got['investment.transaction'].batches, '2');
   assert.equal(got['investment.asset_price'].changed, '61');
-  assert.ok(Object.values(got).every((r) => r.refused === ''));
+  assert.ok(Object.values(got).every((r) => r.refused === '' && r.undetailed === '0'));
   save('reference-sync-run-changes.csv', csv);
+});
+
+// the outcomes a change log LISTS as changed (IA-P4 review R5): the journal's `inserted + updated` must equal them
+const CHANGED = new Set(['inserted', 'updated', 'closed', 'reversed']);
+
+test('sync-run-changes: a correction is one changed movement — the effects equal the listed rows whose outcome changed the book', () => {
+  ready();
+  const got = Object.fromEntries(rows(run('sync-run-changes-reference.sql', { run: 'run-correction' })).map((r) => [r.target, r]));
+  // a new movement + a correction (reversed); the unchanged and the refused rows change nothing
+  assert.equal(got['investment.transaction'].changed, '2');
+  assert.equal(got['investment.transaction'].refused, '');
+  // computed HERE from every detailed record's rows: the counts the reference reads are those rows, by outcome
+  const records = JSON.parse(
+    execFileSync('psql', [DSN, '-X', '-q', '-t', '-A', '-c', "SELECT json_agg(json_build_object('batch', batch_id, 'p', payload::json)) FROM entry_record"], { encoding: 'utf8' }),
+  );
+  const detailed = records.filter((r) => Array.isArray(r.p.effects.rows));
+  assert.ok(detailed.length >= 4, `${detailed.length} detailed records`);
+  for (const r of detailed) {
+    const listed = r.p.effects.rows.filter((x) => CHANGED.has(x.outcome)).length;
+    assert.equal(r.p.effects.inserted + r.p.effects.updated, listed, `${r.batch}: effects ${JSON.stringify(r.p.effects)}`);
+  }
+});
+
+test('sync-run-changes: a run committed with counts only is refused — its change log cannot list the rows', () => {
+  ready();
+  const got = rows(run('sync-run-changes-reference.sql', { run: 'run-counts' }));
+  assert.match(got[0].refused, /^1 batch\(es\) of the run were committed with counts only/);
+  assert.equal(got[0].undetailed, '1');
 });
 
 test('sync-run-changes: a run with a batch still held is refused — the journal records only committed effects', () => {

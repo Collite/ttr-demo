@@ -207,14 +207,35 @@ def price_sheet(wb: Workbook, ref: list[dict[str, str]], d: Diff, months: int | 
     return f"{len(rows)} instruments × {len(got_days)} month-ends"
 
 
+# A listed movement that changed the book: the outcomes `Effects.from` counts as written (IA-C13 v1.2) — a ledger
+# correction (`reversed`) and an SCD2 `closed` row each count one `inserted` in the journal's effects, so they are
+# changed movements here too (IA-P4 review R5). `rejected` rows are listed and change nothing.
+CHANGED_OUTCOMES = ("inserted", "updated", "closed", "reversed")
+COUNTS_ONLY = "Batches committed with counts only"
+
+
 def sync_run_changes(wb: Workbook, ref: list[dict[str, str]], d: Diff) -> str:
+    # a batch committed with counts only is counted in the workbook but none of its rows is listed: the listing is a
+    # part, and holding a part to the journal's whole proves nothing either way — refused, as the reference refuses it
+    run = wb.facts("Run")
+    if COUNTS_ONLY not in run:
+        raise Refused(f"the Run sheet has no {COUNTS_ONLY!r} fact — not the change log this reads")
+    undetailed = int(dec(run[COUNTS_ONLY].get("Value")) or 0)
+    if undetailed > 0:
+        raise Refused(f"{undetailed} batch(es) of the run were committed with counts only — the change log cannot list their rows; pick a run committed with rows")
     by_target = {r["target"]: r for r in ref if r.get("target")}
     tx = wb.table("Transactions", "Portfolio")
-    changed = sum(1 for r in tx if r["Outcome"] in ("inserted", "updated"))
-    d.num("movements changed (investment.transaction)", str(changed), by_target.get("investment.transaction", {}).get("changed", "0"), "count")
+    changed = sum(1 for r in tx if r["Outcome"] in CHANGED_OUTCOMES)
     prices = wb.table("Prices", "Count")
-    d.num("prices changed (investment.asset_price)", prices[0]["Count"] if prices else "0", by_target.get("investment.asset_price", {}).get("changed", "0"), "count")
     count = int(dec(prices[0]["Count"]) or 0) if prices else 0
+    book_tx = by_target.get("investment.transaction", {}).get("changed", "0")
+    book_prices = by_target.get("investment.asset_price", {}).get("changed", "0")
+    # 0 = 0 on both counts holds nothing: a run that changed no movement and no price (an hourly run of unchanged rows)
+    # would "pass" while proving no figure — refused, so the evidence is never an empty agreement (R13)
+    if changed == 0 and count == 0 and (dec(book_tx) or 0) == 0 and (dec(book_prices) or 0) == 0:
+        raise Refused("the run changed no movement and no price, in the workbook and in the journal — there is nothing to hold; pick a run that changed something")
+    d.num("movements changed (investment.transaction)", str(changed), book_tx, "count")
+    d.num("prices changed (investment.asset_price)", prices[0]["Count"] if prices else "0", book_prices, "count")
     return f"{changed} movements, {count} prices"
 
 

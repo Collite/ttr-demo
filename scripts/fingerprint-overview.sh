@@ -23,8 +23,10 @@
 #
 #   * The statement's Evolution is held as v2's is (average cost only; a window with an amount no rate converts is not
 #     fingerprinted — `fingerprint-evolution.sh`'s rules).
-#   * The run's change log: a committed run only (a held batch's changes are a preview the journal never records), and
-#     its movements and prices (the Structure sheet attributes rows to portfolios; the journal does not).
+#   * The run's change log: a committed run only (a held batch's changes are a preview the journal never records),
+#     committed WITH ROWS (a batch committed with counts only is counted but never listed — refused), that changed
+#     something (0 = 0 holds nothing — refused); and its movements and prices (the Structure sheet attributes rows to
+#     portfolios; the journal does not). A correction counts as a changed movement, as the journal counts it.
 #
 # Env:
 #   IE_FP_TEMPLATE    the template (or the first argument)
@@ -169,6 +171,8 @@ python3 "$ENGINE" compare "$TEMPLATE" "$WORK/report.xlsx" "$WORK/reference.csv" 
     ${MONTHS:+--months "$MONTHS"}
 rc=$?
 set -e
+# 2: not compared at all — a refusal, whose reason the engine printed above
+[ "$rc" -ne 2 ] || fail "the $TEMPLATE was not compared with the book — the reason is above"
 [ "$rc" -eq 0 ] || fail "the $TEMPLATE a client receives does not match the book"
 
 if [ "$TEMPLATE" = "portfolio-statement:v1" ]; then

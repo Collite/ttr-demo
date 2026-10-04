@@ -54,11 +54,37 @@ function edited(file, edit) {
   return `${head}\n${rows.map((r) => keys.map((k) => r[k] ?? '').join(',')).join('\n')}\n`;
 }
 
-function compareWith(template, csv, extra = []) {
+function compareWith(template, csv, extra = [], wb = workbook(CASES[template])) {
   const dir = mkdtempSync(path.join(tmpdir(), 'ov-fp-'));
   writeFileSync(path.join(dir, 'ref.csv'), csv);
-  return py(ENGINE, 'compare', template, workbook(CASES[template]), path.join(dir, 'ref.csv'), ...(CASES[template].months ?? []), ...extra);
+  return py(ENGINE, 'compare', template, wb, path.join(dir, 'ref.csv'), ...(CASES[template].months ?? []), ...extra);
 }
+
+// The renderer's own workbook with a cell or a shared string changed — `part pattern replacement` triples (Python
+// regexes), each of which must match, so a template change cannot turn a mutation into a silent no-op.
+const MUTATE = `import re, sys, zipfile
+src, dst, *edits = sys.argv[1:]
+hit = [0] * (len(edits) // 3)
+with zipfile.ZipFile(src) as zin, zipfile.ZipFile(dst, 'w', zipfile.ZIP_DEFLATED) as zout:
+    for item in zin.infolist():
+        data = zin.read(item.filename)
+        for i in range(0, len(edits), 3):
+            if edits[i] == item.filename:
+                text, n = re.subn(edits[i + 1], edits[i + 2], data.decode('utf-8'))
+                hit[i // 3] += n
+                data = text.encode('utf-8')
+        zout.writestr(item, data)
+missed = [edits[3 * i + 1] for i, n in enumerate(hit) if n == 0]
+sys.exit(f'no match for {missed}' if missed else 0)
+`;
+function mutated(template, ...edits) {
+  const dir = mkdtempSync(path.join(tmpdir(), 'ov-fp-wb-'));
+  writeFileSync(path.join(dir, 'mutate.py'), MUTATE);
+  const dst = path.join(dir, 'workbook.xlsx');
+  execFileSync('python3', [path.join(dir, 'mutate.py'), workbook(CASES[template]), dst, ...edits], { encoding: 'utf8' });
+  return dst;
+}
+const SST = 'xl/sharedStrings.xml';
 
 // ── the local fingerprint ──────────────────────────────────────────────────────────────────────────────────────
 
@@ -132,6 +158,46 @@ test('sync-run-changes: a changed count off by one is named; a run the reference
   r = compareWith('sync-run-changes:v1', edited(c, (rows) => rows.forEach((x) => (x.refused = '1 batch(es) of the run are not committed'))));
   assert.equal(r.code, 2);
   assert.match(r.out, /cannot be compared: 1 batch\(es\) of the run are not committed/);
+});
+
+test('sync-run-changes: a correction (reversed) and an SCD2 closed row are changed movements, as the journal counts them; a refused row is not', () => {
+  const c = reference(CASES['sync-run-changes:v1']);
+  const csv = readFileSync(c, 'utf8');
+  // the fixture's two inserted movements, listed as corrections — the journal's effects count each as one `inserted`
+  for (const outcome of ['reversed', 'closed']) {
+    const r = compareWith('sync-run-changes:v1', csv, [], mutated('sync-run-changes:v1', SST, '<t>inserted</t>', `<t>${outcome}</t>`));
+    assert.equal(r.code, 0, `${outcome}: ${r.out}`);
+    assert.match(r.out, /3 movements, 61 prices/);
+  }
+  // …but a refused row is listed and changed nothing
+  const r = compareWith('sync-run-changes:v1', csv, [], mutated('sync-run-changes:v1', SST, '<t>inserted</t>', '<t>rejected</t>'));
+  assert.equal(r.code, 1, r.out);
+  assert.match(r.out, /movements changed \(investment\.transaction\): workbook 1 · book 3/);
+});
+
+test('sync-run-changes: a run committed with counts only is refused — the workbook counts rows it cannot list', () => {
+  const c = reference(CASES['sync-run-changes:v1']);
+  // the Run sheet's "Batches committed with counts only" (a shared "0" with its neighbours) made 2
+  const r = compareWith('sync-run-changes:v1', readFileSync(c, 'utf8'), [], mutated('sync-run-changes:v1', SST, '<t>0</t>', '<t>2</t>'));
+  assert.equal(r.code, 2, r.out);
+  assert.match(r.out, /2 batch\(es\) of the run were committed with counts only/);
+});
+
+test('sync-run-changes: 0 = 0 holds nothing — a run that changed no movement and no price is refused; a 0 against 3 is still a difference', () => {
+  const quiet = mutated(
+    'sync-run-changes:v1',
+    SST, '<t>inserted</t>', '<t>unchanged</t>',
+    SST, '<t>updated</t>', '<t>unchanged</t>',
+    'xl/worksheets/sheet4.xml', '(<c r="A5"[^>]*><v>)61\\.0(</v>)', '\\g<1>0.0\\2',
+  );
+  const c = reference(CASES['sync-run-changes:v1']);
+  let r = compareWith('sync-run-changes:v1', edited(c, (rows) => rows.forEach((x) => (x.changed = '0'))), [], quiet);
+  assert.equal(r.code, 2, r.out);
+  assert.match(r.out, /changed no movement and no price/);
+  // the journal says it changed 3 movements and 61 prices; the workbook lists none — a difference, never "nothing to hold"
+  r = compareWith('sync-run-changes:v1', readFileSync(c, 'utf8'), [], quiet);
+  assert.equal(r.code, 1, r.out);
+  assert.match(r.out, /movements changed \(investment\.transaction\): workbook 0 · book 3/);
 });
 
 // ── the script, end to end ─────────────────────────────────────────────────────────────────────────────────────

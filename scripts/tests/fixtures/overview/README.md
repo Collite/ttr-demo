@@ -12,7 +12,7 @@ workbooks were written by kantheon, not here:
 | `workbook-sync-run-changes.xlsx` | `sync-run-changes:v1` of `run-20260930-0530`, over kantheon's fixture change stream | the same, through a stub studio-bff |
 | `reference-*.csv` | `scripts/sql/{statement,overview,price-sheet,sync-run-changes}-reference.sql` run with psql on the fixture loaded into PostgreSQL 16 | `just verify-overview-reference --write` |
 | `overview-schema.sql` | the tables the references read beyond `../evolution/book-schema.sql` (clients, portfolios, the provider's valuation points, the substrate's journal) | — |
-| `journal.sql` | a synthetic journal: the fixture run committed whole, and a run with a batch still held | — |
+| `journal.sql` | a synthetic journal shaped as the substrate writes it (records carry `effects.rows`): the fixture run committed whole, a run with a batch still held, a run with a correction (`reversed`), and a run committed with counts only | — |
 
 The fixture book is `../evolution/fixture-ledger.json` — since IA-P4·S4.3 it carries the provider's own figures the
 overviews read (`market_values` per valuation, `valuation_points`), and kantheon's fixture door answers
