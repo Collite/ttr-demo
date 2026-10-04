@@ -192,7 +192,9 @@ async function run(template, opts = {}) {
     const result = await new Promise((resolve) => {
       const proc = spawn('bash', [SCRIPT, template, ...(opts.args ?? [])], {
         cwd: h.dir,
-        stdio: ['pipe', 'pipe', 'pipe', 'pipe'],
+        // fd 3 only for a test that hands the token over a pipe — on Linux an extra stdio pipe is a socket pair whose
+        // read side errors (ECONNRESET) once the child exits, so it also gets an error handler below
+        stdio: opts.fd3 !== undefined ? ['pipe', 'pipe', 'pipe', 'pipe'] : ['pipe', 'pipe', 'pipe'],
         env: {
           ...process.env,
           PATH: `${h.dir}:${process.env.PATH}`,
@@ -204,8 +206,10 @@ async function run(template, opts = {}) {
           ...(opts.env ?? {}),
         },
       });
-      if (opts.fd3 !== undefined) proc.stdio[3].end(opts.fd3);
-      else proc.stdio[3].end();
+      if (opts.fd3 !== undefined) {
+        proc.stdio[3].on('error', () => {});
+        proc.stdio[3].end(opts.fd3);
+      }
       let out = '';
       proc.stdout.on('data', (x) => (out += x));
       proc.stderr.on('data', (x) => (out += x));

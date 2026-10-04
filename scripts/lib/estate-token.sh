@@ -42,7 +42,12 @@ estate_token() {
     local bearer="${!bearer_var:-}" url="${!url_var:-}" client="${!id_var:-}" secret="${!secret_var:-}"
 
     if [ -z "$bearer" ] && [ -n "${!file_var:-}" ]; then
-        IFS= read -r bearer <"${!file_var}" || true
+        # `/dev/fd/N` is read from the descriptor itself: on Linux, OPENING /dev/fd/N fails (ENXIO) when N is a socket
+        if [[ "${!file_var}" =~ ^/dev/fd/([0-9]+)$ ]]; then
+            IFS= read -r -u "${BASH_REMATCH[1]}" bearer || true
+        else
+            IFS= read -r bearer <"${!file_var}" || true
+        fi
     fi
     if [ -n "$bearer" ]; then
         printf '%s' "$bearer"
