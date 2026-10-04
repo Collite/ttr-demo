@@ -178,7 +178,9 @@ printf 'running %s in %s/%s …\n' "$JOB" "$CTX" "$NS"
 kubectl --context "$CTX" -n "$NS" wait --for=condition=complete "job/$JOB" --timeout=600s >/dev/null 2>&1 \
     || kubectl --context "$CTX" -n "$NS" wait --for=condition=failed "job/$JOB" --timeout=5s >/dev/null 2>&1 || true
 LOG="$(mktemp)"
-kubectl --context "$CTX" -n "$NS" logs "job/$JOB" --tail=400 >"$LOG" 2>&1 || true
+# The WHOLE log (`--tail=-1`): a fingerprint block is printed whole and lifted from here, and a price sheet's runs
+# to instruments × month-ends lines — a tail of a few hundred cut its BEGIN line off and the save found nothing.
+kubectl --context "$CTX" -n "$NS" logs "job/$JOB" --tail=-1 >"$LOG" 2>&1 || true
 cat "$LOG"
 
 # A fingerprint printed by a run in a pod is the only copy — the Job's filesystem goes with it. Lift it
