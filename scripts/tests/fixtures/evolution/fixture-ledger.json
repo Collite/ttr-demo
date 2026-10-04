@@ -1,0 +1,949 @@
+{
+ "_": [
+  "IA-P4·S4.1 T1 — the period evolution's hand fixture. Written BEFORE PeriodEvolution existed; the expected rows",
+  "(expected-average.csv, expected-fifo.csv) are worked in README.md, never produced by the code under test.",
+  "The window: from 2025-07-01 to as_of 2026-06-15 — twelve monthly periods (the last partial), four quarterly; the",
+  "opening boundary is 2025-06-30. Home currency CZK. P1 reports in CZK (no setting), P2 in USD.",
+  "What it exercises: average vs FIFO (P1's A sale takes one lot and part of another; B's two lots carry different",
+  "EUR rates); a EUR-priced fund settled in CZK (B) and its exchange-rate split; EUR cash (P1's cash leg) and its",
+  "revaluation; a portfolio reporting in USD (P2, every amount converted); a transfer-in without an amount (P1 A",
+  "09-05, cost = the latest price on or before its day); a transfer-in with one (P2 E); a transfer-out (P1 A 04-15,",
+  "at cost, no realized); a payout at par (P1 C 04-10); a month with no movements (2025-08 for P1); a period whose",
+  "opening holds nothing (P2 before 08-12); a substrate correction pair (C 10-10: original + -rev dropped by the",
+  "effective ledger, -rep kept); a Conseq storno pair across a month-end (A 02-26 buy, 03-03 reversal-of-buy: paired",
+  "and dropped by PeriodInputs, while the door's own units carry the buy at 02-28); a never-priced instrument (E);",
+  "units the ledger does not explain (D: the provider holds 500, the ledger only sold 200 — 700 held before the",
+  "ledger began, taken at the opening market value, S4.1·D2); and a purchase still settling at the provider's",
+  "valuation (A 06-10, inside the 20 days before 06-12: the provider's 700 against the ledger's 800 is no gap).",
+  "IA-P4·S4.3 adds the provider's own figures the overviews read (client_overview, IA-C41/C70/C73): each valuation's",
+  "market_values (base CZK; P1's EUR fund at 90 × 10.00 × 24.60, the EUR rate of 05-29; E unpriced, null) and",
+  "valuation_points — the provider's total (holdings + cash) at 2026-03-31 and at 2026-06-12, P2's in USD."
+ ],
+ "home_currency": "CZK",
+ "window": {
+  "from": "2025-07-01",
+  "as_of": "2026-06-15"
+ },
+ "clients": [
+  {
+   "client_id": "conseq:8809001",
+   "name": "Fixture Client"
+  }
+ ],
+ "portfolios": [
+  {
+   "portfolio_id": "conseq:200900001",
+   "name": "Fixture growth",
+   "client_id": "conseq:8809001",
+   "base_currency": "CZK",
+   "reporting_currency": null,
+   "valuation": {
+    "valuation_date": "2026-06-12",
+    "units": {
+     "CZ0008474053": "700.000000",
+     "LU0119195450": "90.000000",
+     "CZ0008473618": "500.000000"
+    },
+    "market_values": {
+     "CZ0008474053": "92400.00",
+     "LU0119195450": "22140.00",
+     "CZ0008473618": "61000.00"
+    }
+   }
+  },
+  {
+   "portfolio_id": "conseq:200900002",
+   "name": "Fixture dollar",
+   "client_id": "conseq:8809001",
+   "base_currency": "CZK",
+   "reporting_currency": "USD",
+   "valuation": {
+    "valuation_date": "2026-06-12",
+    "units": {
+     "CZ0008474053": "60.000000",
+     "CZ0001005557": "10.000000"
+    },
+    "market_values": {
+     "CZ0008474053": "7920.00",
+     "CZ0001005557": null
+    }
+   }
+  }
+ ],
+ "assets": {
+  "CZ0008474053": {
+   "name": "Fixture Akcie",
+   "currency": "CZK"
+  },
+  "LU0119195450": {
+   "name": "Fixture Euro Fund",
+   "currency": "EUR"
+  },
+  "CZ0003704900": {
+   "name": "Fixture Bond 2026",
+   "currency": "CZK"
+  },
+  "CZ0008473618": {
+   "name": "Fixture Legacy Fund",
+   "currency": "CZK"
+  },
+  "CZ0001005557": {
+   "name": "Fixture Unpriced",
+   "currency": "CZK"
+  }
+ },
+ "movements": [
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:FLOW:CRE:T001",
+   "trade_date": "2025-01-10",
+   "leg": "external-flow",
+   "operation": "deposit",
+   "isin": null,
+   "quantity": null,
+   "amount": "200000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:SUB:1001",
+   "trade_date": "2025-01-15",
+   "leg": "security",
+   "operation": "buy",
+   "isin": "CZ0008474053",
+   "quantity": "1000.000000",
+   "amount": "100000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:SUB:1002",
+   "trade_date": "2025-02-10",
+   "leg": "security",
+   "operation": "buy",
+   "isin": "CZ0008474053",
+   "quantity": "500.000000",
+   "amount": "55000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:SUB:1003",
+   "trade_date": "2025-03-12",
+   "leg": "security",
+   "operation": "buy",
+   "isin": "LU0119195450",
+   "quantity": "100.000000",
+   "amount": "25300.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:RED:1004",
+   "trade_date": "2025-07-15",
+   "leg": "security",
+   "operation": "sell",
+   "isin": "CZ0008474053",
+   "quantity": "-1200.000000",
+   "amount": "144000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:FLOW:DEB:T002",
+   "trade_date": "2025-07-20",
+   "leg": "external-flow",
+   "operation": "withdrawal",
+   "isin": null,
+   "quantity": null,
+   "amount": "50000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:TON:1005",
+   "trade_date": "2025-09-05",
+   "leg": "security",
+   "operation": "transfer-in",
+   "isin": "CZ0008474053",
+   "quantity": "300.000000",
+   "amount": null,
+   "currency": null,
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:SUB:1006",
+   "trade_date": "2025-10-10",
+   "leg": "security",
+   "operation": "buy",
+   "isin": "CZ0003704900",
+   "quantity": "100.000000",
+   "amount": "97000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:SUB:1006-rev",
+   "trade_date": "2025-10-10",
+   "leg": "security",
+   "operation": "buy",
+   "isin": "CZ0003704900",
+   "quantity": "100.000000",
+   "amount": "-97000.00",
+   "currency": "CZK",
+   "reversal_of": "conseq:200900001:SUB:1006"
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:SUB:1006-rep",
+   "trade_date": "2025-10-10",
+   "leg": "security",
+   "operation": "buy",
+   "isin": "CZ0003704900",
+   "quantity": "100.000000",
+   "amount": "98000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:CASH:CRE:C001",
+   "trade_date": "2025-11-03",
+   "leg": "cash",
+   "operation": "credit",
+   "isin": null,
+   "quantity": null,
+   "amount": "2000.00",
+   "currency": "EUR",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:FLOW:CRE:T003",
+   "trade_date": "2025-11-03",
+   "leg": "external-flow",
+   "operation": "deposit",
+   "isin": null,
+   "quantity": null,
+   "amount": "2000.00",
+   "currency": "EUR",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:RED:1007",
+   "trade_date": "2025-12-10",
+   "leg": "security",
+   "operation": "sell",
+   "isin": "CZ0008473618",
+   "quantity": "-200.000000",
+   "amount": "23760.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:CASH:DEB:C002",
+   "trade_date": "2025-12-15",
+   "leg": "cash",
+   "operation": "debit",
+   "isin": null,
+   "quantity": null,
+   "amount": "500.00",
+   "currency": "EUR",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:SUB:1008",
+   "trade_date": "2026-01-20",
+   "leg": "security",
+   "operation": "buy",
+   "isin": "LU0119195450",
+   "quantity": "50.000000",
+   "amount": "12350.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:SUB:1009",
+   "trade_date": "2026-02-26",
+   "leg": "security",
+   "operation": "buy",
+   "isin": "CZ0008474053",
+   "quantity": "1000.000000",
+   "amount": "125000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:SST:1010",
+   "trade_date": "2026-03-03",
+   "leg": "security",
+   "operation": "reversal-of-buy",
+   "isin": "CZ0008474053",
+   "quantity": "1000.000000",
+   "amount": "125000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:RED:1011",
+   "trade_date": "2026-03-20",
+   "leg": "security",
+   "operation": "sell",
+   "isin": "LU0119195450",
+   "quantity": "-60.000000",
+   "amount": "15000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:PAY:1012",
+   "trade_date": "2026-04-10",
+   "leg": "security",
+   "operation": "payout",
+   "isin": "CZ0003704900",
+   "quantity": "100.000000",
+   "amount": "100000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:TOFF:1013",
+   "trade_date": "2026-04-15",
+   "leg": "security",
+   "operation": "transfer-out",
+   "isin": "CZ0008474053",
+   "quantity": "100.000000",
+   "amount": null,
+   "currency": null,
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:FLOW:CRE:T004",
+   "trade_date": "2026-05-05",
+   "leg": "external-flow",
+   "operation": "deposit",
+   "isin": null,
+   "quantity": null,
+   "amount": "30000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:SUB:1014",
+   "trade_date": "2026-05-06",
+   "leg": "security",
+   "operation": "buy",
+   "isin": "CZ0008474053",
+   "quantity": "200.000000",
+   "amount": "26000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:SUB:1015",
+   "trade_date": "2026-06-10",
+   "leg": "security",
+   "operation": "buy",
+   "isin": "CZ0008474053",
+   "quantity": "100.000000",
+   "amount": "13200.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900002",
+   "external_id": "conseq:200900002:FLOW:CRE:T101",
+   "trade_date": "2025-08-12",
+   "leg": "external-flow",
+   "operation": "deposit",
+   "isin": null,
+   "quantity": null,
+   "amount": "11900.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900002",
+   "external_id": "conseq:200900002:SUB:2001",
+   "trade_date": "2025-08-12",
+   "leg": "security",
+   "operation": "buy",
+   "isin": "CZ0008474053",
+   "quantity": "100.000000",
+   "amount": "11900.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900002",
+   "external_id": "conseq:200900002:RED:2002",
+   "trade_date": "2026-03-20",
+   "leg": "security",
+   "operation": "sell",
+   "isin": "CZ0008474053",
+   "quantity": "-40.000000",
+   "amount": "5200.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900002",
+   "external_id": "conseq:200900002:FLOW:DEB:T102",
+   "trade_date": "2026-03-25",
+   "leg": "external-flow",
+   "operation": "withdrawal",
+   "isin": null,
+   "quantity": null,
+   "amount": "5200.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900002",
+   "external_id": "conseq:200900002:TON:2003",
+   "trade_date": "2026-05-20",
+   "leg": "security",
+   "operation": "transfer-in",
+   "isin": "CZ0001005557",
+   "quantity": "10.000000",
+   "amount": "1000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  }
+ ],
+ "prices": [
+  {
+   "isin": "CZ0008474053",
+   "price_date": "2025-06-30",
+   "price": "115",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008474053",
+   "price_date": "2025-07-31",
+   "price": "120",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008474053",
+   "price_date": "2025-08-31",
+   "price": "118",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008474053",
+   "price_date": "2025-09-30",
+   "price": "121",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008474053",
+   "price_date": "2025-10-31",
+   "price": "123",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008474053",
+   "price_date": "2025-11-30",
+   "price": "122",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008474053",
+   "price_date": "2025-12-31",
+   "price": "125",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008474053",
+   "price_date": "2026-01-31",
+   "price": "126",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008474053",
+   "price_date": "2026-02-28",
+   "price": "124",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008474053",
+   "price_date": "2026-03-31",
+   "price": "128",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008474053",
+   "price_date": "2026-04-30",
+   "price": "129",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008474053",
+   "price_date": "2026-05-31",
+   "price": "131",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008474053",
+   "price_date": "2026-06-12",
+   "price": "132",
+   "currency": "CZK"
+  },
+  {
+   "isin": "LU0119195450",
+   "price_date": "2025-06-30",
+   "price": "10.00",
+   "currency": "EUR"
+  },
+  {
+   "isin": "LU0119195450",
+   "price_date": "2025-07-31",
+   "price": "10.10",
+   "currency": "EUR"
+  },
+  {
+   "isin": "LU0119195450",
+   "price_date": "2025-08-31",
+   "price": "10.05",
+   "currency": "EUR"
+  },
+  {
+   "isin": "LU0119195450",
+   "price_date": "2025-09-30",
+   "price": "9.90",
+   "currency": "EUR"
+  },
+  {
+   "isin": "LU0119195450",
+   "price_date": "2025-10-31",
+   "price": "9.95",
+   "currency": "EUR"
+  },
+  {
+   "isin": "LU0119195450",
+   "price_date": "2025-11-30",
+   "price": "10.00",
+   "currency": "EUR"
+  },
+  {
+   "isin": "LU0119195450",
+   "price_date": "2025-12-31",
+   "price": "10.20",
+   "currency": "EUR"
+  },
+  {
+   "isin": "LU0119195450",
+   "price_date": "2026-01-31",
+   "price": "10.00",
+   "currency": "EUR"
+  },
+  {
+   "isin": "LU0119195450",
+   "price_date": "2026-02-28",
+   "price": "10.10",
+   "currency": "EUR"
+  },
+  {
+   "isin": "LU0119195450",
+   "price_date": "2026-03-31",
+   "price": "10.00",
+   "currency": "EUR"
+  },
+  {
+   "isin": "LU0119195450",
+   "price_date": "2026-04-30",
+   "price": "9.80",
+   "currency": "EUR"
+  },
+  {
+   "isin": "LU0119195450",
+   "price_date": "2026-05-31",
+   "price": "9.90",
+   "currency": "EUR"
+  },
+  {
+   "isin": "LU0119195450",
+   "price_date": "2026-06-12",
+   "price": "10.00",
+   "currency": "EUR"
+  },
+  {
+   "isin": "CZ0003704900",
+   "price_date": "2025-09-30",
+   "price": "990",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0003704900",
+   "price_date": "2025-10-31",
+   "price": "985",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0003704900",
+   "price_date": "2025-11-30",
+   "price": "990",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0003704900",
+   "price_date": "2025-12-31",
+   "price": "992",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0003704900",
+   "price_date": "2026-01-31",
+   "price": "995",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0003704900",
+   "price_date": "2026-02-28",
+   "price": "996",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0003704900",
+   "price_date": "2026-03-31",
+   "price": "998",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0003704900",
+   "price_date": "2026-04-30",
+   "price": "1000",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0003704900",
+   "price_date": "2026-05-31",
+   "price": "1000",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008473618",
+   "price_date": "2025-06-30",
+   "price": "105",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008473618",
+   "price_date": "2025-07-31",
+   "price": "108",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008473618",
+   "price_date": "2025-08-31",
+   "price": "110",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008473618",
+   "price_date": "2025-09-30",
+   "price": "112",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008473618",
+   "price_date": "2025-10-31",
+   "price": "111",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008473618",
+   "price_date": "2025-11-30",
+   "price": "115",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008473618",
+   "price_date": "2025-12-31",
+   "price": "118",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008473618",
+   "price_date": "2026-01-31",
+   "price": "117",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008473618",
+   "price_date": "2026-02-28",
+   "price": "119",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008473618",
+   "price_date": "2026-03-31",
+   "price": "120",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008473618",
+   "price_date": "2026-04-30",
+   "price": "118",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008473618",
+   "price_date": "2026-05-31",
+   "price": "121",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0008473618",
+   "price_date": "2026-06-12",
+   "price": "122",
+   "currency": "CZK"
+  }
+ ],
+ "rates": [
+  {
+   "currency": "EUR",
+   "rate_date": "2025-03-12",
+   "rate": "25.30",
+   "units": 1
+  },
+  {
+   "currency": "EUR",
+   "rate_date": "2025-06-30",
+   "rate": "25.00",
+   "units": 1
+  },
+  {
+   "currency": "EUR",
+   "rate_date": "2025-07-31",
+   "rate": "25.20",
+   "units": 1
+  },
+  {
+   "currency": "EUR",
+   "rate_date": "2025-08-29",
+   "rate": "25.10",
+   "units": 1
+  },
+  {
+   "currency": "EUR",
+   "rate_date": "2025-09-30",
+   "rate": "24.80",
+   "units": 1
+  },
+  {
+   "currency": "EUR",
+   "rate_date": "2025-10-31",
+   "rate": "24.50",
+   "units": 1
+  },
+  {
+   "currency": "EUR",
+   "rate_date": "2025-11-03",
+   "rate": "24.45",
+   "units": 1
+  },
+  {
+   "currency": "EUR",
+   "rate_date": "2025-11-28",
+   "rate": "24.40",
+   "units": 1
+  },
+  {
+   "currency": "EUR",
+   "rate_date": "2025-12-15",
+   "rate": "24.55",
+   "units": 1
+  },
+  {
+   "currency": "EUR",
+   "rate_date": "2025-12-31",
+   "rate": "24.60",
+   "units": 1
+  },
+  {
+   "currency": "EUR",
+   "rate_date": "2026-01-20",
+   "rate": "24.70",
+   "units": 1
+  },
+  {
+   "currency": "EUR",
+   "rate_date": "2026-01-30",
+   "rate": "24.75",
+   "units": 1
+  },
+  {
+   "currency": "EUR",
+   "rate_date": "2026-02-27",
+   "rate": "24.90",
+   "units": 1
+  },
+  {
+   "currency": "EUR",
+   "rate_date": "2026-03-20",
+   "rate": "25.00",
+   "units": 1
+  },
+  {
+   "currency": "EUR",
+   "rate_date": "2026-03-31",
+   "rate": "25.05",
+   "units": 1
+  },
+  {
+   "currency": "EUR",
+   "rate_date": "2026-04-30",
+   "rate": "24.80",
+   "units": 1
+  },
+  {
+   "currency": "EUR",
+   "rate_date": "2026-05-29",
+   "rate": "24.60",
+   "units": 1
+  },
+  {
+   "currency": "EUR",
+   "rate_date": "2026-06-15",
+   "rate": "24.50",
+   "units": 1
+  },
+  {
+   "currency": "USD",
+   "rate_date": "2025-06-30",
+   "rate": "21.00",
+   "units": 1
+  },
+  {
+   "currency": "USD",
+   "rate_date": "2025-07-31",
+   "rate": "21.50",
+   "units": 1
+  },
+  {
+   "currency": "USD",
+   "rate_date": "2025-08-12",
+   "rate": "21.25",
+   "units": 1
+  },
+  {
+   "currency": "USD",
+   "rate_date": "2025-08-29",
+   "rate": "21.20",
+   "units": 1
+  },
+  {
+   "currency": "USD",
+   "rate_date": "2025-09-30",
+   "rate": "21.00",
+   "units": 1
+  },
+  {
+   "currency": "USD",
+   "rate_date": "2025-10-31",
+   "rate": "21.40",
+   "units": 1
+  },
+  {
+   "currency": "USD",
+   "rate_date": "2025-11-28",
+   "rate": "21.60",
+   "units": 1
+  },
+  {
+   "currency": "USD",
+   "rate_date": "2025-12-31",
+   "rate": "21.30",
+   "units": 1
+  },
+  {
+   "currency": "USD",
+   "rate_date": "2026-01-30",
+   "rate": "21.10",
+   "units": 1
+  },
+  {
+   "currency": "USD",
+   "rate_date": "2026-02-27",
+   "rate": "21.00",
+   "units": 1
+  },
+  {
+   "currency": "USD",
+   "rate_date": "2026-03-20",
+   "rate": "20.80",
+   "units": 1
+  },
+  {
+   "currency": "USD",
+   "rate_date": "2026-03-31",
+   "rate": "20.85",
+   "units": 1
+  },
+  {
+   "currency": "USD",
+   "rate_date": "2026-04-30",
+   "rate": "20.90",
+   "units": 1
+  },
+  {
+   "currency": "USD",
+   "rate_date": "2026-05-29",
+   "rate": "21.20",
+   "units": 1
+  },
+  {
+   "currency": "USD",
+   "rate_date": "2026-06-15",
+   "rate": "21.00",
+   "units": 1
+  }
+ ],
+ "valuation_points": [
+  {
+   "portfolio": "conseq:200900001",
+   "valuation_date": "2026-03-31",
+   "value": "205000.00",
+   "currency": "CZK"
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "valuation_date": "2026-06-12",
+   "value": "212440.00",
+   "currency": "CZK"
+  },
+  {
+   "portfolio": "conseq:200900002",
+   "valuation_date": "2026-03-31",
+   "value": "380.00",
+   "currency": "USD"
+  },
+  {
+   "portfolio": "conseq:200900002",
+   "valuation_date": "2026-06-12",
+   "value": "377.14",
+   "currency": "USD"
+  }
+ ]
+}

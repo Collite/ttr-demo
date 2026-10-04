@@ -2443,3 +2443,86 @@ def query clients_list {
         { name: as_of, type: date, label: "As of date" }
     ]
 }
+
+// IA-P4·S4.1 (F1) — the rates the period evolution converts at (contracts IA-C45, IA-C66). The renderer cannot
+// convert in SQL: an average cost books each purchase at ITS day's rate, recursively, so it needs the rates
+// themselves — at every grid date and at every movement's trade date. One read for the whole window: every day a
+// rate changed on, and the first day, each with every currency's rate on it by the ONE canonical rule
+// (fx-rate.cte.sql, T1.21) — so the renderer only looks a day up as "the latest of these days on or before it".
+def query conversion_rates {
+    description: "The exchange rates a portfolio's figures convert at between two days: on the first day and on every day a rate changed, each currency's worth in the home currency — the latest rate on or before that day, per unit, the home currency at 1 — with the portfolio's reporting currency and the home currency."
+    language: SQL
+    sourceText: """
+        WITH rate_day AS (
+          -- the window's first day, and every later day in it on which some rate was entered: between two of these
+          -- days no rate changes, so a day reads the latest of them on or before it. COALESCE types the parameter, as
+          -- the grid's does (the door strips a bare CAST of it); the MAX only gives it a date-typed partner and the
+          -- branch one row.
+          SELECT rr.rate_date AS rd_day
+          FROM investment_fx_rate rr
+          WHERE rr.rate_date > {from_date}
+            AND rr.rate_date <= {to_date}
+          GROUP BY rr.rate_date
+          UNION ALL
+          SELECT CAST(COALESCE({from_date}, MAX(xr.rate_date)) AS DATE)
+          FROM investment_fx_rate xr
+        )
+        , day_rate AS (
+          SELECT lr.dr_day, lr.dr_currency, CAST(fr.rate AS FLOAT) / fr.units AS dr_rate
+          FROM (SELECT d1.rd_day AS dr_day, r1.currency AS dr_currency, MAX(r1.rate_date) AS dr_date
+                  FROM rate_day d1
+                  JOIN investment_fx_rate r1
+                    ON r1.rate_date <= d1.rd_day
+                  LEFT JOIN investment_estate_setting h1
+                    ON h1.home_currency = r1.currency
+                 WHERE h1.home_currency IS NULL
+                 GROUP BY d1.rd_day, r1.currency) lr
+          JOIN investment_fx_rate fr
+            ON fr.currency = lr.dr_currency
+           AND fr.rate_date = lr.dr_date
+          UNION ALL
+          SELECT d2.rd_day, h2.home_currency, CAST(1 AS FLOAT)
+          FROM rate_day d2
+          CROSS JOIN investment_estate_setting h2
+          GROUP BY d2.rd_day, h2.home_currency
+        )
+        , reporting AS (
+          -- IA-C67: the portfolio's reporting currency — its setting; no row, or a NULL in it, is the home currency.
+          -- ONE ungrouped aggregate over a union, so ONE row even when a table is empty (portfolio_value_series').
+          SELECT COALESCE(MAX(rp.rp_setting), MAX(rp.rp_home)) AS rc_currency, MAX(rp.rp_home) AS rc_home
+          FROM (SELECT ps.reporting_currency AS rp_setting, CAST(NULL AS VARCHAR) AS rp_home
+                  FROM investment_portfolio_setting ps
+                 WHERE ps.portfolio_ref = {portfolio_id}
+                UNION ALL
+                SELECT CAST(NULL AS VARCHAR), hs.home_currency
+                  FROM investment_estate_setting hs) rp
+        )
+        -- one row per day and currency (the fragment groups so, and leaves the home currency's own rate rows out),
+        -- sorted on that pair — the renderer pages over it (DoorPaging), so it is a total order (T1.19)
+        SELECT d.dr_day AS rate_day,
+               d.dr_currency AS currency,
+               d.dr_rate AS rate,
+               rc.rc_currency AS reporting_currency,
+               rc.rc_home AS home_currency
+        FROM day_rate d
+        CROSS JOIN reporting rc
+        ORDER BY rate_day, currency
+    """
+    search {
+        patterns: [
+            "exchange rates? (for|of) (the )?portfolio (between|from)",
+            "(what|which) (exchange )?rates? (did|does) (the )?portfolio convert at",
+            "prehled kurzu (pro|k) portfoliu",
+            "prepocitaci kurzy (za obdobi|mezi daty)"
+        ],
+        examples: [
+            "Which exchange rates does the portfolio convert at this year?",
+            "Jakými kurzy se přepočítává portfolio od ledna?"
+        ]
+    }
+    parameters: [
+        { name: portfolio_id, type: text, label: "Portfolio id (conseq:<ContractId>)" },
+        { name: from_date, type: date, label: "From date (inclusive)" },
+        { name: to_date, type: date, label: "To date (inclusive)" }
+    ]
+}

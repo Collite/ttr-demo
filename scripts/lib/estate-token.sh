@@ -22,6 +22,8 @@
 # `<PREFIX>_BEARER`             a token, used verbatim — a person's, which is what the WRITE drills
 #                               still take (a service account that can write to an append-only ledger
 #                               from a script is a decision, not a convenience).
+# `<PREFIX>_BEARER_FILE`        a file whose first line is that token — a pipe (`…_BEARER_FILE=/dev/fd/3
+#                               … 3< <(…)`), so a person's token is in neither the environment nor a file.
 # `<PREFIX>_OIDC_TOKEN_URL`     the realm's token endpoint.
 # `<PREFIX>_OIDC_CLIENT_ID`     `estate-drill`.
 # `<PREFIX>_OIDC_CLIENT_SECRET` from the `estate-drill-oidc` Secret (key ESTATE_DRILL_CLIENT_SECRET).
@@ -36,8 +38,17 @@ estate_token() {
     local url_var="${prefix}_OIDC_TOKEN_URL"
     local id_var="${prefix}_OIDC_CLIENT_ID"
     local secret_var="${prefix}_OIDC_CLIENT_SECRET"
+    local file_var="${prefix}_BEARER_FILE"
     local bearer="${!bearer_var:-}" url="${!url_var:-}" client="${!id_var:-}" secret="${!secret_var:-}"
 
+    if [ -z "$bearer" ] && [ -n "${!file_var:-}" ]; then
+        # `/dev/fd/N` is read from the descriptor itself: on Linux, OPENING /dev/fd/N fails (ENXIO) when N is a socket
+        if [[ "${!file_var}" =~ ^/dev/fd/([0-9]+)$ ]]; then
+            IFS= read -r -u "${BASH_REMATCH[1]}" bearer || true
+        else
+            IFS= read -r bearer <"${!file_var}" || true
+        fi
+    fi
     if [ -n "$bearer" ]; then
         printf '%s' "$bearer"
         return 0
