@@ -303,6 +303,25 @@ test('⛔ a plain return apart by more than 0.0001 pp fails; by rounding alone i
   assert.match(far.out, /Summary plain_return_pct/);
 });
 
+test('R9 · a cell both sides leave empty (a cost nobody knows) agrees; empty on one side only is a difference', () => {
+  const c = CASES.month;
+  const dir = mkdtempSync(path.join(tmpdir(), 'ev-cmp-'));
+  const wb = JSON.parse(engine('sheet', path.join(FIX, c.workbook), c.portfolio).out);
+  const ref = JSON.parse(engine('reference', path.join(FIX, c.reference)).out);
+  const blank = (row) => Object.assign(row, { invested_close: '', unrealized_close: '', sales_at_cost: '', unexplained: '' });
+  blank(wb.rows[3]);
+  writeFileSync(path.join(dir, 'w.json'), JSON.stringify(wb));
+  writeFileSync(path.join(dir, 'r1.json'), JSON.stringify(ref));
+  const one = engine('compare', path.join(dir, 'w.json'), path.join(dir, 'r1.json'));
+  assert.equal(one.code, 1, one.out);
+  assert.match(one.out, /2025-10 invested_close: workbook None, reference [\d.]+/);
+  assert.match(one.out, /2025-10: the workbook's unexplained is empty, not 0\.00/);
+  blank(ref.rows[3]);
+  writeFileSync(path.join(dir, 'r2.json'), JSON.stringify(ref));
+  const both = engine('compare', path.join(dir, 'w.json'), path.join(dir, 'r2.json'));
+  assert.equal(both.code, 0, both.out);
+});
+
 test('⛔ a missing period is caught', () => {
   const { code, out } = compared(CASES.quarter, (wb) => wb.rows.pop());
   assert.equal(code, 1, out);

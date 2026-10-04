@@ -8,6 +8,8 @@ Everything here is SYNTHETIC — two invented portfolios of an invented client �
 | `expected-average.csv` | its answers, worked by hand (kantheon's `README.md` there shows the working) and checked by an independent script | the same |
 | `workbook-200900001-month.xlsx`, `workbook-200900002-quarter.xlsx` | `investment-evolution:v2` rendered over that fixture, 2025-07-01 … 2026-06-15, average cost — the renderer's own output | kantheon report-renderer (IA-P4·S4.2), through its fixture door |
 | `reference-200900001-month.csv`, `reference-200900002-quarter.csv` | `scripts/sql/evolution-reference.sql` run with psql on the fixture loaded into PostgreSQL 16 | `just verify-evolution-reference` |
+| `expected-as-of-2026-03-15-average.csv` | the main fixture's answers for a window ending BEFORE the provider's valuation (2026-03-15): the gap is still read against the ledger to the valuation day (IA-P4 review R1) | kantheon (`reference.py --as-of`) |
+| `fixture-cases.json`, `expected-cases-average.csv` | a book of its own (client `conseq:8809002`): P3 same-day movements — a storno answered before its original, a sale before its buy (R3); P4 a holding deemed at the opening with no opening price, whose cost is unknown (R9) — and their answers | kantheon (`reference.py`, its README shows the working) |
 | `book-schema.sql` | the six tables the reference reads, with the estate's column types | — |
 
 Three sides that share no code: the hand answers, the renderer's workbook, and the reference on PostgreSQL.

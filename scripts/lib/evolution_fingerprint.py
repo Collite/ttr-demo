@@ -202,20 +202,27 @@ def read_reference(path: str) -> dict:
 
 
 def summarize(rows: list[dict[str, str]]) -> dict[str, str]:
-    """IA-C48's Summary from the reference's rows — the renderer's rules (kantheon `SummaryModel`), written again."""
+    """IA-C48's Summary from the reference's rows — the renderer's rules (kantheon `SummaryModel`), written again. An
+    unknown part (an empty cell: a cost nobody knows, IA-P4 review R9) makes every figure built from it unknown."""
 
-    def total(k: str) -> Decimal:
-        return sum((dec(r[k]) or Decimal(0)) for r in rows)
+    def total(k: str) -> Decimal | None:
+        values = [dec(r[k]) for r in rows]
+        return None if any(v is None for v in values) else sum(values, Decimal(0))
 
-    start = dec(rows[0]["unrealized_open"]) or Decimal(0)
-    end = dec(rows[-1]["unrealized_close"]) or Decimal(0)
+    def known(*xs: Decimal | None) -> bool:
+        return all(x is not None for x in xs)
+
+    start = dec(rows[0]["unrealized_open"])
+    end = dec(rows[-1]["unrealized_close"])
     realized = total("realized_total")
     costs = total("costs_total")
     fx_cash = total("fx_cash")
-    performance = realized + (end - start) - costs + fx_cash
-    average = total("invested_open") / len(rows)
+    performance = realized + (end - start) - costs + fx_cash if known(realized, end, start, costs, fx_cash) else None
+    invested = total("invested_open")
+    average = invested / len(rows) if invested is not None else None
+    deposits, withdrawals = total("deposits"), total("withdrawals")
     out = {
-        "net_contributions": total("deposits") - total("withdrawals"),
+        "net_contributions": deposits - withdrawals if known(deposits, withdrawals) else None,
         "realized_sales_total": total("realized_sales"),
         "fx_realized_total": total("fx_realized"),
         "income_total": total("income"),
@@ -224,9 +231,9 @@ def summarize(rows: list[dict[str, str]]) -> dict[str, str]:
         "fx_cash_total": fx_cash,
         "unrealized_start": start,
         "unrealized_end": end,
-        "fx_unrealized_end": dec(rows[-1]["fx_unrealized_close"]) or Decimal(0),
+        "fx_unrealized_end": dec(rows[-1]["fx_unrealized_close"]),
         "performance": performance,
-        "plain_return_pct": (performance * 100 / average) if average > 0 else None,
+        "plain_return_pct": (performance * 100 / average) if known(performance, average) and average > 0 else None,
     }
     return {k: ("" if v is None else str(v)) for k, v in out.items()}
 
@@ -243,9 +250,11 @@ def compare(workbook: dict, reference: dict, tolerance: Decimal, return_toleranc
         return [f"the workbook is costed `{method}`; the reference computes average cost only"]
 
     w, r = workbook["rows"], reference["rows"]
-    for row in w:
+    for i, row in enumerate(w):
         u = dec(row["unexplained"])
-        if u is None or abs(u) >= Decimal("0.005"):
+        # empty is a cost nobody knows (R9) — checkable only as "the book does not know it either"
+        unknown_too = u is None and i < len(r) and dec(r[i]["unexplained"]) is None
+        if not unknown_too and (u is None or abs(u) >= Decimal("0.005")):
             problems.append(f"{row['period']}: the workbook's unexplained is {row['unexplained'] or 'empty'}, not 0.00")
         if (dec(row["unconverted"]) or 0) != 0 or row["missing_rate"]:
             problems.append(
@@ -264,6 +273,8 @@ def compare(workbook: dict, reference: dict, tolerance: Decimal, return_toleranc
                     problems.append(f"{a['period']} {k}: workbook {a[k]}, reference {b[k]}")
             else:
                 x, y = cents(dec(a[k])), cents(dec(b[k]))
+                if x is None and y is None:
+                    continue  # both unknown (R9) — an agreement, not a figure
                 if x is None or y is None or abs(x - y) > tolerance:
                     problems.append(f"{a['period']} {k}: workbook {x}, reference {y}")
 
@@ -273,6 +284,8 @@ def compare(workbook: dict, reference: dict, tolerance: Decimal, return_toleranc
         return problems
     for k in SUMMARY_MONEY:
         x, y = cents(dec(ws.get(k))), cents(dec(rs.get(k)))
+        if x is None and y is None:
+            continue
         if x is None or y is None or abs(x - y) > tolerance:
             problems.append(f"Summary {k}: workbook {x}, reference {y}")
     x, y = dec(ws.get("plain_return_pct")), dec(rs.get("plain_return_pct"))
@@ -297,6 +310,8 @@ def expect(reference: dict, expected_csv: str, key: str, grain: str, tolerance: 
                     problems.append(f"{a['period']} {k}: computed {a[k]!r}, expected {b[k]!r}")
             else:
                 x, y = dec(a[k]), dec(b[k])
+                if x is None and y is None:
+                    continue  # unknown on both sides (R9: a cost nobody knows)
                 if x is None or y is None or abs(x - y) > tolerance:
                     problems.append(f"{a['period']} {k}: computed {cents(x)}, expected {y}")
     return problems

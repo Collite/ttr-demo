@@ -1,0 +1,329 @@
+{
+ "_": [
+  "IA-P4 review (R3, R9) — the cases the period evolution's main fixture does not hold, in a book of their own so",
+  "fixture-ledger.json (and ttr-demo's copy) stay as they were. Worked in README.md § The cases fixture; the expected",
+  "rows (expected-cases-average.csv, expected-cases-fifo.csv) are printed by reference.py, never by the code under test.",
+  "Window 2025-07-01 … 2025-12-31 (six months, two quarters), opening 2025-06-30, everything in CZK (no rate needed).",
+  "P3 — same-day movements whose ids sort against what happened (R3): a buy and its storno on one day (`SST` sorts",
+  "before `SUB`) of an instrument not held (G) and of one held (X); a buy and a sale of a new instrument on one day",
+  "(H, `RED` before `SUB`); a sale and a buy of a held instrument on one day (X 12-05 — average cost changes with the",
+  "order, FIFO does not). P4 — an instrument the ledger does not explain (K: the provider holds 50, the ledger only",
+  "sold 20) with no price on the window's opening: its cost is unknown, never 0 (R9)."
+ ],
+ "home_currency": "CZK",
+ "window": {
+  "from": "2025-07-01",
+  "as_of": "2025-12-31"
+ },
+ "clients": [
+  {
+   "client_id": "conseq:8809002",
+   "name": "Fixture Cases Client"
+  }
+ ],
+ "portfolios": [
+  {
+   "portfolio_id": "conseq:200900003",
+   "name": "Cases — same-day order",
+   "client_id": "conseq:8809002",
+   "base_currency": "CZK",
+   "reporting_currency": null,
+   "valuation": {
+    "valuation_date": "2025-12-31",
+    "units": {
+     "CZ0000300017": "100.000000",
+     "CZ0000300033": "6.000000"
+    }
+   }
+  },
+  {
+   "portfolio_id": "conseq:200900004",
+   "name": "Cases — unpriced at the opening",
+   "client_id": "conseq:8809002",
+   "base_currency": "CZK",
+   "reporting_currency": null,
+   "valuation": {
+    "valuation_date": "2025-12-31",
+    "units": {
+     "CZ0000400015": "50.000000"
+    }
+   }
+  }
+ ],
+ "assets": {
+  "CZ0000300017": {
+   "name": "Cases Akcie",
+   "currency": "CZK"
+  },
+  "CZ0000300025": {
+   "name": "Cases Storno Fund",
+   "currency": "CZK"
+  },
+  "CZ0000300033": {
+   "name": "Cases New Fund",
+   "currency": "CZK"
+  },
+  "CZ0000400015": {
+   "name": "Cases Late-priced Fund",
+   "currency": "CZK"
+  }
+ },
+ "movements": [
+  {
+   "portfolio": "conseq:200900003",
+   "external_id": "conseq:200900003:FLOW:CRE:T301",
+   "trade_date": "2025-01-10",
+   "leg": "external-flow",
+   "operation": "deposit",
+   "isin": null,
+   "quantity": null,
+   "amount": "50000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900003",
+   "external_id": "conseq:200900003:SUB:3001",
+   "trade_date": "2025-03-10",
+   "leg": "security",
+   "operation": "buy",
+   "isin": "CZ0000300017",
+   "quantity": "100.000000",
+   "amount": "10000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900003",
+   "external_id": "conseq:200900003:SUB:3002",
+   "trade_date": "2025-08-20",
+   "leg": "security",
+   "operation": "buy",
+   "isin": "CZ0000300025",
+   "quantity": "10.000000",
+   "amount": "1000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900003",
+   "external_id": "conseq:200900003:SST:3003",
+   "trade_date": "2025-08-20",
+   "leg": "security",
+   "operation": "reversal-of-buy",
+   "isin": "CZ0000300025",
+   "quantity": "10.000000",
+   "amount": "1000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900003",
+   "external_id": "conseq:200900003:SUB:3004",
+   "trade_date": "2025-10-15",
+   "leg": "security",
+   "operation": "buy",
+   "isin": "CZ0000300033",
+   "quantity": "10.000000",
+   "amount": "1000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900003",
+   "external_id": "conseq:200900003:RED:3005",
+   "trade_date": "2025-10-15",
+   "leg": "security",
+   "operation": "sell",
+   "isin": "CZ0000300033",
+   "quantity": "-4.000000",
+   "amount": "440.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900003",
+   "external_id": "conseq:200900003:SUB:3006",
+   "trade_date": "2025-11-12",
+   "leg": "security",
+   "operation": "buy",
+   "isin": "CZ0000300017",
+   "quantity": "50.000000",
+   "amount": "6000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900003",
+   "external_id": "conseq:200900003:SST:3007",
+   "trade_date": "2025-11-12",
+   "leg": "security",
+   "operation": "reversal-of-buy",
+   "isin": "CZ0000300017",
+   "quantity": "50.000000",
+   "amount": "6000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900003",
+   "external_id": "conseq:200900003:RED:3008",
+   "trade_date": "2025-12-05",
+   "leg": "security",
+   "operation": "sell",
+   "isin": "CZ0000300017",
+   "quantity": "-50.000000",
+   "amount": "6000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900003",
+   "external_id": "conseq:200900003:SUB:3009",
+   "trade_date": "2025-12-05",
+   "leg": "security",
+   "operation": "buy",
+   "isin": "CZ0000300017",
+   "quantity": "50.000000",
+   "amount": "6000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900004",
+   "external_id": "conseq:200900004:FLOW:CRE:T401",
+   "trade_date": "2025-01-10",
+   "leg": "external-flow",
+   "operation": "deposit",
+   "isin": null,
+   "quantity": null,
+   "amount": "10000.00",
+   "currency": "CZK",
+   "reversal_of": null
+  },
+  {
+   "portfolio": "conseq:200900004",
+   "external_id": "conseq:200900004:RED:4001",
+   "trade_date": "2025-11-20",
+   "leg": "security",
+   "operation": "sell",
+   "isin": "CZ0000400015",
+   "quantity": "-20.000000",
+   "amount": "2200.00",
+   "currency": "CZK",
+   "reversal_of": null
+  }
+ ],
+ "prices": [
+  {
+   "isin": "CZ0000300017",
+   "price_date": "2025-06-30",
+   "price": "100",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0000300017",
+   "price_date": "2025-07-31",
+   "price": "102",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0000300017",
+   "price_date": "2025-08-31",
+   "price": "104",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0000300017",
+   "price_date": "2025-09-30",
+   "price": "106",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0000300017",
+   "price_date": "2025-10-31",
+   "price": "108",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0000300017",
+   "price_date": "2025-11-30",
+   "price": "110",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0000300017",
+   "price_date": "2025-12-31",
+   "price": "115",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0000300025",
+   "price_date": "2025-08-20",
+   "price": "100",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0000300033",
+   "price_date": "2025-10-15",
+   "price": "100",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0000300033",
+   "price_date": "2025-10-31",
+   "price": "105",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0000300033",
+   "price_date": "2025-11-30",
+   "price": "107",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0000300033",
+   "price_date": "2025-12-31",
+   "price": "110",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0000400015",
+   "price_date": "2025-07-31",
+   "price": "100",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0000400015",
+   "price_date": "2025-08-31",
+   "price": "101",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0000400015",
+   "price_date": "2025-09-30",
+   "price": "102",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0000400015",
+   "price_date": "2025-10-31",
+   "price": "104",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0000400015",
+   "price_date": "2025-11-30",
+   "price": "108",
+   "currency": "CZK"
+  },
+  {
+   "isin": "CZ0000400015",
+   "price_date": "2025-12-31",
+   "price": "110",
+   "currency": "CZK"
+  }
+ ],
+ "rates": [],
+ "valuation_points": []
+}

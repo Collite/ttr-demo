@@ -11,11 +11,19 @@
 -- ## What it mirrors (contracts IA-C45…C48 v1.18, ruled 2026-10-02) — AVERAGE cost only
 --
 --   * the effective ledger (the substrate's reversal pairs dropped) from the portfolio's first movement;
---   * Conseq stornos: a `reversal-of-buy`/`-of-sell` paired with the latest earlier unpaired `buy`/`sell` of the same
---     instrument, units and amount, both dropped from the cost basis (an unpaired one is the opposite trade);
---   * units the ledger does not explain (S4.1·D2): the provider's latest valuation against the ledger to that day,
---     unless the newest movements of the 20 days before it cancel the difference; such an instrument — and one whose
---     units fall below zero before the window — starts the window at its opening market value;
+--   * Conseq stornos: a `reversal-of-buy`/`-of-sell` paired with the latest unpaired `buy`/`sell` of the same
+--     instrument, units and amount dated ON OR BEFORE its day — a same-day original pairs whatever the ids' order (IA-P4
+--     review R3) — both dropped from the cost basis (an unpaired one is the opposite trade);
+--   * the order within a day (R3): the door answers a day in `external_id` order, which is not the order things
+--     happened (`…:RED:…`, `…:SST:…` sort before `…:SUB:…`), so the basis takes a day's security INFLOWS (buy,
+--     transfer-in, an unpaired reversal-of-sell) before its OUTFLOWS (sell, transfer-out, payout, an unpaired
+--     reversal-of-buy), each in the door's order; settling trades are read newest-first, the reverse of that order;
+--   * units the ledger does not explain (S4.1·D2): the provider's latest valuation against the ledger TO THAT DAY — read
+--     past `as_of` when the valuation is later (R1; the window itself never reads past `as_of`) — unless the newest
+--     movements of the 20 days before it cancel the difference; such an instrument — and one whose units fall below
+--     zero before the window — starts the window at its opening market value, its cost UNKNOWN (NULL) when it has no
+--     price on the opening (R9): NULL then runs through invested, unrealized, the cost of what leaves, realized,
+--     fx_realized and unexplained — not a missing rate, never 0;
 --   * each lot's cost in the reporting currency R and the price currency F, so `fx_realized` / `fx_unrealized` split;
 --   * market value on the DOOR's units (+ the gap − storno'd originals still outstanding), unrealized on the TRACKED
 --     units; cash = the cash leg per currency; `fx_cash` its revaluation; the `unexplained` identity.
@@ -32,8 +40,10 @@
 -- One statement, read-only (no temporary object — the drill's session is a read-only one). One row per period, in the
 -- Periods sheet's column names, UNROUNDED (the comparison rounds both sides; a total built from rounded rows would
 -- carry their rounding); `refused` is the same on every row: empty, or why this book cannot be compared (the
--- renderer refuses the same cases — `incomplete_ledger`). `unconverted` / `missing_rate` are not computed: a window
--- with an amount the rates cannot convert is not fingerprinted (the script checks the workbook's count is 0).
+-- renderer refuses the same cases — `incomplete_ledger`). `unconverted` / `missing_rate` are not computed (so R15's
+-- "each boundary once" has nothing to count here): a window with an amount the rates cannot convert is not
+-- fingerprinted (the script checks the workbook's count is 0). An unknown COST is not a missing rate: its NULLs are
+-- compared as NULLs.
 
 WITH RECURSIVE
 prm AS (
@@ -74,7 +84,13 @@ rc AS (
 ),
 
 -- ── the ledger ──────────────────────────────────────────────────────────────────────────────────────────────────────
-led AS (
+vday AS (
+    SELECT MAX(p.valuation_date) AS vd
+    FROM investment_position p, prm
+    WHERE p.valid_to IS NULL AND p.portfolio_ref = prm.pid
+),
+eff AS (
+    -- the effective ledger as far as the gap needs it: to the provider's valuation when that is later than as_of (R1)
     SELECT t.external_id AS id, t.trade_date AS t, t.leg, t.operation AS op, t.asset_ref AS isin,
            t.quantity, t.amount, t.currency,
            CASE WHEN t.leg = 'security' AND t.operation IN ('buy', 'transfer-in', 'reversal-of-sell')
@@ -86,13 +102,21 @@ led AS (
                 WHEN t.leg = 'cash' AND t.operation = 'debit' THEN -COALESCE(abs(t.amount), 0)
                 WHEN t.leg = 'external-flow' AND t.operation = 'deposit' THEN COALESCE(abs(t.amount), 0)
                 WHEN t.leg = 'external-flow' AND t.operation = 'withdrawal' THEN -COALESCE(abs(t.amount), 0)
-                ELSE 0 END AS am,
-           row_number() OVER (ORDER BY t.trade_date, t.external_id) AS pos
-    FROM investment_transaction t, prm
+                ELSE 0 END AS am
+    FROM investment_transaction t, prm, vday
     WHERE t.portfolio_ref = prm.pid
-      AND t.trade_date <= prm.as_of
+      AND t.trade_date <= GREATEST(prm.as_of, COALESCE(vday.vd, prm.as_of))
       AND t.reversal_of IS NULL
       AND NOT EXISTS (SELECT 1 FROM investment_transaction r WHERE r.reversal_of = t.external_id)
+),
+led AS (
+    -- the window's ledger: to as_of, never past it. `pos` is the door's order (day, id); `bpos` the basis order — a day's
+    -- inflows (units in: qs > 0) before its outflows, each in the door's order (R3)
+    SELECT e.*,
+           row_number() OVER (ORDER BY e.t, e.id) AS pos,
+           row_number() OVER (ORDER BY e.t, (e.qs > 0) DESC, e.id) AS bpos
+    FROM eff e, prm
+    WHERE e.t <= prm.as_of
 ),
 stornos AS (
     SELECT row_number() OVER (ORDER BY l.pos) AS n, l.*
@@ -108,16 +132,18 @@ pairing (n, paired, orig, storno) AS (
     FROM pairing pr
     JOIN stornos s ON s.n = pr.n + 1
     LEFT JOIN LATERAL (
-        -- the LATEST earlier original of the same instrument, units and amount, not paired yet
+        -- the LATEST original of the same instrument, units and amount dated on or before the storno's day, not paired
+        -- yet — on the same day whatever the ids' order (R3)
         SELECT x.id FROM led x
-        WHERE x.pos < s.pos
+        WHERE x.t <= s.t
+          AND x.id <> s.id
           AND x.leg = 'security'
           AND x.op = CASE WHEN s.op = 'reversal-of-buy' THEN 'buy' ELSE 'sell' END
           AND x.isin = s.isin
           AND abs(x.quantity) IS NOT DISTINCT FROM abs(s.quantity)
           AND abs(x.amount) IS NOT DISTINCT FROM abs(s.amount)
           AND NOT (x.id = ANY (pr.paired))
-        ORDER BY x.pos DESC
+        ORDER BY x.t DESC, x.id DESC
         LIMIT 1
     ) o ON TRUE
 ),
@@ -170,19 +196,15 @@ fcur AS (
 ),
 
 -- ── what the ledger does not explain (S4.1·D2) ──────────────────────────────────────────────────────────────────────
-vday AS (
-    SELECT MAX(p.valuation_date) AS vd
-    FROM investment_position p, prm
-    WHERE p.valid_to IS NULL AND p.portfolio_ref = prm.pid
-),
 val AS (
     SELECT p.asset_ref AS isin, p.quantity AS units
     FROM investment_position p, prm, vday
     WHERE p.valid_to IS NULL AND p.portfolio_ref = prm.pid AND p.valuation_date = vday.vd
 ),
 lu AS (
+    -- the ledger's units TO THE VALUATION DAY (R1): the extended ledger, not the window's
     SELECT l.isin, SUM(l.qs) AS units
-    FROM led l, vday
+    FROM eff l, vday
     WHERE l.leg = 'security' AND l.isin IS NOT NULL AND l.t <= vday.vd
     GROUP BY l.isin
 ),
@@ -191,10 +213,11 @@ raw_gap AS (
     FROM val v FULL JOIN lu u ON u.isin = v.isin
 ),
 settle AS (
-    -- trades still settling: the newest movements of the 20 days up to the valuation, summed newest first
+    -- trades still settling: the newest movements of the 20 days up to the valuation (the extended ledger), summed
+    -- newest first — the reverse of the basis order: a day's outflows before its inflows, ids descending (R3)
     SELECT l.isin,
-           SUM(l.qs) OVER (PARTITION BY l.isin ORDER BY l.t DESC, l.id DESC ROWS UNBOUNDED PRECEDING) AS run
-    FROM led l, vday
+           SUM(l.qs) OVER (PARTITION BY l.isin ORDER BY l.t DESC, (l.qs > 0) ASC, l.id DESC ROWS UNBOUNDED PRECEDING) AS run
+    FROM eff l, vday
     WHERE l.leg = 'security' AND l.isin IS NOT NULL AND l.t <= vday.vd AND l.t > vday.vd - 20
 ),
 gap AS (
@@ -204,7 +227,7 @@ gap AS (
       AND NOT EXISTS (SELECT 1 FROM settle s WHERE s.isin = g.isin AND g.raw + s.run = 0)
 ),
 pre AS (
-    SELECT l.isin, SUM(l.qs) OVER (PARTITION BY l.isin ORDER BY l.pos ROWS UNBOUNDED PRECEDING) AS run
+    SELECT l.isin, SUM(l.qs) OVER (PARTITION BY l.isin ORDER BY l.bpos ROWS UNBOUNDED PRECEDING) AS run
     FROM tracked l, opening
     WHERE l.leg = 'security' AND l.isin IS NOT NULL AND l.t <= opening.opening
 ),
@@ -220,10 +243,11 @@ deemed AS (
     LEFT JOIN gap g ON g.isin = d.isin
 ),
 deemed_lot AS (
-    -- the opening state of an instrument the ledger cannot explain: its units at the opening market value
+    -- the opening state of an instrument the ledger cannot explain: its units at the opening market value — and with no
+    -- price on the opening, a cost nobody knows: NULL, never 0 (R9)
     SELECT d.isin, d.units,
-           CASE WHEN d.units = 0 OR p.price IS NULL THEN 0 ELSE d.units * p.price * fx.f END AS cr,
-           CASE WHEN d.units = 0 OR p.price IS NULL THEN 0 ELSE d.units * p.price END AS cf
+           CASE WHEN d.units = 0 THEN 0 WHEN p.price IS NULL THEN NULL ELSE d.units * p.price * fx.f END AS cr,
+           CASE WHEN d.units = 0 THEN 0 WHEN p.price IS NULL THEN NULL ELSE d.units * p.price END AS cf
     FROM deemed d CROSS JOIN opening
     LEFT JOIN LATERAL (SELECT ap.price, ap.currency FROM investment_asset_price ap
                         WHERE ap.isin = d.isin AND ap.price_date <= opening.opening
@@ -238,7 +262,7 @@ mv AS (
            COALESCE(x.currency, rc.r) AS s,
            COALESCE(fc.f, x.currency, rc.r) AS f,
            x.op IN ('buy', 'transfer-in', 'reversal-of-sell') AS inflow,
-           row_number() OVER (PARTITION BY x.isin ORDER BY x.pos) AS k
+           row_number() OVER (PARTITION BY x.isin ORDER BY x.bpos) AS k
     FROM tracked x
     CROSS JOIN rc
     CROSS JOIN opening
@@ -268,7 +292,10 @@ mvx AS (
     LEFT JOIN fx tpf ON tpf.day = m.t AND tpf.cur = tp.currency
 ),
 starts AS (
-    SELECT i.isin, COALESCE(d.units, 0) AS u, COALESCE(d.cr, 0) AS cr, COALESCE(d.cf, 0) AS cf
+    -- an instrument not deemed starts empty (0); a deemed one at its lot — whose cost may be unknown (NULL)
+    SELECT i.isin, COALESCE(d.units, 0) AS u,
+           CASE WHEN d.isin IS NULL THEN 0 ELSE d.cr END AS cr,
+           CASE WHEN d.isin IS NULL THEN 0 ELSE d.cf END AS cf
     FROM (SELECT isin FROM mv UNION SELECT isin FROM deemed) i
     LEFT JOIN deemed_lot d ON d.isin = i.isin
 ),
@@ -288,21 +315,33 @@ basis (isin, k, t, u, cr, cf, taken_r, taken_f, short) AS (
 ),
 
 -- ── each period's movements ─────────────────────────────────────────────────────────────────────────────────────────
-trades AS (
+trade_parts AS (
     SELECT g.period,
-           SUM(CASE WHEN m.op IN ('buy', 'reversal-of-sell') THEN m.in_r ELSE 0 END) AS purchases,
-           SUM(CASE WHEN m.op = 'transfer-in' THEN m.in_r ELSE 0 END) AS transfers_in,
-           SUM(CASE WHEN m.op IN ('sell', 'payout', 'reversal-of-buy') THEN b.taken_r ELSE 0 END) AS sales_at_cost,
-           SUM(CASE WHEN m.op = 'transfer-out' THEN b.taken_r ELSE 0 END) AS transfers_out,
-           SUM(CASE WHEN m.op IN ('sell', 'payout', 'reversal-of-buy') THEN m.pro_r ELSE 0 END) AS proceeds,
-           SUM(CASE WHEN m.op IN ('sell', 'payout', 'reversal-of-buy') THEN m.pro_r - b.taken_r ELSE 0 END) AS realized,
-           SUM(CASE WHEN m.op IN ('sell', 'payout', 'reversal-of-buy')
-                    THEN (CASE WHEN b.taken_f = 0 THEN 0 ELSE m.pro_r - m.pro_f * b.taken_r / b.taken_f END)
-                    ELSE 0 END) AS fx_realized
+           CASE WHEN m.op IN ('buy', 'reversal-of-sell') THEN m.in_r ELSE 0 END AS purchases,
+           CASE WHEN m.op = 'transfer-in' THEN m.in_r ELSE 0 END AS transfers_in,
+           CASE WHEN m.op IN ('sell', 'payout', 'reversal-of-buy') THEN b.taken_r ELSE 0 END AS sales_at_cost,
+           CASE WHEN m.op = 'transfer-out' THEN b.taken_r ELSE 0 END AS transfers_out,
+           CASE WHEN m.op IN ('sell', 'payout', 'reversal-of-buy') THEN m.pro_r ELSE 0 END AS proceeds,
+           CASE WHEN m.op IN ('sell', 'payout', 'reversal-of-buy') THEN m.pro_r - b.taken_r ELSE 0 END AS realized,
+           CASE WHEN m.op IN ('sell', 'payout', 'reversal-of-buy')
+                THEN (CASE WHEN b.taken_f = 0 THEN 0 ELSE m.pro_r - m.pro_f * b.taken_r / b.taken_f END)
+                ELSE 0 END AS fx_realized
     FROM basis b
     JOIN mvx m ON m.isin = b.isin AND m.k = b.k
     JOIN grid g ON m.t BETWEEN g.period_start AND g.period_end
-    GROUP BY g.period
+),
+trades AS (
+    -- a sum with an unknown part is unknown (R9) — SUM alone would skip the NULL and print a figure
+    SELECT period,
+           CASE WHEN bool_or(purchases IS NULL) THEN NULL ELSE SUM(purchases) END AS purchases,
+           CASE WHEN bool_or(transfers_in IS NULL) THEN NULL ELSE SUM(transfers_in) END AS transfers_in,
+           CASE WHEN bool_or(sales_at_cost IS NULL) THEN NULL ELSE SUM(sales_at_cost) END AS sales_at_cost,
+           CASE WHEN bool_or(transfers_out IS NULL) THEN NULL ELSE SUM(transfers_out) END AS transfers_out,
+           CASE WHEN bool_or(proceeds IS NULL) THEN NULL ELSE SUM(proceeds) END AS proceeds,
+           CASE WHEN bool_or(realized IS NULL) THEN NULL ELSE SUM(realized) END AS realized,
+           CASE WHEN bool_or(fx_realized IS NULL) THEN NULL ELSE SUM(fx_realized) END AS fx_realized
+    FROM trade_parts
+    GROUP BY period
 ),
 flows AS (
     SELECT g.period,
@@ -380,11 +419,13 @@ state_at AS (
     ORDER BY b.day, s.isin, s.k DESC
 ),
 held AS (
+    -- a lot of unknown cost makes the day's invested unknown, and its fx part once it has a price to value (R9)
     SELECT st.day,
-           SUM(st.cr) AS invested,
+           CASE WHEN bool_or(st.cr IS NULL) THEN NULL ELSE SUM(st.cr) END AS invested,
            SUM(CASE WHEN p.price IS NOT NULL THEN st.u * p.price * fx.f ELSE 0 END) AS tracked_mv,
-           SUM(CASE WHEN p.price IS NULL OR st.cf = 0 THEN 0
-                    ELSE st.u * p.price * fx.f - st.u * p.price * (st.cr / st.cf) END) AS fx_unrealized
+           CASE WHEN bool_or(p.price IS NOT NULL AND st.cf IS NULL) THEN NULL
+                ELSE SUM(CASE WHEN p.price IS NULL OR st.cf = 0 THEN 0
+                              ELSE st.u * p.price * fx.f - st.u * p.price * (st.cr / st.cf) END) END AS fx_unrealized
     FROM state_at st
     LEFT JOIN LATERAL (SELECT ap.price, ap.currency FROM investment_asset_price ap
                         WHERE ap.isin = st.isin AND ap.price_date <= st.day
@@ -396,9 +437,10 @@ held AS (
 book AS (
     SELECT b.day,
            COALESCE(m.mv, 0) AS mv, COALESCE(c.cash, 0) AS cash,
-           COALESCE(h.invested, 0) AS invested,
-           COALESCE(h.tracked_mv, 0) - COALESCE(h.invested, 0) AS unrealized,
-           COALESCE(h.fx_unrealized, 0) AS fx_unrealized,
+           -- a boundary holding nothing is 0; one holding a lot of unknown cost is NULL (R9) — not COALESCEd away
+           CASE WHEN h.day IS NULL THEN 0 ELSE h.invested END AS invested,
+           CASE WHEN h.day IS NULL THEN 0 ELSE h.tracked_mv - h.invested END AS unrealized,
+           CASE WHEN h.day IS NULL THEN 0 ELSE h.fx_unrealized END AS fx_unrealized,
            COALESCE(m.priced, 0) AS priced, COALESCE(m.unpriced, 0) AS unpriced
     FROM bounds b
     LEFT JOIN market m ON m.day = b.day
@@ -423,10 +465,14 @@ rows AS (
            o.invested AS invested_open, o.mv AS market_value_open, o.cash AS cash_open,
            o.unrealized AS unrealized_open, o.fx_unrealized AS fx_unrealized_open,
            COALESCE(fl.deposits, 0) AS deposits, COALESCE(fl.withdrawals, 0) AS withdrawals,
-           COALESCE(tr.purchases, 0) AS purchases_at_cost, COALESCE(tr.transfers_in, 0) AS transfers_in_at_cost,
-           COALESCE(tr.sales_at_cost, 0) AS sales_at_cost, COALESCE(tr.transfers_out, 0) AS transfers_out_at_cost,
-           COALESCE(tr.proceeds, 0) AS sales_proceeds, COALESCE(tr.realized, 0) AS realized_sales,
-           COALESCE(tr.fx_realized, 0) AS fx_realized,
+           -- a period with no trade is 0; one whose trade has an unknown cost keeps its NULL (R9)
+           CASE WHEN tr.period IS NULL THEN 0 ELSE tr.purchases END AS purchases_at_cost,
+           CASE WHEN tr.period IS NULL THEN 0 ELSE tr.transfers_in END AS transfers_in_at_cost,
+           CASE WHEN tr.period IS NULL THEN 0 ELSE tr.sales_at_cost END AS sales_at_cost,
+           CASE WHEN tr.period IS NULL THEN 0 ELSE tr.transfers_out END AS transfers_out_at_cost,
+           CASE WHEN tr.period IS NULL THEN 0 ELSE tr.proceeds END AS sales_proceeds,
+           CASE WHEN tr.period IS NULL THEN 0 ELSE tr.realized END AS realized_sales,
+           CASE WHEN tr.period IS NULL THEN 0 ELSE tr.fx_realized END AS fx_realized,
            COALESCE(cm.cash_movements, 0) AS cash_movements,
            COALESCE(fo.fx_open, 0) + COALESCE(cm.fx_moves, 0) AS fx_cash,
            c.invested AS invested_close, c.mv AS market_value_close, c.cash AS cash_close,
