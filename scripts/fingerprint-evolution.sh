@@ -85,8 +85,9 @@ step "1. render $TEMPLATE through studio-bff ($PORTFOLIO, $FROM … $AS_OF, by $
 
 ARGS="$(jq -nc --arg p "$PORTFOLIO" --arg g "$GRAIN" --arg f "$FROM" --arg a "$AS_OF" \
     '{scope: "portfolio", id: $p, grain: $g, from: $f, as_of: $a}')"
-http="$(curl -sS -o "$WORK/render.json" -w '%{http_code}' -X POST "$BFF/api/reports/render" \
-    -H "authorization: Bearer $BEARER" -H 'content-type: application/json' \
+# the bearer through a pipe, never on the command line (a process list shows argv)
+http="$(printf 'authorization: Bearer %s\n' "$BEARER" | curl -sS -o "$WORK/render.json" -w '%{http_code}' -X POST "$BFF/api/reports/render" \
+    -H @- -H 'content-type: application/json' \
     --data "$(jq -nc --arg t "$TEMPLATE" --argjson args "$ARGS" '{templateId: $t, args: $args}')" || true)"
 if [ "$http" != "200" ]; then
     # the renderer's own code and sentence survive the hop — `evolution_unbalanced` names the period
@@ -94,8 +95,8 @@ if [ "$http" != "200" ]; then
 fi
 ARTIFACT="$(jq -r '.artifactId // empty' "$WORK/render.json")"
 [ -n "$ARTIFACT" ] || fail "the render answered no artifactId: $(head -c 400 "$WORK/render.json")"
-http="$(curl -sS -o "$WORK/report.xlsx" -w '%{http_code}' \
-    "$BFF/api/reports/artifacts/$ARTIFACT?asOf=$AS_OF" -H "authorization: Bearer $BEARER" || true)"
+http="$(printf 'authorization: Bearer %s\n' "$BEARER" | curl -sS -o "$WORK/report.xlsx" -w '%{http_code}' \
+    "$BFF/api/reports/artifacts/$ARTIFACT?asOf=$AS_OF" -H @- || true)"
 [ "$http" = "200" ] || fail "downloading the artifact failed: HTTP $http"
 head -c 2 "$WORK/report.xlsx" | grep -q 'PK' || fail "the artifact is not a zip — $(head -c 200 "$WORK/report.xlsx")"
 ok "downloaded $(wc -c <"$WORK/report.xlsx" | tr -d ' ') bytes"

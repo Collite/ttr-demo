@@ -65,8 +65,10 @@ process.stdout.write(readFileSync(${JSON.stringify(path.join(dir, 'reference.csv
 `,
     { mode: 0o755 },
   );
+  const auths = [];
   const server = createServer((req, res) => {
     calls.push(`${req.method} ${req.url}`);
+    auths.push(req.headers.authorization);
     const json = (status, body) => {
       res.writeHead(status, { 'content-type': 'application/json' });
       res.end(JSON.stringify(body));
@@ -88,7 +90,7 @@ process.stdout.write(readFileSync(${JSON.stringify(path.join(dir, 'reference.csv
     }
     json(404, { code: 'NOT_FOUND', message: req.url });
   });
-  return { dir, calls, server };
+  return { dir, calls, auths, server };
 }
 
 function run(h, c, args = [], env = {}) {
@@ -225,6 +227,25 @@ test('--save prints the fingerprint block for the private repo — and refuses t
     const inside = await run(h, c, ['--save'], { IE_FP_SAVE_DIR: path.resolve(here, '..') });
     assert.equal(inside.code, 1, inside.out);
     assert.match(inside.out, /inside this repository, which is PUBLIC/);
+  });
+});
+
+test('the bearer reaches studio-bff on both calls and never rides on curl\'s command line (a process list shows argv)', async () => {
+  const c = CASES.month;
+  const real = execFileSync('sh', ['-c', 'command -v curl'], { encoding: 'utf8' }).trim();
+  await withHarness(c, {}, async (h) => {
+    // a curl first on PATH that records its argv, then runs the real one
+    writeFileSync(
+      path.join(h.dir, 'curl'),
+      `#!/usr/bin/env bash\nprintf '%s\\n' "$*" >>${JSON.stringify(path.join(h.dir, 'curl-argv'))}\nexec ${JSON.stringify(real)} "$@"\n`,
+      { mode: 0o755 },
+    );
+    const { code, out } = await run(h, c, [], { IE_FP_BEARER: 'tok-secret-7' });
+    assert.equal(code, 0, out);
+    assert.deepEqual(h.auths, ['Bearer tok-secret-7', 'Bearer tok-secret-7']);
+    const argv = readFileSync(path.join(h.dir, 'curl-argv'), 'utf8');
+    assert.equal(argv.trim().split('\n').length, 2, argv);
+    assert.ok(!argv.includes('tok-secret-7'), `the bearer is on curl's argv: ${argv}`);
   });
 });
 
