@@ -1,3 +1,4 @@
 target,batches,committed,undetailed,changed,refused
 investment.asset_price,1,1,0,61,
+investment.portfolio_valuation,1,1,0,4,
 investment.transaction,2,2,0,3,

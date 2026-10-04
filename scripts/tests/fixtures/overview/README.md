@@ -26,3 +26,10 @@ JavaScript answers.
 Regenerate a workbook when the renderer's template or its fixture door changes, a reference when its SQL does:
 
     just verify-overview-reference --write     # re-runs the references and rewrites reference-*.csv
+
+A workbook is regenerated through the renderer's own HTTP surface over its hand fixture (kantheon
+`./gradlew :services:report-renderer:fixtureServer --args="<port> <artifact dir> <stub studio-bff url>"`): `POST /render`
+as `dan` of tenant `hartland` with the parameters in the table above (a bearer on the request — the change log reads
+with it), then `GET /artifacts/<id>?principal=dan` (a download is its principal's alone). The stub studio-bff serves
+kantheon's `report-renderer/src/test/resources/sync/run-header.json` and `run-changes.ndjson` at
+`/api/sync/runs/run-20260930-0530` and `…/changes`. Only the Notes' `Generated` stamp differs between two renders.

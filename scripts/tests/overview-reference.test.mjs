@@ -241,6 +241,8 @@ test('sync-run-changes: a committed run’s changed rows per target, from its en
   assert.equal(got['investment.transaction'].changed, '3');
   assert.equal(got['investment.transaction'].batches, '2');
   assert.equal(got['investment.asset_price'].changed, '61');
+  // the provider's valuation points: in the run, counted — the change log counts them without listing them
+  assert.equal(got['investment.portfolio_valuation'].changed, '4');
   assert.ok(Object.values(got).every((r) => r.refused === '' && r.undetailed === '0'));
   save('reference-sync-run-changes.csv', csv);
 });
