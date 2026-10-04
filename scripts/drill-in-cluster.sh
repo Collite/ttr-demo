@@ -175,8 +175,17 @@ spec:
 YAML
 
 printf 'running %s in %s/%s …\n' "$JOB" "$CTX" "$NS"
-kubectl --context "$CTX" -n "$NS" wait --for=condition=complete "job/$JOB" --timeout=600s >/dev/null 2>&1 \
-    || kubectl --context "$CTX" -n "$NS" wait --for=condition=failed "job/$JOB" --timeout=5s >/dev/null 2>&1 || true
+# Wait for EITHER end by polling the Job's counts: `kubectl wait --for=condition=complete` sat out its whole timeout on
+# a Job that had FAILED in seconds — a fingerprint's differences read as ten silent minutes. `/` keeps an empty
+# `succeeded` from shifting `failed` into its place.
+deadline=$((SECONDS + 600))
+while :; do
+    IFS=/ read -r ok bad <<<"$(kubectl --context "$CTX" -n "$NS" get job "$JOB" -o jsonpath='{.status.succeeded}/{.status.failed}' 2>/dev/null || true)"
+    [ "${ok:-0}" -ge 1 ] 2>/dev/null && break
+    [ "${bad:-0}" -ge 1 ] 2>/dev/null && break
+    [ "$SECONDS" -ge "$deadline" ] && { printf '%s did not finish in 600 s — its log so far:\n' "$JOB"; break; }
+    sleep 2
+done
 LOG="$(mktemp)"
 # The WHOLE log (`--tail=-1`): a fingerprint block is printed whole and lifted from here, and a price sheet's runs
 # to instruments × month-ends lines — a tail of a few hundred cut its BEGIN line off and the save found nothing.
