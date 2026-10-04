@@ -58,8 +58,8 @@ test('DONE 4 — ListQueries returns exactly 15 q.hartland.* with params', () =>
   assert.equal(own, 15, 'the D-2 roster');
   // Nine since IE-P3·S3.1 (period_values + portfolio_header joined the seven); nineteen since
   // IA-P3·S3.1 (the ten Browse programs, kantheon contracts IA-C35 … IA-C42); twenty since IA-P3·S3.3
-  // (`clients_list`).
-  assert.equal(synced, 20, 'the 20 q.investment.* programs, synced from kantheon');
+  // (`clients_list`); twenty-one since IA-P4·S4.1 (`conversion_rates`).
+  assert.equal(synced, 21, 'the 21 q.investment.* programs, synced from kantheon');
 });
 
 test('DONE 5 — cs + en lexicon resolves (zero unresolved for:, project-wide)', () => {

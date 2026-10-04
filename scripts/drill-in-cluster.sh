@@ -32,8 +32,11 @@
 #   IE_CLIENT       client-overview's client (no default — name it)
 #   IE_MONTHS       price-sheet's month-ends back (default: 24)
 #   IE_RUN          sync-run-changes' run (no default — a COMMITTED run). ⚑ Its reference reads the substrate's
-#                   journal, which the drill's read-only role does not see: the run is refused, naming why, unless the
-#                   Job is given a journal-reader DSN (not by default — no such credential is mounted here).
+#                   journal, which the drill's read-only role does not see, and no journal-reading credential is
+#                   materialised in this namespace — in the Job the run is refused, naming why. Run that one from a
+#                   laptop instead (IA-P4·S4.4): `fingerprint-overview.sh sync-run-changes:v1` with IE_FP_BFF = the
+#                   Studio's origin, a person's bearer, and IE_FP_JOURNAL_PSQL = a `kubectl exec … psql` prefix (the
+#                   session is made read-only first) — the script's header has the line.
 #   IE_TOP_N        the estate's row cap   (default: 200)
 #   IE_IMAGE        the runner image       (default: postgres:16-alpine — psql, plus apk for the rest)
 #   IE_KEEP         1 to leave the Job and its ConfigMap behind for inspection

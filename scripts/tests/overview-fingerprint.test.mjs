@@ -190,8 +190,9 @@ async function run(template, opts = {}) {
   try {
     const { port } = h.server.address();
     const result = await new Promise((resolve) => {
-      const proc = spawn('bash', [SCRIPT, template], {
+      const proc = spawn('bash', [SCRIPT, template, ...(opts.args ?? [])], {
         cwd: h.dir,
+        stdio: ['pipe', 'pipe', 'pipe', 'pipe'],
         env: {
           ...process.env,
           PATH: `${h.dir}:${process.env.PATH}`,
@@ -203,6 +204,8 @@ async function run(template, opts = {}) {
           ...(opts.env ?? {}),
         },
       });
+      if (opts.fd3 !== undefined) proc.stdio[3].end(opts.fd3);
+      else proc.stdio[3].end();
       let out = '';
       proc.stdout.on('data', (x) => (out += x));
       proc.stderr.on('data', (x) => (out += x));
@@ -261,4 +264,62 @@ test('a template the script does not know, and a missing parameter, are refused 
   r = await run('client-overview:v1', { env: { IE_FP_CLIENT: '' } });
   assert.equal(r.code, 1);
   assert.match(r.out, /IE_FP_CLIENT is required/);
+});
+
+// ── S4.4: the evidence, and the journal from a laptop ──────────────────────────────────────────────────────────────
+
+test('--save prints the book’s answer as a fingerprint block and writes it where IE_FP_SAVE_DIR points', async () => {
+  const save = mkdtempSync(path.join(tmpdir(), 'ov-fp-save-'));
+  const { code, out } = await run('client-overview:v1', { args: ['--save'], env: { IE_FP_SAVE_DIR: save } });
+  assert.equal(code, 0, out);
+  const slug = `client-overview-v1-conseq-8809001-${AS_OF}.csv`;
+  const want = readFileSync(reference(CASES['client-overview:v1']), 'utf8');
+  assert.equal(readFileSync(path.join(save, slug), 'utf8'), want);
+  const block = out.split(`-----BEGIN FINGERPRINT ${slug}-----\n`)[1]?.split('-----END FINGERPRINT-----')[0];
+  assert.equal(block, want);
+});
+
+test('--save into this (public) repository is refused, and nothing is written there', async () => {
+  const inside = path.resolve(here, '../../fingerprints-must-not-exist');
+  const { code, out } = await run('price-sheet:v1', { args: ['--save'], env: { IE_FP_SAVE_DIR: inside } });
+  assert.equal(code, 1);
+  assert.match(out, /inside this repository, which is PUBLIC/);
+  assert.throws(() => readFileSync(inside));
+});
+
+test('an unknown option is refused before anything is rendered', async () => {
+  const r = await run('price-sheet:v1', { args: ['--keep'] });
+  assert.equal(r.code, 1);
+  assert.match(r.out, /unknown option '--keep'/);
+  assert.equal(r.h.calls.length, 0);
+});
+
+test('IE_FP_JOURNAL_PSQL: the run’s reference goes to that psql’s stdin, after a line that makes the session read-only', async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'ov-fp-jpsql-'));
+  const fake = path.join(dir, 'jpsql');
+  writeFileSync(
+    fake,
+    `#!/usr/bin/env node
+const { readFileSync, writeFileSync } = require('node:fs');
+writeFileSync(${JSON.stringify(path.join(dir, 'argv.json'))}, JSON.stringify(process.argv.slice(2)));
+writeFileSync(${JSON.stringify(path.join(dir, 'stdin.sql'))}, readFileSync(0, 'utf8'));
+process.stdout.write(readFileSync(${JSON.stringify(reference(CASES['sync-run-changes:v1']))}, 'utf8'));
+`,
+    { mode: 0o755 },
+  );
+  // the DSN psql would be asked for, if the prefix were ignored, fails — so a pass proves the prefix ran
+  const { code, out } = await run('sync-run-changes:v1', { psqlFails: 'should not be called\n', env: { IE_FP_JOURNAL_PSQL: `${fake} --extra` } });
+  assert.equal(code, 0, out);
+  const argv = JSON.parse(readFileSync(path.join(dir, 'argv.json'), 'utf8'));
+  assert.equal(argv[0], '--extra');
+  assert.ok(argv.includes('run=run-20260930-0530') && argv.at(-1) === '-', JSON.stringify(argv));
+  const sql = readFileSync(path.join(dir, 'stdin.sql'), 'utf8');
+  assert.match(sql, /^SET default_transaction_read_only = on;\n/);
+  assert.ok(sql.includes(readFileSync(path.resolve(here, '../sql/sync-run-changes-reference.sql'), 'utf8')));
+});
+
+test('IE_FP_BEARER_FILE: the token read from a pipe is the one studio-bff sees', async () => {
+  const { code, out, h } = await run('distributor-overview:v1', { fd3: 'tok-pipe\n', env: { IE_FP_BEARER: '', IE_FP_BEARER_FILE: '/dev/fd/3' } });
+  assert.equal(code, 0, out);
+  assert.ok(h.calls.length > 0 && h.calls.every((c) => c.authorization === 'Bearer tok-pipe'), JSON.stringify(h.calls.map((c) => c.authorization)));
 });

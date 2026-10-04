@@ -115,12 +115,13 @@ test('T6.6 — no query carries the legacy `search { keywords }` sub-block (RS-3
   assert.deepEqual(without, [], `queries with no search block at all — undiscoverable: ${without.join(', ')}`);
 });
 
-test('T6.7 — the synced investment package brings its twenty, and they are not counted as ours', () => {
+test('T6.7 — the synced investment package brings its twenty-one, and they are not counted as ours', () => {
   // Nine since IE-P3·S3.1: `period_values` (the report's per-period program, ⚑IE-15 (a)) and
   // `portfolio_header` joined the seven. Nineteen since IA-P3·S3.1: the ten Browse programs
-  // (kantheon contracts IA-C35 … IA-C42); twenty since IA-P3·S3.3 (`clients_list`).
+  // (kantheon contracts IA-C35 … IA-C42); twenty since IA-P3·S3.3 (`clients_list`); twenty-one since IA-P4·S4.1
+  // (`conversion_rates`, the period evolution's rates).
   const synced = allQueriesAnywhere().filter(({ uri }) => isSyncedModelFile(uri)).map(({ def }) => def.name);
-  assert.equal(synced.length, 20, `the 20 q.investment.* programs, got ${synced.length}: ${synced.join(', ')}`);
+  assert.equal(synced.length, 21, `the 21 q.investment.* programs, got ${synced.length}: ${synced.join(', ')}`);
   assert.ok(!synced.some((n) => EXPECTED_QUERIES.includes(n)), 'a name collides with the D-2 roster');
   assert.equal(allQueries().length + synced.length, allQueriesAnywhere().length, 'every query is one or the other');
 });

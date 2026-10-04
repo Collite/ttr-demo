@@ -32,6 +32,10 @@
 #   IE_FP_DSN         psql DSN for the `entry` database (the book)
 #   IE_FP_JOURNAL_DSN sync-run-changes only: a DSN whose role may read `journal_batch` and `entry_record`
 #                     (default IE_FP_DSN — the drill's read-only role cannot, and the run is refused, naming why)
+#   IE_FP_JOURNAL_PSQL sync-run-changes only, instead of IE_FP_JOURNAL_DSN: a psql command PREFIX that reaches the
+#                     journal (the reference goes to its stdin), e.g. on hartland, from a laptop:
+#                       'kubectl --context hartland -n data exec -i postgres-1 -c postgres -- psql -U postgres -d entry'
+#                     The session is made read-only first (`SET default_transaction_read_only = on`), whatever the role.
 #   IE_FP_AS_OF       the day (default: today, UTC)
 #   IE_FP_PORTFOLIO   portfolio-statement: the portfolio
 #   IE_FP_FROM        portfolio-statement: the window's first month (default: the as_of's month and the 11 before)
@@ -40,6 +44,11 @@
 #   IE_FP_RUN         sync-run-changes: the run
 #   IE_FP_TOLERANCE   money tolerance per cell (default 0.01, IA-C51)
 #   the bearer: IE_FP_BEARER, or IE_FP_OIDC_TOKEN_URL + _CLIENT_ID + _CLIENT_SECRET (lib/estate-token.sh)
+#
+# Options (after the template):
+#   --save   print the book's answer the workbook was held to (the reference CSV — on a pass, the workbook's figures)
+#            as a fingerprint block, which `drill-in-cluster` lifts into the PRIVATE project repo, and write it to
+#            IE_FP_SAVE_DIR if set — ⛔ never inside this repository: it is public, and the figures are real (S3.3·D8).
 
 set -euo pipefail
 
@@ -51,7 +60,15 @@ fail() { printf '\n\033[31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 ok()   { printf '  \033[32m✓\033[0m %s\n' "$*"; }
 step() { printf '\n\033[1m── %s\033[0m\n' "$*"; }
 
-TEMPLATE="${1:-${IE_FP_TEMPLATE:-}}"
+TEMPLATE="${IE_FP_TEMPLATE:-}"
+SAVE=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --save) SAVE=1; shift ;;
+        -*) fail "unknown option '$1' (--save)" ;;
+        *) TEMPLATE="$1"; shift ;;
+    esac
+done
 BFF="${IE_FP_BFF:?IE_FP_BFF is required (studio-bff base URL)}"
 DSN="${IE_FP_DSN:?IE_FP_DSN is required (psql DSN for the entry database)}"
 AS_OF="${IE_FP_AS_OF:-$(date -u +%F)}"
@@ -125,9 +142,20 @@ ok "downloaded $(wc -c <"$WORK/report.xlsx" | tr -d ' ') bytes ($(jq -r '.fileNa
 # ── 2. the same figures, on the book ─────────────────────────────────────────────────────────────────────────────────
 
 step "2. the reference on the book ($SQL)"
-if ! psql "$REF_DSN" -X -q --csv -v ON_ERROR_STOP=1 "${VARS[@]}" -f "$SQLDIR/$SQL" >"$WORK/reference.csv" 2>"$WORK/psql.err"; then
+reference() {
+    if [ "$TEMPLATE" = "sync-run-changes:v1" ] && [ -n "${IE_FP_JOURNAL_PSQL:-}" ]; then
+        # a command PREFIX, word-split on purpose (as studio-dod-browse's PSQL); the reference on its stdin, after a
+        # line that makes the session read-only — the role this reaches may be able to write
+        # shellcheck disable=SC2086
+        { printf 'SET default_transaction_read_only = on;\n'; cat "$SQLDIR/$SQL"; } \
+            | $IE_FP_JOURNAL_PSQL -X -q --csv -v ON_ERROR_STOP=1 "${VARS[@]}" -f -
+    else
+        psql "$REF_DSN" -X -q --csv -v ON_ERROR_STOP=1 "${VARS[@]}" -f "$SQLDIR/$SQL"
+    fi
+}
+if ! reference >"$WORK/reference.csv" 2>"$WORK/psql.err"; then
     if grep -q 'permission denied' "$WORK/psql.err"; then
-        fail "the reference may not read what it needs ($(head -1 "$WORK/psql.err")) — sync-run-changes reads the substrate's journal: set IE_FP_JOURNAL_DSN to a role that may"
+        fail "the reference may not read what it needs ($(head -1 "$WORK/psql.err")) — sync-run-changes reads the substrate's journal: set IE_FP_JOURNAL_DSN to a role that may, or IE_FP_JOURNAL_PSQL to a psql that reaches it"
     fi
     fail "the reference did not run on the book: $(head -3 "$WORK/psql.err")"
 fi
@@ -156,6 +184,32 @@ if [ "$TEMPLATE" = "portfolio-statement:v1" ]; then
     [ -z "$refused" ] || fail "the book cannot be compared: $refused"
     python3 "$HERE/lib/evolution_fingerprint.py" compare "$WORK/evolution-wb.json" "$WORK/evolution-ref.json" --tolerance "$TOLERANCE" \
         || fail "the statement's Evolution does not match the book"
+fi
+
+if [ -n "$SAVE" ]; then
+    case "$TEMPLATE" in
+        portfolio-statement:v1) subject="-$(printf '%s' "$PORTFOLIO" | tr ':' '-')" ;;
+        client-overview:v1)     subject="-$(printf '%s' "$CLIENT" | tr ':' '-')" ;;
+        price-sheet:v1)         subject="-$MONTHS" ;;
+        sync-run-changes:v1)    subject="-$(printf '%s' "$RUN" | tr -c 'A-Za-z0-9._\n-' '-')" ;;
+        *)                      subject="" ;;
+    esac
+    slug="$(printf '%s' "$TEMPLATE" | tr ':' '-')$subject-$AS_OF.csv"
+    # ⛔ S3.3·D8: printed always (the in-cluster run lifts it out of the log), written only where IE_FP_SAVE_DIR
+    # points, and never in here
+    if [ -n "${IE_FP_SAVE_DIR:-}" ]; then
+        dest="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$IE_FP_SAVE_DIR")/$slug"
+        repo="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$HERE/..")"
+        case "$dest" in
+            "$repo"/*) fail "IE_FP_SAVE_DIR ($IE_FP_SAVE_DIR) is inside this repository, which is PUBLIC — a fingerprint holds the book's figures (S3.3·D8)" ;;
+        esac
+        mkdir -p "$(dirname "$dest")"
+        cp "$WORK/reference.csv" "$dest"
+        ok "fingerprint saved: $dest"
+    fi
+    printf -- '-----BEGIN FINGERPRINT %s-----\n' "$slug"
+    cat "$WORK/reference.csv"
+    printf -- '-----END FINGERPRINT-----\n'
 fi
 
 printf '\n\033[32mthe %s matches the book — as of %s\033[0m\n' "$TEMPLATE" "$AS_OF"
