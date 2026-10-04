@@ -17,8 +17,8 @@ model er
 
 def entity transaction {
     description: {
-        en: "The ledger — every movement in a portfolio: purchases, sales, transfers of units in and out, payouts, cash credits and debits, deposits and withdrawals. There is no separate fee movement: a fee the provider charges arrives as a withdrawal. Append-only: a correction appears as a reversal plus a replacement, never as an edit.",
-        cs: "Pohyby, tedy transakce — každý pohyb v portfoliu: nákupy, prodeje, převody jednotek dovnitř a ven, výplaty, připsání a odepsání hotovosti, vklady a výběry. Samostatný pohyb pro poplatek neexistuje: poplatek účtovaný poskytovatelem přichází jako výběr. Pouze se přidává: oprava se objeví jako storno plus náhrada, nikdy jako přepis."
+        en: "The ledger — every movement in a portfolio: purchases, sales, transfers of units in and out, payouts, cash credits and debits, deposits and withdrawals. There is no separate fee movement: a fee the provider charges arrives as a withdrawal, and its `label` says so (`Vstupní poplatek`, `provize CONSEQ`). Append-only: a correction appears as a reversal plus a replacement, never as an edit.",
+        cs: "Pohyby, tedy transakce — každý pohyb v portfoliu: nákupy, prodeje, převody jednotek dovnitř a ven, výplaty, připsání a odepsání hotovosti, vklady a výběry. Samostatný pohyb pro poplatek neexistuje: poplatek účtovaný poskytovatelem přichází jako výběr a jeho `label` to říká (`Vstupní poplatek`, `provize CONSEQ`). Pouze se přidává: oprava se objeví jako storno plus náhrada, nikdy jako přepis."
     }
     labelPlural: "Transactions"
     codeAttribute: external_id
@@ -100,6 +100,28 @@ def entity transaction {
             description: {
                 en: "Set on a reversal, naming the `external_id` of the movement it undoes. It is the audit chain — and the reason a raw sum over this ledger is wrong: both rows are still here.",
                 cs: "Vyplněno u storna a odkazuje na `external_id` pohybu, který ruší. Tvoří auditní řetěz — a je důvodem, proč je surový součet nad touto knihou chybný: oba řádky tu stále jsou."
+            }
+        },
+        // IA-P4b·S4b.1 (IA-C53, parser 0.6.0) — the first three columns to graduate from NARROWED.md.
+        def attribute fee {
+            type: decimal,
+            description: {
+                en: "What the provider charged on a purchase or a sale of units, in the estate's HOME currency (the estate settings' `home_currency` — CZK here), NOT in `currency`, with the provider's sign (positive = paid) — EMPTY on cash and external-flow movements. A record, not a second charge: the same money leaves the portfolio as its own `withdrawal` labelled `Vstupní poplatek` on the settlement day, so a total of fees counts those withdrawals and never adds this column on top. It is NOT inside `amount`, which is the money settled for the units.",
+                cs: "Co poskytovatel účtoval při nákupu nebo prodeji jednotek, v DOMÁCÍ měně evidence (`home_currency` v nastavení evidence — zde CZK), NIKOLI v měně `currency`, se znaménkem poskytovatele (kladné = zaplaceno) — PRÁZDNÉ u hotovostních a externích pohybů. Je to záznam, nikoli druhý poplatek: tytéž peníze odcházejí z portfolia jako samostatný `withdrawal` s popisem `Vstupní poplatek` v den vypořádání, takže součet poplatků počítá tyto výběry a tento sloupec k nim nikdy nepřičítá. NENÍ součástí `amount`, což jsou peníze vypořádané za jednotky."
+            }
+        },
+        def attribute label {
+            type: text,
+            description: {
+                en: "The provider's own words for the movement, in Czech, verbatim: on cash and external-flow movements the payment text, often the fund's short name and what was paid (`JTOpportCZK, Vstupní poplatek` is an entry fee, `ParvUsaQuant, provize CONSEQ` a commission, `Vklad Ident. 20240115 …` a deposit, `výběr` a withdrawal); on purchases and sales the operation's name (`Nákup`). It tells a fee from a deposit or a withdrawal, which `operation` cannot; reports classify it with the package's income-labels table. At most 200 characters.",
+                cs: "Vlastní slova poskytovatele k pohybu, česky a doslovně: u hotovostních a externích pohybů text platby, často krátký název fondu a co se platilo (`JTOpportCZK, Vstupní poplatek` je vstupní poplatek, `ParvUsaQuant, provize CONSEQ` provize, `Vklad Ident. 20240115 …` vklad, `výběr` výběr); u nákupů a prodejů název operace (`Nákup`). Odliší poplatek od vkladu či výběru, což `operation` nedokáže; sestavy jej třídí tabulkou income-labels z balíčku. Nejvýše 200 znaků."
+            }
+        },
+        def attribute settlement_date {
+            type: date,
+            description: {
+                en: "The day a purchase or a sale of units settles — the day the provider's valuation starts counting the units, usually 2 to 7 days after `trade_date` (the deal) and sometimes more than two weeks. The provider sends the PLANNED day in advance, so on a deal that has not settled yet it lies after today: the purchases not settled yet are those whose day is after today. EMPTY on cash and external-flow movements, whose only date is `trade_date`, and where the provider sent none. Ask by it for \"what did the portfolio hold on day X as the provider sees it\"; ask by `trade_date` for \"what was bought in April\".",
+                cs: "Den, kdy se nákup nebo prodej jednotek vypořádá — den, od kterého ocenění poskytovatele jednotky započítává, obvykle 2 až 7 dní po `trade_date` (sjednání obchodu) a někdy i přes dva týdny. Poskytovatel posílá PLÁNOVANÝ den předem, takže u obchodu, který ještě vypořádán nebyl, leží po dnešku: nevypořádané nákupy jsou ty, jejichž den je po dnešku. PRÁZDNÉ u hotovostních a externích pohybů, jejichž jediným datem je `trade_date`, a tam, kde jej poskytovatel neposlal. Podle něj se ptejte „co portfolio drželo ke dni X pohledem poskytovatele“; podle `trade_date` „co se nakoupilo v dubnu“."
             }
         }
     ]

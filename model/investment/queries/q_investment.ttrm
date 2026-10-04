@@ -215,7 +215,10 @@ def query transactions_recent {
                qty_signed,
                amount,
                amt_signed,
-               currency
+               currency,
+               fee,
+               label,
+               settlement_date
         FROM effective_ledger
         WHERE portfolio_ref = {portfolio_id}
           AND trade_date >= {since}
@@ -272,7 +275,10 @@ def query transactions_between {
                qty_signed,
                amount,
                amt_signed,
-               currency
+               currency,
+               fee,
+               label,
+               settlement_date
         FROM effective_ledger
         WHERE portfolio_ref = {portfolio_id}
           AND trade_date >= {from_date}
@@ -1323,6 +1329,9 @@ def query transactions_of_asset {
                e.amount,
                e.amt_signed,
                e.currency,
+               e.fee,
+               e.label,
+               e.settlement_date,
                e.portfolio_ref AS portfolio_id,
                COALESCE(pf.pf_label, e.portfolio_ref) AS portfolio_name
         FROM effective_ledger e
