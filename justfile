@@ -378,6 +378,7 @@ verify-overview-fingerprint:
 # The reference itself, RUN on PostgreSQL 16 against the hand fixture and held to the hand answers: a throwaway
 # container (`evolution-ref-pg`, C locale as hartland's `entry`), left running for inspection —
 # `just verify-evolution-reference-down` removes it. `--write` rewrites the saved answers the suite above reads.
+# With REF_PG_DSN set (CI's `references` job: a postgres:16 service, C locale) both recipes use that server instead.
 EVOLUTION_REF_PORT := "55436"
 
 # The evolution reference on PostgreSQL 16, held to the hand answers [--write].
@@ -388,16 +389,21 @@ verify-evolution-reference *ARGS:
     for a in {{ARGS}}; do
         case "$a" in --write) write=1 ;; *) echo "unknown argument '$a' (--write)" >&2; exit 2 ;; esac
     done
-    if ! docker inspect evolution-ref-pg >/dev/null 2>&1; then
-        docker run -d --name evolution-ref-pg -e POSTGRES_PASSWORD=evolution -e POSTGRES_DB=entry \
-            -e POSTGRES_INITDB_ARGS="--locale=C --encoding=UTF8" \
-            -p 127.0.0.1:{{EVOLUTION_REF_PORT}}:5432 postgres:16 >/dev/null
+    if [ -n "${REF_PG_DSN:-}" ]; then
+        # a PostgreSQL 16 someone else runs — CI's service container (model-gate `references`), C locale
+        dsn="$REF_PG_DSN"
+    else
+        if ! docker inspect evolution-ref-pg >/dev/null 2>&1; then
+            docker run -d --name evolution-ref-pg -e POSTGRES_PASSWORD=evolution -e POSTGRES_DB=entry \
+                -e POSTGRES_INITDB_ARGS="--locale=C --encoding=UTF8" \
+                -p 127.0.0.1:{{EVOLUTION_REF_PORT}}:5432 postgres:16 >/dev/null
+        fi
+        docker start evolution-ref-pg >/dev/null 2>&1 || true
+        # readiness over TCP, the way the host psql connects (the init server listens on the socket only)
+        for i in $(seq 1 60); do docker exec evolution-ref-pg pg_isready -q -h 127.0.0.1 -U postgres -d entry && break; sleep 1; done
+        dsn="postgresql://postgres:evolution@127.0.0.1:{{EVOLUTION_REF_PORT}}/entry"
     fi
-    docker start evolution-ref-pg >/dev/null 2>&1 || true
-    # readiness over TCP, the way the host psql connects (the init server listens on the socket only)
-    for i in $(seq 1 60); do docker exec evolution-ref-pg pg_isready -q -h 127.0.0.1 -U postgres -d entry && break; sleep 1; done
-    EVOLUTION_REF_DSN="postgresql://postgres:evolution@127.0.0.1:{{EVOLUTION_REF_PORT}}/entry" \
-    EVOLUTION_REF_WRITE="$write" node --test scripts/tests/evolution-reference.test.mjs
+    EVOLUTION_REF_DSN="$dsn" EVOLUTION_REF_WRITE="$write" node --test scripts/tests/evolution-reference.test.mjs
 
 # Remove the reference's PostgreSQL container.
 verify-evolution-reference-down:
@@ -413,15 +419,19 @@ verify-overview-reference *ARGS:
     for a in {{ARGS}}; do
         case "$a" in --write) write=1 ;; *) echo "unknown argument '$a' (--write)" >&2; exit 2 ;; esac
     done
-    if ! docker inspect evolution-ref-pg >/dev/null 2>&1; then
-        docker run -d --name evolution-ref-pg -e POSTGRES_PASSWORD=evolution -e POSTGRES_DB=entry \
-            -e POSTGRES_INITDB_ARGS="--locale=C --encoding=UTF8" \
-            -p 127.0.0.1:{{EVOLUTION_REF_PORT}}:5432 postgres:16 >/dev/null
+    if [ -n "${REF_PG_DSN:-}" ]; then
+        dsn="$REF_PG_DSN"   # CI's service container, as above
+    else
+        if ! docker inspect evolution-ref-pg >/dev/null 2>&1; then
+            docker run -d --name evolution-ref-pg -e POSTGRES_PASSWORD=evolution -e POSTGRES_DB=entry \
+                -e POSTGRES_INITDB_ARGS="--locale=C --encoding=UTF8" \
+                -p 127.0.0.1:{{EVOLUTION_REF_PORT}}:5432 postgres:16 >/dev/null
+        fi
+        docker start evolution-ref-pg >/dev/null 2>&1 || true
+        for i in $(seq 1 60); do docker exec evolution-ref-pg pg_isready -q -h 127.0.0.1 -U postgres -d entry && break; sleep 1; done
+        dsn="postgresql://postgres:evolution@127.0.0.1:{{EVOLUTION_REF_PORT}}/entry"
     fi
-    docker start evolution-ref-pg >/dev/null 2>&1 || true
-    for i in $(seq 1 60); do docker exec evolution-ref-pg pg_isready -q -h 127.0.0.1 -U postgres -d entry && break; sleep 1; done
-    OVERVIEW_REF_DSN="postgresql://postgres:evolution@127.0.0.1:{{EVOLUTION_REF_PORT}}/entry" \
-    OVERVIEW_REF_WRITE="$write" node --test scripts/tests/overview-reference.test.mjs
+    OVERVIEW_REF_DSN="$dsn" OVERVIEW_REF_WRITE="$write" node --test scripts/tests/overview-reference.test.mjs
 
 # IE-P3·S3.3 — run a drill FROM INSIDE the cluster: no port-forward (this estate's drop mid-run, which
 # is how S3.0·T7 failed twice), and no copied bearer (the Job mints its own from `estate-drill`).

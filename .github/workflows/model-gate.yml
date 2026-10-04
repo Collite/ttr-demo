@@ -21,6 +21,11 @@
 #                                 the overview fingerprints' (a stub BFF and a fake psql — no estate, no database), and
 #                                 the in-cluster drill's fingerprint lifting (a fake kubectl)
 #
+# A second job, `references`, runs the fingerprints' psql oracles themselves — `just verify-evolution-reference` and
+# `just verify-overview-reference` — on a PostgreSQL 16 service (C locale, as hartland's `entry`): the script suites
+# above hold the workbooks to the references' SAVED answers, so without this an edit to a reference's SQL that was never
+# re-run with `--write` stayed green.
+#
 # What it cannot run: `just check-investment-model-source` and `just verify-investment-sync` need a
 # checkout of the repository model/investment/ is synced FROM, which this workflow does not have.
 # Run both locally before merging a re-sync.
@@ -121,3 +126,37 @@ jobs:
       - name: Script suites
         working-directory: hartland
         run: node --test scripts/tests/investment-dod.test.mjs scripts/tests/price-history.test.mjs scripts/tests/evolution-fingerprint.test.mjs scripts/tests/overview-fingerprint.test.mjs scripts/tests/drill-in-cluster.test.mjs
+
+  references:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: evolution
+          POSTGRES_DB: entry
+          POSTGRES_INITDB_ARGS: --locale=C --encoding=UTF8
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d entry"
+          --health-interval 2s --health-timeout 5s --health-retries 30
+    env:
+      # the recipes use this server instead of starting their own container
+      REF_PG_DSN: postgresql://postgres:evolution@localhost:5432/entry
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: extractions/setup-just@v2
+
+      - name: psql on PATH
+        run: command -v psql || { sudo apt-get update -q && sudo apt-get install -yq postgresql-client; }
+
+      - name: The evolution reference on PostgreSQL 16
+        run: just verify-evolution-reference
+
+      - name: The overview references on PostgreSQL 16
+        run: just verify-overview-reference
