@@ -31,7 +31,7 @@ function jobLog(slug, rows) {
   ].join('\n') + '\n';
 }
 
-function harness(log) {
+function harness(log, { failed = false } = {}) {
   const dir = mkdtempSync(path.join(tmpdir(), 'drill-'));
   writeFileSync(path.join(dir, 'job.log'), log);
   writeFileSync(
@@ -49,7 +49,20 @@ if (args.includes('logs')) {
   process.stdout.write((n >= 0 ? lines.slice(-n) : lines).join('\\n') + '\\n');
   process.exit(0);
 }
-if (args.includes('get')) { process.stdout.write('1'); process.exit(0); }
+if (args.includes('wait')) {
+  // as kubectl does: waiting for \`complete\` on a Job that failed blocks until the timeout (here 40 s, not 600)
+  if (${JSON.stringify(failed)} && args.includes('--for=condition=complete')) {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 40000);
+    process.exit(1);
+  }
+  process.exit(0);
+}
+if (args.includes('get')) {
+  // the Job's counts: a succeeded Job answers \`1/\` (no failures), a failed one \`/1\`; asked for \`succeeded\` alone, '1' or ''
+  const both = args.some((a) => a.includes('.status.failed'));
+  process.stdout.write(${JSON.stringify(failed)} ? (both ? '/1' : '') : both ? '1/' : '1');
+  process.exit(0);
+}
 if (args.includes('create')) { process.stdout.write('apiVersion: v1\\nkind: ConfigMap\\n'); process.exit(0); }
 process.exit(0);
 `,
@@ -94,3 +107,15 @@ test('a run asked to --save whose log holds no block fails, and writes nothing',
   assert.match(out, /asked to --save and printed no fingerprint block/);
   assert.deepEqual(readdirSync(save), []);
 });
+
+test('a Job that FAILED is reported at once — not after the whole wait for `complete`', async () => {
+  const dir = harness(jobLog('price-sheet-v1-24-2026-06-15.csv', 3) + '93 difference(s)\n', { failed: true });
+  const started = Date.now();
+  const { code, out } = await drill(dir, ['fingerprint', 'price-sheet:v1']);
+  const seconds = (Date.now() - started) / 1000;
+  assert.notEqual(code, 0, out);
+  assert.match(out, /did not succeed/);
+  assert.match(out, /93 difference\(s\)/, 'the failed Job\'s log is shown');
+  assert.ok(seconds < 30, `the drill took ${seconds} s to notice the failure`);
+});
+
