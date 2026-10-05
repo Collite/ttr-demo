@@ -15,5 +15,7 @@ transaction,conseq:200900001:PAY:1012,2026-04-10,security,payout,CZ0003704900,10
 transaction,conseq:200900001:TOFF:1013,2026-04-15,security,transfer-out,CZ0008474053,100.000000,,,
 transaction,conseq:200900001:FLOW:CRE:T004,2026-05-05,external-flow,deposit,,,30000.00,CZK,
 transaction,conseq:200900001:SUB:1014,2026-05-06,security,buy,CZ0008474053,200.000000,26000.00,CZK,
+transaction,conseq:200900001:FLOW:DEB:T005,2026-05-08,external-flow,withdrawal,,,1040.00,CZK,
+transaction,conseq:200900001:FLOW:DEB:T006,2026-05-08,external-flow,withdrawal,,,200.00,CZK,
 transaction,conseq:200900001:SUB:1015,2026-06-10,security,buy,CZ0008474053,100.000000,13200.00,CZK,
 cash,,,,,,,,EUR,1500.00

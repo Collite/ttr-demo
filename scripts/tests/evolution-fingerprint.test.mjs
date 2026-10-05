@@ -164,6 +164,11 @@ for (const [name, c] of Object.entries(CASES)) {
       for (const v of [`portfolio=${c.portfolio}`, `from=${FROM}`, `as_of=${AS_OF}`, `grain=${c.grain}`]) {
         assert.ok(args.includes(v), `psql was not given -v ${v}: ${args.join(' ')}`);
       }
+      // …and the classification table (IA-P4b·S4b.2), as the relation the reference joins — read from the synced copy
+      const labels = args.find((a) => a.startsWith('labels='));
+      assert.ok(labels, `psql was not given -v labels=…: ${args.join(' ')}`);
+      assert.match(labels, /^labels=VALUES \(1, 'vstupní poplatek', /);
+      assert.match(out, /every cash and flow movement labelled \(IA-C49 footnotes off\)/);
     });
   });
 }
@@ -272,6 +277,49 @@ test('the engine reads the workbook a person opens: periods, Summary, Notes — 
   const other = engine('sheet', path.join(FIX, CASES.month.workbook), 'conseq:999');
   assert.notEqual(other.code, 0);
   assert.match(other.out, /holds no row of conseq:999/);
+});
+
+// ── IA-P4b·S4b.2: IA-C49's footnotes follow the classification ─────────────────────────────────────────────────────
+
+test('IA-P4b · the classified workbook prints no footnote on Withdrawals, Income, Fees — and the engine says so', () => {
+  const wb = JSON.parse(engine('sheet', path.join(FIX, CASES.month.workbook), CASES.month.portfolio).out);
+  assert.equal(wb.footnoted, false);
+  // the book it was rendered from is labelled whole — and the saved reference says so
+  assert.equal(JSON.parse(engine('reference', path.join(FIX, CASES.month.reference)).out).labelled, true);
+});
+
+test('IA-P4b · a workbook from before the classification (every header still ` *`) is read too — footnoted', () => {
+  // the renderer's v2 workbook of IA-P4 (ttr-demo ce70327), kept as the shape an unclassified render prints
+  const wb = JSON.parse(engine('sheet', path.join(FIX, 'workbook-200900001-month-unlabelled.xlsx'), CASES.month.portfolio).out);
+  assert.equal(wb.footnoted, true);
+  assert.equal(wb.rows.length, 12);
+});
+
+test('⛔ IA-P4b · footnotes that contradict the book FAIL — a classified book with them, an unclassified one without', () => {
+  const kept = compared(CASES.month, (wb) => (wb.footnoted = true));
+  assert.equal(kept.code, 1, kept.out);
+  assert.match(kept.out, /carries IA-C49's footnotes .* but the book is labelled whole/);
+  // the other way round: the reference says some movement carries no label, the workbook dropped the footnotes anyway
+  const dir = mkdtempSync(path.join(tmpdir(), 'ev-cmp-'));
+  const wb = JSON.parse(engine('sheet', path.join(FIX, CASES.month.workbook), CASES.month.portfolio).out);
+  writeFileSync(path.join(dir, 'w.json'), JSON.stringify(wb));
+  const ref = JSON.parse(engine('reference', path.join(FIX, CASES.month.reference)).out);
+  ref.labelled = false;
+  writeFileSync(path.join(dir, 'r.json'), JSON.stringify(ref));
+  const dropped = engine('compare', path.join(dir, 'w.json'), path.join(dir, 'r.json'));
+  assert.equal(dropped.code, 1, dropped.out);
+  assert.match(dropped.out, /drops IA-C49's footnotes .* but the book is not labelled whole/);
+});
+
+test('⛔ IA-P4b · a fee the workbook moved and the book did not is a difference in fees AND withdrawals', () => {
+  const { code, out } = compared(CASES.month, (wb) => {
+    const may = wb.rows.find((r) => r.period === '2026-05');
+    may.withdrawals = String(Number(may.withdrawals) + 1240);
+    may.fees = String(Number(may.fees) - 1240);
+  });
+  assert.equal(code, 1, out);
+  assert.match(out, /2026-05 withdrawals: workbook/);
+  assert.match(out, /2026-05 fees: workbook/);
 });
 
 test('⛔ a FIFO workbook is refused — the reference computes average cost only', () => {

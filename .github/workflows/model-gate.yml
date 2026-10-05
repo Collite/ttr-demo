@@ -125,7 +125,7 @@ jobs:
 
       - name: Script suites
         working-directory: hartland
-        run: node --test scripts/tests/investment-dod.test.mjs scripts/tests/price-history.test.mjs scripts/tests/evolution-fingerprint.test.mjs scripts/tests/overview-fingerprint.test.mjs scripts/tests/drill-in-cluster.test.mjs
+        run: node --test scripts/tests/investment-dod.test.mjs scripts/tests/price-history.test.mjs scripts/tests/evolution-fingerprint.test.mjs scripts/tests/overview-fingerprint.test.mjs scripts/tests/drill-in-cluster.test.mjs scripts/tests/income-labels.test.mjs
 
   references:
     runs-on: ubuntu-latest

@@ -1,6 +1,7 @@
 -- The six tables `scripts/sql/evolution-reference.sql` reads, with the estate's own column types (kantheon
--- `packages/investment/model/entry/investment-schema-v1.sql` + `-v2.sql`) — only what the reference touches, so the
--- fixture book loads into an empty PostgreSQL 16 without the rest of the estate.
+-- `packages/investment/model/entry/investment-schema-v1.sql` + `-v2.sql`, and the ledger's three `-v3.sql` columns —
+-- IA-P4b·S4b.1) — only what the reference touches, so the fixture book loads into an empty PostgreSQL 16 without the
+-- rest of the estate.
 CREATE TABLE investment_asset_price (
     isin       CHAR(12) NOT NULL,
     price_date DATE     NOT NULL,
@@ -19,7 +20,12 @@ CREATE TABLE investment_transaction (
     quantity      NUMERIC(18, 6),
     amount        NUMERIC(18, 2),
     currency      CHAR(3),
-    reversal_of   TEXT
+    reversal_of   TEXT,
+    -- investment-schema-v3 (IA-C53): the provider's fee (security leg — the wire's scale, in the home currency), label and
+    -- settlement day
+    fee             NUMERIC(18, 4),
+    label           TEXT,
+    settlement_date DATE
 );
 CREATE TABLE investment_position (
     portfolio_ref  TEXT     NOT NULL,

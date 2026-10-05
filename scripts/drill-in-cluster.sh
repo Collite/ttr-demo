@@ -111,6 +111,7 @@ kubectl --context "$CTX" -n "$NS" create configmap estate-drill-scripts \
     --from-file=fingerprint.py="$HERE/lib/fingerprint.py" \
     --from-file=evolution_fingerprint.py="$HERE/lib/evolution_fingerprint.py" \
     --from-file=overview_fingerprint.py="$HERE/lib/overview_fingerprint.py" \
+    --from-file=income_labels.py="$HERE/lib/income_labels.py" \
     --from-file=evolution-reference.sql="$HERE/sql/evolution-reference.sql" \
     --from-file=statement-reference.sql="$HERE/sql/statement-reference.sql" \
     --from-file=overview-reference.sql="$HERE/sql/overview-reference.sql" \
@@ -119,9 +120,11 @@ kubectl --context "$CTX" -n "$NS" create configmap estate-drill-scripts \
     --dry-run=client -o yaml | kubectl --context "$CTX" -n "$NS" apply -f - >/dev/null
 
 # The model file the fingerprint lifts the reference query out of (the SYNCED one, which is what the
-# estate serves) — mounted rather than fetched, so the comparison uses this checkout's model too.
+# estate serves) — mounted rather than fetched, so the comparison uses this checkout's model too. And the
+# classification table synced beside it (IA-P4b·S4b.2): the evolution reference classifies with it.
 kubectl --context "$CTX" -n "$NS" create configmap estate-drill-model \
     --from-file="$HERE/../model/investment/queries/q_investment.ttrm" \
+    --from-file="$HERE/../model/investment/income-labels.yaml" \
     --dry-run=client -o yaml | kubectl --context "$CTX" -n "$NS" apply -f - >/dev/null
 
 cat <<YAML | kubectl --context "$CTX" apply -f - >/dev/null
@@ -137,7 +140,7 @@ spec:
       containers:
         - name: drill
           image: $IMAGE
-          command: ["sh", "-c", "apk add -q --no-cache bash curl jq python3 && mkdir -p /drill/lib /drill/sql && cp /scripts/estate-token.sh /scripts/fingerprint.py /scripts/evolution_fingerprint.py /scripts/overview_fingerprint.py /drill/lib/ && cp /scripts/*.sql /drill/sql/ && cp /scripts/*.sh /drill/ && $COMMAND"]
+          command: ["sh", "-c", "apk add -q --no-cache bash curl jq python3 && mkdir -p /drill/lib /drill/sql && cp /scripts/estate-token.sh /scripts/fingerprint.py /scripts/evolution_fingerprint.py /scripts/overview_fingerprint.py /scripts/income_labels.py /drill/lib/ && cp /scripts/*.sql /drill/sql/ && cp /scripts/*.sh /drill/ && $COMMAND"]
           env:
             - { name: IE_DOD_MODE, value: readonly }
             - { name: IE_DOD_PORTFOLIO, value: "$PORTFOLIO" }
@@ -158,6 +161,9 @@ spec:
             - { name: IE_FP_BFF, value: "http://studio-bff.kantheon.svc.cluster.local:7330" }
             - { name: IE_FP_DSN, value: "host=postgres-rw.data.svc.cluster.local port=5432 dbname=entry user=entry_readonly" }
             - { name: IE_FP_MODEL, value: /model/q_investment.ttrm }
+            # the classification table the evolution reference classifies fees and income with (IA-P4b·S4b.2) — this
+            # checkout's synced copy, like the model file beside it
+            - { name: IE_FP_LABELS, value: /model/income-labels.yaml }
             - { name: IE_FP_OIDC_TOKEN_URL, value: "https://keycloak.hartland.collite.cz/realms/kantheon/protocol/openid-connect/token" }
             - { name: IE_FP_OIDC_CLIENT_ID, value: estate-drill }
             - name: IE_FP_OIDC_CLIENT_SECRET

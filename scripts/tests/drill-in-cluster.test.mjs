@@ -40,7 +40,7 @@ function harness(log, { failed = false } = {}) {
 const { readFileSync, appendFileSync } = require('node:fs');
 const args = process.argv.slice(2);
 appendFileSync(${JSON.stringify(path.join(dir, 'kubectl-calls'))}, JSON.stringify(args) + '\\n');
-if (args.includes('apply')) { readFileSync(0); process.exit(0); }
+if (args.includes('apply')) { appendFileSync(${JSON.stringify(path.join(dir, 'applied.yaml'))}, readFileSync(0)); process.exit(0); }
 if (args.includes('logs')) {
   const lines = readFileSync(${JSON.stringify(path.join(dir, 'job.log'))}, 'utf8').split('\\n');
   if (lines.at(-1) === '') lines.pop();
@@ -75,7 +75,9 @@ function drill(dir, args, env = {}) {
   return new Promise((resolve) => {
     const proc = spawn('bash', [SCRIPT, ...args], {
       cwd: dir,
-      env: { ...process.env, PATH: `${dir}:${process.env.PATH}`, ...env },
+      // ⛔ a lifted fingerprint goes to a throwaway directory unless a test names its own: the script's default is the
+      // PRIVATE project repo beside this checkout, and a fixture block written there reads as a real portfolio's
+      env: { ...process.env, IE_FINGERPRINTS_DIR: mkdtempSync(path.join(tmpdir(), 'drill-fp-')), PATH: `${dir}:${process.env.PATH}`, ...env },
     });
     let out = '';
     proc.stdout.on('data', (x) => (out += x));
@@ -119,3 +121,22 @@ test('a Job that FAILED is reported at once — not after the whole wait for `co
   assert.ok(seconds < 30, `the drill took ${seconds} s to notice the failure`);
 });
 
+
+test('IA-P4b · the Job carries the classification table and its reader, and points the evolution reference at them', async () => {
+  // the evolution reference classifies fees and income with THIS checkout's synced income-labels.yaml — mounted
+  // beside the model file the fingerprint reads, never fetched, never baked into an image
+  // a log with no fingerprint block: no --save, so nothing is lifted (and no private repo is needed — CI has none)
+  const dir = harness('running the drill …\nthe evolution matches the book\n');
+  const { code, out } = await drill(dir, ['fingerprint', 'investment-evolution:v2']);
+  assert.equal(code, 0, out);
+  const calls = readFileSync(path.join(dir, 'kubectl-calls'), 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  const created = calls.filter((a) => a.includes('create') && a.includes('configmap'));
+  const scripts = created.find((a) => a.includes('estate-drill-scripts'));
+  const model = created.find((a) => a.includes('estate-drill-model'));
+  assert.ok(scripts.some((a) => /^--from-file=income_labels\.py=.*\/lib\/income_labels\.py$/.test(a)), JSON.stringify(scripts));
+  assert.ok(model.some((a) => /^--from-file=.*\/model\/investment\/income-labels\.yaml$/.test(a)), JSON.stringify(model));
+  const job = readFileSync(path.join(dir, 'applied.yaml'), 'utf8');
+  assert.match(job, /\{ name: IE_FP_LABELS, value: \/model\/income-labels\.yaml \}/);
+  assert.match(job, /\/scripts\/income_labels\.py \/drill\/lib\//);
+  assert.match(job, /bash \/drill\/fingerprint-evolution\.sh/);
+});

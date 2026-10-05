@@ -38,6 +38,10 @@ from fingerprint import EXCEL_EPOCH, _cells, _shared_strings, _sheet_path
 #: The Periods sheet's columns, in the workbook's order (kantheon `PeriodColumns.ALL`), each with the header the
 #: template prints for it. Read by POSITION and checked by header: several headers repeat (Invested, Cash, "of which
 #: FX" — once under Opening, once under Closing), so a header alone does not name a column.
+#:
+#: IA-P4b·S4b.2: a header ending ` *` is IA-C49's footnote. Those in [FOOTNOTED] carry it only while the render cannot
+#: classify every cash and external-flow movement by its label (no table, no `label` column, or a movement without
+#: one); once it can, the template's `{{footnote.<table>.<key>}}` prints nothing. `fx_costs` keeps its `*` always.
 PERIODS = [
     ("period", "Period"),
     ("period_start", "From"),
@@ -95,6 +99,9 @@ SUMMARY = [
     ("plain_return_pct", "Plain return %"),
 ]
 
+#: The headers whose ` *` comes and goes with the classification (IA-C49 as IA-P4b·S4b.2 made it dynamic).
+FOOTNOTED = {"withdrawals", "income", "fees", "income_total", "costs_total"}
+
 TEXT = {"period", "period_start", "period_end", "portfolio_id", "currency", "missing_rate"}
 DATES = {"period_start", "period_end"}
 COUNTS = {"priced_instruments", "unpriced_instruments", "unconverted"}
@@ -131,22 +138,35 @@ def _letters(n: int) -> str:
     return out
 
 
-def _table(rows: list[dict[str, str]], columns: list[tuple[str, str]], sheet: str, first: str) -> list[dict[str, str]]:
-    """The table whose header row prints exactly [columns]' headers from column A; its rows until the first whose
-    [first] column is not a number (the notes under a table are text)."""
+def headers(columns: list[tuple[str, str]], footnoted: bool) -> list[str]:
+    """The headers a table prints: [columns]' own, with IA-C49's ` *` dropped from the [FOOTNOTED] ones when the render
+    could classify every movement (IA-P4b·S4b.2)."""
+    return [h if footnoted or k not in FOOTNOTED else h.removesuffix(" *") for k, h in columns]
+
+
+def _table(rows: list[dict[str, str]], columns: list[tuple[str, str]], sheet: str, first: str) -> tuple[list[dict[str, str]], bool]:
+    """The table whose header row prints exactly [columns]' headers from column A — footnoted (` *`) or classified —
+    its rows until the first whose [first] column is not a number (the notes under a table are text), and whether
+    its headers carried the footnotes."""
     letters = [_letters(i) for i in range(len(columns))]
-    want = [h for _, h in columns]
-    at = next((i for i, r in enumerate(rows) if [r.get(c, "") for c in letters] == want), None)
-    if at is None:
-        heads = next((list(r.values()) for r in rows if r.get("A") == want[0]), None)
-        raise SystemExit(f"the {sheet} sheet has no table headed {want} — the workbook has {heads}")
+    found = None
+    for footnoted in (True, False):
+        want = headers(columns, footnoted)
+        at = next((i for i, r in enumerate(rows) if [r.get(c, "") for c in letters] == want), None)
+        if at is not None:
+            found = (at, footnoted)
+            break
+    if found is None:
+        heads = next((list(r.values()) for r in rows if r.get("A") == columns[0][1]), None)
+        raise SystemExit(f"the {sheet} sheet has no table headed {headers(columns, True)} (or without the IA-C49 footnotes) — the workbook has {heads}")
+    at, footnoted = found
     probe = letters[[k for k, _ in columns].index(first)]
     out = []
     for r in rows[at + 1:]:
         if dec(r.get(probe)) is None:
             break
         out.append({k: r.get(c, "") for (k, _), c in zip(columns, letters)})
-    return out
+    return out, footnoted
 
 
 def read_workbook(path: str, portfolio: str, sheet: str = "Periods") -> dict:
@@ -159,7 +179,8 @@ def read_workbook(path: str, portfolio: str, sheet: str = "Periods") -> dict:
         notes = _cells(zf, _sheet_path(zf, "Notes"), strings)
 
     rows = []
-    for r in _table(periods, PERIODS, sheet, "period_start"):
+    table, footnoted = _table(periods, PERIODS, sheet, "period_start")
+    for r in table:
         if r["portfolio_id"] != portfolio:
             continue
         for k in DATES:
@@ -171,7 +192,13 @@ def read_workbook(path: str, portfolio: str, sheet: str = "Periods") -> dict:
 
     mine = [None]
     if summary is not None:
-        mine = [r for r in _table(summary, SUMMARY, "Summary", "net_contributions") if r["portfolio_id"] == portfolio]
+        table, summary_footnoted = _table(summary, SUMMARY, "Summary", "net_contributions")
+        if summary_footnoted != footnoted:
+            raise SystemExit(
+                f"the Periods {'carry' if footnoted else 'drop'} IA-C49's footnotes and the Summary "
+                f"{'carries' if summary_footnoted else 'drops'} them — one render, one classification"
+            )
+        mine = [r for r in table if r["portfolio_id"] == portfolio]
         if len(mine) != 1:
             raise SystemExit(f"the Summary sheet holds {len(mine)} rows of {portfolio}, not one")
 
@@ -183,7 +210,7 @@ def read_workbook(path: str, portfolio: str, sheet: str = "Periods") -> dict:
             if "A" not in r or "B" not in r:
                 break
             facts[r["A"]] = r["B"]
-    return {"rows": rows, "summary": mine[0], "facts": facts}
+    return {"rows": rows, "summary": mine[0], "facts": facts, "footnoted": footnoted}
 
 
 # ── the reference ────────────────────────────────────────────────────────────────────────────────────────────────
@@ -198,7 +225,15 @@ def read_reference(path: str) -> dict:
     if missing:
         raise SystemExit(f"the reference answered no {', '.join(missing)}")
     refused = rows[0].get("refused", "")
-    return {"rows": [{k: r[k] for k in COMPARED} for r in rows], "summary": summarize(rows), "refused": refused}
+    # IA-P4b·S4b.2: whether every cash and external-flow movement of the window carries a label — the renderer drops
+    # IA-C49's footnotes exactly then. A reference from before it (no column) says nothing: None.
+    labelled = {"true": True, "false": False}.get(rows[0].get("labelled", ""))
+    return {
+        "rows": [{k: r[k] for k in COMPARED} for r in rows],
+        "summary": summarize(rows),
+        "refused": refused,
+        "labelled": labelled,
+    }
 
 
 def summarize(rows: list[dict[str, str]]) -> dict[str, str]:
@@ -248,6 +283,16 @@ def compare(workbook: dict, reference: dict, tolerance: Decimal, return_toleranc
     method = workbook["facts"].get("Cost basis", "")
     if method != "average":
         return [f"the workbook is costed `{method}`; the reference computes average cost only"]
+
+    # IA-C49 / IA-P4b: the footnotes are a claim about the book — "fees and income may be incomplete" — so they must
+    # be there exactly when the book cannot be classified whole, and gone when it can
+    labelled = reference.get("labelled")
+    if labelled is not None and "footnoted" in workbook and workbook["footnoted"] == labelled:
+        problems.append(
+            "the workbook " + ("carries" if workbook["footnoted"] else "drops") + " IA-C49's footnotes (Withdrawals, "
+            "Income, Fees) but the book is " + ("" if labelled else "not ") + "labelled whole — every cash and "
+            "external-flow movement of the window " + ("carries" if labelled else "does not carry") + " a label"
+        )
 
     w, r = workbook["rows"], reference["rows"]
     for i, row in enumerate(w):

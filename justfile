@@ -125,7 +125,7 @@ verify-price-history:
 # on hartland serves THIS repo's `model/` and nothing else, so the interpreted face is copied here
 # and never hand-edited. `check-investment-model` is what makes "never hand-edited" checkable.
 #
-# ⛔ FOUR DIRECTORIES, AND NOT ONE MORE. kantheon's package also holds `model/book.ttrm`,
+# ⛔ FOUR DIRECTORIES (and the one data file INVESTMENT_FILES names), AND NOT ONE MORE. kantheon's package also holds `model/book.ttrm`,
 # `model/parties.ttrm`, `model/instruments.ttrm` (the entry face) and `model/entry/` (DDL + apply
 # programs). Those three .ttrm files DO NOT PARSE — `model book` is not one of the grammar's model
 # codes — and S2.1·D1 measured what a rejected file still costs: the parser recovers past the bad
@@ -138,6 +138,17 @@ verify-price-history:
 # not synced — and `just verify-model` above runs `find model -name '*.test.mjs'`, so a copied test
 # tree does not sit inertly, it turns this repo's own model gate red.
 INVESTMENT_KINDS := "db er binding queries"
+# IA-P4b·S4b.2: plain files the sync carries beside the kind directories. `income-labels.yaml` (IA-C55) is the
+# classification table the report renders by — the fingerprint references classify the book with the SAME file
+# (`scripts/lib/income_labels.py`), so it is synced from kantheon like the model, under the same stamp and tree hash,
+# never hand-copied here. Not a TTR file: nothing that reads the model tree parses it.
+INVESTMENT_FILES := "income-labels.yaml"
+# IA-P4b review R15: kantheon files this repo keeps a COPY of outside model/investment/ — `<source under
+# packages/investment/model>:<path here>`. The sync does not carry them (they are tests, not model), so
+# `check-investment-model-source` compares each, byte for byte, against the commit the stamp names. The label case list is
+# the contract the reference's SQL and scripts/lib/income_labels.py are held to, as the renderer is: a stale copy would keep
+# this repo green while the renderer normalises differently.
+INVESTMENT_COPIES := "tests/income-labels.cases.json:scripts/tests/fixtures/evolution/income-labels.cases.json"
 
 sync-investment-model kantheon="../kantheon" allow_dirty="false":
     #!/usr/bin/env bash
@@ -162,12 +173,12 @@ sync-investment-model kantheon="../kantheon" allow_dirty="false":
     just --justfile "{{justfile()}}" --working-directory "$(pwd)" _investment-copy "$src" model/investment
     tree=$(just --justfile "{{justfile()}}" --working-directory "$(pwd)" _investment-tree-sha)
     printf 'source-repo: kantheon\nsource-path: packages/investment/model/{%s}\nsource-commit: %s\nsynced-at: %s\ntree-sha256: %s\n' \
-        "$(echo {{INVESTMENT_KINDS}} | tr ' ' ',')" "$commit" "$(date -u +%Y-%m-%d)" "$tree" > model/investment/SYNCED-FROM
+        "$(echo {{INVESTMENT_KINDS}} {{INVESTMENT_FILES}} | tr ' ' ',')" "$commit" "$(date -u +%Y-%m-%d)" "$tree" > model/investment/SYNCED-FROM
     echo "synced $(find model/investment -type f ! -path model/investment/SYNCED-FROM | wc -l | tr -d ' ') files from kantheon $commit"
 
 # The copy the sync makes, and the one `check-investment-model-source` rebuilds to compare against —
 # one definition, so the comparison cannot drift from what the sync writes. `dest` is REPLACED, not
-# merged into: afterwards it is EXACTLY the source's four directories minus every `tests/` (the note
+# merged into: afterwards it is EXACTLY the source's four directories minus every `tests/`, plus INVESTMENT_FILES (the note
 # above). `rsync --delete` per kind directory could see neither a stray top-level file nor a
 # receiver-side `tests/` (an excluded path is protected from deletion), so both survived a re-sync
 # and were re-certified by the new stamp.
@@ -177,6 +188,9 @@ _investment-copy src dest:
     src="{{src}}"; dest="{{dest}}"
     for kind in {{INVESTMENT_KINDS}}; do
         [ -d "$src/$kind" ] || { echo "$src/$kind is missing — refusing a partial sync" >&2; exit 2; }
+    done
+    for file in {{INVESTMENT_FILES}}; do
+        [ -f "$src/$file" ] && [ ! -L "$src/$file" ] || { echo "$src/$file is missing (or not a plain file) — refusing a partial sync" >&2; exit 2; }
     done
     # ⛔ Plain files and directories only, or nothing is written. A symlink is invisible to the tree
     # hash, and what it points at is decided by whoever reads it — so one is refused, not copied.
@@ -191,6 +205,7 @@ _investment-copy src dest:
     trap 'rm -rf "$stage"' EXIT
     chmod 755 "$stage"
     for kind in {{INVESTMENT_KINDS}}; do cp -R "$src/$kind" "$stage/$kind"; done
+    for file in {{INVESTMENT_FILES}}; do cp "$src/$file" "$stage/$file"; done
     find "$stage" -type d -name tests -prune -exec rm -rf {} +
     rm -rf "$dest"
     mv "$stage" "$dest"
@@ -266,19 +281,36 @@ check-investment-model-source kantheon=env_var_or_default("IE_KANTHEON_DIR", "..
     tmp=$(mktemp -d)
     trap 'rm -rf "$tmp"' EXIT
     paths=()
-    for kind in {{INVESTMENT_KINDS}}; do paths+=("packages/investment/model/$kind"); done
+    for kind in {{INVESTMENT_KINDS}} {{INVESTMENT_FILES}}; do paths+=("packages/investment/model/$kind"); done
     git -C "{{kantheon}}" archive --format=tar "$sha" "${paths[@]}" | tar -x -C "$tmp"
     just --justfile "{{justfile()}}" --working-directory "$(pwd)" _investment-copy "$tmp/packages/investment/model" "$tmp/want"
     want=$(just --justfile "{{justfile()}}" --working-directory "$(pwd)" _investment-tree-sha "$tmp/want")
     have=$(just --justfile "{{justfile()}}" --working-directory "$(pwd)" _investment-tree-sha)
+    rc=0
     if [ "$want" = "$have" ]; then
         echo "model/investment is exactly kantheon $sha"
-        exit 0
+    else
+        echo "model/investment is NOT what kantheon $sha holds — the source of truth is kantheon; edit it THERE and re-sync. Files that differ:" >&2
+        diff -rq "$tmp/want" model/investment 2>&1 | grep -v '^Only in model/investment: SYNCED-FROM$' \
+            | sed "s|$tmp/want|kantheon@${sha:0:12}|g; s|^|  |" >&2 || true
+        rc=3
     fi
-    echo "model/investment is NOT what kantheon $sha holds — the source of truth is kantheon; edit it THERE and re-sync. Files that differ:" >&2
-    diff -rq "$tmp/want" model/investment 2>&1 | grep -v '^Only in model/investment: SYNCED-FROM$' \
-        | sed "s|$tmp/want|kantheon@${sha:0:12}|g; s|^|  |" >&2 || true
-    exit 3
+    # the copies kept outside model/investment (R15): each byte-identical to the stamped commit's file
+    for pair in {{INVESTMENT_COPIES}}; do
+        src="packages/investment/model/${pair%%:*}"; dst="${pair#*:}"
+        if ! git -C "{{kantheon}}" cat-file -e "$sha:$src" 2>/dev/null; then
+            echo "$dst copies $src, which kantheon $sha does not have" >&2; rc=3; continue
+        fi
+        if [ ! -f "$dst" ]; then
+            echo "$dst is missing — it is the copy of kantheon's $src (cp it from $sha)" >&2; rc=3; continue
+        fi
+        if git -C "{{kantheon}}" show "$sha:$src" | cmp -s - "$dst"; then
+            echo "$dst is exactly kantheon $sha:$src"
+        else
+            echo "$dst is NOT kantheon $sha:$src — copy it from that commit (the stamp's)" >&2; rc=3
+        fi
+    done
+    exit $rc
 
 # ── IE-P2·S2.4 · the estate answers, and it answers DIFFERENTLY after a write ────────────────────
 #

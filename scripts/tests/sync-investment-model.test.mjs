@@ -56,9 +56,15 @@ function justFails(cwd, ...args) {
   }
 }
 
+/** The label case list (R15): a scratch kantheon holds it under `model/tests/`, a fresh destination its copy. */
+const CASES = '[{"label": "Vklad", "normalized": "vklad"}]\n';
+const CASES_COPY = 'scripts/tests/fixtures/evolution/income-labels.cases.json';
+
 function freshDest() {
   const d = mkdtempSync(path.join(tmpdir(), 'ie-sync-'));
   mkdirSync(path.join(d, 'model'), { recursive: true });
+  mkdirSync(path.join(d, path.dirname(CASES_COPY)), { recursive: true });
+  writeFileSync(path.join(d, CASES_COPY), CASES);
   execFileSync('git', ['init', '-q'], { cwd: d });
   return d;
 }
@@ -139,10 +145,13 @@ test('T4.4 — the INTERPRETED FACE ONLY: no book layer, no entry/, no kantheon 
   assert.ok(!files.some((f) => f.includes('tests/')), 'kantheon\'s test tree would turn `just verify-model` red here');
   assert.ok(!files.some((f) => f.endsWith('.test.mjs') || f.endsWith('.mjs')), 'no JavaScript belongs in a served model');
 
-  // And what it MUST carry: the four interpreted directories.
+  // And what it MUST carry: the four interpreted directories — and the classification table the fingerprint
+  // references read (IA-P4b·S4b.2), the one top-level file.
   for (const kind of ['db/', 'er/', 'binding/', 'queries/']) {
     assert.ok(files.some((f) => f.startsWith(kind)), `the sync carries no ${kind}`);
   }
+  assert.ok(files.includes('income-labels.yaml'), 'the sync carries no income-labels.yaml (IA-C55)');
+  assert.deepEqual(files.filter((f) => !f.includes('/')).sort(), ['SYNCED-FROM', 'income-labels.yaml']);
   assert.ok(files.includes('SYNCED-FROM'), 'no stamp');
 });
 
@@ -159,6 +168,9 @@ test('T4.4b — a DIRTY source is refused: the stamp may not name a commit it is
     mkdirSync(path.join(model, kind), { recursive: true });
     writeFileSync(path.join(model, kind, 'x.ttrm'), 'package investment\n');
   }
+  writeFileSync(path.join(model, 'income-labels.yaml'), 'version: 1\nlabels: []\n');
+  mkdirSync(path.join(model, 'tests'));
+  writeFileSync(path.join(model, 'tests', 'income-labels.cases.json'), CASES);
   execFileSync('git', ['add', '-A'], { cwd: scratch });
   execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'seed'], { cwd: scratch });
   just(dest, 'sync-investment-model', scratch); // clean: allowed
@@ -213,6 +225,9 @@ function scratchKantheon() {
     writeFileSync(path.join(model, kind, 'tests', `${kind}.test.mjs`), '// kantheon-only\n');
   }
   writeFileSync(path.join(model, 'book.ttrm'), 'model book\n');
+  writeFileSync(path.join(model, 'income-labels.yaml'), 'version: 1\nlabels: []\n');
+  mkdirSync(path.join(model, 'tests'));
+  writeFileSync(path.join(model, 'tests', 'income-labels.cases.json'), CASES);
   mkdirSync(path.join(model, 'entry'));
   writeFileSync(path.join(model, 'entry', 'programs.json'), '{}\n');
   commitAll(dir, 'seed');
@@ -307,4 +322,46 @@ test('T4.11 — a +dirty stamp names no commit, so the source comparison refuses
   const { status, output } = justFails(dest, 'check-investment-model-source', k.dir);
   assert.notEqual(status, 0, 'a dirty stamp was compared against a commit that does not hold it');
   assert.match(output, /dirty/i, output);
+});
+
+test('T4.12 — a source without income-labels.yaml is refused, and the destination is left untouched', () => {
+  // IA-P4b·S4b.2: the fingerprint references classify the book with the synced table. A sync that silently
+  // dropped it would leave the references reading last month's table — or none — under a fresh stamp.
+  const k = scratchKantheon();
+  const dest = freshDest();
+  just(dest, 'sync-investment-model', k.dir);
+  const before = filesUnder(inv(dest));
+  execFileSync('git', ['rm', '-q', path.join(k.model, 'income-labels.yaml')], { cwd: k.dir });
+  commitAll(k.dir, 'no table');
+  const { status, output } = justFails(dest, 'sync-investment-model', k.dir);
+  assert.notEqual(status, 0, 'a sync with no classification table succeeded');
+  assert.match(output, /income-labels\.yaml is missing/, output);
+  assert.deepEqual(filesUnder(inv(dest)), before, 'the refused sync touched the destination');
+});
+
+test('T4.13 — the label case list kept OUTSIDE model/investment is compared with the stamped commit too (R15)', () => {
+  // the sync does not carry it (a test file, not model), so nothing else would see the copy drift from kantheon's:
+  // the reference's SQL and income_labels.py would stay green on a list the renderer no longer satisfies
+  const k = scratchKantheon();
+  const dest = freshDest();
+  just(dest, 'sync-investment-model', k.dir);
+  assert.match(just(dest, 'check-investment-model-source', k.dir), /income-labels\.cases\.json is exactly kantheon/);
+
+  // kantheon's list moves on in a LATER commit: the stamp still names the old one, whose list the copy is
+  writeFileSync(path.join(k.model, 'tests', 'income-labels.cases.json'), '[]\n');
+  commitAll(k.dir, 'later cases');
+  just(dest, 'check-investment-model-source', k.dir);
+
+  // the copy edited here: refused, and named — while model/investment itself still compares clean
+  writeFileSync(path.join(dest, CASES_COPY), '[{"label": "Vklad", "normalized": "x"}]\n');
+  let r = justFails(dest, 'check-investment-model-source', k.dir);
+  assert.equal(r.status, 3, r.output);
+  assert.match(r.output, /income-labels\.cases\.json is NOT kantheon [0-9a-f]+:packages\/investment\/model\/tests\/income-labels\.cases\.json/);
+  assert.match(r.output, /model\/investment is exactly kantheon/, 'the model comparison still runs and reports');
+
+  // the copy gone: refused too, never skipped
+  execFileSync('rm', [path.join(dest, CASES_COPY)]);
+  r = justFails(dest, 'check-investment-model-source', k.dir);
+  assert.equal(r.status, 3, r.output);
+  assert.match(r.output, /income-labels\.cases\.json is missing/);
 });
