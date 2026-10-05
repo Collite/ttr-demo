@@ -41,10 +41,20 @@
 --     v1.25, the IA-P4b review's R1: a cash-account contract's fee arrives on both legs), then the flow counts it, once.
 --     Twins: the provider's ids (`…:CASH:<T>:<Id>` is the same payment as `…:DEP:<T><Id>`), else, for a flow with no
 --     provider id (`…:DEP:H:…`, or not from the provider), the same day, signed amount, currency and class; each flow
---     twins one cash movement at most, and a twin of another class is none. The security leg's `fee` is the provider's
---     record of the same entry fee that arrives as its own withdrawal, stated in the estate's HOME currency: never
---     added (this file has no Notes to print its sum on). `labelled` says whether IA-C49's footnotes drop: the book
---     has the `label` column AND every cash/external-flow movement of the window carries one.
+--     twins one cash movement at most, and a twin of another class is none. `labelled` says whether IA-C49's footnotes
+--     drop: the book has the `label` column AND every cash/external-flow movement of the window carries one;
+--   * the security leg's `fee` (IA-C55 v1.26): the provider's record of a trade's fee, stated in the estate's HOME
+--     currency, which mostly arrives as a movement of its own as well (`"<fund>, Vstupní poplatek"` around the
+--     settlement day). It is added to `fees` — converted from home to R at its deal day's rate, in the period of its
+--     deal day — UNLESS a movement RECORDS it: a cash or external-flow movement that counts in `fees` already (classed
+--     fee: any external-flow one, a cash one with no flow twin) or that the table cannot classify (no label, or one it
+--     does not know); never one the table knows as another class. A recorder is dated from 3 days before the deal to 7
+--     days after the settlement day (the deal day when it has none), and pays the same money: a withdrawal or a cash
+--     debit its amount, a deposit or a cash credit minus it — equal to the fee when in the home currency, within 1 % of
+--     it when converted from another at the recorder's own day's rate (no rate: no match). One movement records one
+--     fee: the fees of the whole ledger to as_of in (deal day, id) order, each taking the untaken recorder nearest its
+--     settlement day, then the earlier, then the lower id — so a fee is decided alike whatever the window. A book
+--     without the `label` column adds none (nothing can be told apart).
 --
 -- ⚑ Lower case in a C-locale database (hartland's `entry` is one, and so is every reference container): a C ctype
 -- folds ASCII only — `lower('ÚROKY Z PRODLENÍ')` is `Úroky z prodlenÍ` — so the label is lowered under the ICU root
@@ -124,6 +134,8 @@ eff AS (
            to_jsonb(t) ->> 'label' AS label,
            -- the day the provider counts a security movement (R7) — read the same way: a pre-v3 book has none
            CAST(to_jsonb(t) ->> 'settlement_date' AS DATE) AS sd,
+           -- the security leg's fee, in the home currency (IA-C55 v1.26) — the same way
+           CAST(to_jsonb(t) ->> 'fee' AS NUMERIC) AS fee,
            CASE WHEN t.leg = 'security' AND t.operation IN ('buy', 'transfer-in', 'reversal-of-sell')
                      THEN COALESCE(abs(t.quantity), 0)
                 WHEN t.leg = 'security' AND t.operation IN ('sell', 'transfer-out', 'payout', 'reversal-of-buy')
@@ -217,13 +229,18 @@ classed AS (
     ) c ON TRUE
     WHERE l.leg IN ('cash', 'external-flow')
 ),
-labelling AS (
-    -- IA-C49's footnotes drop iff the book HAS the column and every cash/flow movement of the window carries a label
+label_col AS (
+    -- whether the book can be classified at all: it HAS the column (a book before investment-schema v3 does not)
     SELECT EXISTS (SELECT 1 FROM information_schema.columns
                     WHERE table_name = 'investment_transaction' AND column_name = 'label'
-                      AND table_schema = ANY (current_schemas(false)))
+                      AND table_schema = ANY (current_schemas(false))) AS present
+),
+labelling AS (
+    -- IA-C49's footnotes drop iff the book HAS the column and every cash/flow movement of the window carries a label
+    SELECT lc.present
            AND NOT EXISTS (SELECT 1 FROM classed c JOIN grid g ON c.t BETWEEN g.period_start AND g.period_end
                             WHERE c.norm IS NULL) AS labelled
+    FROM label_col lc
 ),
 twin_cash AS (
     -- the cash movements a class would show in fees / income — each may be the same payment as an external-flow movement
@@ -300,6 +317,62 @@ fcur AS (
     FROM investment_asset_price ap, prm
     WHERE ap.price_date <= prm.as_of
     ORDER BY ap.isin, ap.price_date DESC
+),
+
+-- ── the security leg's fee (IA-C55 v1.26) ─────────────────────────────────────────────────────────────────────────
+sec_fees AS (
+    -- every security movement of the ledger to as_of (storno pairs dropped) that carries a fee, in the order the fees are
+    -- decided: deal day, then id (byte order, as the renderer compares ids)
+    SELECT row_number() OVER (ORDER BY l.t, l.id COLLATE "C") AS n,
+           l.id, l.t, l.isin, l.fee, COALESCE(l.sd, l.t) AS settles
+    FROM tracked l
+    WHERE l.leg = 'security' AND l.fee IS NOT NULL AND l.fee <> 0
+),
+recorders AS (
+    -- the movements that may record a fee — counted in fees already (a flow classed fee; a cash one classed fee with no
+    -- flow twin) or not classifiable (no label, a label the table does not know) — and what each pays: minus its signed
+    -- amount (a withdrawal or a debit pays, a deposit or a credit refunds), in its currency and in the home currency at
+    -- its own day's rate (NULL when no rate converts it); one paying nothing records nothing
+    SELECT c.id, c.t, COALESCE(c.currency, rc.r) AS cur, -c.am AS paid, -c.am * rn.v AS paid_home
+    FROM classed c
+    CROSS JOIN rc
+    LEFT JOIN twinned tw ON tw.cash_id = c.id
+    LEFT JOIN ron rn ON rn.day = c.t AND rn.cur = COALESCE(c.currency, rc.r)
+    WHERE c.am <> 0
+      AND (c.cls IS NULL OR (c.cls = 'fee' AND (c.leg = 'external-flow' OR tw.cash_id IS NULL)))
+),
+fee_match (n, taken, fee_id, rec_id) AS (
+    -- one fee at a time, each taking the untaken recorder of its window that pays the same money — the nearest to its
+    -- settlement day, then the earlier, then the lower id; `taken` carries the recorders already used
+    SELECT CAST(0 AS BIGINT), CAST(ARRAY[] AS TEXT[]), CAST(NULL AS TEXT), CAST(NULL AS TEXT)
+    UNION ALL
+    SELECT s.n, CASE WHEN x.id IS NULL THEN m.taken ELSE m.taken || x.id END, s.id, x.id
+    FROM fee_match m
+    JOIN sec_fees s ON s.n = m.n + 1
+    LEFT JOIN LATERAL (
+        SELECT r.id FROM recorders r
+        WHERE r.t BETWEEN s.t - 3 AND s.settles + 7
+          AND NOT (r.id = ANY (m.taken))
+          AND CASE WHEN r.cur = (SELECT COALESCE(home.h, rc.r) FROM home, rc) THEN r.paid = s.fee
+                   ELSE r.paid_home IS NOT NULL AND abs(r.paid_home - s.fee) <= abs(s.fee) * 0.01 END
+        ORDER BY abs(r.t - s.settles), r.t, r.id COLLATE "C"
+        LIMIT 1
+    ) x ON TRUE
+),
+sec_fee_added AS (
+    -- the fees no movement records, in the period of their deal day, from home to R at that day's rate — only in a book
+    -- that can be classified; a fee on a movement with no instrument is the renderer's to skip too
+    SELECT g.period, SUM(s.fee * fx.f) AS fees
+    FROM sec_fees s
+    CROSS JOIN label_col lc
+    CROSS JOIN home
+    CROSS JOIN rc
+    JOIN grid g ON s.t BETWEEN g.period_start AND g.period_end
+    LEFT JOIN fx ON fx.day = s.t AND fx.cur = COALESCE(home.h, rc.r)
+    WHERE lc.present
+      AND s.isin IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM fee_match fm WHERE fm.fee_id = s.id AND fm.rec_id IS NOT NULL)
+    GROUP BY g.period
 ),
 
 -- ── what the ledger does not explain (S4.1·D2) ──────────────────────────────────────────────────────────────────────
@@ -598,7 +671,7 @@ rows AS (
            CASE WHEN tr.period IS NULL THEN 0 ELSE tr.realized END AS realized_sales,
            CASE WHEN tr.period IS NULL THEN 0 ELSE tr.fx_realized END AS fx_realized,
            COALESCE(fl.income, 0) + COALESCE(cm.income, 0) AS income,
-           COALESCE(fl.fees, 0) + COALESCE(cm.fees, 0) AS fees,
+           COALESCE(fl.fees, 0) + COALESCE(cm.fees, 0) + COALESCE(sf.fees, 0) AS fees,
            COALESCE(cm.cash_movements, 0) AS cash_movements,
            COALESCE(fo.fx_open, 0) + COALESCE(cm.fx_moves, 0) AS fx_cash,
            c.invested AS invested_close, c.mv AS market_value_close, c.cash AS cash_close,
@@ -612,6 +685,7 @@ rows AS (
     LEFT JOIN flows fl ON fl.period = sp.period
     LEFT JOIN trades tr ON tr.period = sp.period
     LEFT JOIN cashm cm ON cm.period = sp.period
+    LEFT JOIN sec_fee_added sf ON sf.period = sp.period
     LEFT JOIN fx_open fo ON fo.period = sp.period
 )
 SELECT r.period, r.period_start, r.period_end, r.portfolio_id, r.currency,

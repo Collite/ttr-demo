@@ -386,3 +386,145 @@ test('R7 · a buy that SETTLED before the valuation cannot explain a gap away as
     psql(`DELETE FROM investment_transaction WHERE external_id = ${q(id)}`);
   }
 });
+
+// ── IA-C55 v1.26: the security leg's fee — added to `fees` unless a movement of its own RECORDS it ───────────────────
+//
+// Planted in P5 (CZK, a cash-account contract with fees on both legs): security rows with a fee and NO units (they move
+// neither the cost basis nor the units — only the fee rule can see them) and external-flow withdrawals (outside the
+// cash identity). Each test measures its month's `fees` and `withdrawals` against the same book without its plants.
+
+const FEE_TAG = ':FEETEST:';
+
+/** P5's [period] row by month: its fees, withdrawals and unexplained, as numbers. */
+function p5Month(period) {
+  const r = csvRows2(reference(cases.portfolios[2].portfolio_id, 'month', cases.window)).find((x) => x.period === period);
+  return { fees: Number(r.fees), withdrawals: Number(r.withdrawals), unexplained: Number(r.unexplained) };
+}
+
+/** A security movement of P5 with a [fee] and no units, dealt [deal], settling [settles]. */
+function secFee(id, deal, settles, fee) {
+  const p5 = cases.portfolios[2].portfolio_id;
+  return (
+    'INSERT INTO investment_transaction (external_id, portfolio_ref, asset_ref, leg, operation, trade_date, quantity, amount, currency, fee, label, settlement_date) ' +
+    `VALUES (${q(`${p5}:SUB${FEE_TAG}${id}`)}, ${q(p5)}, 'FEETEST', 'security', 'buy', ${q(deal)}, 0, 0, 'CZK', ${fee}, 'Nákup', ${q(settles)})`
+  );
+}
+
+/** An external-flow withdrawal of P5 on [day] — [label] null for none. */
+function withdrawal(id, day, amount, label, currency = 'CZK') {
+  const p5 = cases.portfolios[2].portfolio_id;
+  return (
+    'INSERT INTO investment_transaction (external_id, portfolio_ref, leg, operation, trade_date, amount, currency, label) ' +
+    `VALUES (${q(`${p5}:FLOW${FEE_TAG}${id}`)}, ${q(p5)}, 'external-flow', 'withdrawal', ${q(day)}, ${amount}, ${q(currency)}, ${q(label)})`
+  );
+}
+
+/** [period]'s change in fees and withdrawals once [plants] are in the book (removed again afterwards). */
+function feeDelta(period, plants) {
+  const psql = (sql) => execFileSync('psql', [DSN, '-X', '-q', '-v', 'ON_ERROR_STOP=1', '-c', sql], { encoding: 'utf8' });
+  const before = p5Month(period);
+  try {
+    for (const sql of plants) psql(sql);
+    const after = p5Month(period);
+    assert.ok(Math.abs(after.unexplained) < 0.005, `${period} unexplained ${after.unexplained}`);
+    const d = (k) => Math.round((after[k] - before[k]) * 100) / 100;
+    return { fees: d('fees'), withdrawals: d('withdrawals') };
+  } finally {
+    psql(`DELETE FROM investment_transaction WHERE external_id LIKE ${q(`%${FEE_TAG}%`)}`);
+  }
+}
+
+test('IA-C55 v1.26 · a fee the flow\'s entry-fee withdrawal records is not added again — and its CASH twin records nothing: of two equal fees, one is added', () => {
+  ready();
+  // July 07-01: `…:DEP:DEB502` (a flow classed fee, 300) and its cash twin `…:CASH:DEB:502`. The first fee takes the flow;
+  // the twin is no recorder (the flow already counts that payment), so the second fee has none and is added
+  assert.deepEqual(
+    feeDelta('2025-07', [secFee('F1', '2025-07-01', '2025-07-01', '300.00'), secFee('F2', '2025-07-02', '2025-07-02', '300.00')]),
+    { fees: 300, withdrawals: 0 },
+  );
+  assert.deepEqual(feeDelta('2025-07', [secFee('F1', '2025-07-01', '2025-07-01', '300.00')]), { fees: 0, withdrawals: 0 });
+});
+
+test('IA-C55 v1.26 · one movement records one fee: two equal fees beside one cash fee — one is added', () => {
+  ready();
+  // August 08-05: `…:CASH:DEB:503`, a cash debit classed fee with no flow twin (50)
+  assert.deepEqual(
+    feeDelta('2025-08', [secFee('F3', '2025-08-04', '2025-08-05', '50.00'), secFee('F4', '2025-08-05', '2025-08-05', '50.00')]),
+    { fees: 50, withdrawals: 0 },
+  );
+});
+
+test('IA-C55 v1.26 · a fee nothing records is added; an unlabelled or unknown withdrawal records it, one the table knows as other does not', () => {
+  ready();
+  assert.deepEqual(feeDelta('2025-10', [secFee('F5', '2025-10-15', '2025-10-17', '77.70')]), { fees: 77.7, withdrawals: 0 });
+  assert.deepEqual(
+    feeDelta('2025-11', [
+      secFee('F6', '2025-11-07', '2025-11-09', '55.50'),
+      withdrawal('W1', '2025-11-10', '55.50', null), //              no label: it may be the fee — it records it
+      secFee('F7', '2025-11-12', '2025-11-14', '66.60'),
+      withdrawal('W2', '2025-11-14', '66.60', 'Výběr'), //           known as other: it is not the fee
+      secFee('F8', '2025-11-17', '2025-11-19', '44.40'),
+      withdrawal('W3', '2025-11-19', '44.40', 'Neznámá platba'), //  a label the table does not know: it records it
+    ]),
+    { fees: 66.6, withdrawals: 166.5 },
+  );
+});
+
+test('IA-C55 v1.26 · the window: from 3 days before the deal to 7 days after the settlement, both ends included', () => {
+  ready();
+  assert.deepEqual(
+    feeDelta('2025-12', [
+      secFee('F9', '2025-12-01', '2025-12-03', '88.80'),
+      withdrawal('W4', '2025-12-11', '88.80', null), //  settlement + 8: outside — the fee is added
+      secFee('F10', '2025-12-08', '2025-12-10', '99.90'),
+      withdrawal('W5', '2025-12-05', '99.90', null), //  deal − 3: inside
+      secFee('F11', '2025-12-01', '2025-12-03', '22.20'),
+      withdrawal('W6', '2025-12-10', '22.20', null), //  settlement + 7: inside
+    ]),
+    { fees: 88.8, withdrawals: 210.9 },
+  );
+});
+
+test('IA-C55 v1.26 · each fee takes the recorder nearest its settlement day — not the first one dated', () => {
+  ready();
+  // F12 settles 10-22: of 10-19 (3 days off) and 10-23 (1 day) it takes 10-23; F13's window (10-21…10-31) then holds
+  // only the taken one, so F13 is added. Earliest-first would give F12 10-19 and F13 10-23, adding nothing
+  assert.deepEqual(
+    feeDelta('2025-10', [
+      secFee('F12', '2025-10-20', '2025-10-22', '30.30'),
+      withdrawal('W7', '2025-10-19', '30.30', null),
+      withdrawal('W8', '2025-10-23', '30.30', null),
+      secFee('F13', '2025-10-24', '2025-10-24', '30.30'),
+    ]),
+    { fees: 30.3, withdrawals: 60.6 },
+  );
+});
+
+test('IA-C55 v1.26 · a recorder in another currency matches within 1 % at its own day\'s rate; outside 1 % it does not', () => {
+  ready();
+  // 20.00 EUR on 12-15 at 24.55 = 491.00 CZK. F14 (500.00, decided first) is 1.8 % off — no match; F15 (493.00) is 0.4 %
+  // off — recorded. So 500 is added (a wider tolerance would let F14 take it and add 493 instead)
+  assert.deepEqual(
+    feeDelta('2025-12', [
+      secFee('F14', '2025-12-12', '2025-12-14', '500.00'),
+      secFee('F15', '2025-12-13', '2025-12-14', '493.00'),
+      withdrawal('W9', '2025-12-15', '20.00', null, 'EUR'),
+    ]),
+    { fees: 500, withdrawals: 491 },
+  );
+});
+
+test('IA-C55 v1.26 · a book without the `label` column adds no security fee — nothing can be told apart', () => {
+  ready();
+  // P6's 12-05 buy carries a fee of 43.20 no movement records: added in December — but not once the column is gone
+  const p6 = cases.portfolios[3].portfolio_id;
+  const psql = (sql) => execFileSync('psql', [DSN, '-X', '-q', '-v', 'ON_ERROR_STOP=1', '-c', sql], { encoding: 'utf8' });
+  const dec = () => Number(csvRows2(reference(p6, 'month', cases.window)).find((r) => r.period === '2025-12').fees);
+  assert.equal(dec(), 43.2);
+  psql('ALTER TABLE investment_transaction RENAME COLUMN label TO label_hidden');
+  try {
+    assert.equal(dec(), 0);
+  } finally {
+    psql('ALTER TABLE investment_transaction RENAME COLUMN label_hidden TO label');
+  }
+});
