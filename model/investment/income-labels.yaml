@@ -1,0 +1,95 @@
+# income-labels — what a cash or external-flow movement IS, by the provider's own label (IA-C55, IA-P4b·S4b.2).
+#
+# The investment report's period evolution (`investment-evolution:v2`, the statement's Evolution) reads every movement's
+# `label` (S4b.1: `OperationDescrip`, else `OperationNameCZ`, as DistrInfo spelled it) and looks it up here. A
+# movement classed:
+#
+#   fee                         on the external-flow leg leaves `withdrawals` for `fees` (Conseq books its entry fee
+#                               and its commission as a withdrawal beside the deposit); on a deposit it is a refund,
+#                               a negative fee. On the cash leg it is shown in `fees` and stays in the cash movements
+#                               — unless the external-flow leg carries the same money (a cash-account contract books
+#                               one fee on both legs, `DEB<Id>` beside the cash debit `<Id>`): then it is counted once.
+#   dividend · coupon · interest the same way into `income`.
+#   tax · other                 stays where its leg put it.
+#
+# A label the table does not know is `other` too, and is COUNTED on every Notes sheet with the five commonest — that
+# count is how this file is kept complete. The security leg is never classified: its movements are trades, and its
+# `fee` column (FeeAmount) is the provider's record of the same entry fee that arrives as its own withdrawal (the
+# report prints its sum and does not add it again).
+#
+# ## How a label is matched
+#
+# Normalised first, by the renderer (`IncomeLabels.normalize`) and by `scripts/dump-operation-labels` alike — pinned by
+# `tests/income-labels.cases.json`:
+#
+#   1. trimmed, every run of whitespace one space;
+#   2. lower case;
+#   3. only the text after the LAST ", " — DistrInfo prefixes the fund's short name: `JTOpportCZK, Vstupní poplatek`;
+#   4. without a trailing payment ident: `Vklad Ident. 20240115 900000001` → `vklad`;
+#   5. trimmed again.
+#
+# Then an `exact` entry (the default) whose `label` equals the normalised text, else the longest `match: prefix` entry
+# it starts with. `leg: cash | external-flow` restricts an entry to that leg; without it the entry applies to both, so
+# a label and match kind has one entry per leg at most. Every `label` must already be in its normalised form — the
+# renderer refuses to boot on one that is not, because it could never match, and on two entries that overlap.
+#
+# ## Where these labels come from
+#
+# Every distinct label of the provider's own extracts — the cash and flow movements of a certification run and of a
+# live estate's recent windows — as `dump-operation-labels` prints them with their counts (the dumps beside the package's
+# model tests). No dividend, coupon or interest label occurs: the provider's funds accumulate, so `income` reads 0 on
+# such an estate, and a label that appears later is counted on the Notes sheet until it is added here.
+#
+# ## To extend
+#
+# Add the normalised label with its class and a note saying why, bump `version` (printed on every Notes sheet, so a
+# report names the table it was classified by), and re-render.
+version: 1
+labels:
+  - label: "vstupní poplatek"
+    match: prefix
+    class: fee
+    note: "the entry fee — a withdrawal beside the deposit that paid it (on a cash-account contract also its cash debit, the same money); a prefix, so a named variant is one too and its refund a negative fee"
+  - label: "provize conseq"
+    class: fee
+    note: "the distributor's commission, withdrawn from the client's money"
+  - label: "provize"
+    class: fee
+    note: "a commission, spelled without the distributor's name"
+  - label: "poplatek vklad"
+    class: fee
+    note: "a fee on a deposit"
+  - label: "vklad"
+    class: other
+    note: "a plain deposit (most carry a payment ident)"
+  - label: "výběr"
+    class: other
+    note: "a plain withdrawal"
+  - label: "pojištění"
+    class: other
+    note: "an insurance premium withdrawn from the contract — not an investment cost; it stays a withdrawal"
+  - label: "pojištění - vratka"
+    class: other
+    note: "an insurance premium refunded — follows `pojištění`: it stays a deposit"
+  - label: "vklad - popl.prav.investice"
+    class: other
+    note: "a deposit towards the regular-investment fee — the money arrives as a deposit; the fee itself leaves under its own label"
+  - label: "nákup"
+    leg: cash
+    class: other
+    note: "the cash leg paying for a purchase"
+  - label: "převod mezi účty"
+    class: other
+    note: "a transfer between the client's accounts"
+  - label: "vyrovnání zůstatku"
+    match: prefix
+    class: other
+    note: "a balance settlement — `vyrovnání zůstatku mie` and the like"
+  - label: "zaokr. rozdíl"
+    leg: cash
+    class: other
+    note: "a rounding difference"
+  - label: "příspěvek gfo"
+    leg: cash
+    class: fee
+    note: "the contribution to the securities traders' guarantee fund (Garanční fond obchodníků s cennými papíry), debited from the cash account"

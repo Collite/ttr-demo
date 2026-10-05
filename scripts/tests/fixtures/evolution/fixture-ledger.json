@@ -14,10 +14,17 @@
   "and dropped by PeriodInputs, while the door's own units carry the buy at 02-28); a never-priced instrument (E);",
   "units the ledger does not explain (D: the provider holds 500, the ledger only sold 200 — 700 held before the",
   "ledger began, taken at the opening market value, S4.1·D2); and a purchase still settling at the provider's",
-  "valuation (A 06-10, inside the 20 days before 06-12: the provider's 700 against the ledger's 800 is no gap).",
+  "valuation (A 06-10, settling 06-15 — after the provider's 06-12 valuation: its 700 against the ledger's 800 dealt is no gap).",
   "IA-P4·S4.3 adds the provider's own figures the overviews read (client_overview, IA-C41/C70/C73): each valuation's",
   "market_values (base CZK; P1's EUR fund at 90 × 10.00 × 24.60, the EUR rate of 05-29; E unpriced, null) and",
-  "valuation_points — the provider's total (holdings + cash) at 2026-03-31 and at 2026-06-12, P2's in USD."
+  "valuation_points — the provider's total (holdings + cash) at 2026-03-31 and at 2026-06-12, P2's in USD.",
+  "IA-P4b·S4b.2 (IA-C53, IA-C55) gives every movement the provider's `label` (OperationDescrip, else OperationNameCZ),",
+  "the security leg its `fee` and `settlement_date`, and adds the entry fee and commission of A's 05-06 purchase as",
+  "two withdrawals on its settlement day (05-08: `CQStraAMICZK, Vstupní poplatek` 1 040.00 — the SAME money as the",
+  "purchase's fee — and `CQStraAMICZK, provize CONSEQ` 200.00), both classed fee; P1's EUR cash debit of 12-15 is a",
+  "cash-leg entry fee; P2's 03-25 withdrawal carries a label the table does not know.",
+  "The IA-P4b review (2026-10-04): A's 06-10 purchase settles 06-15, not 06-12 — the provider counts a movement when it",
+  "SETTLES (R7), so on 06-12 it holds 700; the payment idents are invented (900000001, 900000002)."
  ],
  "home_currency": "CZK",
  "window": {
@@ -103,7 +110,10 @@
    "quantity": null,
    "amount": "200000.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Vklad Ident. 20250110 900000001",
+   "settlement_date": null
   },
   {
    "portfolio": "conseq:200900001",
@@ -115,7 +125,10 @@
    "quantity": "1000.000000",
    "amount": "100000.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": "0.00",
+   "label": "Nákup",
+   "settlement_date": "2025-01-17"
   },
   {
    "portfolio": "conseq:200900001",
@@ -127,7 +140,10 @@
    "quantity": "500.000000",
    "amount": "55000.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Nákup",
+   "settlement_date": "2025-02-12"
   },
   {
    "portfolio": "conseq:200900001",
@@ -139,7 +155,10 @@
    "quantity": "100.000000",
    "amount": "25300.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Nákup",
+   "settlement_date": "2025-03-14"
   },
   {
    "portfolio": "conseq:200900001",
@@ -151,7 +170,10 @@
    "quantity": "-1200.000000",
    "amount": "144000.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Odkup",
+   "settlement_date": "2025-07-17"
   },
   {
    "portfolio": "conseq:200900001",
@@ -163,7 +185,10 @@
    "quantity": null,
    "amount": "50000.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "výběr",
+   "settlement_date": null
   },
   {
    "portfolio": "conseq:200900001",
@@ -175,7 +200,10 @@
    "quantity": "300.000000",
    "amount": null,
    "currency": null,
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Převod dovnitř",
+   "settlement_date": null
   },
   {
    "portfolio": "conseq:200900001",
@@ -187,7 +215,10 @@
    "quantity": "100.000000",
    "amount": "97000.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Nákup",
+   "settlement_date": "2025-10-14"
   },
   {
    "portfolio": "conseq:200900001",
@@ -199,7 +230,10 @@
    "quantity": "100.000000",
    "amount": "-97000.00",
    "currency": "CZK",
-   "reversal_of": "conseq:200900001:SUB:1006"
+   "reversal_of": "conseq:200900001:SUB:1006",
+   "fee": null,
+   "label": "Nákup",
+   "settlement_date": "2025-10-14"
   },
   {
    "portfolio": "conseq:200900001",
@@ -211,7 +245,10 @@
    "quantity": "100.000000",
    "amount": "98000.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Nákup",
+   "settlement_date": "2025-10-14"
   },
   {
    "portfolio": "conseq:200900001",
@@ -223,7 +260,10 @@
    "quantity": null,
    "amount": "2000.00",
    "currency": "EUR",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Převod mezi účty",
+   "settlement_date": null
   },
   {
    "portfolio": "conseq:200900001",
@@ -235,7 +275,10 @@
    "quantity": null,
    "amount": "2000.00",
    "currency": "EUR",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Vklad",
+   "settlement_date": null
   },
   {
    "portfolio": "conseq:200900001",
@@ -247,7 +290,10 @@
    "quantity": "-200.000000",
    "amount": "23760.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Odkup",
+   "settlement_date": "2025-12-12"
   },
   {
    "portfolio": "conseq:200900001",
@@ -259,7 +305,10 @@
    "quantity": null,
    "amount": "500.00",
    "currency": "EUR",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Vstupní poplatek",
+   "settlement_date": null
   },
   {
    "portfolio": "conseq:200900001",
@@ -271,7 +320,10 @@
    "quantity": "50.000000",
    "amount": "12350.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Nákup",
+   "settlement_date": "2026-01-22"
   },
   {
    "portfolio": "conseq:200900001",
@@ -283,7 +335,10 @@
    "quantity": "1000.000000",
    "amount": "125000.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Nákup",
+   "settlement_date": "2026-03-02"
   },
   {
    "portfolio": "conseq:200900001",
@@ -295,7 +350,10 @@
    "quantity": "1000.000000",
    "amount": "125000.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Storno nákupu",
+   "settlement_date": "2026-03-05"
   },
   {
    "portfolio": "conseq:200900001",
@@ -307,7 +365,10 @@
    "quantity": "-60.000000",
    "amount": "15000.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Odkup",
+   "settlement_date": "2026-03-24"
   },
   {
    "portfolio": "conseq:200900001",
@@ -319,7 +380,10 @@
    "quantity": "100.000000",
    "amount": "100000.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Výplata",
+   "settlement_date": "2026-04-14"
   },
   {
    "portfolio": "conseq:200900001",
@@ -331,7 +395,10 @@
    "quantity": "100.000000",
    "amount": null,
    "currency": null,
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Převod ven",
+   "settlement_date": null
   },
   {
    "portfolio": "conseq:200900001",
@@ -343,7 +410,10 @@
    "quantity": null,
    "amount": "30000.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Vklad Ident. 20260505 900000002",
+   "settlement_date": null
   },
   {
    "portfolio": "conseq:200900001",
@@ -355,7 +425,40 @@
    "quantity": "200.000000",
    "amount": "26000.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": "1040.00",
+   "label": "Nákup",
+   "settlement_date": "2026-05-08"
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:FLOW:DEB:T005",
+   "trade_date": "2026-05-08",
+   "leg": "external-flow",
+   "operation": "withdrawal",
+   "isin": null,
+   "quantity": null,
+   "amount": "1040.00",
+   "currency": "CZK",
+   "reversal_of": null,
+   "fee": null,
+   "label": "CQStraAMICZK, Vstupní poplatek",
+   "settlement_date": null
+  },
+  {
+   "portfolio": "conseq:200900001",
+   "external_id": "conseq:200900001:FLOW:DEB:T006",
+   "trade_date": "2026-05-08",
+   "leg": "external-flow",
+   "operation": "withdrawal",
+   "isin": null,
+   "quantity": null,
+   "amount": "200.00",
+   "currency": "CZK",
+   "reversal_of": null,
+   "fee": null,
+   "label": "CQStraAMICZK, provize CONSEQ",
+   "settlement_date": null
   },
   {
    "portfolio": "conseq:200900001",
@@ -367,7 +470,10 @@
    "quantity": "100.000000",
    "amount": "13200.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": "0.00",
+   "label": "Nákup",
+   "settlement_date": "2026-06-15"
   },
   {
    "portfolio": "conseq:200900002",
@@ -379,7 +485,10 @@
    "quantity": null,
    "amount": "11900.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Vklad",
+   "settlement_date": null
   },
   {
    "portfolio": "conseq:200900002",
@@ -391,7 +500,10 @@
    "quantity": "100.000000",
    "amount": "11900.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Nákup",
+   "settlement_date": "2025-08-14"
   },
   {
    "portfolio": "conseq:200900002",
@@ -403,7 +515,10 @@
    "quantity": "-40.000000",
    "amount": "5200.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Odkup",
+   "settlement_date": "2026-03-24"
   },
   {
    "portfolio": "conseq:200900002",
@@ -415,7 +530,10 @@
    "quantity": null,
    "amount": "5200.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Výplata na účet XY",
+   "settlement_date": null
   },
   {
    "portfolio": "conseq:200900002",
@@ -427,7 +545,10 @@
    "quantity": "10.000000",
    "amount": "1000.00",
    "currency": "CZK",
-   "reversal_of": null
+   "reversal_of": null,
+   "fee": null,
+   "label": "Převod dovnitř",
+   "settlement_date": null
   }
  ],
  "prices": [

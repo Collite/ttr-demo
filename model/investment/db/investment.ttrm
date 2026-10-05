@@ -124,7 +124,10 @@ def table investment_transaction {
         def column quantity      { type: { type: decimal, length: 18, precision: 6 }, optional: true, description: "Units moved. NULL on cash legs." },
         def column amount        { type: { type: decimal, length: 18, precision: 2 }, optional: true, description: "Money moved, in `currency`." },
         def column currency      { type: { type: char, length: 3 }, optional: true, description: "Currency of `amount`, ISO 4217." },
-        def column reversal_of   { type: text, optional: true, description: "md `reversal-link` role — the external_id this row reverses. The audit chain, and half of the effective-ledger rule (IE-C25)." }
+        def column reversal_of   { type: text, optional: true, description: "md `reversal-link` role — the external_id this row reverses. The audit chain, and half of the effective-ledger rule (IE-C25)." },
+        def column fee             { type: { type: decimal, length: 18, precision: 4 }, optional: true, description: "v3 (IA-C53) — the provider's fee on a security movement (`FeeAmount`, its sign kept), in the estate's HOME currency (`investment_estate_setting.home_currency`), not in `currency`. The wire's scale (numeric(18,4)) — the apply compares a re-delivery unrounded. A record: the same money is its own external-flow withdrawal, so it is never added to a fee total. NULL on cash and external-flow legs." },
+        def column label           { type: text, optional: true, description: "v3 (IA-C53, named `label`: `description` is a TTR keyword) — the provider's label: `OperationDescrip` on cash and external-flow legs, else and on the security leg `OperationNameCZ`. ≤ 200 characters. What income-labels.yaml classifies (IA-C55)." },
+        def column settlement_date { type: date, optional: true, description: "v3 (IA-C53) — the security leg's `SettlementDate`, the day the provider's valuation counts the units — sent in advance, so the PLANNED day (after today) on a deal not settled yet. NULL on cash and external-flow legs (their settlement day is `trade_date`) and where the provider sent none." }
     ]
 }
 

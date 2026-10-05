@@ -25,6 +25,9 @@
 #   IE_FP_FROM        the window's first month (default: the first day of the month 11 months before IE_FP_AS_OF)
 #   IE_FP_GRAIN       month | quarter (default month)
 #   IE_FP_SQL         the reference (default scripts/sql/evolution-reference.sql)
+#   IE_FP_LABELS      the classification table the reference classifies the book with (IA-C55, IA-P4b·S4b.2) —
+#                     default model/investment/income-labels.yaml, the copy synced from kantheon with the model: the
+#                     SAME table the renderer packages, so the two sides classify alike
 #   IE_FP_TOLERANCE   money tolerance per cell (default 0.01, IA-C51)
 #   IE_FP_RETURN_TOLERANCE  the plain return's, in percentage points (default 0.0001, IA-C51)
 #   the bearer: IE_FP_BEARER, or IE_FP_OIDC_TOKEN_URL + _CLIENT_ID + _CLIENT_SECRET (lib/estate-token.sh)
@@ -57,6 +60,7 @@ PORTFOLIO="${IE_FP_PORTFOLIO:?IE_FP_PORTFOLIO is required — name the portfolio
 AS_OF="${IE_FP_AS_OF:-$(date -u +%F)}"
 GRAIN="${IE_FP_GRAIN:-month}"
 SQL="${IE_FP_SQL:-$HERE/sql/evolution-reference.sql}"
+LABELS_YAML="${IE_FP_LABELS:-$HERE/../model/investment/income-labels.yaml}"
 TOLERANCE="${IE_FP_TOLERANCE:-0.01}"
 RETURN_TOLERANCE="${IE_FP_RETURN_TOLERANCE:-0.0001}"
 ENGINE="$HERE/lib/evolution_fingerprint.py"
@@ -64,6 +68,10 @@ TEMPLATE="investment-evolution:v2"
 
 for tool in curl jq psql python3; do command -v "$tool" >/dev/null || fail "$tool is not on PATH"; done
 [ -f "$SQL" ] || fail "no reference at $SQL"
+[ -f "$LABELS_YAML" ] || fail "no classification table at $LABELS_YAML (IE_FP_LABELS) — the reference classifies fees and income with it"
+# the table as a psql relation, read strictly (scripts/lib/income_labels.py refuses a shape it does not know)
+LABELS="$(python3 "$HERE/lib/income_labels.py" sql "$LABELS_YAML")" || fail "the classification table at $LABELS_YAML cannot be read"
+
 [[ "$AS_OF" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || fail "IE_FP_AS_OF must be YYYY-MM-DD, not '$AS_OF'"
 case "$GRAIN" in month|quarter) ;; *) fail "IE_FP_GRAIN must be month or quarter, not '$GRAIN'" ;; esac
 FROM="${IE_FP_FROM:-$(python3 -c '
@@ -110,12 +118,12 @@ step "2. the reference, on the book"
 
 # psql quotes `:'name'` itself — the values reach the SQL as literals, never as text spliced in
 psql "$DSN" -X -q --csv -v ON_ERROR_STOP=1 \
-    -v portfolio="$PORTFOLIO" -v from="$FROM" -v as_of="$AS_OF" -v grain="$GRAIN" \
+    -v portfolio="$PORTFOLIO" -v from="$FROM" -v as_of="$AS_OF" -v grain="$GRAIN" -v labels="$LABELS" \
     -f "$SQL" >"$WORK/reference.csv" || fail "the reference did not run on the book"
 python3 "$ENGINE" reference "$WORK/reference.csv" >"$WORK/reference.json" || fail "the reference answered a shape this cannot read"
 refused="$(jq -r '.refused' "$WORK/reference.json")"
 [ -z "$refused" ] || fail "the book cannot be compared: $refused"
-ok "the book answers $(jq '.rows | length' "$WORK/reference.json") periods"
+ok "the book answers $(jq '.rows | length' "$WORK/reference.json") periods, $(jq -r 'if .labelled == true then "every cash and flow movement labelled (IA-C49 footnotes off)" elif .labelled == false then "not labelled whole (IA-C49 footnotes on)" else "labels not read" end' "$WORK/reference.json")"
 
 # ── 3. do they agree? ────────────────────────────────────────────────────────────────────────────────────────────────
 

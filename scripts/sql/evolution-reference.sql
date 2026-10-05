@@ -18,15 +18,39 @@
 --     happened (`…:RED:…`, `…:SST:…` sort before `…:SUB:…`), so the basis takes a day's security INFLOWS (buy,
 --     transfer-in, an unpaired reversal-of-sell) before its OUTFLOWS (sell, transfer-out, payout, an unpaired
 --     reversal-of-buy), each in the door's order; settling trades are read newest-first, the reverse of that order;
---   * units the ledger does not explain (S4.1·D2): the provider's latest valuation against the ledger TO THAT DAY — read
---     past `as_of` when the valuation is later (R1; the window itself never reads past `as_of`) — unless the newest
---     movements of the 20 days before it cancel the difference; such an instrument — and one whose units fall below
+--   * units the ledger does not explain (S4.1·D2, IA-C46 v1.25): the provider counts a movement when it SETTLES, so its
+--     latest valuation is held against the ledger SETTLED by that day — a movement counts on its `settlement_date`, else
+--     its deal day, sales, transfers and payouts as much as buys — read past `as_of` when the valuation is later (R1;
+--     the window itself never reads past `as_of`). Only a movement with NO settlement day can still be settling unseen:
+--     a difference the newest of those dealt in the 20 days before the valuation cancel is no gap; a movement with a
+--     settlement day is decided by it (the IA-P4b review's R7). Such an instrument — and one whose units fall below
 --     zero before the window — starts the window at its opening market value, its cost UNKNOWN (NULL) when it has no
 --     price on the opening (R9): NULL then runs through invested, unrealized, the cost of what leaves, realized,
 --     fx_realized and unexplained — not a missing rate, never 0;
 --   * each lot's cost in the reporting currency R and the price currency F, so `fx_realized` / `fx_unrealized` split;
 --   * market value on the DOOR's units (+ the gap − storno'd originals still outstanding), unrealized on the TRACKED
---     units; cash = the cash leg per currency; `fx_cash` its revaluation; the `unexplained` identity.
+--     units; cash = the cash leg per currency; `fx_cash` its revaluation; the `unexplained` identity;
+--   * income and fees by the provider's LABEL (IA-C55, IA-P4b·S4b.2): each cash and external-flow movement of the window
+--     classified with `income-labels.yaml` — the SAME table the renderer packages, synced with the model and handed in
+--     as `:labels` (`scripts/lib/income_labels.py sql`). The label normalised as the table spells it (whitespace runs
+--     one space, lower case, the text after the LAST ", ", no trailing ` ident. …`); an exact entry first, else the
+--     longest prefix; an entry's `leg` restricts it. An external-flow movement classed `fee` LEAVES deposits/withdrawals
+--     for `fees` (a withdrawal +, a deposit — a refund — −); dividend/coupon/interest leave them for `income` (deposit +,
+--     withdrawal −). A cash movement classed so is shown in `fees` (debit +) or `income` (credit +) and STAYS in
+--     `cash_movements` — the identity never moves — UNLESS its external-flow twin carries the same payment (IA-C55
+--     v1.25, the IA-P4b review's R1: a cash-account contract's fee arrives on both legs), then the flow counts it, once.
+--     Twins: the provider's ids (`…:CASH:<T>:<Id>` is the same payment as `…:DEP:<T><Id>`), else, for a flow with no
+--     provider id (`…:DEP:H:…`, or not from the provider), the same day, signed amount, currency and class; each flow
+--     twins one cash movement at most, and a twin of another class is none. The security leg's `fee` is the provider's
+--     record of the same entry fee that arrives as its own withdrawal, stated in the estate's HOME currency: never
+--     added (this file has no Notes to print its sum on). `labelled` says whether IA-C49's footnotes drop: the book
+--     has the `label` column AND every cash/external-flow movement of the window carries one.
+--
+-- ⚑ Lower case in a C-locale database (hartland's `entry` is one, and so is every reference container): a C ctype
+-- folds ASCII only — `lower('ÚROKY Z PRODLENÍ')` is `Úroky z prodlenÍ` — so the label is lowered under the ICU root
+-- collation, `COLLATE "und-x-icu"`, the Unicode folding the renderer's `lowercase()` does (the postgres:16 image and
+-- CloudNativePG's are built with ICU; a server without it refuses the statement, naming the collation — never a
+-- silent misclassification).
 --
 -- Rates: the latest `investment_fx_rate` on or before the day, per unit, the home currency at 1 (IA-C66). R is the
 -- portfolio's reporting currency, else the home currency. Prices: the latest price on or before the day (IA-C36 (3)).
@@ -35,11 +59,13 @@
 --
 --   psql "$DSN" -X -q --csv -v ON_ERROR_STOP=1 \
 --        -v portfolio=conseq:… -v from=YYYY-MM-DD -v as_of=YYYY-MM-DD -v grain=month|quarter \
+--        -v labels="$(python3 scripts/lib/income_labels.py sql model/investment/income-labels.yaml)" \
 --        -f scripts/sql/evolution-reference.sql
 --
 -- One statement, read-only (no temporary object — the drill's session is a read-only one). One row per period, in the
 -- Periods sheet's column names, UNROUNDED (the comparison rounds both sides; a total built from rounded rows would
--- carry their rounding); `refused` is the same on every row: empty, or why this book cannot be compared (the
+-- carry their rounding); `refused` and `labelled` are the same on every row — `refused` empty, or why this book cannot
+-- be compared (the
 -- renderer refuses the same cases — `incomplete_ledger`). `unconverted` / `missing_rate` are not computed (so R15's
 -- "each boundary once" has nothing to count here): a window with an amount the rates cannot convert is not
 -- fingerprinted (the script checks the workbook's count is 0). An unknown COST is not a missing rate: its NULLs are
@@ -93,6 +119,11 @@ eff AS (
     -- the effective ledger as far as the gap needs it: to the provider's valuation when that is later than as_of (R1)
     SELECT t.external_id AS id, t.trade_date AS t, t.leg, t.operation AS op, t.asset_ref AS isin,
            t.quantity, t.amount, t.currency,
+           -- read through the row, not by name: a book before investment-schema v3 has no `label` column, and its
+           -- movements are then simply unlabelled (`labelled` says so) instead of the statement failing
+           to_jsonb(t) ->> 'label' AS label,
+           -- the day the provider counts a security movement (R7) — read the same way: a pre-v3 book has none
+           CAST(to_jsonb(t) ->> 'settlement_date' AS DATE) AS sd,
            CASE WHEN t.leg = 'security' AND t.operation IN ('buy', 'transfer-in', 'reversal-of-sell')
                      THEN COALESCE(abs(t.quantity), 0)
                 WHEN t.leg = 'security' AND t.operation IN ('sell', 'transfer-out', 'payout', 'reversal-of-buy')
@@ -159,6 +190,82 @@ tracked AS (
     SELECT l.* FROM led l WHERE NOT EXISTS (SELECT 1 FROM paired_ids p WHERE p.id = l.id)
 ),
 
+-- ── the provider's labels (IA-C55, IA-P4b·S4b.2) ────────────────────────────────────────────────────────────────────
+lbl (ord, label, leg, mtch, cls) AS (
+    :labels
+),
+classed AS (
+    -- every cash and external-flow movement, its label as the table spells it (NULL = it carries none), its class
+    SELECT l.*, n.norm, c.cls
+    FROM tracked l
+    CROSS JOIN LATERAL (
+        -- the expression between the two `norm` markers is held to the renderer's case list, verbatim (evolution-reference.test.mjs)
+        SELECT /* norm */ NULLIF(btrim(regexp_replace(regexp_replace(
+                   lower(btrim(regexp_replace(COALESCE(l.label, ''),
+                       '[[:space:]\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+', ' ', 'g'), ' ')
+                         COLLATE "und-x-icu"),
+                   '^.*, ', ''), ' +ident\..*$', ''), ' '), '') /* /norm */ AS norm
+    ) n
+    LEFT JOIN LATERAL (
+        -- an exact entry first (the file's first that fits the leg), else the longest prefix
+        SELECT b.cls FROM lbl b
+        WHERE (b.leg IS NULL OR b.leg = l.leg)
+          AND ((b.mtch = 'exact' AND b.label = n.norm)
+               OR (b.mtch = 'prefix' AND left(n.norm, length(b.label)) = b.label))
+        ORDER BY (b.mtch = 'exact') DESC, CASE WHEN b.mtch = 'prefix' THEN length(b.label) END DESC, b.ord
+        LIMIT 1
+    ) c ON TRUE
+    WHERE l.leg IN ('cash', 'external-flow')
+),
+labelling AS (
+    -- IA-C49's footnotes drop iff the book HAS the column and every cash/flow movement of the window carries a label
+    SELECT EXISTS (SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'investment_transaction' AND column_name = 'label'
+                      AND table_schema = ANY (current_schemas(false)))
+           AND NOT EXISTS (SELECT 1 FROM classed c JOIN grid g ON c.t BETWEEN g.period_start AND g.period_end
+                            WHERE c.norm IS NULL) AS labelled
+),
+twin_cash AS (
+    -- the cash movements a class would show in fees / income — each may be the same payment as an external-flow movement
+    SELECT c.id, c.pos, c.t, c.currency, c.am, c.cls
+    FROM classed c
+    WHERE c.leg = 'cash' AND c.cls IN ('fee', 'dividend', 'coupon', 'interest')
+),
+twin_flow AS (
+    -- `provider`: the flow carries the provider's own id (`…:DEP:<T><Id>`), not a content hash (`…:DEP:H:…`)
+    SELECT c.id, c.pos, c.t, c.currency, c.am, COALESCE(c.cls, 'other') AS cls,
+           c.id ~ ':DEP:[^:]+$' AS provider
+    FROM classed c
+    WHERE c.leg = 'external-flow'
+),
+twin_by_id AS (
+    -- the provider's ids: `…:CASH:<T>:<Id>` and `…:DEP:<T><Id>` are one payment, if the two are classed alike; one flow
+    -- twins one cash movement (the first, in the door's order)
+    SELECT DISTINCT ON (f.id) c.id AS cash_id
+    FROM twin_cash c
+    JOIN twin_flow f ON c.id ~ '^.+:CASH:[A-Z]+:[^:]+$'
+                    AND f.id = regexp_replace(c.id, '^(.+):CASH:([A-Z]+):([^:]+)$', '\1:DEP:\2\3')
+                    AND f.cls = c.cls
+    ORDER BY f.id, c.pos
+),
+twin_by_key AS (
+    -- a flow with no provider id: the same day, signed amount, currency and class — the k-th such cash movement (door
+    -- order) with the k-th such flow, which is what pairing each cash movement with the first flow still free gives
+    SELECT c.id AS cash_id
+    FROM (SELECT tc.*, row_number() OVER (PARTITION BY tc.t, tc.currency, tc.am, tc.cls ORDER BY tc.pos) AS k
+          FROM twin_cash tc
+          WHERE NOT EXISTS (SELECT 1 FROM twin_by_id b WHERE b.cash_id = tc.id)) c
+    JOIN (SELECT tf.*, row_number() OVER (PARTITION BY tf.t, tf.currency, tf.am, tf.cls ORDER BY tf.pos) AS k
+          FROM twin_flow tf
+          WHERE NOT tf.provider) f
+      ON f.t = c.t AND f.currency IS NOT DISTINCT FROM c.currency AND f.am = c.am AND f.cls = c.cls AND f.k = c.k
+),
+twinned AS (
+    SELECT cash_id FROM twin_by_id
+    UNION
+    SELECT cash_id FROM twin_by_key
+),
+
 -- ── rates and prices ────────────────────────────────────────────────────────────────────────────────────────────────
 days AS (
     SELECT day FROM bounds
@@ -202,10 +309,11 @@ val AS (
     WHERE p.valid_to IS NULL AND p.portfolio_ref = prm.pid AND p.valuation_date = vday.vd
 ),
 lu AS (
-    -- the ledger's units TO THE VALUATION DAY (R1): the extended ledger, not the window's
+    -- the ledger's units SETTLED BY THE VALUATION DAY (R1, R7): the extended ledger, not the window's — a movement
+    -- counts on its settlement day, else its deal day, whatever its direction
     SELECT l.isin, SUM(l.qs) AS units
     FROM eff l, vday
-    WHERE l.leg = 'security' AND l.isin IS NOT NULL AND l.t <= vday.vd
+    WHERE l.leg = 'security' AND l.isin IS NOT NULL AND l.t <= vday.vd AND COALESCE(l.sd, l.t) <= vday.vd
     GROUP BY l.isin
 ),
 raw_gap AS (
@@ -213,12 +321,13 @@ raw_gap AS (
     FROM val v FULL JOIN lu u ON u.isin = v.isin
 ),
 settle AS (
-    -- trades still settling: the newest movements of the 20 days up to the valuation (the extended ledger), summed
-    -- newest first — the reverse of the basis order: a day's outflows before its inflows, ids descending (R3)
+    -- trades still settling UNSEEN: only a movement with NO settlement day can be one (a known day already decided `lu`,
+    -- R7) — the newest of those dealt in the 20 days up to the valuation (the extended ledger), summed newest first —
+    -- the reverse of the basis order: a day's outflows before its inflows, ids descending (R3)
     SELECT l.isin,
            SUM(l.qs) OVER (PARTITION BY l.isin ORDER BY l.t DESC, (l.qs > 0) ASC, l.id DESC ROWS UNBOUNDED PRECEDING) AS run
     FROM eff l, vday
-    WHERE l.leg = 'security' AND l.isin IS NOT NULL AND l.t <= vday.vd AND l.t > vday.vd - 20
+    WHERE l.leg = 'security' AND l.isin IS NOT NULL AND l.sd IS NULL AND l.t <= vday.vd AND l.t > vday.vd - 20
 ),
 gap AS (
     SELECT g.isin, g.raw AS gap
@@ -344,10 +453,19 @@ trades AS (
     GROUP BY period
 ),
 flows AS (
+    -- a flow classed fee or income LEAVES deposits / withdrawals for its column (IA-C55); tax / other / unknown stay
     SELECT g.period,
-           SUM(CASE WHEN l.op = 'deposit' THEN abs(l.amount) * fx.f ELSE 0 END) AS deposits,
-           SUM(CASE WHEN l.op = 'withdrawal' THEN abs(l.amount) * fx.f ELSE 0 END) AS withdrawals
-    FROM tracked l
+           SUM(CASE WHEN l.op = 'deposit' AND COALESCE(l.cls, 'other') IN ('tax', 'other')
+                    THEN abs(l.amount) * fx.f ELSE 0 END) AS deposits,
+           SUM(CASE WHEN l.op = 'withdrawal' AND COALESCE(l.cls, 'other') IN ('tax', 'other')
+                    THEN abs(l.amount) * fx.f ELSE 0 END) AS withdrawals,
+           SUM(CASE WHEN l.cls = 'fee' AND l.op = 'withdrawal' THEN abs(l.amount) * fx.f
+                    WHEN l.cls = 'fee' AND l.op = 'deposit' THEN -abs(l.amount) * fx.f
+                    ELSE 0 END) AS fees,
+           SUM(CASE WHEN l.cls IN ('dividend', 'coupon', 'interest') AND l.op = 'deposit' THEN abs(l.amount) * fx.f
+                    WHEN l.cls IN ('dividend', 'coupon', 'interest') AND l.op = 'withdrawal' THEN -abs(l.amount) * fx.f
+                    ELSE 0 END) AS income
+    FROM classed l
     CROSS JOIN rc
     JOIN grid g ON l.t BETWEEN g.period_start AND g.period_end
     LEFT JOIN fx ON fx.day = l.t AND fx.cur = COALESCE(l.currency, rc.r)
@@ -355,12 +473,18 @@ flows AS (
     GROUP BY g.period
 ),
 cashm AS (
+    -- a cash movement classed fee / income is SHOWN there and stays in cash_movements (the identity reads those) — not
+    -- when its external-flow twin already counted the same payment (R1)
     SELECT g.period,
            SUM(l.am * ft.f) AS cash_movements,
-           SUM(l.am * (fc.f - ft.f)) AS fx_moves
-    FROM tracked l
+           SUM(l.am * (fc.f - ft.f)) AS fx_moves,
+           SUM(CASE WHEN l.cls = 'fee' AND tw.cash_id IS NULL THEN -(l.am * ft.f) ELSE 0 END) AS fees,
+           SUM(CASE WHEN l.cls IN ('dividend', 'coupon', 'interest') AND tw.cash_id IS NULL THEN l.am * ft.f ELSE 0 END)
+               AS income
+    FROM classed l
     CROSS JOIN rc
     JOIN grid g ON l.t BETWEEN g.period_start AND g.period_end
+    LEFT JOIN twinned tw ON tw.cash_id = l.id
     LEFT JOIN fx ft ON ft.day = l.t AND ft.cur = COALESCE(l.currency, rc.r)
     LEFT JOIN fx fc ON fc.day = g.period_end AND fc.cur = COALESCE(l.currency, rc.r)
     WHERE l.leg = 'cash'
@@ -473,6 +597,8 @@ rows AS (
            CASE WHEN tr.period IS NULL THEN 0 ELSE tr.proceeds END AS sales_proceeds,
            CASE WHEN tr.period IS NULL THEN 0 ELSE tr.realized END AS realized_sales,
            CASE WHEN tr.period IS NULL THEN 0 ELSE tr.fx_realized END AS fx_realized,
+           COALESCE(fl.income, 0) + COALESCE(cm.income, 0) AS income,
+           COALESCE(fl.fees, 0) + COALESCE(cm.fees, 0) AS fees,
            COALESCE(cm.cash_movements, 0) AS cash_movements,
            COALESCE(fo.fx_open, 0) + COALESCE(cm.fx_moves, 0) AS fx_cash,
            c.invested AS invested_close, c.mv AS market_value_close, c.cash AS cash_close,
@@ -504,11 +630,11 @@ SELECT r.period, r.period_start, r.period_end, r.portfolio_id, r.currency,
        r.sales_proceeds AS sales_proceeds,
        r.realized_sales AS realized_sales,
        r.fx_realized AS fx_realized,
-       0.00 AS income,
-       r.realized_sales AS realized_total,
-       0.00 AS fees,
+       r.income AS income,
+       r.realized_sales + r.income AS realized_total,
+       r.fees AS fees,
        0.00 AS fx_costs,
-       0.00 AS costs_total,
+       r.fees + 0.00 AS costs_total,
        r.cash_movements AS cash_movements,
        r.fx_cash AS fx_cash,
        r.invested_close AS invested_close,
@@ -522,6 +648,7 @@ SELECT r.period, r.period_start, r.period_end, r.portfolio_id, r.currency,
              + (r.cash_close - r.cash_open - r.cash_movements - r.fx_cash) AS unexplained,
        r.priced_instruments,
        r.unpriced_instruments,
-       COALESCE((SELECT string_agg(why, '; ') FROM refusals), '') AS refused
+       COALESCE((SELECT string_agg(why, '; ') FROM refusals), '') AS refused,
+       (SELECT CASE WHEN labelled THEN 'true' ELSE 'false' END FROM labelling) AS labelled
 FROM rows r
 ORDER BY r.period_start;

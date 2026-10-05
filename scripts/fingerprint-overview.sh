@@ -41,6 +41,8 @@
 #   IE_FP_AS_OF       the day (default: today, UTC)
 #   IE_FP_PORTFOLIO   portfolio-statement: the portfolio
 #   IE_FP_FROM        portfolio-statement: the window's first month (default: the as_of's month and the 11 before)
+#   IE_FP_LABELS      portfolio-statement: the classification table its Evolution's reference classifies fees and
+#                     income with (IA-C55, IA-P4b·S4b.2; default model/investment/income-labels.yaml, synced with the model)
 #   IE_FP_CLIENT      client-overview: the client
 #   IE_FP_MONTHS      price-sheet: month-ends back (default 24)
 #   IE_FP_RUN         sync-run-changes: the run
@@ -178,8 +180,11 @@ set -e
 if [ "$TEMPLATE" = "portfolio-statement:v1" ]; then
     # its Evolution sheet IS v2's Periods — held to v2's reference, by month, over the same window
     step "4. the statement's Evolution against the evolution reference"
+    labels_yaml="${IE_FP_LABELS:-$HERE/../model/investment/income-labels.yaml}"
+    [ -f "$labels_yaml" ] || fail "no classification table at $labels_yaml (IE_FP_LABELS) — the evolution reference classifies fees and income with it"
+    labels="$(python3 "$HERE/lib/income_labels.py" sql "$labels_yaml")" || fail "the classification table at $labels_yaml cannot be read"
     psql "$DSN" -X -q --csv -v ON_ERROR_STOP=1 -v "portfolio=$PORTFOLIO" -v "from=$FROM" -v "as_of=$AS_OF" -v grain=month \
-        -f "$SQLDIR/evolution-reference.sql" >"$WORK/evolution.csv" || fail "the evolution reference did not run on the book"
+        -v "labels=$labels" -f "$SQLDIR/evolution-reference.sql" >"$WORK/evolution.csv" || fail "the evolution reference did not run on the book"
     python3 "$HERE/lib/evolution_fingerprint.py" sheet "$WORK/report.xlsx" "$PORTFOLIO" --sheet Evolution >"$WORK/evolution-wb.json" \
         || fail "could not read the statement's Evolution sheet"
     python3 "$HERE/lib/evolution_fingerprint.py" reference "$WORK/evolution.csv" >"$WORK/evolution-ref.json" \
