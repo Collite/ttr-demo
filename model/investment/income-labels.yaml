@@ -10,12 +10,14 @@
 #                               — unless the external-flow leg carries the same money (a cash-account contract books
 #                               one fee on both legs, `DEB<Id>` beside the cash debit `<Id>`): then it is counted once.
 #   dividend · coupon · interest the same way into `income`.
-#   tax · other                 stays where its leg put it.
+#   tax · other                 stays where its leg put it (a tax withheld from a coupon leaves the coupon gross).
 #
 # A label the table does not know is `other` too, and is COUNTED on every Notes sheet with the five commonest — that
-# count is how this file is kept complete. The security leg is never classified: its movements are trades, and its
-# `fee` column (FeeAmount) is the provider's record of the same entry fee that arrives as its own withdrawal (the
-# report prints its sum and does not add it again).
+# count is how this file is kept complete. The security leg is never classified: its movements are trades. Its `fee`
+# column (FeeAmount, in the estate's home currency) is the provider's record of the trade's fee, which mostly arrives
+# as a movement of its own as well — a withdrawal or cash debit classed fee here, around the settlement day. The report
+# adds a security fee to `fees` only when no such movement carries the same money; a movement this table cannot
+# classify (no label, or one it does not know) counts as carrying it, so nothing is counted twice.
 #
 # ## How a label is matched
 #
@@ -37,14 +39,15 @@
 #
 # Every distinct label of the provider's own extracts — the cash and flow movements of a certification run and of a
 # live estate's recent windows — as `dump-operation-labels` prints them with their counts (the dumps beside the package's
-# model tests). No dividend, coupon or interest label occurs: the provider's funds accumulate, so `income` reads 0 on
-# such an estate, and a label that appears later is counted on the Notes sheet until it is added here.
+# model tests); version 2 adds those of a live estate's whole ledger, read again from each contract's first day. Income
+# is rare: the provider's funds accumulate, and the one income label met is a bond's interest (`coupon`); a label that
+# appears later is counted on the Notes sheet until it is added here.
 #
 # ## To extend
 #
 # Add the normalised label with its class and a note saying why, bump `version` (printed on every Notes sheet, so a
 # report names the table it was classified by), and re-render.
-version: 1
+version: 2
 labels:
   - label: "vstupní poplatek"
     match: prefix
@@ -93,3 +96,65 @@ labels:
     leg: cash
     class: fee
     note: "the contribution to the securities traders' guarantee fund (Garanční fond obchodníků s cennými papíry), debited from the cash account"
+  - label: "poplatek za vedení investičního účtu"
+    class: fee
+    note: "the investment account's maintenance fee, debited from the cash account"
+  - label: "poplatek za vedeni inv. uctu"
+    match: prefix
+    class: fee
+    note: "the same fee spelled without diacritics, named with its quarter (`… - <n>q<year>`)"
+  - label: "poplatek za využívání platformy"
+    match: prefix
+    class: fee
+    note: "the platform fee — a prefix: some carry the client's service tier after a dash"
+  - label: "výpis z evidence investičních nástrojů"
+    class: fee
+    note: "a statement from the register of investment instruments, charged"
+  - label: "manažerský poplatek"
+    class: fee
+    note: "a management fee"
+  - label: "výplata úroku"
+    match: prefix
+    class: coupon
+    note: "interest paid on a bond held, named after the bond — its coupon"
+  - label: "* výplata úroku"
+    match: prefix
+    class: coupon
+    note: "the same payment as the provider marks some, with a leading asterisk"
+  - label: "srážková daň"
+    match: prefix
+    class: tax
+    note: "the withholding tax on a coupon, named after the bond — tax stays where its leg put it, so the coupon shows gross"
+  - label: "* srážková daň"
+    match: prefix
+    class: tax
+    note: "the same tax with the provider's leading asterisk"
+  - label: "vklad dip - zaměstnavatel"
+    class: other
+    note: "a deposit into a long-term investment product (DIP), paid by the employer"
+  - label: "vklad dip - klient"
+    class: other
+    note: "a deposit into a long-term investment product (DIP), paid by the client"
+  - label: "prodej"
+    leg: cash
+    class: other
+    note: "the cash leg receiving a sale's proceeds — the counterpart of `nákup`"
+  - label: "záloha na mandatorní odkup"
+    match: prefix
+    class: other
+    note: "an advance on a mandatory buyout of shares, named after the issue, and its settlement (`…-zúčtování`)"
+  - label: "capital call"
+    match: prefix
+    class: other
+    note: "a fund's capital call — money into an investment, not a cost; its reversal (`… - negace pohledávky`) too"
+  - label: "* capital call"
+    match: prefix
+    class: other
+    note: "the same with the provider's leading asterisk"
+  - label: "vratka pobídky"
+    class: other
+    note: "an incentive returned"
+  - label: "refundace"
+    match: prefix
+    class: other
+    note: "a refund, named after the fund it concerns"
