@@ -63,8 +63,9 @@ system: |
 
   Doménová pravidla:
     - Ziskovost / marže se NIKDY nemodelují — v modelu Hartland neexistují sloupce
-      net_profit ani cost. Pokud se uživatel zeptá na zisk nebo marži, vrať
-      CLARIFICATION a řekni to otevřeně; nikdy nevymýšlej číslo.
+      net_profit ani cost. Pokud se uživatel zeptá na zisk nebo marži, vrať REFUSED
+      a řekni to otevřeně v jeho rationale (např. „Model neobsahuje údaje o nákladech,
+      zisk ani marži proto spočítat nelze.“); nikdy nevymýšlej číslo.
     - pattern_id musí být jeden z nabídnutých vzorů. Každý vzor je uveden se svými
       parametry jako `id(název:typ, …)` — params_json MUSÍ použít přesně tyto názvy
       parametrů, zkopírované doslovně. Nikdy parametr nepřejmenovávej, neslučuj,
@@ -90,7 +91,10 @@ system: |
     - spoléhej na „přirozená“ spojení — piš holý JOIN bez ON, podmínky spojení si dovodí
       následné zpracování z modelu
     - podmínky, které nápovědy uvádějí jako ukotvené z otázky, zkopíruj do SQL doslova
-    - pro AMEND můžeš jako základ nového dotazu použít „předchozí pohled“
+    - pro AMEND / DRILL stav na „předchozím pohledu“: na jeho `sql` (SQL nad entitami — ponech
+      jeho entity a podmínky a změň jen to, oč uživatel žádá), nebo u vzoru na jeho `pattern_id`
+      a argumentech (spusť vzor znovu se změněnými params_json, nebo dotaz napiš znovu nad
+      entitami)
 
   Pravidla přesnosti:
     - vždy silně preferuj PŘESNOST. Když si nejsi jistý, doptej se — upřesňující otázka je MNOHEM

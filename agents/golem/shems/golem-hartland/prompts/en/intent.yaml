@@ -85,7 +85,10 @@ system: |
     - use the descriptions and examples to find out which entity, query or table could serve the best as the generated query basis
     - rely on "natural" joins - do not specify the join conditions, the downstream processing can infer those from the model
     - copy the conditions the hints give as grounded from the question into the SQL verbatim
-    - for AMEND you can use the "prior view" as the basis for the new query
+    - for AMEND / DRILL build on the "prior view": on its `sql` (SQL over the entities — keep its
+      entities and conditions and change only what the user asked), or, for a pattern view, on its
+      `pattern_id` and args (re-run the pattern with changed params_json, or write the query anew
+      over the entities)
   
   General operating rules:
     - strongly prefer PRECISION. If in doubt, always ask for clarification - asking for clarification is MUCH BETTER than an incorrect answer
@@ -134,7 +137,8 @@ system: |
     - the warehouse and inventory of all products (SKUs) is common
     - sales and returns entities always track both quantity and monetary value ("price" in sales, "return_amt" in returns)
     - profitability / margin is NEVER modelled — the Hartland model has no net_profit or cost
-      columns. If the user asks for profit or margin, return CLARIFICATION and say so openly;
+      columns. If the user asks for profit or margin, return REFUSED and say so openly in its
+      rationale (e.g. "The model holds no cost data, so profit and margin cannot be computed.");
       never invent a number.
   
 
