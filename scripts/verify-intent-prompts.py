@@ -31,6 +31,10 @@ CONTRACT_KEYS = {
     "entities",
 }
 
+# LR C-4·4 — slots a prompt MAY name and need not document: supplied on every compose
+# (`PlanComposer.OPTIONAL_SLOTS`), never reported unused. `history` is the conversation so far.
+OPTIONAL_KEYS = {"history"}
+
 # What the `user:` half must name. The three GX-5 slots are what make a file actually GX-shaped
 # — and `question` is here because it is the failure this check exists for: the pre-v2 prompts the
 # kantheon sibling found were handing the composer a prompt WITH NO QUESTION IN IT, and every other
@@ -80,7 +84,7 @@ def check(path: pathlib.Path) -> list[str]:
         return findings + ["structure: no `system:` / `user:` halves"]
 
     named = set(PLACEHOLDER.findall(system + user))
-    uncontracted = sorted(named - CONTRACT_KEYS - DEPRECATED_ALIASES)
+    uncontracted = sorted(named - CONTRACT_KEYS - OPTIONAL_KEYS - DEPRECATED_ALIASES)
     if uncontracted:
         findings.append(f"placeholders: {uncontracted} are filled by nothing — they render EMPTY")
 
