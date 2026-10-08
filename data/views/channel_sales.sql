@@ -11,6 +11,14 @@
 -- Channel labels are the ones `q_hartland.channel_revenue_monthly` already returns ('store',
 -- 'web', 'marketplace'), in BOTH worlds — one vocabulary for the pattern path and the fast path.
 --
+-- `warehouse_sk` (LR ⚑LR-9, 2026-10-08) — the distribution centre that fulfilled the line: web and
+-- marketplace lines carry their fact's own warehouse key, a store line carries NULL (a store sale
+-- is not shipped from a DC). The DC-scope row rule (olymp `apps/validate`, contracts C-5·4) narrows
+-- this view by it, so a DC-scoped caller asking by channel sees that DC's web and marketplace lines
+-- and no store lines — `NULL IN (5)` is never true — instead of nothing at all. It is the LAST
+-- column on purpose: CREATE OR REPLACE VIEW may only append columns, so the script stays
+-- re-runnable on a world that already has the view.
+--
 -- Idempotent (CREATE OR REPLACE; the GRANT is a no-op when already held). Run against each world:
 --     psql -d hartland_us -f data/views/channel_sales.sql
 --     psql -d hartland_cz -f data/views/channel_sales.sql
@@ -23,13 +31,14 @@ SELECT 'store'::text          AS channel,
        ss_item_sk             AS item_sk,
        ss_customer_sk         AS customer_sk,
        ss_quantity            AS quantity,
-       ss_ext_sales_price     AS ext_sales_price
+       ss_ext_sales_price     AS ext_sales_price,
+       NULL::int              AS warehouse_sk
   FROM public.store_sales
 UNION ALL
-SELECT 'web', ws_sold_date_sk, ws_item_sk, ws_bill_customer_sk, ws_quantity, ws_ext_sales_price
+SELECT 'web', ws_sold_date_sk, ws_item_sk, ws_bill_customer_sk, ws_quantity, ws_ext_sales_price, ws_warehouse_sk
   FROM public.web_sales
 UNION ALL
-SELECT 'marketplace', cs_sold_date_sk, cs_item_sk, cs_bill_customer_sk, cs_quantity, cs_ext_sales_price
+SELECT 'marketplace', cs_sold_date_sk, cs_item_sk, cs_bill_customer_sk, cs_quantity, cs_ext_sales_price, cs_warehouse_sk
   FROM public.catalog_sales;
 
 COMMENT ON VIEW public.channel_sales IS

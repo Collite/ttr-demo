@@ -41,6 +41,7 @@ def table web_sales {
         def column ws_item_sk          { type: int, isKey: true },
         def column ws_bill_customer_sk { type: int },
         def column ws_bill_addr_sk     { type: int },
+        def column ws_warehouse_sk     { type: int },
         def column ws_promo_sk         { type: int },
         def column ws_order_number     { type: int, isKey: true },
         def column ws_quantity         { type: int },

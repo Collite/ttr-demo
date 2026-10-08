@@ -47,6 +47,7 @@ def entity web_sales {
         def attribute sold_date      { type: int, description: "Sale date — FK to the 'sk' attribute of the Calendar (date_dim) entity." },
         def attribute customer       { type: int, description: "Buying customer — FK to the 'sk' attribute of the Customer entity." },
         def attribute addr           { type: int, description: "Customer address at sale time — FK to the 'sk' attribute of the Customer Address entity." },
+        def attribute warehouse      { type: int, description: "Fulfilling distribution center — FK to the 'sk' attribute of the Distribution Center (warehouse) entity." },
         def attribute promo          { type: int, description: "Promotion applied to this line, if any — FK to the 'sk' attribute of the Promotion entity." },
         def attribute quantity       { type: int, description: "Units sold on this line." },
         def attribute ext_sales_price { type: { type: decimal, length: 10, precision: 2 }, description: "Extended sales price of the line (unit price × quantity) — the revenue amount; SUM this for revenue/sales." }
@@ -99,6 +100,8 @@ def entity channel_sales {
         def attribute item            { type: int, description: "Sold product — FK to the 'sk' attribute of the Product (item) entity." },
         def attribute customer        { type: int, description: "Buying customer — FK to the 'sk' attribute of the Customer entity." },
         def attribute quantity        { type: int, description: "Units sold on this line." },
-        def attribute ext_sales_price { type: { type: decimal, length: 10, precision: 2 }, description: "Extended sales price of the line (unit price × quantity) — the revenue amount; SUM this for revenue/sales, in any channel." }
+        def attribute ext_sales_price { type: { type: decimal, length: 10, precision: 2 }, description: "Extended sales price of the line (unit price × quantity) — the revenue amount; SUM this for revenue/sales, in any channel." },
+        // LR ⚑LR-9 — what the DC-scope row rule narrows by; empty on a store line.
+        def attribute warehouse       { type: int, description: "Fulfilling distribution center of a web or marketplace line — FK to the 'sk' attribute of the Distribution Center (warehouse) entity; empty for a store line, which no distribution center ships." }
     ]
 }

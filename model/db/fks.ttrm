@@ -21,6 +21,7 @@ def fk fk_ws_customer { from: [db.dbo.web_sales.ws_bill_customer_sk], to: [db.db
 def fk fk_ws_addr     { from: [db.dbo.web_sales.ws_bill_addr_sk],     to: [db.dbo.customer_address.ca_address_sk] }
 def fk fk_ws_promo    { from: [db.dbo.web_sales.ws_promo_sk],         to: [db.dbo.promotion.p_promo_sk] }
 def fk fk_ws_date     { from: [db.dbo.web_sales.ws_sold_date_sk],     to: [db.dbo.date_dim.d_date_sk] }
+def fk fk_ws_warehouse { from: [db.dbo.web_sales.ws_warehouse_sk],    to: [db.dbo.warehouse.w_warehouse_sk] }
 
 // -- catalog_sales (Marketplace) --
 def fk fk_cs_item       { from: [db.dbo.catalog_sales.cs_item_sk],          to: [db.dbo.item.i_item_sk] }
@@ -70,3 +71,5 @@ def fk fk_hd_income { from: [db.dbo.household_demographics.hd_income_band_sk], t
 def fk fk_chs_date     { from: [db.dbo.channel_sales.sold_date_sk], to: [db.dbo.date_dim.d_date_sk] }
 def fk fk_chs_item     { from: [db.dbo.channel_sales.item_sk],      to: [db.dbo.item.i_item_sk] }
 def fk fk_chs_customer { from: [db.dbo.channel_sales.customer_sk],  to: [db.dbo.customer.c_customer_sk] }
+// LR ⚑LR-9 — web and marketplace lines only: a store line's `warehouse_sk` is NULL.
+def fk fk_chs_warehouse { from: [db.dbo.channel_sales.warehouse_sk], to: [db.dbo.warehouse.w_warehouse_sk] }

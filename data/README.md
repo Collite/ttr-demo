@@ -33,6 +33,9 @@ snapshot-guarded:
    non-idempotent by nature, deletion, so the guard is load-bearing there).
 6. `recon/run-recon.sh dsk <db>` → diff against `data/recon/R0.md`.
 7. `views/channel_sales.sql` (both worlds, as `hartland`) — `er.entity.channel_sales` reads it.
+   Re-run it on a world that already has the view whenever the script changes: LR ⚑LR-9 appended
+   `warehouse_sk`, which the DC-scope row rule filters on, so the model's column must exist in the
+   database before that rule is mounted (`SELECT warehouse_sk FROM channel_sales LIMIT 1` checks it).
 
 **Retained snapshots** (`data/dr-snapshots.md`): the US pre-catalog dump (Stage 1.2 T1) is a
 physical rollback point in `tpcds-staging/hartland/us/`. The CZ pre-seed state was **not**
