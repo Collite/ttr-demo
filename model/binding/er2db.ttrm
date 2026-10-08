@@ -25,6 +25,7 @@ def er2db_attribute web_sales_order_number_map   { attribute: er.entity.web_sale
 def er2db_attribute web_sales_sold_date_map       { attribute: er.entity.web_sales.sold_date,       target: { column: db.dbo.web_sales.ws_sold_date_sk } }
 def er2db_attribute web_sales_customer_map        { attribute: er.entity.web_sales.customer,        target: { column: db.dbo.web_sales.ws_bill_customer_sk } }
 def er2db_attribute web_sales_addr_map            { attribute: er.entity.web_sales.addr,            target: { column: db.dbo.web_sales.ws_bill_addr_sk } }
+def er2db_attribute web_sales_warehouse_map       { attribute: er.entity.web_sales.warehouse,       target: { column: db.dbo.web_sales.ws_warehouse_sk } }
 def er2db_attribute web_sales_promo_map           { attribute: er.entity.web_sales.promo,           target: { column: db.dbo.web_sales.ws_promo_sk } }
 def er2db_attribute web_sales_quantity_map        { attribute: er.entity.web_sales.quantity,        target: { column: db.dbo.web_sales.ws_quantity } }
 def er2db_attribute web_sales_ext_sales_price_map { attribute: er.entity.web_sales.ext_sales_price, target: { column: db.dbo.web_sales.ws_ext_sales_price } }
@@ -184,3 +185,4 @@ def er2db_attribute channel_sales_item_map            { attribute: er.entity.cha
 def er2db_attribute channel_sales_customer_map        { attribute: er.entity.channel_sales.customer,        target: { column: db.dbo.channel_sales.customer_sk } }
 def er2db_attribute channel_sales_quantity_map        { attribute: er.entity.channel_sales.quantity,        target: { column: db.dbo.channel_sales.quantity } }
 def er2db_attribute channel_sales_ext_sales_price_map { attribute: er.entity.channel_sales.ext_sales_price, target: { column: db.dbo.channel_sales.ext_sales_price } }
+def er2db_attribute channel_sales_warehouse_map       { attribute: er.entity.channel_sales.warehouse,       target: { column: db.dbo.channel_sales.warehouse_sk } }

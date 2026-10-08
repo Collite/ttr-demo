@@ -161,3 +161,31 @@ test('T6.7 — measures policy (D-6a): no profit/margin/cost token in any er att
   }
   assert.deepEqual(offenders, [], `profit/margin attribute leaked into er: ${offenders.join(', ')}`);
 });
+
+// LR ⚑LR-9 (C-5·4) — the DC-scope persona's row rule narrows channel_sales and web_sales by their
+// distribution centre, so the model says how each reaches one. channel_sales' reach is NULLABLE: a
+// store line is not fulfilled by a DC (`warehouse_sk` is NULL there), so the join keeps only web and
+// marketplace lines — exactly what the persona's rule leaves them. web_sales follows catalog_sales.
+const objectEntry = (node, key) => node?.entries?.find((e) => e.key === key)?.value;
+
+test('LR ⚑LR-9 — channel_sales and web_sales reach the distribution centre; a store line reaches none', () => {
+  const byName = (kind, name) => allDefsOfKind(kind).find((d) => d.def.name === name)?.def;
+  const expected = [
+    ['channel_sales', 'rel_channel_sales_warehouse', 'db.dbo.fk_chs_warehouse', 'db.dbo.channel_sales.warehouse_sk', '0..1'],
+    ['web_sales', 'rel_web_sales_warehouse', 'db.dbo.fk_ws_warehouse', 'db.dbo.web_sales.ws_warehouse_sk', '1'],
+  ];
+  for (const [entity, relation, fk, column, to] of expected) {
+    const e = byName('entity', entity);
+    assert.ok(e?.attributes?.some((a) => a.name === 'warehouse'), `${entity} has no 'warehouse' attribute`);
+
+    const r = byName('relation', relation);
+    assert.ok(r, `${relation} is not declared`);
+    assert.equal(r.from.path, `er.entity.${entity}`);
+    assert.equal(r.to.path, 'er.entity.warehouse');
+    assert.equal(r.binding?.fk?.path, fk);
+    assert.equal(objectEntry(r.cardinality, 'to')?.value, to, `${relation} cardinality.to`);
+
+    const bound = allDefsOfKind('er2dbAttribute').find((a) => a.def.attribute.path === `er.entity.${entity}.warehouse`);
+    assert.equal(objectEntry(bound?.def.target, 'column')?.path, column, `${entity}.warehouse binds to ${column}`);
+  }
+});

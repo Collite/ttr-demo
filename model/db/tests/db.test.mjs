@@ -149,3 +149,53 @@ test('T6.5 — no profit/cost/discount-internal column reachable (D-6a)', async 
   }
   assert.deepEqual(offenders, [], `profit/cost columns leaked into the model: ${offenders.join(', ')}`);
 });
+
+// LR C-5·4 (⚑LR-9) — validate's DC-scope policy (olymp `apps/validate` configFragment) filters each
+// of these relations on its OWN distribution-centre column. A predicate on a column the model does
+// not declare is one no reader of the model can explain, so each is declared here, with the fk that
+// says what it means. ttr-server's HartlandScopeFragmentSpec holds the same five names.
+const DC_SCOPED = {
+  inventory: 'inv_warehouse_sk',
+  warehouse: 'w_warehouse_sk',
+  catalog_sales: 'cs_warehouse_sk',
+  web_sales: 'ws_warehouse_sk',
+  channel_sales: 'warehouse_sk',
+};
+
+test('LR ⚑LR-9 — every DC-scoped relation declares the column the DC-scope policy filters on, joined to warehouse', async () => {
+  const parsed = await parseAll(await ttrmFiles(dbDir));
+  const columnsByTable = new Map();
+  const fkTo = new Map(); // "table.column" -> "table.column"
+  const last2 = (idNode) => idNode.parts.slice(-2).join('.');
+  for (const { result } of parsed) {
+    for (const def of result.ast?.definitions ?? []) {
+      if (def.kind === 'table' || def.kind === 'view') {
+        columnsByTable.set(def.name, new Set((def.columns ?? []).map((c) => c.name)));
+      }
+      if (def.kind === 'fk' && def.from?.items?.length === 1) fkTo.set(last2(def.from.items[0]), last2(def.to.items[0]));
+    }
+  }
+  const missing = [];
+  const unjoined = [];
+  for (const [table, column] of Object.entries(DC_SCOPED)) {
+    if (!columnsByTable.get(table)?.has(column)) missing.push(`${table}.${column}`);
+    if (table !== 'warehouse' && fkTo.get(`${table}.${column}`) !== 'warehouse.w_warehouse_sk') unjoined.push(`${table}.${column}`);
+  }
+  assert.deepEqual(missing, [], `DC columns the model does not declare: ${missing.join(', ')}`);
+  assert.deepEqual(unjoined, [], `DC columns with no fk to warehouse: ${unjoined.join(', ')}`);
+});
+
+// The view's model columns ARE the script's (data/views/channel_sales.sql), in the script's order.
+// Order matters twice: `definitionSql` mirrors the script, and Postgres' CREATE OR REPLACE VIEW can
+// only APPEND columns — a new one anywhere but last makes the script fail on a world that has the view.
+test('channel_sales — the model view declares the script\'s columns in the script\'s order', async () => {
+  const sql = await readFile(path.resolve(hartlandRoot, 'data/views/channel_sales.sql'), 'utf-8');
+  const firstBranch = sql.slice(sql.indexOf('CREATE OR REPLACE VIEW public.channel_sales AS'), sql.indexOf('UNION ALL'));
+  const scriptColumns = [...firstBranch.matchAll(/\bAS\s+(\w+)\s*(?:,|\n\s*FROM)/g)].map((m) => m[1]);
+
+  const parsed = await parseAll([path.join(dbDir, 'views.ttrm')]);
+  const view = parsed[0].result.ast.definitions.find((d) => d.kind === 'view' && d.name === 'channel_sales');
+  assert.deepEqual(view.columns.map((c) => c.name), scriptColumns);
+  assert.equal(scriptColumns.at(-1), 'warehouse_sk', 'warehouse_sk (⚑LR-9) is appended LAST');
+  assert.match(firstBranch, /NULL::int\s+AS\s+warehouse_sk/, 'a store line carries no distribution centre');
+});

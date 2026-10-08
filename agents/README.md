@@ -7,13 +7,24 @@ from the model, the per-agent residue in `shem.yaml`, template constants at boot
 
 ## Persona -> `visibility_roles` mapping (Q-BM-4a, Stage 2.6 T5)
 
-| Persona | World | Role | Shem(s) it grants |
-|---|---|---|---|
-| Maya | US | `kantheon-area-hartland` | golem-hartland ("Hartland Analytics") |
-| Markéta Nováková (Senior Category Manager) | CZ | `kantheon-area-hartland` | golem-hartland |
-| Dan (CFO) | US | `kantheon-role-finance` | golem-hartland-finance ("Hartland Finance") |
-| CZ CFO | CZ | `kantheon-role-finance` | golem-hartland-finance |
-| Dan (the investment estate) | CZ | `kantheon-area-investment` | golem-investment ("Investment Q&A") — IE-P4 |
+As the hartland realm overlay wires them (olymp `platform/auth/keycloak/overlays/hartland/realm/kantheon.json`):
+
+| Persona | User | World | Realm roles | Shem(s) it grants | Row scope |
+|---|---|---|---|---|---|
+| Maya Chen (Senior Category Manager) | `maya` | US | `kantheon-area-hartland` | golem-hartland ("Hartland Analytics") | — |
+| Markéta Nováková (Senior Category Manager) | `marketa` | CZ | `kantheon-area-hartland` | golem-hartland | — |
+| Sam Reyes (Memphis DC Manager) | `sam` | US | `kantheon-area-hartland`, `kantheon-scope-dc-5` | golem-hartland | distribution centre 5 (Memphis DC) |
+| Petr Svoboda (Vedoucí distribučního centra Brno) | `petr` | CZ | `kantheon-area-hartland`, `kantheon-scope-dc-5` | golem-hartland | distribution centre 5 (Brno DC) |
+| Dan Whitaker (CFO) | `dan` | US | `kantheon-area-hartland`, `kantheon-role-finance`, `kantheon-area-investment`, `studio-operations` | golem-hartland, golem-hartland-finance ("Hartland Finance"), golem-investment ("Investment Q&A", IE-P4) | — |
+| Tomáš Horák (Finanční ředitel) | `tomas` | CZ | `kantheon-area-hartland`, `kantheon-role-finance` | golem-hartland, golem-hartland-finance | — |
+
+**Row scope (LR C-5·4, ⚑LR-13).** `kantheon-scope-dc-5` grants no Shem. It is a row rule: for its
+holders, validate narrows `inventory`, `warehouse`, `catalog_sales`, `web_sales` and `channel_sales`
+to warehouse 5 — Memphis DC in the US world, Brno DC in the Czech one (olymp `apps/validate`
+`configFragment`). Store sales, items, customers and the calendar stay open. A store line in
+`channel_sales` has no distribution centre (`warehouse_sk` NULL, `data/views/channel_sales.sql`), so a
+DC-scoped caller asking by channel sees its DC's web and marketplace lines and no store lines. The
+Golem ends such an answer with the rights sentence (contracts C-6·1/2).
 
 ## golem-investment — the DEPLOYED copy of a bundle authored in kantheon
 
@@ -33,10 +44,9 @@ omits `free-sql`/`chip-topup`: only `intent` has a live consumer.
 **The governance-cameo contrast (F-1, verify in Stage 2.6 T6 / live in Phase 3 H3.2):**
 `golem-hartland`'s `visibility_roles` = `[kantheon-area-hartland]` only;
 `golem-hartland-finance`'s = `[kantheon-role-finance]` only — the two role sets are
-disjoint, so the finance Shem is structurally unroutable for Maya/Markéta (B-2α) and the
-main Shem is absent for the CFO personas in Discover **and** in Themis routing. The actual
-Keycloak realm-role wiring (mapping real user accounts to these two roles) is Phase 3
-H3.2 — here the Shems only carry the declared contract.
+disjoint, so the finance Shem is structurally unroutable for Maya/Markéta (B-2α). As wired
+(table above), both CFOs also hold `kantheon-area-hartland`, so they see both Shems; the contrast
+is the analysts', who never see the finance Shem in Discover **or** in Golem routing.
 
 ## Prompts
 

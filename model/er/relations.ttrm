@@ -21,6 +21,7 @@ def relation rel_web_sales_customer { from: er.entity.web_sales, to: er.entity.c
 def relation rel_web_sales_addr     { from: er.entity.web_sales, to: er.entity.customer_address, cardinality: { from: "0..*", to: "1" }, binding: { fk: db.dbo.fk_ws_addr } }
 def relation rel_web_sales_promo    { from: er.entity.web_sales, to: er.entity.promotion,        cardinality: { from: "0..*", to: "1" }, binding: { fk: db.dbo.fk_ws_promo } }
 def relation rel_web_sales_date     { from: er.entity.web_sales, to: er.entity.date_dim,         cardinality: { from: "0..*", to: "1" }, binding: { fk: db.dbo.fk_ws_date } }
+def relation rel_web_sales_warehouse { from: er.entity.web_sales, to: er.entity.warehouse,       cardinality: { from: "0..*", to: "1" }, binding: { fk: db.dbo.fk_ws_warehouse } }
 
 // -- catalog_sales (Marketplace) --
 def relation rel_catalog_sales_item       { from: er.entity.catalog_sales, to: er.entity.item,             cardinality: { from: "0..*", to: "1" }, binding: { fk: db.dbo.fk_cs_item } }
@@ -68,3 +69,5 @@ def relation rel_household_demographics_income_band { from: er.entity.household_
 def relation rel_channel_sales_date     { from: er.entity.channel_sales, to: er.entity.date_dim, cardinality: { from: "0..*", to: "1" }, binding: { fk: db.dbo.fk_chs_date } }
 def relation rel_channel_sales_item     { from: er.entity.channel_sales, to: er.entity.item,     cardinality: { from: "0..*", to: "1" }, binding: { fk: db.dbo.fk_chs_item } }
 def relation rel_channel_sales_customer { from: er.entity.channel_sales, to: er.entity.customer, cardinality: { from: "0..*", to: "1" }, binding: { fk: db.dbo.fk_chs_customer } }
+// LR ⚑LR-9 — NULLABLE: a store line has no distribution center, so joining drops store lines.
+def relation rel_channel_sales_warehouse { from: er.entity.channel_sales, to: er.entity.warehouse, cardinality: { from: "0..*", to: "0..1" }, binding: { fk: db.dbo.fk_chs_warehouse } }
