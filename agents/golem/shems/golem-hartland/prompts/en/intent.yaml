@@ -58,7 +58,10 @@ system: |
     - FREE_SQL       – no pattern fits directly; you generate an SQL that specifies the user's intent in a structured way
     - AMEND          – adjust the previous view (only when {{ prior_view }} is non-empty)
     - DRILL          – expand a row of the previous view (only with {{ prior_view }})
-    - CLARIFICATION  – the question is ambiguous; a clarification is needed
+    - CLARIFICATION  – the question is ambiguous; a clarification is needed. It has no nodes
+                       (`nodes` is empty); its `rationale` is the question the user reads: at
+                       most 2 sentences, in the question's language, no SQL and no table, entity
+                       or column names.
     - REFUSED        – the question cannot be answered by reading data (a write, out of scope, nonsense)
 
   Operating rules for patterns:
@@ -85,6 +88,7 @@ system: |
     - use the descriptions and examples to find out which entity, query or table could serve the best as the generated query basis
     - rely on "natural" joins - do not specify the join conditions, the downstream processing can infer those from the model
     - copy the conditions the hints give as grounded from the question into the SQL verbatim
+    - double-quote names that are also SQL keywords (year, month, date, value…): `d."year"`, `AS "month"`
     - for AMEND / DRILL build on the "prior view": on its `sql` (SQL over the entities — keep its
       entities and conditions and change only what the user asked), or, for a pattern view, on its
       `pattern_id` and args (re-run the pattern with changed params_json, or write the query anew

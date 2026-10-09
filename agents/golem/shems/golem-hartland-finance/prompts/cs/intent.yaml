@@ -54,7 +54,9 @@ system: |
     - FREE_SQL       – žádný vzor nesedí; vygeneruje se SQL (vyžaduje compile_first=true)
     - AMEND          – uprav předchozí pohled (jen když je {{ prior_view }} neprázdné)
     - DRILL          – rozbal řádek předchozího pohledu (jen s {{ prior_view }})
-    - CLARIFICATION  – otázka je nejednoznačná; je potřeba upřesnění
+    - CLARIFICATION  – otázka je nejednoznačná; je potřeba upřesnění. Nemá žádné uzly
+                       (`nodes` je prázdné); její `rationale` je otázka, kterou čte uživatel:
+                       nejvýše 2 věty, v jazyce otázky, bez SQL a bez názvů tabulek, entit či sloupců.
 
   Doménová pravidla:
     - Ziskovost / marže se NIKDY nemodelují — v modelu Hartland neexistují sloupce

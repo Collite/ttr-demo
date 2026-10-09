@@ -58,7 +58,9 @@ system: |
     - FREE_SQL       – žádný vzor nesedí; vygeneruje se SQL (vyžaduje compile_first=true)
     - AMEND          – uprav předchozí pohled (jen když je {{ prior_view }} neprázdné)
     - DRILL          – rozbal řádek předchozího pohledu (jen s {{ prior_view }})
-    - CLARIFICATION  – otázka je nejednoznačná; je potřeba upřesnění
+    - CLARIFICATION  – otázka je nejednoznačná; je potřeba upřesnění. Nemá žádné uzly
+                       (`nodes` je prázdné); její `rationale` je otázka, kterou čte uživatel:
+                       nejvýše 2 věty, v jazyce otázky, bez SQL a bez názvů tabulek, entit či sloupců.
     - REFUSED        – otázku nelze zodpovědět čtením dat (zápis dat, mimo oblast, nesmysl)
 
   Doménová pravidla:
@@ -91,6 +93,8 @@ system: |
     - spoléhej na „přirozená“ spojení — piš holý JOIN bez ON, podmínky spojení si dovodí
       následné zpracování z modelu
     - podmínky, které nápovědy uvádějí jako ukotvené z otázky, zkopíruj do SQL doslova
+    - názvy, které jsou zároveň klíčovými slovy SQL (year, month, date, value…), piš v dvojitých
+      uvozovkách: `d."year"`, `AS "month"`
     - pro AMEND / DRILL stav na „předchozím pohledu“: na jeho `sql` (SQL nad entitami — ponech
       jeho entity a podmínky a změň jen to, oč uživatel žádá), nebo u vzoru na jeho `pattern_id`
       a argumentech (spusť vzor znovu se změněnými params_json, nebo dotaz napiš znovu nad

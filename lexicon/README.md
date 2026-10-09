@@ -78,6 +78,23 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-10**: no lexicon change. The archive embeds the model
+snapshot, and the model gained a query (`channel_revenue_monthly_yoy`) and changed another
+(`inventory_on_hand_series` filters the DC by name). Built with the **pinned** toolchain
+`grammar/v0.13.7`:
+
+| | |
+|---|---|
+| archive id | `sha256:009cc3f0c388ce10a058ef47ab333d41f2ef7086c511fdd676e9da073e215058` |
+| model id | `sha256:d0a2543fa97c282fe1d92d1e4d5ce20f2bd3edd5c89004c86eb5452e5b72a8e8` (was `5ebf54ce…`) |
+| schema | `ttr-lexicon-compiled/v5` |
+| toolchain | `Collite/ttr-core` **`grammar/v0.13.7`** (= `efd99dd`) |
+| entries | **509** (unchanged) — the per-class counts below are unchanged too |
+| build warnings | **4**, the same four |
+| size | 10,576 bytes |
+
+### 2026-10-09
+
 From `just build-lexicon`, **2026-10-09**: the „obrat z …“ channel phrases. Built with the **pinned**
 toolchain `grammar/v0.13.7`:
 

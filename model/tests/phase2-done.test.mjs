@@ -42,7 +42,7 @@ test('DONE 3 — ResolveArea("hartland") is green', () => {
   assert.ok(resolved.resolvedEntities.length > 0);
 });
 
-test('DONE 4 — ListQueries returns exactly 15 q.hartland.* with params', () => {
+test('DONE 4 — ListQueries returns exactly 16 q.hartland.* with params', () => {
   // ⛔ IE-P2·S2.3: this counted EVERY query in the project while its name promised
   // `q.hartland.*`, so the synced investment package pushed it to 22 and the failure read as a
   // regression in a roster nobody had touched. Scoped to the files this repo authors; the seven
@@ -55,7 +55,7 @@ test('DONE 4 — ListQueries returns exactly 15 q.hartland.* with params', () =>
       if (isOwnModelFile(uri)) own++; else synced++;
     }
   }
-  assert.equal(own, 15, 'the D-2 roster');
+  assert.equal(own, 16, 'the D-2 roster + LR\'s channel_revenue_monthly_yoy (2026-10-10)');
   // Nine since IE-P3·S3.1 (period_values + portfolio_header joined the seven); nineteen since
   // IA-P3·S3.1 (the ten Browse programs, kantheon contracts IA-C35 … IA-C42); twenty since IA-P3·S3.3
   // (`clients_list`); twenty-one since IA-P4·S4.1 (`conversion_rates`).

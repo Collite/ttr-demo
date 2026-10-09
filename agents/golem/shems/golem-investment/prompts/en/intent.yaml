@@ -58,7 +58,10 @@ system: |
     - FREE_SQL       – no curated query fits; you generate SQL (always compile_first=true)
     - AMEND          – adjust the previous view (only when {{ prior_view }} is non-empty)
     - DRILL          – expand a row of the previous view (only with {{ prior_view }})
-    - CLARIFICATION  – the question is ambiguous; a clarification is needed
+    - CLARIFICATION  – the question is ambiguous; a clarification is needed. It has no nodes
+                       (`nodes` is empty); its `rationale` is the question the user reads: at
+                       most 2 sentences, in the question's language, no SQL and no table, entity
+                       or column names.
 
   Operating rules:
     - pattern_id must be one of the offered queries. Each is listed with its parameters as

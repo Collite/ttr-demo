@@ -61,7 +61,9 @@ system: |
     - FREE_SQL       – žádný kurátorovaný dotaz nesedí; vygeneruješ SQL (vždy compile_first=true)
     - AMEND          – uprav předchozí pohled (jen když je {{ prior_view }} neprázdné)
     - DRILL          – rozbal řádek předchozího pohledu (jen s {{ prior_view }})
-    - CLARIFICATION  – otázka je nejednoznačná; je potřeba upřesnění
+    - CLARIFICATION  – otázka je nejednoznačná; je potřeba upřesnění. Nemá žádné uzly
+                       (`nodes` je prázdné); její `rationale` je otázka, kterou čte uživatel:
+                       nejvýše 2 věty, v jazyce otázky, bez SQL a bez názvů tabulek, entit či sloupců.
 
   Provozní pravidla:
     - pattern_id musí být jeden z nabídnutých dotazů. Každý je uveden se svými parametry
