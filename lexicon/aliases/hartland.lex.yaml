@@ -117,6 +117,11 @@ entries:
       - { text: "tržby z tržiště", method: TOKENS }
       - { text: "tržba z tržiště", method: TOKENS }
       - { text: "tržeb z tržiště", method: TOKENS }
+      # 2026-10-09 (LR, CZ-world smoke): script 1.4's synonym „Obrat z tržiště po čtvrtletích“ bound
+      # the bare `obrat` (→ all channels, below) and dropped `tržiště`: the four quarters of every
+      # channel, told as the marketplace's. The channel-qualified phrase is the longer span and wins.
+      - { text: "obrat z tržiště", method: TOKENS }
+      - { text: "obratu z tržiště", method: TOKENS }
       - { text: "marketplace revenue", lang: en, method: TOKENS }
       - { text: "marketplace sales", lang: en, method: TOKENS }
     target: er.entity.catalog_sales.ext_sales_price
@@ -132,6 +137,8 @@ entries:
       - { text: "tržby z webu", method: TOKENS }
       - { text: "tržba z webu", method: TOKENS }
       - { text: "tržby z e-shopu", method: TOKENS }
+      - { text: "obrat z webu", method: TOKENS }
+      - { text: "obratu z webu", method: TOKENS }
       - { text: "web revenue", lang: en, method: TOKENS }
       - { text: "online revenue", lang: en, method: TOKENS }
     target: er.entity.web_sales.ext_sales_price
@@ -141,6 +148,8 @@ entries:
   # `tržby z prodejen` is NOT declared here.
   - terms:
       - { text: "tržba z prodejen", method: TOKENS }
+      - { text: "obrat z prodejen", method: TOKENS }
+      - { text: "obratu z prodejen", method: TOKENS }
       - { text: "store revenue", lang: en, method: TOKENS }
       - { text: "retail revenue", lang: en, method: TOKENS }
     target: er.entity.store_sales.ext_sales_price
