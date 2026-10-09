@@ -14,6 +14,9 @@ const EXPECTED_QUERIES = [
   'returns_rate_by_channel', 'warehouse_stockout_weeks', 'inventory_on_hand_series',
   'customer_channel_overlap', 'revenue_by_customer_state', 'buyer_age_profile',
   'promo_share', 'store_sales_by_month', 'customer_running_total',
+  // LR 2026-10-10 — the 16th: which months of a year fell against the prior one, for one channel
+  // (the Czech demo's 3.2; the yearly per-channel query cannot say which months).
+  'channel_revenue_monthly_yoy',
 ];
 
 const BANNED_TOKENS = ['net_profit', 'margin', 'wholesale_cost', 'list_price', 'net_paid'];
@@ -45,11 +48,11 @@ test('T6.1 — parse-clean: q_hartland.ttrm parses with zero errors', () => {
   assert.deepEqual(errors, [], `parse errors: ${JSON.stringify(errors)}`);
 });
 
-test('T6.2 — ListQueries = 15, exactly the D-2 roster, each with typed+labeled params', () => {
+test('T6.2 — ListQueries = 16, exactly the D-2 roster + LR\'s monthly YoY, each with typed+labeled params', () => {
   const queries = allQueries();
   const names = queries.map(({ def }) => def.name);
   assert.deepEqual([...names].sort(), [...EXPECTED_QUERIES].sort());
-  assert.equal(queries.length, 15);
+  assert.equal(queries.length, 16);
   for (const { def } of queries) {
     for (const p of def.parameters ?? []) {
       assert.ok(p.type, `${def.name}.${p.name} has no type`);

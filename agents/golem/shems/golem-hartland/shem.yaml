@@ -32,7 +32,7 @@ source:
 #   capability_refs / preferred_capabilities  query.query, query.compile, render.table, render.chart
 #   hitl_default      INTERACTIVE
 #   area_entities / preferred_queries / area_terminology  from the model — NOT listed here
-#     (preferred_queries = the 15 q.hartland.* defs, model/queries/q_hartland.ttrm)
+#     (preferred_queries = the 16 q.hartland.* defs, model/queries/q_hartland.ttrm)
 
 # ── (3) Overlay — the per-agent residue kantheon owns ──
 overlay:
