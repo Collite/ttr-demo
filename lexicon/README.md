@@ -78,6 +78,37 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-09**: the „obrat z …“ channel phrases. Built with the **pinned**
+toolchain `grammar/v0.13.7`:
+
+| | |
+|---|---|
+| archive id | `sha256:29b01c5337057ac46f46005fa458650b576e66fa3df87d3a27d82316860ee97e` |
+| model id | `sha256:5ebf54ceb6517e84e4ea438ac45586aa47cde0d99dc35ddfd9e470f936b58dca` (unchanged) |
+| schema | `ttr-lexicon-compiled/v5` |
+| toolchain | `Collite/ttr-core` **`grammar/v0.13.7`** (= `efd99dd`) |
+| entries | **509** (was 503) |
+| — `MODEL_OBJECT` | 178 (94 DECLARED, 84 METADATA) |
+| — `MEMBER` | 100 |
+| — `OPERATOR` | 35 |
+| — `GROUNDING_TRIGGER` | 98 |
+| — `STRING_PREDICATE` | 98 |
+| build warnings | **4** (1 `RG-LEXC-002`, 3 `RG-LEXC-004`), the same four master's archive builds with |
+| targets | 50 |
+| size | 10,575 bytes |
+
+Six DECLARED rows, TOKENS, one per channel measure: `obrat z tržiště` / `obratu z tržiště` →
+`catalog_sales.ext_sales_price`, and the same for `z webu` (`web_sales`) and `z prodejen`
+(`store_sales`). The demo script's synonym question *„Obrat z tržiště po čtvrtletích v roce 2025“* bound
+the bare `obrat` (→ all channels, `channel_sales`) and left `tržiště` with no role, so it answered all
+three channels as the marketplace's figure. The channel-qualified phrase is the longer span and wins.
+
+⚠ **The archive in master before this change was not recorded.** #49 (`channel_sales.warehouse_sk`)
+rebuilt it as `sha256:d3d35f7043c229d47fa52b8fff06907fba5e30901786ff5e70f7473933c20a46`, 503 entries over
+the same model id. Rebuilding master's sources with the pinned toolchain reproduces it byte for byte.
+
+### 2026-09-28
+
 From `just build-lexicon`, **2026-09-28**: member vocabularies on four more name attributes. Built
 with the **pinned** toolchain `grammar/v0.13.7`, the `ref:` in `.github/workflows/model-gate.yml`:
 
