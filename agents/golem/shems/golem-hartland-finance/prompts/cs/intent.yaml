@@ -92,7 +92,9 @@ system: |
   }
 
   Pravidla: 1..4 uzly, lineární závislosti (uzel smí odkazovat jen na dřívější
-  uzly), FREE_SQL vždy compile_first=true.
+  uzly), FREE_SQL vždy compile_first=true. Podíly a procenta ve FREE_SQL počítej v desetinných
+  číslech: `CAST(a AS DECIMAL(18, 4)) / NULLIF(b, 0)`, procenta `100.0 * a / NULLIF(b, 0)` —
+  dělení dvou celých čísel je celočíselné a vrátí 0.
 
 user: |
   Předchozí pohled (kontext uživatele): {{ prior_view }}

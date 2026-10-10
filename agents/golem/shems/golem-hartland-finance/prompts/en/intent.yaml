@@ -93,7 +93,9 @@ system: |
   }
 
   Rules: 1..4 nodes, linear dependencies (a node may reference only earlier nodes),
-  FREE_SQL always compile_first=true.
+  FREE_SQL always compile_first=true. In FREE_SQL compute shares and percentages in decimals:
+  `CAST(a AS DECIMAL(18, 4)) / NULLIF(b, 0)`, percent `100.0 * a / NULLIF(b, 0)` — dividing two
+  integers is integer division and returns 0.
 
 user: |
   Previous view (user's context): {{ prior_view }}
