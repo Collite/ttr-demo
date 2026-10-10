@@ -67,7 +67,11 @@ def entity catalog_returns {
 }
 
 def entity reason {
-    description: "Return reasons — \"Did not get it on time\" is the incident's late-delivery signal."
+    // The incident's late-delivery signal is one of these reasons. Its text is world-specific
+    // (US "Did not get it on time", CZ "Nedorazilo včas"), so no description below names a value:
+    // the model serves both worlds (BM-8), and the composer copied the US example into SQL on the
+    // CZ world (0 rows, 2026-10-10).
+    description: "Return reasons — why a customer returned a sales line. The reason text is stored in the language of the loaded data."
     labelPlural: "Return Reasons"
     // LP-P3·T1 (LP contracts §2.1) — the mention facet a quoted literal attributes to:
     // `"..."` on this head lands on `name`, a code-shaped literal on `code`. Without it the
@@ -82,6 +86,6 @@ def entity reason {
         def attribute sk          { type: int, isKey: true, description: "Sequence key. Internal primary key only." },
         def attribute reason_id   { type: text, description: "Return reason identifier (code)." },
         // Member vocabulary, TOKENS: 35 reasons, each a short phrase — «better price» finds 'Found a better price'.
-        def attribute reason_desc { type: text, description: "Return reason text, the human-readable label — e.g. 'Did not get it on time'.", search { searchable method: TOKENS } }
+        def attribute reason_desc { type: text, description: "Return reason text, the human-readable label, in the language of the loaded data. Filter on the reason exactly as the question names it, never on a translation of it.", search { searchable method: TOKENS } }
     ]
 }

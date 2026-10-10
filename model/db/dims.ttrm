@@ -107,7 +107,8 @@ def table store {
 }
 
 def table warehouse {
-    description: "Distribution Centers (D-5: Distribution Centers — Memphis/Brno DC, beat-3 pivot)."
+    // D-5 beat-3 pivot: the meltdown DC (Memphis DC in the US world, Brno DC in the CZ world).
+    description: "Distribution Centers (D-5: Distribution Centers)."
     primaryKey: [w_warehouse_sk]
     columns: [
         def column w_warehouse_sk   { type: int, isKey: true },
@@ -129,7 +130,8 @@ def table promotion {
 }
 
 def table reason {
-    description: "Return reasons (D-5: Return Reasons — \"Did not get it on time\")."
+    // D-5: the late-delivery reason is the incident's signal; its text is the world's language.
+    description: "Return reasons (D-5: Return Reasons). r_reason_desc is in the language of the loaded data."
     primaryKey: [r_reason_sk]
     columns: [
         def column r_reason_sk   { type: int, isKey: true },
