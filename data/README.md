@@ -13,6 +13,7 @@ Phase 1):
    relation, labelled by channel). Idempotent (`CREATE OR REPLACE`); run in both worlds as the
    tables' owner. Views read the facts live, so they need no re-run after a data rebuild — only
    after a DROP.
+7. `extend/` — copy 2024 forward so the facts reach a date you name (LR-P4); re-run before a show.
 
 All scripts idempotent + hash-keyed (deterministic). Item keys + category assignments are
 invariants (the seeds key on warehouse×week, not item).
@@ -36,6 +37,14 @@ snapshot-guarded:
    Re-run it on a world that already has the view whenever the script changes: LR ⚑LR-9 appended
    `warehouse_sk`, which the DC-scope row rule filters on, so the model's column must exist in the
    database before that rule is mounted (`SELECT warehouse_sk FROM channel_sales LIMIT 1` checks it).
+8. `extend/run-extend.sh <ctx> <db> <until>` (`just extend-data <us|cz> <until> [ctx]`) — copies
+   the template year 2024 forward week by week so the facts reach `<until>` (LR-P4, contracts C-8;
+   `extend/README.md`). Incremental: `_extend_meta` holds the weeks already done. After a rebuild
+   (steps 1–7) the world ends 2026-01-08 again — re-run this step.
+
+**Prolong before a show.** The data does not move with the calendar: on the day of a show, run
+`just extend-data <world> <end of this month>` for the world on stage, then refresh the R1 figures
+the script quotes (`recon/R1.md`, "Refreshing R1"). A re-run with a date already covered is a no-op.
 
 **Retained snapshots** (`data/dr-snapshots.md`): the US pre-catalog dump (Stage 1.2 T1) is a
 physical rollback point in `tpcds-staging/hartland/us/`. The CZ pre-seed state was **not**

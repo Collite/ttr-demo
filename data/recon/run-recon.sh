@@ -1,20 +1,24 @@
 #!/usr/bin/env bash
 # Demo-TPCDS Q-1 data recon — read-only aggregate battery against `tpc-ds-1g` on the dsk cluster.
 #
-# Usage:   ./run-recon.sh [kube-context] [database]     (defaults: dsk, tpc-ds-1g)
+# Usage:   ./run-recon.sh [kube-context] [database] [pod] [role]
+#          (defaults: dsk, tpc-ds-1g, test-pg-1, tpcds_readonly)
 #          post-surgery baselines: ./run-recon.sh dsk hartland
+#          the hartland-pg fixture:  ./run-recon.sh dsk hartland_cz hartland-pg-1 hartland_cz_readonly
+#          one query only:           RECON_ONLY=r14_extended_months ./run-recon.sh …
 # Access:  kubectl exec into the CNPG pod `test-pg-1` (ns `data`), psql over the local socket,
 #          SET ROLE tpcds_readonly — the same path the WS-T1 runbook / MP-2 smoke used.
 # Output:  ./results/rNN_*.csv (small aggregates, all committable). Commit results/ so the
 #          design session can analyze them. Expected total runtime: a few minutes at SF1.
 set -euo pipefail
-CTX="${1:-dsk}"; DB="${2:-tpc-ds-1g}"; NS="data"; POD="test-pg-1"
+CTX="${1:-dsk}"; DB="${2:-tpc-ds-1g}"; NS="data"; POD="${3:-test-pg-1}"; ROLE="${4:-tpcds_readonly}"
 DIR="$(cd "$(dirname "$0")" && pwd)"; OUT="$DIR/results"; mkdir -p "$OUT"
 
 q() { # q <name>  (SQL on stdin)
   local name="$1"
+  if [ -n "${RECON_ONLY:-}" ] && [ "$name" != "$RECON_ONLY" ]; then cat > /dev/null; return; fi
   printf '== %s ' "$name"
-  { echo "SET ROLE tpcds_readonly;"; cat; } |
+  { echo "SET ROLE $ROLE;"; cat; } |
     kubectl --context "$CTX" -n "$NS" exec -i "$POD" -c postgres -- \
       psql -q --csv -v ON_ERROR_STOP=1 -d "$DB" -f - > "$OUT/$name.csv"
   printf -- '-> %s lines\n' "$(wc -l < "$OUT/$name.csv" | tr -d ' ')"
@@ -340,6 +344,9 @@ FROM web_sales JOIN date_dim d ON ws_sold_date_sk = d.d_date_sk
 GROUP BY 2, d.d_year
 ORDER BY channel, warehouse, d_year;
 SQL
+
+# ------------------------- r14 the extended months (LR-P4 data/extend, contracts C-8·8 → R1.md)
+q r14_extended_months < "$DIR/queries/r14_extended_months.sql"
 
 echo
 echo "Done. $(ls "$OUT" | wc -l | tr -d ' ') CSVs in $OUT — commit results/ for analysis."

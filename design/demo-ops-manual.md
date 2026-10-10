@@ -292,6 +292,10 @@ the new vocabulary and the matcher served the old one.
 ### 7.3 Pre-show (T-60 → T-10; scripted as `just pre-show hartland` when it lands)
 
 1. `demo-reset` (§7.1).
+1b. **Prolong the data** (LR-P4): `just extend-data cz <end of this month>` (and `us` if the EN
+   world is shown) — the facts stop where the last prolong left them, and a „minulý měsíc“ question
+   after that date reads an empty month. A date already covered is a no-op. Then re-read the R1
+   figures into the script (`data/recon/R1.md`, "Refreshing R1").
 2. **Warm everything**: the node idles with shrunk requests — first tokens are cold. One
    throwaway Golem turn + one Pythia turn (as a *throwaway* session, not Maya's).
 3. **Fire the "Monday channel health brief" routine** — Beat 1 needs the inbox item.

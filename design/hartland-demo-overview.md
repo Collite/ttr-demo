@@ -55,6 +55,13 @@ From `data/recon/results-us/r00_rowcounts.csv` (identical in `results-cz/`):
 | store | 12 (6 logical, SCD-doubled) | | promotion | 300 |
 | call_center | 6 | | reason | 35 |
 
+**Time coverage.** As restored, sales run 2021-01-01 → 2026-01-08 (store and web to 2026-01-02)
+and inventory to 2025-12-26 — the table above. `data/extend/` (LR-P4) then copies the template year
+2024 forward week by week to a date you name, re-run before a show; extended to 2026-10-31 the
+facts reach 2026-11-02 and gain 368,898 store, 191,657 marketplace and 98,686 web lines, 32,337
+returns and 1,980,000 inventory rows (both worlds; 2026 figures in `data/recon/R1.md`). The meltdown
+DC is recovered in extended weeks — 2026 reads as a normal year.
+
 The pre-seed baseline (`results-precatalog/`) differs on exactly two tables — the seed's
 S2 deletion removes 16,674 `catalog_sales` and 1,696 `catalog_returns` lines. Everything
 else is identical, which is the point (see §1.5). Post-catalog the item population carries
