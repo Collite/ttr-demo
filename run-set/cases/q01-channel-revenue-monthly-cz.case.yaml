@@ -6,7 +6,7 @@ owner: "@boraperusic"                 # reassign when the catalog is distributed
 title: "Monthly channel revenue, CZ world — catches revenue/channel/redate drift incl. the H2-2025 Marketplace dip"
 source:
   query: channel_revenue_monthly
-  params: { year: 2025 }
+  params: { channel: all, year: 2025 }   # channel is required since 2026-10-10 (all = every channel)
 target:
   db: hartland_cz
   via: sql

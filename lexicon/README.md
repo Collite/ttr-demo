@@ -78,6 +78,24 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-10 (night)**: no lexicon change. The archive embeds the model
+snapshot, and `q.hartland.channel_revenue_monthly` gained a required `channel` parameter (`all` = every
+channel), while every channel-labelled query now casts its labels to `VARCHAR(16)` (a bare `'store'`
+was padded to `'store      '` and no `channel = {channel}` filter could match store or web). Built with
+the **pinned** toolchain `grammar/v0.13.7`:
+
+| | |
+|---|---|
+| archive id | `sha256:481543ff731c8c82e5adc39f52c8d48b60f6ede5e132225cc4c82ed29adcb887` |
+| model id | `sha256:3858fd6711a0809c5659b54a2279bd05d06eb1987029ec4996b308e9a1b07b1b` (was `8a797c92…`) |
+| schema | `ttr-lexicon-compiled/v5` |
+| toolchain | `Collite/ttr-core` **`grammar/v0.13.7`** (= `efd99dd`) |
+| entries | **509** (unchanged) — the per-class counts below are unchanged too |
+| build warnings | **4**, the same four |
+| size | 10,575 bytes |
+
+### 2026-10-10 (evening)
+
 From `just build-lexicon`, **2026-10-10 (evening)**: no lexicon change. The archive embeds the model
 snapshot, and the model's descriptions changed: the 16 `q.hartland.*` queries carry localized `en`/`cs`
 titles (golem names a pattern by the first sentence of its description), and the return-reason and
