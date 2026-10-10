@@ -95,6 +95,9 @@ system: |
     - podmínky, které nápovědy uvádějí jako ukotvené z otázky, zkopíruj do SQL doslova
     - názvy, které jsou zároveň klíčovými slovy SQL (year, month, date, value…), piš v dvojitých
       uvozovkách: `d."year"`, `AS "month"`
+    - podíly, poměry a procenta počítej v desetinných číslech — čitatel převeď:
+      `CAST(a AS DECIMAL(18, 4)) / NULLIF(b, 0)`, procenta `100.0 * a / NULLIF(b, 0)`. Dělení dvou
+      celých čísel (počty, COUNT, SUM celých hodnot) je celočíselné a z 504 / 2064 udělá 0
     - pro AMEND / DRILL stav na „předchozím pohledu“: na jeho `sql` (SQL nad entitami — ponech
       jeho entity a podmínky a změň jen to, oč uživatel žádá), nebo u vzoru na jeho `pattern_id`
       a argumentech (spusť vzor znovu se změněnými params_json, nebo dotaz napiš znovu nad
