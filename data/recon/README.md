@@ -32,6 +32,11 @@ Same access path as the WS-T1 runbook (kubectl exec → `test-pg-1` local socket
 | r10a/r10b | buyer age trend + income mix, catalog vs web | demographic-shift hypothesis |
 | r11_hygiene | fact date spans, null rates, category/brand cardinalities | TTR-M model authoring (D), C-1 date grounding |
 | r12_holiday_share | d_holiday revenue share | seasonality narrative; holiday-forecast beat |
+| r14_extended_months | channel × month from 2026-01: revenue, orders, returns dated in the month (`queries/r14_extended_months.sql`) | `R1.md` — the extended year (LR-P4, `data/extend/`) |
+
+On the `hartland-pg` fixture the pod and the read-only role differ — pass them:
+`./run-recon.sh <ctx> hartland_cz hartland-pg-1 hartland_cz_readonly`. `RECON_ONLY=<name>` runs one
+query (e.g. `r14_extended_months` after a prolong).
 
 ## Baselines in this repo (Stage 1.2+)
 

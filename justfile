@@ -74,6 +74,25 @@ build-lexicon cli="../tatrman/packages/kotlin/ttr-lexicon-cli/build/install/ttr-
 check-lexicon cli="../tatrman/packages/kotlin/ttr-lexicon-cli/build/install/ttr-lexicon/bin/ttr-lexicon":
     {{cli}} build "$(pwd)" --check --out generated/lexicon.tar.zst
 
+# ── the data extension (LR-P4, contracts C-8) ──────────────────────────────────
+# Copy the template year (2024) forward so the world's facts reach <until> — a question about
+# „minulý měsíc“ / "last month" then has data. Idempotent and incremental: run it again with a
+# later date before a show and only the new weeks are added (data/extend/README.md).
+#
+#     just extend-data cz 2026-10-31          # the hartland cluster (CTX below)
+#     just extend-data us 2026-10-31 dsk      # another cluster — positional, not `ctx=dsk`
+#
+# Every cluster carries the same olymp `hartland-pg` CNPG (ns `data`), so the pod is `hartland-pg-1`.
+extend-data world until ctx=CTX:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "{{world}}" in us|cz) ;; *) echo "world must be us or cz, got '{{world}}'" >&2; exit 2 ;; esac
+    case "{{ctx}}" in
+      dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
+      *) echo "no hartland-pg pod known for context '{{ctx}}' (dsk, collite-o1, hartland)" >&2; exit 2 ;;
+    esac
+    data/extend/run-extend.sh "{{ctx}}" "hartland_{{world}}" "{{until}}" "$pod"
+
 # ── the simulated price history (IE-P1·S1.5·T0c, IE-C64) ──────────────────────
 # ⚑IE-12, ruled by Bora 2026-09-07: *simulate it, with some evolution*. DistrInfo's `Prices` is
 # CURRENT market data — one row per ISIN, no series — so IE-C30 values every PAST quarter with
