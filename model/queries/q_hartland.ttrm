@@ -20,7 +20,11 @@ model query
 // so there is nothing to join/select even if a query tried.
 
 def query channel_revenue_monthly {
-    description: "Monthly revenue per channel — beats 1-2 charts, Metis input series."
+    // Demo notes (not shown to users): beats 1-2 charts, Metis input series.
+    description: {
+        en: "Monthly revenue by channel. One row per channel, year and month, for a range of years.",
+        cs: "Měsíční tržby podle kanálu. Jeden řádek za kanál, rok a měsíc pro zvolený rozsah let."
+    }
     language: SQL
     sourceText: """
         SELECT 'store' AS channel, d.d_year, d.d_moy, SUM(ss.ss_ext_sales_price) AS revenue
@@ -58,7 +62,11 @@ def query channel_revenue_monthly {
 }
 
 def query channel_revenue_yoy {
-    description: "Year-over-year revenue per channel — the briefing KPI (the -11%-ish tile)."
+    // Demo notes (not shown to users): the briefing KPI (the -11%-ish tile).
+    description: {
+        en: "Year-over-year revenue by channel. Each channel's revenue in a year and in the year before, with the change in percent.",
+        cs: "Meziroční tržby podle kanálu. Tržby každého kanálu v daném a v předchozím roce a změna v procentech."
+    }
     language: SQL
     sourceText: """
         WITH cur AS (
@@ -102,7 +110,11 @@ def query channel_revenue_yoy {
 // that question (the Czech demo, 3.2: „Které měsíce roku 2025 měly na tržišti největší meziroční
 // pokles?“), answering a different one. Aliases keep clear of SQL keywords (no `month`/`year`).
 def query channel_revenue_monthly_yoy {
-    description: "Month-by-month year-over-year revenue for one channel, largest decline first — which months fell (the H2 dip)."
+    // Demo notes (not shown to users): which months fell (the H2 dip).
+    description: {
+        en: "Month-by-month year-over-year revenue for one channel. Each month of a year against the same month a year earlier, the largest decline first.",
+        cs: "Meziroční tržby jednoho kanálu po měsících. Každý měsíc roku proti stejnému měsíci předchozího roku, největší pokles první."
+    }
     language: SQL
     sourceText: """
         WITH by_channel AS (
@@ -150,7 +162,11 @@ def query channel_revenue_monthly_yoy {
 }
 
 def query category_revenue {
-    description: "Revenue by product category, one channel — category drill (drop spans categories)."
+    // Demo notes (not shown to users): category drill (drop spans categories).
+    description: {
+        en: "Revenue by product category for one channel. One row per category in a year, the largest first.",
+        cs: "Tržby podle kategorie produktu pro jeden kanál. Jeden řádek za kategorii v daném roce, největší první."
+    }
     language: SQL
     sourceText: """
         WITH by_channel AS (
@@ -192,7 +208,11 @@ def query category_revenue {
 }
 
 def query marketplace_revenue_by_warehouse {
-    description: "Marketplace revenue by distribution center — beat-3 pivot, Memphis/Brno DC stands out."
+    // Demo notes (not shown to users): beat-3 pivot; the meltdown DC stands out (Memphis DC in the US world, Brno DC in the CZ world).
+    description: {
+        en: "Marketplace revenue by distribution center. One row per distribution center and year.",
+        cs: "Tržby z tržiště podle distribučního centra. Jeden řádek za distribuční centrum a rok."
+    }
     language: SQL
     sourceText: """
         SELECT w.w_warehouse_name AS warehouse, d.d_year, SUM(cs.cs_ext_sales_price) AS revenue
@@ -222,7 +242,11 @@ def query marketplace_revenue_by_warehouse {
 }
 
 def query top_items_by_revenue {
-    description: "Top products by revenue — drill (seed heritage)."
+    // Demo notes (not shown to users): drill (seed heritage).
+    description: {
+        en: "Top products by marketplace revenue. The best-selling products of a year, as many as asked for.",
+        cs: "Nejprodávanější produkty podle tržeb z tržiště. Produkty s nejvyššími tržbami v daném roce, kolik jich je požadováno."
+    }
     language: SQL
     sourceText: """
         SELECT i.i_item_id, i.i_product_name, SUM(cs.cs_ext_sales_price) AS revenue
@@ -253,7 +277,11 @@ def query top_items_by_revenue {
 }
 
 def query returns_by_reason {
-    description: "Returns by reason, one channel — S3 evidence (\"Did not get it on time\"/\"Nedorazilo včas\")."
+    // Demo notes (not shown to users): S3 evidence — the late-delivery reason, stored in the world's language (US "Did not get it on time", CZ "Nedorazilo včas").
+    description: {
+        en: "Returns by reason for one channel. Returned units and amount per return reason in a year, the largest amount first.",
+        cs: "Reklamace podle důvodu pro jeden kanál. Vrácené kusy a částka za každý důvod reklamace v daném roce, největší částka první."
+    }
     language: SQL
     sourceText: """
         WITH by_channel AS (
@@ -294,7 +322,11 @@ def query returns_by_reason {
 }
 
 def query returns_rate_by_channel {
-    description: "Return rate (return amount / revenue) per channel — returns branch."
+    // Demo notes (not shown to users): returns branch.
+    description: {
+        en: "Return rate by channel. Returned amount divided by revenue, per channel in a year.",
+        cs: "Míra reklamací podle kanálu. Vrácená částka vydělená tržbami, za každý kanál v daném roce."
+    }
     language: SQL
     sourceText: """
         WITH sales AS (
@@ -329,7 +361,11 @@ def query returns_rate_by_channel {
 }
 
 def query warehouse_stockout_weeks {
-    description: "Weekly zero-inventory incidence per warehouse — the smoking gun (17-week streak, S1)."
+    // Demo notes (not shown to users): the smoking gun (17-week streak, S1).
+    description: {
+        en: "Weekly zero-stock incidence per distribution center. For each distribution center and week of a year, how many inventory rows were at zero out of all rows.",
+        cs: "Výskyt nulových zásob po týdnech podle distribučního centra. Pro každé distribuční centrum a týden roku počet záznamů zásob s nulovým stavem ze všech záznamů."
+    }
     language: SQL
     sourceText: """
         SELECT w.w_warehouse_name AS warehouse, d.d_week_seq,
@@ -360,7 +396,11 @@ def query warehouse_stockout_weeks {
 }
 
 def query inventory_on_hand_series {
-    description: "Weekly on-hand quantity series for one warehouse — evidence chart behind #8."
+    // Demo notes (not shown to users): evidence chart behind #8.
+    description: {
+        en: "Weekly stock on hand for one distribution center. Total on-hand quantity per week of a year.",
+        cs: "Týdenní stav zásob jednoho distribučního centra. Celkové množství na skladě po týdnech daného roku."
+    }
     language: SQL
     sourceText: """
         SELECT w.w_warehouse_name AS warehouse, d.d_week_seq, SUM(inv.inv_quantity_on_hand) AS on_hand_qty
@@ -393,7 +433,11 @@ def query inventory_on_hand_series {
 }
 
 def query customer_channel_overlap {
-    description: "Customer channel touch combinations for one year — cannibalization branch (dies: flat)."
+    // Demo notes (not shown to users): cannibalization branch (dies: flat).
+    description: {
+        en: "Customers by the combination of channels they bought in. One row per combination of store, web and marketplace in a year, with the number of customers.",
+        cs: "Zákazníci podle kombinace kanálů, ve kterých nakupovali. Jeden řádek za kombinaci prodejny, webu a tržiště v daném roce s počtem zákazníků."
+    }
     language: SQL
     sourceText: """
         WITH touches AS (
@@ -433,7 +477,11 @@ def query customer_channel_overlap {
 }
 
 def query revenue_by_customer_state {
-    description: "Revenue by billing-address state, one channel — regional branch (dies: even)."
+    // Demo notes (not shown to users): regional branch (dies: even).
+    description: {
+        en: "Revenue by the customer's billing region for one channel. One row per region of the billing address in a year.",
+        cs: "Tržby podle regionu fakturační adresy zákazníka pro jeden kanál. Jeden řádek za region fakturační adresy v daném roce."
+    }
     language: SQL
     sourceText: """
         WITH by_channel AS (
@@ -474,7 +522,11 @@ def query revenue_by_customer_state {
 }
 
 def query buyer_age_profile {
-    description: "Buyer age distribution, one channel — demographic branch (dies: flat)."
+    // Demo notes (not shown to users): demographic branch (dies: flat).
+    description: {
+        en: "Buyer age profile for one channel. Order lines per buyer age in a year.",
+        cs: "Věkový profil kupujících pro jeden kanál. Počet řádků objednávek podle věku kupujícího v daném roce."
+    }
     language: SQL
     sourceText: """
         WITH by_channel AS (
@@ -521,7 +573,11 @@ def query buyer_age_profile {
 }
 
 def query promo_share {
-    description: "Promoted-vs-unpromoted revenue share, one channel — promo branch (dies: dense as always)."
+    // Demo notes (not shown to users): promo branch (dies: dense as always).
+    description: {
+        en: "Promoted versus unpromoted revenue for one channel. The share of a year's revenue sold with and without a promotion.",
+        cs: "Tržby s promoakcí a bez ní pro jeden kanál. Podíl tržeb roku prodaných s promoakcí a bez ní."
+    }
     language: SQL
     sourceText: """
         WITH by_channel AS (
@@ -563,7 +619,11 @@ def query promo_share {
 }
 
 def query store_sales_by_month {
-    description: "Store-channel revenue by month, all years — Stores-channel texture (seed heritage)."
+    // Demo notes (not shown to users): Stores-channel texture (seed heritage).
+    description: {
+        en: "Store revenue by month. One row per year and month, over all years.",
+        cs: "Tržby prodejen po měsících. Jeden řádek za rok a měsíc, za všechny roky."
+    }
     language: SQL
     sourceText: """
         SELECT d.d_year, d.d_moy, SUM(ss.ss_ext_sales_price) AS revenue
@@ -588,7 +648,11 @@ def query store_sales_by_month {
 }
 
 def query customer_running_total {
-    description: "Running total of store-channel spend per customer over time — top-customer drill, window coverage (seed heritage)."
+    // Demo notes (not shown to users): top-customer drill, window coverage (seed heritage).
+    description: {
+        en: "Running total of each customer's store spend. Cumulative store spend per customer, date by date.",
+        cs: "Průběžný součet útraty zákazníka v prodejnách. Kumulovaná útrata každého zákazníka v prodejnách den po dni."
+    }
     language: SQL
     sourceText: """
         SELECT c.c_customer_id, d.d_date,
