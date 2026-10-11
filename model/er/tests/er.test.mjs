@@ -4,7 +4,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { loadHartlandProject, ACCEPTED_RESIDUAL_CODES, isOwnModelFile, isSyncedModelFile } from '../../tests/project-harness.mjs';
+import { loadHartlandProject, ACCEPTED_RESIDUAL_CODES } from '../../tests/project-harness.mjs';
 
 // D-5 roster (05-d-ttrm-spec.md) — the 19 D-5 entities, no D-5-Out entity (time_dim, web_site,
 // web_page, catalog_page, ship_mode, dbgen_version) — plus `channel_sales` (2026-09-24), the
@@ -22,19 +22,7 @@ const BANNED_MEASURE_TOKENS = ['net_profit', 'net_paid', 'wholesale_cost', 'list
 
 const project = await loadHartlandProject();
 
-/**
- * Definitions of one kind, from the files THIS repo authors.
- *
- * ⛔ IE-P2·S2.3: `model/investment/` is synced in from kantheon and veles serves it beside
- * hartland's own model, so an unscoped walk counts a second package's entities as hartland's. T6.2
- * below is a ROSTER — "exactly the 19 D-5 entities" — and a roster that counts someone else's rows
- * is not a roster. `allDefsAnywhere` is the deliberate unscoped form, used by T6.2b.
- */
 function allDefsOfKind(kind) {
-  return allDefsAnywhere(kind).filter(({ uri }) => isOwnModelFile(uri));
-}
-
-function allDefsAnywhere(kind) {
   const out = [];
   for (const [uri, ast] of project.asts) {
     for (const def of ast.definitions ?? []) {
@@ -61,26 +49,6 @@ test('T6.2 — exactly the D-5 entities (+ channel_sales) are declared, no D-5-O
   assert.deepEqual(missing, [], `missing entities: ${missing.join(', ')}`);
   assert.deepEqual(stray, [], `D-5-Out entities present: ${stray.join(', ')}`);
   assert.equal(entities.length, EXPECTED_ENTITIES.length, `expected exactly ${EXPECTED_ENTITIES.length} entities, got ${entities.length}: ${entities.join(', ')}`);
-});
-
-test('T6.2b — and the synced investment package is there, separately, with its own ten', () => {
-  // The other side of T6.2's scoping. If the sync broke, or if the filter started swallowing
-  // hartland's own files, this is what notices — a scoped roster that nothing checks the scope of
-  // would go green on an empty tree.
-  const synced = allDefsAnywhere('entity').filter(({ uri }) => isSyncedModelFile(uri));
-  assert.deepEqual(
-    synced.map(({ def }) => def.name).sort(),
-    // IE-C23's six + IA-P3b·S3b.1's rate model (IA-C65–C67): exchange_rate, estate_setting, portfolio_setting
-    // + IA-P3b·S3b.3's provider valuation history (IA-C73): portfolio_valuation.
-    [
-      'asset', 'client', 'estate_setting', 'exchange_rate', 'portfolio', 'portfolio_setting', 'portfolio_valuation',
-      'position', 'price', 'transaction',
-    ],
-    'the synced investment package must contribute exactly ten er entities (IE-C23\'s six + the rate model + the valuation history)',
-  );
-  const own = allDefsOfKind('entity');
-  assert.equal(own.length + synced.length, allDefsAnywhere('entity').length, 'every entity is one or the other');
-  assert.ok(own.length > 0, 'the scope filter swallowed hartland\'s own model');
 });
 
 test('T6.3 — no unresolved references anywhere in the project (er/relations/binding cross-refs all resolve)', () => {

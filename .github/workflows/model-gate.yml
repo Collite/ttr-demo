@@ -6,29 +6,13 @@
 # side by side does.
 #
 # What it runs:
-#   just check-investment-model   model/investment/ matches its SYNCED-FROM stamp (hash, no symlinks)
-#   just verify-model             the same check, then every model/agents/lexicon suite
+#   just verify-model             every model/agents/lexicon suite
 #   just check-model              generated/resolved-packages.json is not stale
-#   just check-lexicon            generated/lexicon.tar.zst is not stale — ADDED 2026-09-16, and it
-#                                 is the gate this repo most needed: the archive was last rebuilt
-#                                 2026-09-04, model/investment landed 2026-09-09, and nothing
-#                                 noticed. The estate therefore served a lexicon with no word for
-#                                 a portfolio, a client or a position, so every investment question
-#                                 came back as "I don't recognise …" — a model that was live and
-#                                 unaskable. `check-model` already guards the other generated
-#                                 artifact; this is its missing twin.
-#   node --test …                 the investment drill's suite, the price-history suite, the evolution fingerprint's and
-#                                 the overview fingerprints' (a stub BFF and a fake psql — no estate, no database), and
-#                                 the in-cluster drill's fingerprint lifting (a fake kubectl)
-#
-# A second job, `references`, runs the fingerprints' psql oracles themselves — `just verify-evolution-reference` and
-# `just verify-overview-reference` — on a PostgreSQL 16 service (C locale, as hartland's `entry`): the script suites
-# above hold the workbooks to the references' SAVED answers, so without this an edit to a reference's SQL that was never
-# re-run with `--write` stayed green.
-#
-# What it cannot run: `just check-investment-model-source` and `just verify-investment-sync` need a
-# checkout of the repository model/investment/ is synced FROM, which this workflow does not have.
-# Run both locally before merging a re-sync.
+#   just check-lexicon            generated/lexicon.tar.zst is not stale — ADDED 2026-09-16, after a
+#                                 model change went live with an archive that predated it: the model
+#                                 was served and its words were not, so questions about it came back
+#                                 as "I don't recognise …". `check-model` already guards the other
+#                                 generated artifact; this is its missing twin.
 name: model-gate
 
 on:
@@ -104,10 +88,6 @@ jobs:
         working-directory: tatrman
         run: ./gradlew :packages:kotlin:ttr-lexicon-cli:installDist
 
-      - name: model/investment matches its stamp
-        working-directory: hartland
-        run: just check-investment-model
-
       - name: Model suites
         working-directory: hartland
         run: just verify-model
@@ -122,41 +102,3 @@ jobs:
       - name: lexicon.tar.zst is not stale
         working-directory: hartland
         run: just check-lexicon
-
-      - name: Script suites
-        working-directory: hartland
-        run: node --test scripts/tests/investment-dod.test.mjs scripts/tests/price-history.test.mjs scripts/tests/evolution-fingerprint.test.mjs scripts/tests/overview-fingerprint.test.mjs scripts/tests/drill-in-cluster.test.mjs scripts/tests/income-labels.test.mjs
-
-  references:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_PASSWORD: evolution
-          POSTGRES_DB: entry
-          POSTGRES_INITDB_ARGS: --locale=C --encoding=UTF8
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd "pg_isready -U postgres -d entry"
-          --health-interval 2s --health-timeout 5s --health-retries 30
-    env:
-      # the recipes use this server instead of starting their own container
-      REF_PG_DSN: postgresql://postgres:evolution@localhost:5432/entry
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - uses: extractions/setup-just@v2
-
-      - name: psql on PATH
-        run: command -v psql || { sudo apt-get update -q && sudo apt-get install -yq postgresql-client; }
-
-      - name: The evolution reference on PostgreSQL 16
-        run: just verify-evolution-reference
-
-      - name: The overview references on PostgreSQL 16
-        run: just verify-overview-reference

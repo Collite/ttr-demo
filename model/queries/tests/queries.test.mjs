@@ -6,7 +6,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { loadHartlandProject, ACCEPTED_RESIDUAL_CODES, isOwnModelFile, isSyncedModelFile } from '../../tests/project-harness.mjs';
+import { loadHartlandProject, ACCEPTED_RESIDUAL_CODES } from '../../tests/project-harness.mjs';
 
 const EXPECTED_QUERIES = [
   'channel_revenue_monthly', 'channel_revenue_yoy', 'category_revenue',
@@ -25,16 +25,7 @@ const BANNED_TOKENS = ['net_profit', 'margin', 'wholesale_cost', 'list_price', '
 
 const project = await loadHartlandProject();
 
-/**
- * The queries THIS repo authors. ⛔ IE-P2·S2.3: `model/investment/queries/` is synced in from
- * kantheon and served beside these, so an unscoped walk turns "the D-2 roster of 15" into "however
- * many queries the tree happens to hold".
- */
 function allQueries() {
-  return allQueriesAnywhere().filter(({ uri }) => isOwnModelFile(uri));
-}
-
-function allQueriesAnywhere() {
   const out = [];
   for (const [uri, ast] of project.asts) {
     for (const def of ast.definitions ?? []) {
@@ -109,24 +100,13 @@ test('T6.6 — no query carries the legacy `search { keywords }` sub-block (RS-3
   // deprecated too — `ttr/lexicon-legacy-patterns` — and is ACCEPTED, not fixed, in the harness's
   // residual list, with the reason: moving the patterns would take every q.hartland.* out of
   // discovery at once, on the estate that is the live demo.
-  const withKeywords = allQueriesAnywhere()
+  const withKeywords = allQueries()
     .filter(({ def }) => def.search?.keywords != null)
     .map(({ def }) => def.name);
   assert.deepEqual(withKeywords, [], `queries carrying legacy search{keywords}: ${withKeywords.join(', ')}`);
 
   // And the positive half, which is the part that would actually break the demo: every query the
   // estate serves still HAS a search block for the golem to match on.
-  const without = allQueriesAnywhere().filter(({ def }) => def.search == null).map(({ def }) => def.name);
+  const without = allQueries().filter(({ def }) => def.search == null).map(({ def }) => def.name);
   assert.deepEqual(without, [], `queries with no search block at all — undiscoverable: ${without.join(', ')}`);
-});
-
-test('T6.7 — the synced investment package brings its twenty-one, and they are not counted as ours', () => {
-  // Nine since IE-P3·S3.1: `period_values` (the report's per-period program, ⚑IE-15 (a)) and
-  // `portfolio_header` joined the seven. Nineteen since IA-P3·S3.1: the ten Browse programs
-  // (kantheon contracts IA-C35 … IA-C42); twenty since IA-P3·S3.3 (`clients_list`); twenty-one since IA-P4·S4.1
-  // (`conversion_rates`, the period evolution's rates).
-  const synced = allQueriesAnywhere().filter(({ uri }) => isSyncedModelFile(uri)).map(({ def }) => def.name);
-  assert.equal(synced.length, 21, `the 21 q.investment.* programs, got ${synced.length}: ${synced.join(', ')}`);
-  assert.ok(!synced.some((n) => EXPECTED_QUERIES.includes(n)), 'a name collides with the D-2 roster');
-  assert.equal(allQueries().length + synced.length, allQueriesAnywhere().length, 'every query is one or the other');
 });

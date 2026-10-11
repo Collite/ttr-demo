@@ -14,25 +14,6 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const hartlandRoot = path.resolve(here, '../..');
 
-/**
- * True for a file this repo AUTHORS, false for one synced in from another repository.
- *
- * ⛔ IE-P2·S2.3. Until the investment package landed under `model/investment/` this distinction did
- * not exist, and the suites below were written in a world where "every definition in the project"
- * and "every definition hartland declares" were the same sentence. They are not any more: veles
- * serves this tree, so a second package lives in it, and four assertions that read as rosters —
- * *the 19 D-5 entities*, *ListQueries = 15* — silently became project-wide counts that a sync
- * could move. A roster must count what it names.
- *
- * Scoped by PATH rather than by `package` declaration on purpose: the synced tree is identified by
- * where the sync puts it, and a file that arrived here by mistake declaring `package hartland`
- * should still be excluded from hartland's own roster and caught by the sync's suite instead.
- */
-export const isOwnModelFile = (uri) => !uri.includes('model/investment/');
-
-/** The synced package's own files — the other half of [isOwnModelFile], so both sides are checked. */
-export const isSyncedModelFile = (uri) => uri.includes('model/investment/');
-
 // Diagnostics every stage's project-wide sweep should treat as expected, not a failure —
 // centralized here so a later stage adding a new accepted residual doesn't silently break
 // an earlier stage's test (each entry says which stage introduced it and why).
@@ -73,7 +54,7 @@ export const ACCEPTED_RESIDUAL_CODES = new Set([
   // examples: … }` on a `def query` now raises `ttr/lexicon-legacy-patterns` /
   // `-legacy-examples`. Both fire on `model/queries/q_hartland.ttrm` — which is why this
   // repo's model gate has been RED on master since the toolchain bump, 8 assertions across
-  // 4 files — and on the synced `model/investment/queries/q_investment.ttrm` beside it.
+  // 4 files.
   //
   // ACCEPTED, not fixed, and READERS BEFORE PRODUCERS is again the reason: the running
   // veles and golem on hartland discover a pattern query through `search`, and moving the
