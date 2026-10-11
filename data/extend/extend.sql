@@ -147,6 +147,25 @@ BEGIN
     (SELECT max(d_date) FROM date_dim WHERE d_week_seq = w_to),
     tyear, (SELECT min(k) FROM _ext_weeks), kmax, CASE WHEN cz THEN 'CZ (10 Kč)' ELSE 'column-scale' END;
 
+  -- ---- no mixing offsets: a world extended with a larger order_offset is reset first -----------
+  -- A copy's key is original + order_offset·k with original < order_offset, so every copy this
+  -- offset wrote lies below order_offset·(k + 1). One above it was written with a larger offset
+  -- (1e9 before 2026-10-11), and copies under two offsets would collide at some later k.
+  IF EXISTS (SELECT 1 FROM _extend_meta) THEN
+    FOR f IN SELECT * FROM (VALUES
+        ('store_sales', 'ss_sold_date_sk', 'ss_ticket_number'), ('catalog_sales', 'cs_sold_date_sk', 'cs_order_number'),
+        ('web_sales', 'ws_sold_date_sk', 'ws_order_number')
+      ) v(tbl, dcol, okey)
+    LOOP
+      SELECT d.d_date_sk INTO base_sk FROM _extend_base b JOIN date_dim d ON d.d_date = b.base_end WHERE b.fact = f.tbl;
+      EXECUTE format('SELECT max(%I) FROM %I WHERE %I > %s', f.okey, f.tbl, f.dcol, base_sk) INTO maxord;
+      IF maxord >= off * ((SELECT max(k) FROM _extend_meta) + 1) THEN
+        RAISE EXCEPTION 'extend: %.% holds copies written with a larger order_offset than extend.conf''s % (max %). Reset the extension first (just extend-reset <world>), then extend again.',
+          f.tbl, f.okey, off, maxord;
+      END IF;
+    END LOOP;
+  END IF;
+
   -- ---- order keys must fit their column (they are `integer` in TPC-DS) -------------------------
   FOR f IN SELECT * FROM (VALUES
       ('store_sales', 'ss_ticket_number'), ('catalog_sales', 'cs_order_number'), ('web_sales', 'ws_order_number'),

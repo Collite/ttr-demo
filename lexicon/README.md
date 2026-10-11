@@ -78,6 +78,27 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-11 (afternoon)**: eleven words and one query (LR rulings 1 and 7).
+`model/lexicon/cs/warehouses.ttrm` declares the Czech case forms of „distribuční centrum“
+(„distribučního centra“, „distribučních center“, …) and „sklad“ → `er.entity.warehouse`;
+`model/lexicon/en/warehouses.ttrm` the plural "distribution centers". The citation forms were already
+terms (the entity's `displayLabel`), but the resolver looks a mention up by its dictionary form only when
+it is one word, so «podle distribučního centra» bound nothing (the demo's 4.1 / 6.1 went to the LLM). The
+model snapshot also carries the new `q.hartland.warehouse_stockout_week_count` (the demo's 3.5). Built
+with the **pinned** toolchain `grammar/v0.13.7`:
+
+| | |
+|---|---|
+| archive id | `sha256:4cdcff333779824fb2f4457ecbcabd879260b5b515d1c4f1a6ada84202e3d24a` |
+| model id | `sha256:390430841d873f7ecad7a90c2e19ba116f0617c86ea3e09e995984d9da3cfa05` (was `d39d4c3e…`) |
+| schema | `ttr-lexicon-compiled/v5` |
+| toolchain | `Collite/ttr-core` **`grammar/v0.13.7`** (= `efd99dd`) |
+| entries | **521** (was 510) — eleven more `MODEL_OBJECT`, `DECLARED`, `EXACT` |
+| build warnings | **4**, the same four |
+| size | 10,670 bytes |
+
+### 2026-10-11
+
 From `just build-lexicon`, **2026-10-11**: one word. `model/lexicon/cs/reasons.ttrm` declares the bare
 Czech head word **„důvod“** → `er.entity.reason` (attested by `returns_by_reason`'s «reklamace podle
 důvodu» and the Czech demo's «… s důvodem Nedorazilo včas»). The entity's Czech label names it only as

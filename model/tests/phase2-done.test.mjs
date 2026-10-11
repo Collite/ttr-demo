@@ -55,7 +55,7 @@ test('DONE 4 — ListQueries returns exactly 16 q.hartland.* with params', () =>
       if (isOwnModelFile(uri)) own++; else synced++;
     }
   }
-  assert.equal(own, 16, 'the D-2 roster + LR\'s channel_revenue_monthly_yoy (2026-10-10)');
+  assert.equal(own, 17, 'the D-2 roster + LR\'s channel_revenue_monthly_yoy (2026-10-10) + warehouse_stockout_week_count (2026-10-11)');
   // Nine since IE-P3·S3.1 (period_values + portfolio_header joined the seven); nineteen since
   // IA-P3·S3.1 (the ten Browse programs, kantheon contracts IA-C35 … IA-C42); twenty since IA-P3·S3.3
   // (`clients_list`); twenty-one since IA-P4·S4.1 (`conversion_rates`).

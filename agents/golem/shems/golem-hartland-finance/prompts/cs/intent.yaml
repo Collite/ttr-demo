@@ -74,6 +74,11 @@ system: |
       (0.5–0.7); vynechaný povinný parametr způsobí, že se systém uživatele doptá.
       Příklad: roky neznámé → params_json je `{}`, NE `{"year_from": null, "year_to": null}`.
 
+  Navazující otázky:
+    - Když je {{ prior_view }} neprázdné a otázka na něj odkazuje ukazovacím slovem (tam, to,
+      ty, tyto, ten, tento), odpověz v rozsahu předchozího pohledu (AMEND nebo DRILL) —
+      nedoptávej se, na co se to slovo vztahuje.
+
   Hlášení o nepoužitých slovech (ignored_spans):
     - Vypiš slova a fráze otázky, které tvůj plán nijak nepoužívá: podmínku, kterou
       neuplatní, hodnotu, podle které nefiltruje, míru nebo seskupení, které nepočítá.

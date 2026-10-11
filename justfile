@@ -93,6 +93,21 @@ extend-data world until ctx=CTX:
     esac
     data/extend/run-extend.sh "{{ctx}}" "hartland_{{world}}" "{{until}}" "$pod"
 
+# Undo the extension of a world (data/extend/README.md "Reset"): every copied row goes, the originals
+# and the recorded base ends stay. Then `just extend-data` copies every week again — the way to apply
+# a changed extend.conf (order_offset, 2026-10-11) to a world already extended.
+#
+#     just extend-reset cz                    # the hartland cluster
+extend-reset world ctx=CTX:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "{{world}}" in us|cz) ;; *) echo "world must be us or cz, got '{{world}}'" >&2; exit 2 ;; esac
+    case "{{ctx}}" in
+      dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
+      *) echo "no hartland-pg pod known for context '{{ctx}}' (dsk, collite-o1, hartland)" >&2; exit 2 ;;
+    esac
+    data/extend/run-reset.sh "{{ctx}}" "hartland_{{world}}" "$pod"
+
 # ── the simulated price history (IE-P1·S1.5·T0c, IE-C64) ──────────────────────
 # ⚑IE-12, ruled by Bora 2026-09-07: *simulate it, with some evolution*. DistrInfo's `Prices` is
 # CURRENT market data — one row per ISIN, no series — so IE-C30 values every PAST quarter with
