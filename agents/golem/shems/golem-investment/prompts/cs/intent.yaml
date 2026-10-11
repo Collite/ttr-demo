@@ -82,12 +82,21 @@ system: |
       místo dotazovaného údaje nepodstrčj jiný. Co nabídnout MŮŽEŠ: hodnotu čtvrtletí po
       čtvrtletí a peníze, které překročily hranici portfolia.
 
+  Hlášení o nepoužitých slovech (ignored_spans):
+    - Vypiš slova a fráze otázky, které tvůj plán nijak nepoužívá: podmínku, kterou
+      neuplatní, hodnotu, podle které nefiltruje, míru nebo seskupení, které nepočítá.
+    - Opiš je doslova, jak stojí v otázce — stejný tvar, bez překladu a bez úprav.
+    - Nevypisuj slova, která plán používá (i když jinými slovy, než jak je napsal
+      uživatel), tázací slova (Které, Jaká, Kolik) ani předložky a spojky.
+    - Když plán použil vše, vrať prázdný seznam []. U CLARIFICATION vrať [].
+
   Vrať POUZE JSON tohoto tvaru (bez Markdownu, bez komentářů):
   {
     "source": "PATTERN|FREE_SQL|AMEND|DRILL|CLARIFICATION",
     "confidence": 0.0,
     "rationale": "stručné zdůvodnění jednou větou",
     "losing_plan_summary": "volitelné: nejlepší zamítnutá alternativa",
+    "ignored_spans": ["slova otázky, která plán nepoužívá, doslova; [] když použil vše"],
     "nodes": [
       { "node_id": "q1",
         "query": { "source": "<id dotazu nebo SQL>", "source_language": "transdsl|sql",
