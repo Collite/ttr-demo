@@ -78,6 +78,24 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-11**: one word. `model/lexicon/cs/reasons.ttrm` declares the bare
+Czech head word **„důvod“** → `er.entity.reason` (attested by `returns_by_reason`'s «reklamace podle
+důvodu» and the Czech demo's «… s důvodem Nedorazilo včas»). The entity's Czech label names it only as
+the whole phrase „Důvod reklamace“, so a bare «důvodem» bound nothing. There is no English twin: "reason"
+is the entity's own name and already binds it. Built with the **pinned** toolchain `grammar/v0.13.7`:
+
+| | |
+|---|---|
+| archive id | `sha256:ae7bd4a94da38017cc29cb1d9a1a98a21ce259fece542fd207bd40ef062b794b` |
+| model id | `sha256:d39d4c3ee027a480fd8e93170050784df2caa49e6ff59fab0477ecc16e351191` (was `3858fd67…`) |
+| schema | `ttr-lexicon-compiled/v5` |
+| toolchain | `Collite/ttr-core` **`grammar/v0.13.7`** (= `efd99dd`) |
+| entries | **510** (was 509) — one more `MODEL_OBJECT`, `DECLARED`, `EXACT` |
+| build warnings | **4**, the same four |
+| size | 10,578 bytes |
+
+### 2026-10-10 (night)
+
 From `just build-lexicon`, **2026-10-10 (night)**: no lexicon change. The archive embeds the model
 snapshot, and `q.hartland.channel_revenue_monthly` gained a required `channel` parameter (`all` = every
 channel), while every channel-labelled query now casts its labels to `VARCHAR(16)` (a bare `'store'`
