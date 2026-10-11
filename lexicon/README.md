@@ -78,6 +78,24 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-11 (night)**: thirty entries fewer, none of them hartland's. The
+investment package (`model/investment/`, synced from kantheon) moved out of this repository with the
+investment estate's Shem and scripts, so its 30 `METADATA` rows (`asset`, `client`, `portfolio`,
+`position`, `price`, `transaction`, … — provenance `model/investment/er/*`) left the archive with it.
+Built with the **pinned** toolchain `grammar/v0.13.7`:
+
+| | |
+|---|---|
+| archive id | `sha256:25a38870e0ec9221c36f6385d4528123630e63a62552289b43bee319df83c444` |
+| model id | `sha256:10cb6460f614542dfe111f215ceb29a41745d5fe8498e45d6b83e241ad5b25d5` (was `390430…`) |
+| schema | `ttr-lexicon-compiled/v5` |
+| toolchain | `Collite/ttr-core` **`grammar/v0.13.7`** (= `efd99dd`) |
+| entries | **492** (was 522) — thirty `MODEL_OBJECT` rows fewer |
+| build warnings | **4**, the same four |
+| size | 10,123 bytes |
+
+### 2026-10-11 (evening)
+
 From `just build-lexicon`, **2026-10-11 (evening)**: one word. `aliases/hartland.lex.yaml` declares the
 citation form **„zásoba“** → `er.entity.inventory.quantity_on_hand`, beside „zásoby“. The resolver's
 anchors match a term by the token as written or by its lemma, and every case of the word („zásob“,
@@ -313,15 +331,13 @@ er.entity.store             store_name   | store_id  (MS, already there)
 er.entity.warehouse         warehouse_name | warehouse_id
 ```
 
-⚑ **That is every eligible hartland head.** Of the 30 targets still without a facet, 12 are
+⚑ **That is every eligible hartland head.** Of the 24 targets still without a facet, 12 are
 attributes and measures (a member has no name column — it IS one, `Mention.NONE` by
 construction), 8 are facts (`entity_with_measures` — a fact is not a thing you name), 3 declare
 neither a name nor a code (`customer_demographics`, `household_demographics`, `income_band`), and
 `date_dim`'s name is a date and its code the internal sequence key, so attributing a typed string
-to either would be wrong. The remaining **6 are the investment area** (`asset`, `client`,
-`portfolio`, `position`, `price`, `transaction`), which is **not authored here** —
-`model/investment/` is synced out of kantheon (`just sync-investment-model`), so its facet is a
-change in that repo.
+to either would be wrong. (Written as 30 when the investment package's six heads were still in
+this tree; it moved out on 2026-10-11.)
 
 ⚠ **The previous archive was never recorded.** `7fc8c36` (*"lexicon: rebuild with the current CLI
 — 418 entries incl. LP-P2a STRING_PREDICATE"*) shipped archive

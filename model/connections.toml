@@ -21,25 +21,3 @@ dialect  = "postgres"
 schema   = "dbo"
 currency = "CZK"     # display fact — surfaces via lexicon locale cs
 locale   = "cs"
-
-# ── pg-entry (IE-C26, IE-P2·S2.3) ────────────────────────────────────────────────────────────
-# The investment book, read-only. Unlike the two worlds above this is a THIRD database on the same
-# cluster (`entry`, written by the entry substrate through the investment door) and a different
-# package's tables (`db.dbo.investment_*`, synced into model/investment/), so it is not a world
-# variant — both of these can be live at once.
-#
-# ⛔ `schema = "dbo"` is the modeler.toml HANDLE, not the physical schema, exactly as it is above:
-# the investment tables really are in Postgres `public`, and the db layer declares `dbo` because the
-# query door resolves unqualified DB identifiers in that fixed namespace (S2.3·D1b). It is the same
-# handle the TPC-DS tables use, which is safe only because the two table sets share no name — and
-# because dispatch routes on the qname PREFIX: `db.dbo.investment_*` comes here, everything else
-# falls through to WORLD_DEFAULT_CONNECTION (`pg-hartland-us`).
-#
-# The credentials are `entry_readonly` (IE-C20) and live in the cluster, not here.
-[[connection]]
-id       = "pg-entry"
-database = "entry"
-dialect  = "postgres"
-schema   = "dbo"
-currency = "CZK"     # the book is a Czech distributor's; display fact, as above
-locale   = "cs"
