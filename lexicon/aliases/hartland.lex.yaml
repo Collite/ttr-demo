@@ -282,7 +282,14 @@ entries:
   # a restriction (`quantity_on_hand = 0`) riding a measure word. The er layer has no
   # separate stockout attribute to point them at, and the removed md file made exactly the
   # same choice against `md.measure.onHandQty`. Recorded rather than silently smoothed.
+  #
+  # `zásoba` is the citation form, and it is here for the resolver's ANCHORS (LR, 2026-10-11).
+  # An anchor matches a term by the token as written or by its lemma, and every case of the
+  # word — `zásob`, `zásobách`, `zásobami` — lemmatises to `zásoba`, which no term spelled. So
+  # «Kolik týdnů v roce 2025 byly v Brně výpadky zásob?» had no stock anchor when the place was
+  # read, and «Brně» took the store; with the anchor, the DC the stock fact reaches wins.
   - terms:
+      - { text: "zásoba" }
       - { text: "zásoby" }
       - { text: "stav zásob", method: TOKENS }
       - { text: "skladem" }
