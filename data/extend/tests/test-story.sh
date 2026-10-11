@@ -13,7 +13,7 @@ expect_between "meltdown DC share of marketplace revenue, %" \
 expect_between "meltdown DC zero-inventory share, %" \
   "$(pgq "$DB" "SELECT round(100.0 * count(*) FILTER (WHERE x.inv_quantity_on_hand = 0) / count(*), 3) FROM ($(extended_rows_sql inventory)) x WHERE x.inv_warehouse_sk = $DC" 2>/dev/null)" 0 0.2
 expect_between "late-delivery reason share among the meltdown DC's extended returns, %" \
-  "$(pgq "$DB" "SELECT round(100.0 * count(*) FILTER (WHERE cr_reason_sk = $LATE) / nullif(count(*), 0), 2) FROM catalog_returns WHERE cr_order_number >= 1000000000 AND cr_warehouse_sk = $DC" 2>/dev/null)" 0 5
+  "$(pgq "$DB" "SELECT round(100.0 * count(*) FILTER (WHERE x.cr_reason_sk = $LATE) / nullif(count(*), 0), 2) FROM ($(extended_rows_sql catalog_returns)) x WHERE x.cr_warehouse_sk = $DC" 2>/dev/null)" 0 5
 
 # Returns vs revenue in the last whole extended month, against the SAME month of the template year.
 # The task's "≈ 5 %" is the annual ratio; per month TPC-DS runs 2–12 % (revenue is Q4-heavy and
