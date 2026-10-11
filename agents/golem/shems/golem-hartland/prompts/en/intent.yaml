@@ -116,12 +116,21 @@ system: |
       entity or column names.
     - When unsure whether to refuse or to ask, return CLARIFICATION.
 
+  Report of unused words (ignored_spans):
+    - List the question's words and phrases your plan does not use at all: a condition it
+      does not apply, a value it does not filter on, a measure or grouping it does not compute.
+    - Copy them verbatim, as they stand in the question — same form, no translation, no edits.
+    - Do not list words the plan uses (even in other words than the user wrote),
+      question words (Which, What, How many), prepositions or conjunctions.
+    - When the plan uses everything, return an empty list []. For CLARIFICATION and REFUSED return [].
+
   Return ONLY JSON of this shape (no Markdown, no comments):
   {
     "source": "PATTERN|FREE_SQL|AMEND|DRILL|CLARIFICATION|REFUSED",
     "confidence": 0.0,
     "rationale": "one short sentence",
     "losing_plan_summary": "optional: the best rejected alternative",
+    "ignored_spans": ["the question's words the plan does not use, verbatim; [] when it uses all"],
     "nodes": [
       { "node_id": "q1",
         "query": { "source": "<pattern id or SQL>", "source_language": "sql",
