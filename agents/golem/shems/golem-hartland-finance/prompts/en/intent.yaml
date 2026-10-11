@@ -75,6 +75,11 @@ system: |
       the system ask the user for it. Example: years unknown → params_json is `{}`,
       NOT `{"year_from": null, "year_to": null}`.
 
+  Follow-up questions:
+    - When {{ prior_view }} is non-empty and the question points at it with a pointer word
+      (there, that, those, these, it), answer within the previous view's scope (AMEND or DRILL)
+      — do not ask what the word refers to.
+
   Report of unused words (ignored_spans):
     - List the question's words and phrases your plan does not use at all: a condition it
       does not apply, a value it does not filter on, a measure or grouping it does not compute.

@@ -61,10 +61,13 @@ date-filtered question). A return with a NULL return date goes into its sale's w
 
 ## Keys, jitter, rounding (C-8·4–5, 7)
 
-- **Keys:** `*_order_number` / `*_ticket_number` + `order_offset × k` (`extend.conf`, 1e9). The
-  original numbers stay below 240 001, so every copy is distinct by construction and an extended
-  row is recognisable (order number ≥ 1e9). ⛔ The columns are `integer`: `2e9 + 240 000` fits,
-  **k = 3 does not** (2026-12-29 onward). The script refuses with a clear error before writing.
+- **Keys:** `*_order_number` / `*_ticket_number` + `order_offset × k` (`extend.conf`, **1e8**
+  since 2026-10-11). The original numbers stay below 240 001, so every copy is distinct by
+  construction and an extended row is recognisable (order number ≥ 1e8). The columns are `integer`
+  (≤ 2 147 483 647), so 1e8 lasts to **k = 21** (about 2045); the script refuses a k that would
+  overflow, with a clear error, before writing. The first offset, 1e9, overflowed at k = 3
+  (2026-12-29). A world extended with it is **reset** and extended again (below); `extend.sql`
+  refuses to add 1e8 copies to 1e9 ones, which would collide at k = 10.
 - **Jitter:** each copied line's amounts and quantities × `1 + ((|hashtext(new_order || item)| mod 401) − 200) / 10 000`
   (±2 %, deterministic; returns use their sale's factor; inventory hashes date‖item‖warehouse).
   C-8·5 wrote `hashtext(…) % 401` without the `abs`; a negative hash would skew it to −6..+2 %.
@@ -72,13 +75,32 @@ date-filtered question). A return with a NULL return date goes into its sale's w
   (CZ) rounds like `localize-cz/02-czk-fx.sql` — nearest 10 Kč at ≥ 100 Kč, haléře below; any
   other world rounds to the column's scale.
 
+## Reset
+
+`run-reset.sh <ctx> <db> [pod]` (= `just extend-reset <us|cz> [ctx]`) deletes every row the
+extension wrote and empties `_extend_meta`, in one transaction. The originals stay, and so does
+`_extend_base`, so the next `run-extend.sh` copies every week again from the same base. What is a
+copy is read without knowing the offset it was written with:
+
+- a **sale** dated after its fact's base end (the originals end there by definition);
+- a **return** of such a sale (joined on order + item), whatever its own return date;
+- an **inventory** snapshot after inventory's base end.
+
+A dateless sale is an original (never copied) and stays. Use it to apply a changed `extend.conf`
+to a world already extended. For the 1e9 → 1e8 change of 2026-10-11:
+
+```sh
+just extend-reset cz && just extend-data cz 2026-10-31
+```
+
 ## Tests (`tests/`)
 
 | script | checks |
 |---|---|
 | `test-incremental.sh <ctx> <db> [pod]` | on a scratch copy: to 2026-03-31, then 2026-06-30 adds exactly the weeks between and leaves earlier weeks untouched; a third run with the same date and one with an earlier date are no-ops |
+| `test-reset.sh <ctx> <db> [pod]` | on a scratch copy: a reset leaves every fact byte-identical to its originals, keeps the base ends, empties `_extend_meta`; a second reset is a no-op; reset + re-extend writes exactly what the first extension wrote |
 | `test-determinism.sh <ctx> <db> [pod] [until]` | two scratch copies — one prolonged in two steps, one in one — hold byte-identical extended rows (md5 per table) and identical `_extend_meta` |
-| `test-keys.sh <ctx> <db> [pod]` | unique keys in every fact, extended order numbers ≥ 1e9 and originals below, every extended return has its extended sale, `date_dim` covers 2026–2030 |
+| `test-keys.sh <ctx> <db> [pod]` | unique keys in every fact, extended order numbers ≥ `order_offset` (read from `extend.conf`) and originals below, every extended return has its extended sale, `date_dim` covers 2026–2030 |
 | `test-story.sh <ctx> <db> [pod]` | in extended weeks: meltdown-DC share of marketplace revenue ≈ 20 % (±1 pt), DC-5 zero-inventory share < 0.2 %, late-delivery reason share at DC 5 < 5 %, and per channel the last whole month's returns-to-revenue ratio within 1 pt of the same month of 2024 (the task's "≈ 5 %" is the annual ratio; per month TPC-DS runs 2–12 %) |
 | `test-world-neutral.sh <ctx> <db> [pod]` | CZ: every extended amount ≥ 100 is a multiple of 10 Kč; US: the 10 Kč rule is not applied and amounts keep 2 decimals |
 

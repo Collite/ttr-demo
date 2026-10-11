@@ -408,6 +408,57 @@ def query warehouse_stockout_weeks {
     ]
 }
 
+def query warehouse_stockout_week_count {
+    // Demo notes (not shown to users): the Czech demo's 3.5 („Kolik týdnů v roce 2025 mělo Brno DC
+    // výpadky zásob?“ → 17, weeks 31–47). LR ruling 1 (2026-10-11): the question asked „nulové
+    // zásoby“, read literally — the DC's TOTAL stock at zero — which never happens (0 weeks). A
+    // stockout week is the seed's own definition (data/seed/02-seed-incident/tests/verify-story.sql
+    // §3): at least half of the DC's inventory rows for the week are at zero. Baseline weeks sit
+    // near 0.1 %, the incident weeks far above half, so the line is not a close call.
+    description: {
+        en: "Stockout weeks of one distribution center in a year. A stockout week is a week in which at least half of the center's inventory rows were at zero; also the first and the last such week of the year.",
+        cs: "Týdny s výpadky zásob jednoho distribučního centra v daném roce. Týden s výpadkem je týden, kdy byla nejméně polovina záznamů zásob centra nulová; také první a poslední takový týden roku."
+    }
+    language: SQL
+    sourceText: """
+        WITH weekly AS (
+            SELECT w.w_warehouse_name AS warehouse, d.d_week_seq,
+                   SUM(CASE WHEN inv.inv_quantity_on_hand = 0 THEN 1 ELSE 0 END) AS zero_rows,
+                   COUNT(*) AS total_rows
+            FROM inventory inv
+            JOIN warehouse w ON inv.inv_warehouse_sk = w.w_warehouse_sk
+            JOIN date_dim d ON inv.inv_date_sk = d.d_date_sk
+            WHERE w.w_warehouse_name = {warehouse} AND d.d_year = {year}
+            GROUP BY w.w_warehouse_name, d.d_week_seq
+        ),
+        base AS (
+            SELECT MIN(d.d_week_seq) AS first_seq FROM date_dim d WHERE d.d_year = {year}
+        )
+        SELECT weekly.warehouse,
+               SUM(CASE WHEN 2 * weekly.zero_rows >= weekly.total_rows THEN 1 ELSE 0 END) AS stockout_weeks,
+               MIN(CASE WHEN 2 * weekly.zero_rows >= weekly.total_rows THEN weekly.d_week_seq - base.first_seq + 1 END) AS first_week,
+               MAX(CASE WHEN 2 * weekly.zero_rows >= weekly.total_rows THEN weekly.d_week_seq - base.first_seq + 1 END) AS last_week
+        FROM weekly CROSS JOIN base
+        GROUP BY weekly.warehouse
+    """
+    search {
+        patterns: [
+            "(how many |)stockout weeks (at|for|did) {warehouse}",
+            "(how many |)weeks (did |){warehouse} (have |)(a |)stock ?outs?",
+            "kolik tydnu (melo |mel |mela |)(dc |sklad |){warehouse} vypadky zasob",
+            "vypadky zasob (v |ve |)(dc |skladu |){warehouse}"
+        ],
+        examples: [
+            "How many stockout weeks did Memphis DC have in 2025?",
+            "Kolik týdnů v roce 2025 mělo Brno DC výpadky zásob?"
+        ]
+    }
+    // {warehouse} is the DC NAME („Brno DC“, „Memphis DC“), as in inventory_on_hand_series.
+    parameters: [
+        { name: warehouse, type: text, label: "Warehouse (DC name)" },
+        { name: year, type: int, label: "Year" }
+    ]
+}
 def query inventory_on_hand_series {
     // Demo notes (not shown to users): evidence chart behind #8.
     description: {
