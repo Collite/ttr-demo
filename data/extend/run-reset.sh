@@ -5,7 +5,7 @@
 # that was already extended.
 #
 # Runs reset.sql as ONE transaction, as the postgres superuser over the pod-local socket (the
-# run-extend.sh path), then ANALYZEs the seven facts and prints each fact's last date.
+# run-extend.sh path), then VACUUMs and ANALYZEs the seven facts and prints each fact's last date.
 #
 # Usage: ./run-reset.sh <kube-context> <database> [pod]
 #        `just extend-reset <us|cz> [ctx]` wraps it with the world's database and the pod.
@@ -26,8 +26,13 @@ t0=$(date +%s)
 pg "$DB" -q -1 -f - < "$DIR/reset.sql"
 t1=$(date +%s)
 
-echo "== ANALYZE =="
-pg "$DB" -q -c "ANALYZE store_sales, catalog_sales, web_sales, store_returns, catalog_returns, web_returns, inventory;"
+# VACUUM, not just ANALYZE: the delete leaves every copied row behind as a dead tuple, and on the CZ
+# world a reset deleted less than autovacuum's 20 % threshold of each fact, so nothing reclaimed them —
+# after the first reset (2026-10-11) `inventory` alone carried 1.97 M dead rows, which every scan read
+# past until a manual VACUUM (69 s for the facts). Outside the transaction — VACUUM cannot run inside
+# one — and after it, so a failed reset vacuums nothing.
+echo "== VACUUM (ANALYZE) =="
+pg "$DB" -q -c "VACUUM (ANALYZE) store_sales, catalog_sales, web_sales, store_returns, catalog_returns, web_returns, inventory;"
 
 echo "== each fact's last date (= its base end after a reset) =="
 pg "$DB" -P footer=off -f - <<'SQL'
