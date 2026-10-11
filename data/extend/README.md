@@ -86,7 +86,9 @@ copy is read without knowing the offset it was written with:
 - a **return** of such a sale (joined on order + item), whatever its own return date;
 - an **inventory** snapshot after inventory's base end.
 
-A dateless sale is an original (never copied) and stays. Use it to apply a changed `extend.conf`
+A dateless sale is an original (never copied) and stays. After the transaction the script runs
+`VACUUM (ANALYZE)` on the seven facts: a reset's deletes stay under autovacuum's threshold, and the dead
+rows would otherwise slow every scan of the world. Use it to apply a changed `extend.conf`
 to a world already extended. For the 1e9 → 1e8 change of 2026-10-11:
 
 ```sh

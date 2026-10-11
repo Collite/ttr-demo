@@ -183,3 +183,17 @@ test('T5 — the artifact carries BOTH stdlib and estate grounding terms for the
   assert.ok(estateOnly > 0, 'the estate contributes no grounding terms of its own');
   assert.ok(layered > estateOnly, `layering added nothing: ${layered} with stdlib vs ${estateOnly} without`);
 });
+
+// LR (2026-10-11) — the resolver's anchors match a term by the token as written or by its
+// lemma, never by a declension. The stock measure's words are inflected in every question
+// that names them («výpadky zásob», «v zásobách»), and all of those lemmatise to `zásoba`:
+// without that citation form no anchor said "stock", and a place word took the store
+// instead of the DC the stock fact reaches.
+test('T6 — the stock measure declares its citation form, the one an anchor reads', () => {
+  const file = path.join(areaRoot, 'aliases', 'hartland.lex.yaml');
+  const blocks = readFileSync(file, 'utf-8').split(/^\s*- terms:\s*$/m);
+  const stock = blocks.find((b) => /^\s*target:\s*er\.entity\.inventory\.quantity_on_hand\s*$/m.test(b));
+  assert.ok(stock, 'no term block targets er.entity.inventory.quantity_on_hand');
+  const terms = [...stock.matchAll(/\{\s*text:\s*"([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(terms.includes('zásoba'), `the stock terms are ${terms.join(', ')} — «zásoba» is missing`);
+});

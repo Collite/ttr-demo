@@ -78,6 +78,25 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-11 (evening)**: one word. `aliases/hartland.lex.yaml` declares the
+citation form **„zásoba“** → `er.entity.inventory.quantity_on_hand`, beside „zásoby“. The resolver's
+anchors match a term by the token as written or by its lemma, and every case of the word („zásob“,
+„zásobách“) lemmatises to „zásoba“, which no term spelled — so «Kolik týdnů v roce 2025 byly v Brně
+výpadky zásob?» had no stock anchor when the place was read, and «Brně» took the store instead of the DC.
+Guarded by `lexicon/tests/area.test.mjs` T6. Built with the **pinned** toolchain `grammar/v0.13.7`:
+
+| | |
+|---|---|
+| archive id | `sha256:97a9a3fe94427352942e745a9b096473dabffc95bdfae3556de23e8dd25925ae` |
+| model id | `sha256:390430841d873f7ecad7a90c2e19ba116f0617c86ea3e09e995984d9da3cfa05` (unchanged) |
+| schema | `ttr-lexicon-compiled/v5` |
+| toolchain | `Collite/ttr-core` **`grammar/v0.13.7`** (= `efd99dd`) |
+| entries | **522** (was 521) — one more `MODEL_OBJECT`, `DECLARED`, `TYPOS(1)` |
+| build warnings | **4**, the same four |
+| size | 10,682 bytes |
+
+### 2026-10-11 (afternoon)
+
 From `just build-lexicon`, **2026-10-11 (afternoon)**: eleven words and one query (LR rulings 1 and 7).
 `model/lexicon/cs/warehouses.ttrm` declares the Czech case forms of „distribuční centrum“
 („distribučního centra“, „distribučních center“, …) and „sklad“ → `er.entity.warehouse`;
