@@ -23,6 +23,7 @@ const project = await loadHartlandProject();
 const LEXICON_FILES = [
   'model/lexicon/en/channels.ttrm',
   'model/lexicon/cs/channels.ttrm',
+  'model/lexicon/cs/reasons.ttrm',
 ];
 
 // All canonical lexicon entries across every lexicon file, tagged with their real
