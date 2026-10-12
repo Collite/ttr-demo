@@ -1,0 +1,9 @@
+id: a1-3-marketplace-by-category
+title: Marketplace revenue 2025 by category — a join the door writes
+act: '1.3'
+shape: breakdown
+question:
+  cs: Tržby z tržiště v roce 2025 podle kategorie
+  en: Marketplace revenue in 2025 by category
+expected_route: FAST
+validation: marketplace-2025-by-category.yaml

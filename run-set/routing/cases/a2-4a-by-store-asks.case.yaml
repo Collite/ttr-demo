@@ -1,0 +1,11 @@
+id: a2-4a-by-store-asks
+title: „prodejny“ / store — the dimension or the channel? Asked with 0 LLM calls
+act: '2.4'
+shape: homonym
+question:
+  cs: Tržby podle prodejen v roce 2025
+  en: Revenue by store in 2025
+expected_route: ASK
+session: a2-4
+xfail:
+  cs: 'ttr-demo#62 — „prodejna“ binds the store_sales measure / entity, store names are not members: the 2.4 ask is gone'

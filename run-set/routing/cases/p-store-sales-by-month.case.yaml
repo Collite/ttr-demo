@@ -1,0 +1,12 @@
+id: p-store-sales-by-month
+title: The saved query `q.hartland.store_sales_by_month` — its own example question
+shape: pattern
+question:
+  cs: Měsíční tržby prodejen
+  en: Store revenue by month
+expected_route: LLM
+validation: non-empty.yaml
+tags:
+- q.hartland.store_sales_by_month
+notes: |
+  A pattern question: the composer should pick this saved query (statement source PATTERN). Recorded, not asserted: which saved query ran.

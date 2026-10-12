@@ -1,0 +1,9 @@
+id: a2-1-prefix-literal
+title: A quoted prefix literal, bound as a parameter
+act: '2.1'
+shape: literal
+question:
+  cs: Tržby z tržiště v roce 2025 za produkty začínající na „Voltaic“ podle kategorie
+  en: Marketplace revenue in 2025 for products starting with "Voltaic" by category
+expected_route: FAST
+validation: marketplace-2025-prefix-by-category.yaml

@@ -1,0 +1,18 @@
+notes: |
+  Ten categories, evenly spread („tohle není produktový problém“). The answer may carry an 11th row for the items without a category.
+core: |
+  SELECT i.i_category AS category, SUM(cs.cs_ext_sales_price) AS revenue
+  FROM catalog_sales cs
+  JOIN date_dim d ON cs.cs_sold_date_sk = d.d_date_sk
+  JOIN item i ON cs.cs_item_sk = i.i_item_sk
+  WHERE d.d_year = 2025 AND i.i_category IS NOT NULL
+  GROUP BY i.i_category
+assert:
+  row_count:
+    min: 10
+    max: 11
+  row_set:
+    keys:
+    - category
+    value: revenue
+    tolerance: 0.001

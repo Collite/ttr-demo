@@ -1,0 +1,9 @@
+id: a5-5-list-capped
+title: A long list is visibly cut at the validator's ceiling
+act: '5.5'
+shape: list
+question:
+  cs: Vypiš všechny objednávky z tržiště z prosince 2025
+  en: List all marketplace orders from December 2025
+expected_route: LLM
+validation: list-capped.yaml

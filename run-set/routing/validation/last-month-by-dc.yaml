@@ -1,0 +1,17 @@
+notes: |
+  2026: the five DCs are back to about equal — warehouse 5 recovered (R1).
+core: |
+  SELECT w.w_warehouse_name AS dc, SUM(cs.cs_ext_sales_price) AS revenue
+  FROM catalog_sales cs
+  JOIN date_dim d ON cs.cs_sold_date_sk = d.d_date_sk
+  JOIN warehouse w ON cs.cs_warehouse_sk = w.w_warehouse_sk
+  WHERE d.d_date >= date_trunc('month', DATE '{reference_date}') - interval '1 month'
+    AND d.d_date < date_trunc('month', DATE '{reference_date}')
+  GROUP BY w.w_warehouse_name
+assert:
+  row_count: 5
+  row_set:
+    keys:
+    - dc
+    value: revenue
+    tolerance: 0.001

@@ -1,0 +1,9 @@
+id: a5-1-profit-not-in-data
+title: Profit is not in the model
+act: '5.1'
+shape: refusal
+question:
+  cs: Jaký byl náš zisk na tržišti v roce 2025?
+  en: What was our marketplace profit in 2025?
+expected_route: REFUSE
+validation: refusal-not-in-data.yaml

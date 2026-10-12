@@ -1,0 +1,12 @@
+id: a1-4a-no-diacritics
+title: No diacritics (cs) / a typo (en) on the opening question
+act: '1.4'
+shape: grain
+question:
+  cs: trzby z trziste v roce 2025 po mesicich
+  en: marketplace revenu in 2025 by month
+expected_route: LLM
+expected_reason: UNDECIDED_AXIS
+validation: marketplace-2025-by-month.yaml
+notes: |
+  Ruled 2026-10-09 (Bora, the Czech grain phrases): without diacritics `po` reads both as a breakdown (distributive) and as a restriction („po roce 2020“), and when the two readings disagree the resolver keeps both and the composer decides (UNDECIDED_AXIS). So this one is the LLM lane by design; the answer must still be the monthly series.

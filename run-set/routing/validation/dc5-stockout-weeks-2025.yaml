@@ -1,0 +1,17 @@
+notes: |
+  A stockout week = at least half of the DC's inventory rows at zero (the seed's definition, held by q.hartland.warehouse_stockout_week_count). 17 weeks (31–47) at warehouse 5.
+core: |
+  WITH weekly AS (
+    SELECT d.d_week_seq,
+           SUM(CASE WHEN inv.inv_quantity_on_hand = 0 THEN 1 ELSE 0 END) AS zero_rows,
+           COUNT(*) AS total_rows
+    FROM inventory inv
+    JOIN date_dim d ON inv.inv_date_sk = d.d_date_sk
+    WHERE inv.inv_warehouse_sk = 5 AND d.d_year = 2025
+    GROUP BY d.d_week_seq
+  )
+  SELECT SUM(CASE WHEN 2 * zero_rows >= total_rows THEN 1 ELSE 0 END) AS weeks FROM weekly
+assert:
+  scalar:
+    value: weeks
+    tolerance: 0

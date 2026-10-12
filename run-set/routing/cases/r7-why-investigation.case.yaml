@@ -1,0 +1,8 @@
+id: r7-why-investigation
+title: Why — an investigation, not a data question
+act: R7
+shape: investigation
+question:
+  cs: Proč klesly tržby z tržiště ve 2. pololetí 2025?
+  en: Why did marketplace revenue drop in the second half of 2025?
+expected_route: REFUSE

@@ -1,0 +1,12 @@
+id: p-customer-running-total
+title: The saved query `q.hartland.customer_running_total` — its own example question
+shape: pattern
+question:
+  cs: Kumulativní útrata zákazníka
+  en: Running total of customer spend
+expected_route: LLM
+validation: non-empty.yaml
+tags:
+- q.hartland.customer_running_total
+notes: |
+  A pattern question: the composer should pick this saved query (statement source PATTERN). Recorded, not asserted: which saved query ran.

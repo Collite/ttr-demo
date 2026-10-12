@@ -1,0 +1,4 @@
+notes: |
+  Ten rows, ordered — the door writes ORDER BY … DESC LIMIT 10 (LR P1).
+assert:
+  row_count: 10

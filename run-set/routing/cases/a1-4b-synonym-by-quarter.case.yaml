@@ -1,0 +1,11 @@
+id: a1-4b-synonym-by-quarter
+title: A synonym and a quarter grain
+act: '1.4'
+shape: grain
+question:
+  cs: Obrat z tržiště po čtvrtletích v roce 2025
+  en: Marketplace sales by quarter in 2025
+expected_route: FAST
+validation: marketplace-2025-by-quarter.yaml
+xfail:
+  en: ttr-server#152 (2026-10-12 comment) — `quarter in 2025` is grounded as ONE span = the current quarter ⇒ FAST with the wrong period

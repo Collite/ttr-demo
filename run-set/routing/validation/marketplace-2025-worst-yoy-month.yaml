@@ -1,0 +1,19 @@
+notes: |
+  The worst month's year-over-year change (September 2025, −12,5 %). The answer may say it as a fraction or a percentage.
+core: |
+  SELECT MIN(yoy) AS yoy FROM (
+    SELECT d.d_moy,
+           SUM(CASE WHEN d.d_year = 2025 THEN cs.cs_ext_sales_price END)
+             / SUM(CASE WHEN d.d_year = 2024 THEN cs.cs_ext_sales_price END) - 1 AS yoy
+    FROM catalog_sales cs
+    JOIN date_dim d ON cs.cs_sold_date_sk = d.d_date_sk
+    WHERE d.d_year IN (2024, 2025)
+    GROUP BY d.d_moy
+  ) m
+assert:
+  scalar:
+    value: yoy
+    tolerance: 0.01
+    scale:
+    - 1
+    - 100

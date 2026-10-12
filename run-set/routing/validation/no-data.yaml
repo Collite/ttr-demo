@@ -1,0 +1,4 @@
+notes: |
+  A year the data does not reach: no rows (or one all-NULL aggregate), and an honest „no data“.
+assert:
+  empty: true

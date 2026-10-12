@@ -1,0 +1,11 @@
+id: p-returns-rate-by-channel
+title: The saved query `q.hartland.returns_rate_by_channel` — its own example question
+shape: pattern
+question:
+  cs: Jaká je míra vrácení podle kanálu?
+  en: What is our return rate by channel?
+expected_route: ASK
+tags:
+- q.hartland.returns_rate_by_channel
+notes: |
+  The example names no year (or channel), so the planner asks for it — the composer found the query.

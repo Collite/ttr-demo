@@ -1,0 +1,12 @@
+id: p-channel-revenue-yoy
+title: The saved query `q.hartland.channel_revenue_yoy` — its own example question
+shape: pattern
+question:
+  cs: Porovnej tržby z webu a tržiště, 2024 vs 2025
+  en: Compare Web and Marketplace revenue, 2024 vs 2025
+expected_route: LLM
+validation: non-empty.yaml
+tags:
+- q.hartland.channel_revenue_yoy
+notes: |
+  A pattern question: the composer should pick this saved query (statement source PATTERN). Recorded, not asserted: which saved query ran.

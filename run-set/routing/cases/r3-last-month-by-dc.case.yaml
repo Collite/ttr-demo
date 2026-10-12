@@ -1,0 +1,9 @@
+id: r3-last-month-by-dc
+title: Relative time by DC — warehouse 5 recovered
+act: R3
+shape: relative-period
+question:
+  cs: Tržby z tržiště za minulý měsíc podle distribučního centra
+  en: Marketplace revenue last month by distribution center
+expected_route: FAST
+validation: last-month-by-dc.yaml

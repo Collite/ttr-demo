@@ -1,0 +1,12 @@
+id: p-warehouse-stockout-weeks
+title: The saved query `q.hartland.warehouse_stockout_weeks` — its own example question
+shape: pattern
+question:
+  cs: Které položky byly vyprodané v Brno DC v říjnu 2025?
+  en: Which items were out of stock at Memphis DC in October 2025?
+expected_route: LLM
+validation: non-empty.yaml
+tags:
+- q.hartland.warehouse_stockout_weeks
+notes: |
+  A pattern question: the composer should pick this saved query (statement source PATTERN). Recorded, not asserted: which saved query ran.

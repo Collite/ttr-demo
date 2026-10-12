@@ -1,0 +1,9 @@
+id: a3-1-compare-channels-two-years
+title: Compare two channels over two years
+act: '3.1'
+shape: compare
+question:
+  cs: Porovnej tržby z webu a z tržiště v letech 2024 a 2025
+  en: Compare web and marketplace revenue in 2024 and 2025
+expected_route: LLM
+validation: web-marketplace-2024-2025.yaml

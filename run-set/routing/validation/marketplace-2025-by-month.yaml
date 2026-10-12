@@ -1,0 +1,16 @@
+notes: |
+  Marketplace (catalog_sales) revenue per month of 2025 — the H2 incident is visible from August.
+core: |
+  SELECT d.d_moy AS month, SUM(cs.cs_ext_sales_price) AS revenue
+  FROM catalog_sales cs
+  JOIN date_dim d ON cs.cs_sold_date_sk = d.d_date_sk
+  WHERE d.d_year = 2025
+  GROUP BY d.d_moy
+  ORDER BY 1
+assert:
+  row_count: 12
+  row_set:
+    keys:
+    - month
+    value: revenue
+    tolerance: 0.001

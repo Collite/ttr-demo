@@ -1,0 +1,7 @@
+notes: |
+  Another DC for a DC-5 manager: the row rule leaves nothing, and the answer says so with C-6·2 (never a bare 0).
+assert:
+  empty: true
+  text_contains:
+    cs: V rozsahu dat, která máte oprávnění zobrazit, nebyly nalezeny žádné
+    en: No matching records were found within the data you are allowed to see

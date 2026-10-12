@@ -1,0 +1,12 @@
+id: n6b-elliptic-last-year
+title: elliptic follow-up — leans on the view
+shape: elliptic
+question:
+  cs: A loni?
+  en: And the year before?
+expected_route: LLM
+expected_reason: PRIOR_VIEW
+validation: marketplace-2024.yaml
+session: n6
+tags:
+- C-1·3

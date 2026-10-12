@@ -1,0 +1,13 @@
+core: |
+  SELECT d.d_qoy AS quarter, SUM(cs.cs_ext_sales_price) AS revenue
+  FROM catalog_sales cs
+  JOIN date_dim d ON cs.cs_sold_date_sk = d.d_date_sk
+  WHERE d.d_year = 2025
+  GROUP BY d.d_qoy
+assert:
+  row_count: 4
+  row_set:
+    keys:
+    - quarter
+    value: revenue
+    tolerance: 0.001

@@ -1,0 +1,15 @@
+id: p-revenue-by-customer-state
+title: The saved query `q.hartland.revenue_by_customer_state` — its own example question
+shape: pattern
+question:
+  cs: Tržby podle státu
+  en: Revenue by state for Web
+expected_route: LLM
+validation: non-empty.yaml
+xfail:
+  cs: 'kantheon#182 — the fast path answers a plain SUM: the lattice lost the breakdown / count / average — „podle státu“ binds ground:geo as GROUPING; FAST answers the total'
+  en: 'kantheon#182 — the fast path answers a plain SUM: the lattice lost the breakdown / count / average'
+tags:
+- q.hartland.revenue_by_customer_state
+notes: |
+  A pattern question: the composer should pick this saved query (statement source PATTERN). Recorded, not asserted: which saved query ran.

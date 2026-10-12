@@ -1,0 +1,13 @@
+notes: |
+  „Minulý měsíc“ / "last month" on the real clock: the calendar month before the reference date (R1: September 2026 = 357 418 826 Kč / $15,539,944 when asked in October 2026).
+core: |
+  SELECT SUM(cs.cs_ext_sales_price) AS revenue
+  FROM catalog_sales cs
+  JOIN date_dim d ON cs.cs_sold_date_sk = d.d_date_sk
+  WHERE cs.cs_warehouse_sk = 5
+    AND d.d_date >= date_trunc('month', DATE '{reference_date}') - interval '1 month'
+    AND d.d_date < date_trunc('month', DATE '{reference_date}')
+assert:
+  scalar:
+    value: revenue
+    tolerance: 0.001

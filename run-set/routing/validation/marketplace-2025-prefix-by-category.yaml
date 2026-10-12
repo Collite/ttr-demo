@@ -1,0 +1,23 @@
+notes: |
+  A quoted literal the user typed: products whose name starts with it. The brand is the same word in both worlds.
+params:
+  cz:
+    term: Voltaic
+  us:
+    term: Voltaic
+core: |
+  SELECT i.i_category AS category, SUM(cs.cs_ext_sales_price) AS revenue
+  FROM catalog_sales cs
+  JOIN date_dim d ON cs.cs_sold_date_sk = d.d_date_sk
+  JOIN item i ON cs.cs_item_sk = i.i_item_sk
+  WHERE d.d_year = 2025 AND i.i_product_name LIKE '{term}%'
+  GROUP BY i.i_category
+assert:
+  row_count:
+    min: 1
+    max: 2
+  row_set:
+    keys:
+    - category
+    value: revenue
+    tolerance: 0.001

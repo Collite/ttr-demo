@@ -1,0 +1,12 @@
+id: a6-2-dc-manager-other-dc
+title: 'Another DC for the DC-5 manager: nothing, said so'
+act: '6.2'
+shape: rights
+question:
+  cs: Tržby z tržiště v roce 2025 pro Praha DC
+  en: Marketplace revenue in 2025 for Dallas DC
+persona: dc_manager
+expected_route: FAST
+validation: rights-empty.yaml
+notes: |
+  Any DC other than 5 will do; cs asks for Praha DC (1), en for Dallas DC (2).

@@ -1,0 +1,11 @@
+id: n2-ratio
+title: ratio — the door writes plain sums
+shape: ratio
+question:
+  cs: Jaký byl podíl tržeb z tržiště na celkových tržbách v roce 2025?
+  en: What share of total revenue came from the marketplace in 2025?
+expected_route: LLM
+expected_reason: RATIO
+validation: marketplace-share-2025.yaml
+tags:
+- C-1·3

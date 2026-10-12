@@ -1,0 +1,9 @@
+id: a2-3b-partial-dc
+title: Part of a DC name
+act: '2.3'
+shape: partial
+question:
+  cs: Tržby z tržiště v roce 2025 pro Hradec
+  en: Marketplace revenue in 2025 for Allen
+expected_route: FAST
+validation: dc4-2025.yaml

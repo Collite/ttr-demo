@@ -1,0 +1,9 @@
+id: a1-2-revenue-by-channel
+title: Revenue by channel 2025 — the bare word lands on one modelled view
+act: '1.2'
+shape: breakdown
+question:
+  cs: Tržby podle kanálu v roce 2025
+  en: Revenue by channel in 2025
+expected_route: FAST
+validation: channel-2025.yaml

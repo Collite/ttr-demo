@@ -1,0 +1,11 @@
+id: a4-3-drill-category
+title: DRILL the previous view
+act: '4.3'
+shape: elliptic
+question:
+  cs: Rozpad podle kategorie
+  en: Break it down by category
+expected_route: LLM
+expected_reason: PRIOR_VIEW
+validation: dc-by-category.yaml
+session: a4

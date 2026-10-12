@@ -1,0 +1,9 @@
+id: a6-1a-analyst-by-dc
+title: The analyst sees five DCs
+act: '6.1'
+shape: rights
+question:
+  cs: Tržby z tržiště podle distribučního centra v roce 2025
+  en: Marketplace revenue by distribution center in 2025
+expected_route: FAST
+validation: marketplace-2025-by-dc.yaml

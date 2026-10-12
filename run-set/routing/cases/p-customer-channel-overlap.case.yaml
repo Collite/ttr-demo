@@ -1,0 +1,11 @@
+id: p-customer-channel-overlap
+title: The saved query `q.hartland.customer_channel_overlap` — its own example question
+shape: pattern
+question:
+  cs: Překryv zákazníků mezi kanály
+  en: Customer channel overlap
+expected_route: ASK
+tags:
+- q.hartland.customer_channel_overlap
+notes: |
+  The example names no year (or channel), so the planner asks for it — the composer found the query.

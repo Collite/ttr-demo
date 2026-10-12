@@ -1,0 +1,17 @@
+notes: |
+  „Letos“ / "this year" by month: the reference year's months that hold data (the extension runs to the start of November 2026).
+core: |
+  SELECT d.d_moy AS month, SUM(cs.cs_ext_sales_price) AS revenue
+  FROM catalog_sales cs
+  JOIN date_dim d ON cs.cs_sold_date_sk = d.d_date_sk
+  WHERE d.d_year = EXTRACT(YEAR FROM DATE '{reference_date}')
+  GROUP BY d.d_moy
+assert:
+  row_count:
+    min: 1
+    max: 12
+  row_set:
+    keys:
+    - month
+    value: revenue
+    tolerance: 0.001

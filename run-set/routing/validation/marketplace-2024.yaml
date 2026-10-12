@@ -1,0 +1,11 @@
+notes: |
+  The elliptic follow-up „A loni?“ re-asks the previous view for the year before.
+core: |
+  SELECT SUM(cs.cs_ext_sales_price) AS revenue
+  FROM catalog_sales cs
+  JOIN date_dim d ON cs.cs_sold_date_sk = d.d_date_sk
+  WHERE d.d_year = 2024
+assert:
+  scalar:
+    value: revenue
+    tolerance: 0.001

@@ -1,0 +1,19 @@
+notes: |
+  kantheon-scope-dc-5: validate narrows catalog_sales to warehouse 5, so the DC manager sees ONE row, and the answer ends with the C-6·1 rights sentence.
+core: |
+  SELECT w.w_warehouse_name AS dc, SUM(cs.cs_ext_sales_price) AS revenue
+  FROM catalog_sales cs
+  JOIN date_dim d ON cs.cs_sold_date_sk = d.d_date_sk
+  JOIN warehouse w ON cs.cs_warehouse_sk = w.w_warehouse_sk
+  WHERE d.d_year = 2025 AND cs.cs_warehouse_sk = 5
+  GROUP BY w.w_warehouse_name
+assert:
+  row_count: 1
+  row_set:
+    keys:
+    - dc
+    value: revenue
+    tolerance: 0.001
+  text_contains:
+    cs: Výsledek zahrnuje pouze data, která máte oprávnění zobrazit
+    en: The result includes only the data you are allowed to see

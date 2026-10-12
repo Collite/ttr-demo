@@ -97,3 +97,20 @@ extend-reset world ctx=CTX:
       *) echo "no hartland-pg pod known for context '{{ctx}}' (dsk, collite-o1, hartland)" >&2; exit 2 ;;
     esac
     data/extend/run-reset.sh "{{ctx}}" "hartland_{{world}}" "$pod"
+
+# ── the routing corpus (LR P6, contracts C-9·3) ─────────────────────────────────────────────────
+# run-set/routing/README.md. `check` needs no cluster; `run` asks every case of the DELIVERED world
+# through the public iris-bff as the case's persona (HARTLAND_DEMO_PASSWORD, or the olymp realm file
+# beside this checkout) and validates against the world DB as hartland_<world>_readonly.
+#
+#     just routing-run cz                          # the Czech world (the cluster must be on it)
+#     just routing-run us --shadow --out /tmp/r    # + every FAST answer re-asked on the LLM lane
+routing-check:
+    uv run scripts/routing-run.py check
+
+# The runner's own specs (assertions, verdicts, the schema check) — no cluster.
+routing-test:
+    uv run --quiet --with pyyaml --with httpx python3 -B -m unittest scripts/test_routing_run.py
+
+routing-run world *FLAGS:
+    uv run scripts/routing-run.py run --world {{world}} {{FLAGS}}

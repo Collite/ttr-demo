@@ -1,0 +1,11 @@
+id: p-inventory-on-hand-series
+title: The saved query `q.hartland.inventory_on_hand_series` — its own example question
+shape: pattern
+question:
+  cs: Stav zásob v Brno DC
+  en: Weekly inventory on hand for Memphis DC
+expected_route: ASK
+tags:
+- q.hartland.inventory_on_hand_series
+notes: |
+  The example names no year (or channel), so the planner asks for it — the composer found the query.

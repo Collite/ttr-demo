@@ -1,0 +1,10 @@
+id: a6-1b-dc-manager-by-dc
+title: The DC-5 manager sees one, with the rights sentence
+act: '6.1'
+shape: rights
+question:
+  cs: Tržby z tržiště podle distribučního centra v roce 2025
+  en: Marketplace revenue by distribution center in 2025
+persona: dc_manager
+expected_route: FAST
+validation: dc5-only-2025-by-dc.yaml

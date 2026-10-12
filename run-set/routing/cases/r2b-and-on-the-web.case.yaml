@@ -1,0 +1,13 @@
+id: r2b-and-on-the-web
+title: The follow-up must recompute, never filter the shown ten
+act: R2
+shape: elliptic
+question:
+  cs: A na webu?
+  en: And on the web?
+expected_route: LLM
+expected_reason: PRIOR_VIEW
+validation: top-10.yaml
+session: r2
+notes: |
+  Asserts 10 rows: the follow-up recomputes the top ten for the web. 2026-10-12 it did, even after r2a's own answer came back with 200 rows (kantheon#183).

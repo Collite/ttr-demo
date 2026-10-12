@@ -1,0 +1,16 @@
+notes: |
+  Six stores. `store` carries SCD history (12 rows), so the answer must group by NAME, not by key.
+core: |
+  SELECT s.s_store_name AS store, SUM(ss.ss_ext_sales_price) AS revenue
+  FROM store_sales ss
+  JOIN store s ON ss.ss_store_sk = s.s_store_sk
+  JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk
+  WHERE d.d_year = 2025
+  GROUP BY s.s_store_name
+assert:
+  row_count: 6
+  row_set:
+    keys:
+    - store
+    value: revenue
+    tolerance: 0.001

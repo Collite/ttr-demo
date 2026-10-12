@@ -1,0 +1,9 @@
+id: a5-6-write-refused
+title: A write request
+act: '5.6'
+shape: refusal
+question:
+  cs: Založ na listopad slevovou akci pro tržiště
+  en: Create a discount campaign for the marketplace in November
+expected_route: REFUSE
+validation: refusal-write.yaml

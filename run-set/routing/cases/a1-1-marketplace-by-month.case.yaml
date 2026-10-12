@@ -1,0 +1,11 @@
+id: a1-1-marketplace-by-month
+title: Marketplace revenue 2025 by month — the opening question
+act: '1.1'
+shape: grain
+question:
+  cs: Jaké byly tržby z tržiště v roce 2025 po měsících?
+  en: What was marketplace revenue in 2025 by month?
+expected_route: FAST
+validation: marketplace-2025-by-month.yaml
+xfail:
+  en: ttr-server#152 — the grain word inside `by month` is also grounded as the current month ⇒ two periods ⇒ MULTI_PERIOD ⇒ LLM lane

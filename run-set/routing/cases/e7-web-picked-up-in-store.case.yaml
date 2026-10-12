@@ -1,0 +1,11 @@
+id: e7-web-picked-up-in-store
+title: 'E7 — two slots, two readings (recorded: what it binds)'
+shape: homonym
+question:
+  cs: Tržby webu vyzvednuté na prodejně
+  en: Web revenue picked up in store
+expected_route: ASK
+tags:
+- MH-E7
+notes: |
+  MH contracts §9.2: E7 is asserted as 'record what it binds'. The expected route is a placeholder for the record; read `observed_route` and the protocol.

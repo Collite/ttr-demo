@@ -1,0 +1,8 @@
+notes: |
+  Six stores (the dimension, SCD history counted by name).
+core: |
+  SELECT COUNT(DISTINCT s.s_store_name) AS stores FROM store s
+assert:
+  scalar:
+    value: stores
+    tolerance: 0
