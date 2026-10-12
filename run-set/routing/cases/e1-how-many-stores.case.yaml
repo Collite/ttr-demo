@@ -8,6 +8,5 @@ expected_route: LLM
 validation: store-count.yaml
 xfail:
   cs: 'kantheon#182 — the fast path answers a plain SUM: the lattice lost the breakdown / count / average (ttr-core#178: no count operator)'
-  en: 'ttr-demo#62 — „prodejna“ binds the store_sales measure / entity, store names are not members: the 2.4 ask is gone — en counts the SCD rows (12, not 6)'
 tags:
 - MH-E1

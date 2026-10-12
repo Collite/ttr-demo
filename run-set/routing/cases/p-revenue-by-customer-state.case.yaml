@@ -8,7 +8,6 @@ expected_route: LLM
 validation: non-empty.yaml
 xfail:
   cs: 'kantheon#182 — the fast path answers a plain SUM: the lattice lost the breakdown / count / average — „podle státu“ binds ground:geo as GROUPING; FAST answers the total'
-  en: 'kantheon#182 — the fast path answers a plain SUM: the lattice lost the breakdown / count / average'
 tags:
 - q.hartland.revenue_by_customer_state
 notes: |

@@ -5,4 +5,8 @@ shape: last
 question:
   cs: Měl Brno DC v říjnu 2025 nulové zásoby?
   en: Did Memphis DC have zero stock in October 2025?
-expected_route: LLM
+expected_route: ASK
+xfail:
+  cs: "ttr-demo#68 — „nulové zásoby v říjnu“ is the 4.4 ambiguity (any time, or the whole month?); the cs composer guesses"
+notes: |
+  Ruled 2026-10-12 (as 4.4): zero stock IN October is ambiguous — at any time, or the whole month? Asking is the correct response.

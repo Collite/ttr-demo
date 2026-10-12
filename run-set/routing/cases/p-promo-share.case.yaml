@@ -4,8 +4,9 @@ shape: pattern
 question:
   cs: Podíl akčních tržeb
   en: Promo share for Web
-expected_route: ASK
+expected_route: LLM
+validation: non-empty.yaml
 tags:
 - q.hartland.promo_share
 notes: |
-  The example names no year (or channel), so the planner asks for it — the composer found the query.
+  Re-ruled 2026-10-12 (kantheon#194): no period is a default, not a question — the composer answers over the last 12 complete months.
