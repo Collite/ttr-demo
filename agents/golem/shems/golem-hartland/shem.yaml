@@ -47,23 +47,26 @@ overlay:
     and marketplace channels.
 
   # Per-locale (BM-6/BM-8 — one locale is delivered at a time, but the Shem carries both
-  # so either delivery locale is ready). The rehearsed beats (05-d-ttrm-spec.md); cs uses
-  # Brno DC / Czech places, en uses Memphis DC, per BM-7's mirrored-not-reinvented story.
+  # so either delivery locale is ready). LR-P5 (2026-10-12): six TWINS, index for index, each a
+  # question the demo script answers on the FAST path (the query door, no LLM call) — Acts 1, 2.1,
+  # 2.2 and 4.1 of the demo script. cs names Brno DC, en Memphis DC (warehouse 5 in both worlds).
+  # Checked live 2026-10-12: all six cs FAST; en 2–6 FAST. en 1 ("… by month") is answered by the
+  # LLM lane until ttr-server#152 (the grain word `month` is also grounded as the current month).
   example_questions:
     en:
-      - "How did Marketplace revenue develop in 2025?"
-      - "Which categories drove the H2 2025 drop?"
-      - "What is our return rate by channel?"
-      - "Which items were out of stock at Memphis DC in October 2025?"
-      - "Compare Web and Marketplace revenue, 2024 vs 2025"
-      - "Top products by revenue last year"
+      - "What was marketplace revenue in 2025 by month?"
+      - "Revenue by channel in 2025"
+      - "Marketplace revenue in 2025 by category"
+      - 'Marketplace revenue in 2025 for products starting with "Voltaic" by category'
+      - "Marketplace revenue in 2025 for Memphis DC"
+      - "Marketplace revenue by distribution center in 2025"
     cs:
-      - "Jak se vyvíjela tržba z tržiště v roce 2025?"
-      - "Které kategorie způsobily propad v 2. pol. 2025?"
-      - "Jaká je míra vrácení podle kanálu?"
-      - "Které položky byly vyprodané v Brno DC v říjnu 2025?"
-      - "Porovnej tržby z webu a tržiště, 2024 vs 2025"
-      - "Nejprodávanější produkty za loňský rok"
+      - "Jaké byly tržby z tržiště v roce 2025 po měsících?"
+      - "Tržby podle kanálu v roce 2025"
+      - "Tržby z tržiště v roce 2025 podle kategorie"
+      - "Tržby z tržiště v roce 2025 za produkty začínající na „Voltaic“ podle kategorie"
+      - "Tržby z tržiště v roce 2025 pro Brno DC"
+      - "Tržby z tržiště podle distribučního centra v roce 2025"
 
   # B-2 gap ammunition — deliberately unanswerable, routes away or gaps gracefully.
   counter_examples:
