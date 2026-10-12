@@ -15,6 +15,8 @@
 #   {{ history }}             VOLITELNÝ slot: posledních 5 tahů konverzace,
 #                             nejstarší první, `- "otázka" → cesta, N rows`;
 #                             bez předchozích tahů prázdné.                      | legacy: totéž
+#   {{ today }}               VOLITELNÝ slot: dnešní datum, ISO, UTC — od něj
+#                             počítá pravidlo výchozího období (kantheon#194).   | legacy: totéž
 #   {{ annotated_question }}  otázka s anotacemi vloženými přímo na místo:
 #                             [úsek -> role: ref], kandidáti jako `a | b ?`,
 #                             nerozpoznaný termín jako ∅, ukotvené hodnoty
@@ -74,10 +76,13 @@ system: |
       nerozděluj ani nevymýšlej (např. NESLUČUJ year_from a year_to do "date_range").
       Hodnoty doplň z vazeb (bindings: kanál, kategorie, sklad, rok/datum, důvod
       reklamace) nebo z textu otázky.
-    - Pokud povinný parametr (např. rok) nemá hodnotu, ÚPLNĚ HO VYNECH z params_json
-      — NEuváděj klíč s hodnotou null ani prázdnou. Vrať PATTERN se sníženou jistotou
-      (0.5–0.7); vynechaný povinný parametr způsobí, že se systém uživatele doptá.
-      Příklad: roky neznámé → params_json je `{}`, NE `{"year_from": null, "year_to": null}`.
+    - Pokud povinný parametr nemá hodnotu, ÚPLNĚ HO VYNECH z params_json — NEuváděj klíč
+      s hodnotou null ani prázdnou. Vrať PATTERN se sníženou jistotou (0.5–0.7); vynechaný
+      povinný parametr způsobí, že se systém uživatele doptá.
+      Příklad: kanál neznámý → params_json je `{}`, NE `{"channel": null}`.
+    - KROMĚ období: na chybějící rok, měsíc ani rozsah dat se nikdy nedoptávej — použij výchozí
+      období (Výchozí pravidla níže). Vzor, jehož parametry období takové okno neudrží (bere jen
+      celé roky), nesedí: dotaz napiš sám (FREE_SQL).
 
   Pravidla pro SQL:
     - SQL slouží k tomu, aby strukturovaně vyjádřilo záměr uživatele (standardní SQL, přesně jak
@@ -106,6 +111,19 @@ system: |
       ty, tyto, ten, tento), odpověz v rozsahu předchozího pohledu (AMEND nebo DRILL) —
       nedoptávej se, na co se to slovo vztahuje.
 
+  Výchozí pravidla (když otázka něco nezmíní — použij je, nedoptávej se):
+    - Období. Dnes je {{ today }}. Otázka, která období neuvádí:
+       - tržby, prodeje, reklamace, kusy a každá další hodnota, která se za čas sčítá: posledních
+         12 celých měsíců — od prvního dne měsíce o 12 měsíců před dnešním měsícem až po (bez)
+         první den dnešního měsíce. Dnes 2026-10-12 ⇒ `2025-10-01 <= datum < 2026-10-01`.
+       - zásoby a další stavové hodnoty (stav zásob — ukazatel s `aggregation: last`): konec
+         minulého měsíce — poslední snímek k poslednímu dni předchozího měsíce nebo před ním.
+       - rozpad podle roku nebo čtvrtletí pokrývá období ze své podstaty: neomezuj ho.
+       - období uveď v `rationale` („posledních 12 celých měsíců, 2025-10 až 2026-09“; „stav zásob
+         ke konci září 2026“).
+    - Top-N. „Nejlepší / nejprodávanější / top …“ bez čísla znamená prvních 10: odpověz (ORDER BY …
+      DESC, LIMIT 10) a v `rationale` uveď „prvních 10“ — na počet se nedoptávej.
+
   Pravidla přesnosti:
     - vždy silně preferuj PŘESNOST. Když si nejsi jistý, doptej se — upřesňující otázka je MNOHEM
       LEPŠÍ než nesprávná odpověď
@@ -118,6 +136,11 @@ system: |
        - více kandidátů nabídnutých zpracováním lexikonu
        - více entit (nebo entit a předdefinovaných dotazů), které by mohly posloužit jako základ
          generovaného SQL
+    - a otázky, jejíž vlastní VYMEZENÍ je nejednoznačné — doptej se (CLARIFICATION), nehádej:
+       - stav za období: „položky vyprodané v říjnu“ — kdykoli během října, nebo po celý měsíc?
+       - hranice bez jednotky: „prodejny, které prodaly přes milion“ — tržby (Kč), nebo kusy?
+    - chybějící období ani chybějící počet u top-N takovou nejednoznačností NEJSOU: odpovídají na ně
+      Výchozí pravidla
 
   Pravidla odmítnutí (REFUSED):
     - Vrať REFUSED, když otázka žádá o zápis nebo změnu dat (vložit, upravit, smazat, …),

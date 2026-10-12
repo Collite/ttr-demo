@@ -32,8 +32,9 @@ CONTRACT_KEYS = {
 }
 
 # LR C-4·4 — slots a prompt MAY name and need not document: supplied on every compose
-# (`PlanComposer.OPTIONAL_SLOTS`), never reported unused. `history` is the conversation so far.
-OPTIONAL_KEYS = {"history"}
+# (`PlanComposer.OPTIONAL_SLOTS`), never reported unused. `history` is the conversation so far;
+# `today` the composer's date, for the default-period rule (kantheon#194).
+OPTIONAL_KEYS = {"history", "today"}
 
 # What the `user:` half must name. The three GX-5 slots are what make a file actually GX-shaped
 # — and `question` is here because it is the failure this check exists for: the pre-v2 prompts the
