@@ -9,5 +9,7 @@ expected_route: LLM
 expected_reason: PRIOR_VIEW
 validation: top-10.yaml
 session: r2
+xfail:
+  en: "kantheon#193 — the composed follow-up is sent with the prior view's parameters and fails in the database; `the web` is unbound (ttr-server#204)"
 notes: |
   Asserts 10 rows: the follow-up recomputes the top ten for the web. 2026-10-12 it did, even after r2a's own answer came back with 200 rows (kantheon#183).

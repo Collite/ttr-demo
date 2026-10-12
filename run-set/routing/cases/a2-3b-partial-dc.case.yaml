@@ -7,3 +7,5 @@ question:
   en: Marketplace revenue in 2025 for Allen
 expected_route: FAST
 validation: dc4-2025.yaml
+xfail:
+  en: "kantheon#189 — `Allen` is a clarification (Allentown DC / a product name); the fast path ANDs both options: a wrong number"

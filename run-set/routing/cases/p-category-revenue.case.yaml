@@ -5,10 +5,12 @@ question:
   cs: Které kategorie způsobily propad v 2. pol. 2025?
   en: Which categories drove the H2 2025 drop?
 expected_route: LLM
-validation: non-empty.yaml
 xfail:
   cs: kantheon#185 — the plan gate refuses the saved query's own example (PLAN_GATE_REFUSED)
 tags:
 - q.hartland.category_revenue
 notes: |
   A pattern question: the composer should pick this saved query (statement source PATTERN). Recorded, not asserted: which saved query ran.
+  No validation (2026-10-12, the en half): neither world has an H2 2025 drop — H2 is ~2.3× H1 in both (hartland_cz
+  4.80 → 10.91 bn Kč; hartland_us every category doubles), so the example question's premise is false and an EMPTY
+  answer („no category fell“) is the correct one. Route only.

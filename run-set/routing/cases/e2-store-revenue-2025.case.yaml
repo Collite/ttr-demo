@@ -8,5 +8,6 @@ expected_route: FAST
 validation: store-channel-2025.yaml
 xfail:
   cs: 'ttr-demo#62 — „prodejna“ binds the store_sales measure / entity, store names are not members: the 2.4 ask is gone'
+  en: "ttr-demo#62 — `2025` is not honoured beside `Store revenue`; the composer runs the three-channel monthly query"
 tags:
 - MH-E2

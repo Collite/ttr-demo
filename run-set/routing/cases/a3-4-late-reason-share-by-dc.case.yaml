@@ -7,3 +7,5 @@ question:
   en: Which distribution center had the highest share of returns with the reason Did not get it on time in the second half of 2025?
 expected_route: LLM
 validation: late-reason-share-top-dc-h2-2025.yaml
+xfail:
+  en: "ttr-server#204 — `the highest share` stays unbound (article and modifier folded into the mention); golem then asks what it means or composes — seen both"

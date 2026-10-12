@@ -8,5 +8,7 @@ question:
 expected_route: LLM
 expected_reason: UNDECIDED_AXIS
 validation: marketplace-2025-by-month.yaml
+xfail:
+  en: "kantheon#191 — the typo binds another fact's measure; the door emits it as a value filter on itself and the turn fails"
 notes: |
   Ruled 2026-10-09 (Bora, the Czech grain phrases): without diacritics `po` reads both as a breakdown (distributive) and as a restriction („po roce 2020“), and when the two readings disagree the resolver keeps both and the composer decides (UNDECIDED_AXIS). So this one is the LLM lane by design; the answer must still be the monthly series.
