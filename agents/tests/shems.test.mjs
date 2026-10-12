@@ -85,6 +85,15 @@ test('T6.e — every example_question and counter_example is present in BOTH en 
   }
 });
 
+test('T6.e2 — golem-hartland example_questions are en/cs TWINS: six each, index for index (LR-P5 S2)', () => {
+  const { en, cs } = mainShem.overlay.example_questions;
+  assert.equal(en.length, 6, `golem-hartland example_questions.en has ${en.length}, want 6`);
+  assert.equal(cs.length, en.length, `cs has ${cs.length} example_questions, en ${en.length} — they are twins`);
+  // The twins name each world's DC 5, never the other world's (Memphis DC / Brno DC).
+  assert.ok(!en.some((q) => /Brno|Praha|Ostrava|Plzeň|Hradec/.test(q)), 'a Czech place in the en examples');
+  assert.ok(!cs.some((q) => /Memphis|Allentown|Columbus|Dallas|Reno/.test(q)), 'a US place in the cs examples');
+});
+
 test('T6.f — finance Shem preferred_query_subset is a subset of the 15 q.hartland.* names', async () => {
   const { loadHartlandProject } = await import('../../model/tests/project-harness.mjs');
   const project = await loadHartlandProject();

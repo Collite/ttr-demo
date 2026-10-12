@@ -104,18 +104,30 @@ cameo, keep a **second browser profile** logged in as Dan/Tomáš — don't log 
 
 ### 3.2 The demo personas (realm `kantheon`)
 
-All four share the password **`Hartland!2026`** (non-temporary). Username or email works.
+All six share the password **`Hartland!2026`** (non-temporary). Username or email works.
+Realm-as-code: olymp `platform/auth/keycloak/overlays/hartland/realm/kantheon.json` (it wins if
+this table drifts).
 
-| User | Email | Password | Realm roles | World / locale | Discover shows |
+| User | Email | Realm roles | World / locale | Discover shows | Rows |
 |---|---|---|---|---|---|
-| **Maya Chen** — Senior Category Manager | `maya@hartland.example` (username `maya`) | `Hartland!2026` | `kantheon-area-hartland` | US / en-US | **1 card** (Hartland Analytics) |
-| **Dan Whitaker** — CFO | `cfo@hartland.example` (username `dan`) | `Hartland!2026` | `kantheon-area-hartland` + `kantheon-role-finance` | US / en-US | **2 cards** (+ Hartland Finance) |
-| **Markéta Nováková** — Senior Category Manager (CZ) | `marketa@hartland.example` (username `marketa`) | `Hartland!2026` | `kantheon-area-hartland` | CZ / cs-CZ | **1 card** |
-| **Tomáš Horák** — Finanční ředitel (CZ) | `cfo-cz@hartland.example` (username `tomas`) | `Hartland!2026` | `kantheon-area-hartland` + `kantheon-role-finance` | CZ / cs-CZ | **2 cards** |
+| **Maya Chen** — Senior Category Manager | `maya@hartland.example` (`maya`) | `kantheon-area-hartland` | US / en-US | **1 card** (Hartland Analytics) | all |
+| **Sam Reyes** — Memphis DC Manager | `sam@hartland.example` (`sam`) | `kantheon-area-hartland` + `kantheon-scope-dc-5` | US / en-US | **1 card** | **Memphis DC only** (DC 5) |
+| **Dan Whitaker** — CFO | `cfo@hartland.example` (`dan`) | `kantheon-area-hartland` + `kantheon-role-finance` + `kantheon-area-investment` + `studio-operations` | US / en-US | **2 cards** (+ Hartland Finance) | all |
+| **Markéta Nováková** — Senior Category Manager (CZ) | `marketa@hartland.example` (`marketa`) | `kantheon-area-hartland` | CZ / cs-CZ | **1 card** | all |
+| **Petr Svoboda** — Vedoucí distribučního centra Brno | `petr@hartland.example` (`petr`) | `kantheon-area-hartland` + `kantheon-scope-dc-5` | CZ / cs-CZ | **1 card** | **Brno DC only** (DC 5) |
+| **Tomáš Horák** — Finanční ředitel (CZ) | `cfo-cz@hartland.example` (`tomas`) | `kantheon-area-hartland` + `kantheon-role-finance` | CZ / cs-CZ | **2 cards** | all |
 
-One locale per delivery (BM-8): EN delivery = Maya + Dan over `hartland_us`; CZ delivery =
-Markéta + Tomáš over `hartland_cz`. The visibility contrast (1 vs 2 cards) is the Satellite-G
-beat — verify it at pre-show (E-5 item 6).
+One world per delivery (BM-8, ⚑LR-8 v1): the **EN** delivery is Maya (+ Sam for the roles act) over
+`hartland_us`, the **CZ** delivery Markéta (+ Petr) over `hartland_cz`. The cluster serves one world
+at a time — `just world <us|cz>` in olymp flips it (§7.6). A persona from the other world can log in,
+but answers come from the delivered world.
+
+**The roles act ("same question, two people").** `kantheon-scope-dc-5` grants no Shem: it is a row
+rule. Validate narrows `inventory`, `warehouse`, `catalog_sales`, `web_sales` and `channel_sales` to
+warehouse 5 for its holders (olymp `apps/validate` `configFragment`), and the Golem ends such an answer
+with the rights sentence. Markéta/Maya see five DCs, Petr/Sam one. The act may be shown only with
+token signature verification on (G2b, closed 2026-10-09 — `just drill-forged-token` in olymp re-checks
+it). The finance Shem (Dan, Tomáš) stays deployed but is not part of the LR demo.
 
 ### 3.3 Keycloak admin
 
@@ -292,10 +304,14 @@ the new vocabulary and the matcher served the old one.
 ### 7.3 Pre-show (T-60 → T-10; scripted as `just pre-show hartland` when it lands)
 
 1. `demo-reset` (§7.1).
-1b. **Prolong the data** (LR-P4): `just extend-data cz <end of this month>` (and `us` if the EN
-   world is shown) — the facts stop where the last prolong left them, and a „minulý měsíc“ question
-   after that date reads an empty month. A date already covered is a no-op. Then re-read the R1
-   figures into the script (`data/recon/R1.md`, "Refreshing R1").
+1a. **The world** (LR-P5, §7.6): before a **cs** show `just world cz`, before an **en** show
+   `just world us` (olymp; a no-op when the cluster is already there), merge, then
+   `just world-smoke <cz|us>` — green, or no show.
+1b. **Prolong the data** (LR-P4) — **both worlds**, whichever is shown: `just extend-data cz <end of
+   this month>` and `just extend-data us <end of this month>`. The facts stop where the last prolong
+   left them, and a „minulý měsíc“ / "last month" question after that date reads an empty month. A date
+   already covered is a no-op. Then re-read the R1 figures into the script (`data/recon/R1.md`,
+   "Refreshing R1").
 2. **Warm everything**: the node idles with shrunk requests — first tokens are cold. One
    throwaway Golem turn + one Pythia turn (as a *throwaway* session, not Maya's).
 3. **Fire the "Monday channel health brief" routine** — Beat 1 needs the inbox item.
@@ -331,6 +347,26 @@ pin-to-pin by PR only; the Ariadne source ref is pinned. The only permitted oper
 too.
 
 ---
+
+### 7.6 The world flip (LR-P5, contracts C-9·1)
+
+The cluster serves ONE world. Five values in three olymp files carry it, and they flip together:
+dispatch `WORLD_DEFAULT_CONNECTION`, fuzzy `FUZZY_PG_DATABASE` / `FUZZY_PG_USER` / password secret
+(the member vocabulary — Brno DC or Memphis DC), iris-bff `IRIS_LOCALE` (the answer language when a
+turn carries none). In olymp:
+
+```sh
+just world us          # or cz — edits the three files, commits on world/<w>-<date> (HEAD = clean master)
+git push -u origin world/us-<date> && gh pr create -R Collite/olymp --fill    # merge = deploy
+just world-smoke us    # synced? restart fuzzy, resolver, golem-hartland(+finance); two persona turns
+```
+
+`world-smoke` is green only when the live Deployments carry the world's values, the restarted
+services are Ready, the persona's channel question (no locale) is in the world's currency (largest
+channel > 1e10 Kč / $1e8–1e10), and the DC-5 question (Brno DC / Memphis DC) answers **on the fast
+path** with the name in the SQL — the door needs the bound member, so this proves the matcher's
+vocabulary. `just world-smoke <w> hartland --no-restart` re-checks a flip that already happened
+(pre-show). Never hand-edit the world keys: `just preflight hartland` fails on a half flip.
 
 ## 8. Troubleshooting quick table
 
