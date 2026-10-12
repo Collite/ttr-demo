@@ -1213,20 +1213,20 @@
    "shape": "pattern",
    "persona": "maya",
    "question": "Marketplace revenue by distribution center",
-   "expected_route": "ASK",
+   "expected_route": "FAST",
    "expected_reason": null,
    "observed_route": "FAST",
    "observed_reason": null,
    "llm_calls": 0,
-   "secs": 0.9,
+   "secs": 3.1,
    "rows": 5,
    "statement_source": null,
    "error_code": null,
    "sql": "SELECT \"t0\".\"warehouse_name\", SUM(\"t\".\"ext_sales_price\") AS \"ext_sales_price\"\nFROM (SELECT \"cs_item_sk\" AS \"item\", \"cs_order_number\" AS \"order_number\", \"cs_sold_date_sk\" AS \"sold_date\", \"cs_bill_customer_sk\" AS \"customer\", \"cs_bill_addr_sk\" AS \"addr\", \"cs_call_center_sk\" AS \"call_center\", \"cs_warehouse_sk\" AS \"warehouse\", \"cs_promo_sk\" AS \"promo\", \"cs_quantity\" AS \"quantity\", \"cs_ext_sales_price\" AS \"ext_sales_price\"\n        FROM \"catalog_sales\") AS \"t\"\n    INNER JOIN (SELECT \"w_warehouse_sk\" AS \"sk\", \"w_warehouse_id\" AS \"warehouse_id\", \"w_warehouse_name\" AS \"warehouse_name\", \"w_city\" AS \"city\", \"w_state\" AS \"state\"\n        FROM \"warehouse\") AS \"t0\" ON \"t\".\"warehouse\" = \"t0\".\"sk\"\nGROUP BY \"t0\".\"warehouse_name\"\nFETCH NEXT 200 ROWS ONLY",
-   "turn_id": "7cd3598d-aece-4bdc-8302-2d94d1e12d3e",
-   "xfail": "kantheon#194 — no period: the door answers all-time on the fast path; ruled: ask for the period",
+   "turn_id": "c4747538-0bf4-46ad-bd8e-0a38f566a51f",
+   "xfail": "kantheon#194 — no period: until kantheon#196 is deployed the door answers all time, not the last 12 complete months",
    "fails": [
-    "route FAST ≠ ASK"
+    "row_set: 5/5 core rows missing, e.g. [{'dc': 'Allentown DC', 'revenue': '145952293.49'}, {'dc': 'Columbus DC', 'revenue': '145681139.53'}, {'dc': 'Dallas DC', 'revenue': '146212554.72'}]"
    ],
    "status": "XFAIL"
   },
@@ -1602,5 +1602,5 @@
   ],
   "shadow_by_shape": {}
  },
- "notes": "First baseline, hartland US world, 2026-10-12 (golem 0.11.33, resolver 0.11.19, lexicon 25a38870), after the 2026-10-12 ruling on asks vs answers: a top-N with no N is answered (top 10 by default, ttr-demo#67); an ambiguous definition (4.4 / stock-out weeks, E8) and a question with no period (p-marketplace-revenue-by-warehouse, kantheon#194) are asked. No shadow: the cluster's golem predates kantheon#181. query-mcp was restarted before the first of two identical runs (ttr-server#201); most LLM-lane seconds are llm-gateway cache hits. a3-4 flips between asking and composing on the unbound `the highest share` (ttr-server#204); it asked in this run. The CZ baseline predates the ruling: its cs halves of the ruled cases are xfails now (ttr-demo#67/#68)."
+ "notes": "First baseline, hartland US world, 2026-10-12 (golem 0.11.33, resolver 0.11.19, lexicon 25a38870), after the 2026-10-12 ruling on asks vs answers: a top-N with no N is answered (top 10 by default, ttr-demo#67); an ambiguous definition (4.4 / stock-out weeks, E8) and a question with no period (p-marketplace-revenue-by-warehouse, kantheon#194) are asked. No shadow: the cluster's golem predates kantheon#181. query-mcp was restarted before the first of two identical runs (ttr-server#201); most LLM-lane seconds are llm-gateway cache hits. a3-4 flips between asking and composing on the unbound `the highest share` (ttr-server#204); it asked in this run. The CZ baseline predates the ruling: its cs halves of the ruled cases are xfails now (ttr-demo#67/#68). p-marketplace-revenue-by-warehouse re-recorded after the period-default ruling (kantheon#194): expects FAST over the last 12 complete months; XFAIL until kantheon#196 is deployed."
 }
