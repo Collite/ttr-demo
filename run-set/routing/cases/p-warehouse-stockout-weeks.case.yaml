@@ -4,9 +4,11 @@ shape: pattern
 question:
   cs: Které položky byly vyprodané v Brno DC v říjnu 2025?
   en: Which items were out of stock at Memphis DC in October 2025?
-expected_route: LLM
-validation: non-empty.yaml
+expected_route: ASK
+xfail:
+  cs: "ttr-demo#68 — the cs composer guesses what „vyprodané v říjnu“ means and answers; it should ask"
 tags:
 - q.hartland.warehouse_stockout_weeks
 notes: |
   A pattern question: the composer should pick this saved query (statement source PATTERN). Recorded, not asserted: which saved query ran.
+  Ruled 2026-10-12: „out of stock in October“ is ambiguous (at any time, or the whole month) — asking is the correct response.

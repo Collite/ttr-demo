@@ -148,6 +148,26 @@ class CorpusCheckSpec(unittest.TestCase):
         for needle in ("filename stem", "cs AND en", "expected_route", "LLM cases only", "missing.yaml", "persona", "unknown keys"):
             self.assertIn(needle, problems)
 
+    def test_expected_reason_may_differ_per_language(self):
+        self.write("r", """
+            id: r
+            title: t
+            shape: compare
+            question: {cs: "Porovnej", en: "Compare"}
+            expected_route: LLM
+            expected_reason: {cs: UNHONOURED_OP, en: NO_OBJECT_BINDING}
+        """)
+        self.assertEqual(rr.load_corpus(self.root)[2], [])
+        self.write("r", """
+            id: r
+            title: t
+            shape: compare
+            question: {cs: "Porovnej", en: "Compare"}
+            expected_route: LLM
+            expected_reason: {de: RATIO}
+        """)
+        self.assertIn("expected_reason keys", "\n".join(rr.load_corpus(self.root)[2]))
+
     def test_a_resume_needs_a_session_that_asked_first(self):
         self.write("r1", """
             id: r1

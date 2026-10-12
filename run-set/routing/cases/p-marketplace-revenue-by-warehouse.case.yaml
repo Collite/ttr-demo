@@ -5,7 +5,10 @@ question:
   cs: Tržby z tržiště podle skladu
   en: Marketplace revenue by distribution center
 expected_route: ASK
+xfail:
+  en: "kantheon#194 — no period: the door answers all-time on the fast path; ruled: ask for the period"
 tags:
 - q.hartland.marketplace_revenue_by_warehouse
 notes: |
   The example names no year (or channel), so the planner asks for it — the composer found the query.
+  Ruled 2026-10-12: with no period, asking for it is the correct response (kantheon#194 holds the scope question).

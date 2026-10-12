@@ -4,6 +4,10 @@ shape: count
 question:
   cs: Kolik prodejen prodalo přes milion?
   en: How many stores sold over a million?
-expected_route: LLM
+expected_route: ASK
+xfail:
+  cs: "ttr-demo#68 — the cs composer guesses the unit and period of „přes milion“ and answers; it should ask"
 tags:
 - MH-E8
+notes: |
+  Ruled 2026-10-12: „over a million“ names no unit or period — asking is the correct response.

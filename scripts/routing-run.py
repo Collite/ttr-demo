@@ -116,6 +116,8 @@ def load_corpus(root: pathlib.Path) -> tuple[list[Case], dict, list[str]]:
             problems.append(f"{where}: expected_route {raw.get('expected_route')!r} not in {ROUTES}")
         if raw.get("expected_reason") and raw.get("expected_route") != "LLM":
             problems.append(f"{where}: expected_reason is for LLM cases only")
+        if isinstance(raw.get("expected_reason"), dict) and set(raw["expected_reason"]) - {"cs", "en"}:
+            problems.append(f"{where}: expected_reason keys must be cs / en")
         if raw.get("persona", "analyst") not in personas:
             problems.append(f"{where}: persona {raw.get('persona')!r} not in personas.yaml")
         for loc in (raw.get("xfail") or {}):
@@ -681,7 +683,9 @@ def score(c: Case, turn: Turn, world: str, locale: str, user: str, ref: dt.date,
     if observed == "NONE" and turn.resume_token:
         observed = "ASK"
     route_ok = observed == expected
-    want_reason = c.raw.get("expected_reason") or ""
+    want = c.raw.get("expected_reason") or ""
+    # one prefix for both languages, or {cs, en} where a language legitimately names another reason
+    want_reason = (want.get(locale) or "") if isinstance(want, dict) else want
     reason_ok = not want_reason or (turn.reason or "").startswith(want_reason)
     fails: list[str] = []
     core_rows = None
