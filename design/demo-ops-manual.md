@@ -305,7 +305,7 @@ the new vocabulary and the matcher served the old one.
 
 1. `demo-reset` (§7.1).
 1a. **The world** (LR-P5, §7.6): before a **cs** show `just world cz`, before an **en** show
-   `just world us` (olymp; a no-op when the cluster is already there), merge, then
+   `just world us` (olymp; opens the flip PR, a no-op when the cluster is already there), merge it, then
    `just world-smoke <cz|us>` — green, or no show.
 1b. **Prolong the data** (LR-P4) — **both worlds**, whichever is shown: `just extend-data cz <end of
    this month>` and `just extend-data us <end of this month>`. The facts stop where the last prolong
@@ -356,8 +356,9 @@ dispatch `WORLD_DEFAULT_CONNECTION`, fuzzy `FUZZY_PG_DATABASE` / `FUZZY_PG_USER`
 turn carries none). In olymp:
 
 ```sh
-just world us          # or cz — edits the three files, commits on world/<w>-<date> (HEAD = clean master)
-git push -u origin world/us-<date> && gh pr create -R Collite/olymp --fill    # merge = deploy
+just world us          # or cz — edits the three files, commits on world/<w>-<date>, pushes, opens the PR
+                       # (HEAD = clean master, fast-forwarded to origin first; back on master after)
+                       # → merge the PR it prints: merge = deploy
 just world-smoke us    # synced? restart fuzzy, resolver, golem-hartland(+finance); two persona turns
 ```
 
