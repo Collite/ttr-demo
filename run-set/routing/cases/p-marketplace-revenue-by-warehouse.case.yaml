@@ -4,8 +4,13 @@ shape: pattern
 question:
   cs: Tržby z tržiště podle skladu
   en: Marketplace revenue by distribution center
-expected_route: ASK
+expected_route: FAST
+validation: marketplace-last-12-months-by-dc.yaml
+xfail:
+  cs: "kantheon#194 — no period: until kantheon#196 is deployed the door answers all time, not the last 12 complete months"
+  en: "kantheon#194 — no period: until kantheon#196 is deployed the door answers all time, not the last 12 complete months"
 tags:
 - q.hartland.marketplace_revenue_by_warehouse
 notes: |
   The example names no year (or channel), so the planner asks for it — the composer found the query.
+  Re-ruled 2026-10-12 (kantheon#194): a question with no period is not asked — it reads the last 12 complete months, applied by the door (FAST), and the answer says which window.

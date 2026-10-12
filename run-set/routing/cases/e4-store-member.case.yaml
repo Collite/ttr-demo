@@ -8,5 +8,6 @@ expected_route: FAST
 validation: store1-2025.yaml
 xfail:
   cs: 'ttr-demo#62 — „prodejna“ binds the store_sales measure / entity, store names are not members: the 2.4 ask is gone'
+  en: "ttr-demo#62 — store names are not members; the composer filters store.city = Nashville (a wrong figure)"
 tags:
 - MH-E4

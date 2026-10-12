@@ -4,8 +4,12 @@ shape: pattern
 question:
   cs: Nejprodávanější produkty za loňský rok
   en: Top products by revenue last year
-expected_route: ASK
+expected_route: LLM
+validation: top-10.yaml
+xfail:
+  cs: "ttr-demo#67 — the cs composer asks for the N; a top-N with no N answers the top 10"
 tags:
 - q.hartland.top_items_by_revenue
 notes: |
   The example names no year (or channel), so the planner asks for it — the composer found the query.
+  Ruled 2026-10-12: a top-N with no N is ANSWERED, top 10 by default (prompt or skill) — not asked.

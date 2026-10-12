@@ -5,5 +5,8 @@ shape: last
 question:
   cs: Které položky byly v říjnu 2025 vyprodané v Brno DC?
   en: Which items were out of stock at Memphis DC in October 2025?
-expected_route: LLM
-validation: non-empty.yaml
+expected_route: ASK
+xfail:
+  cs: "ttr-demo#68 — the cs composer guesses what „vyprodané v říjnu“ means and answers; it should ask"
+notes: |
+  Ruled 2026-10-12: „out of stock in October“ is ambiguous (at any time, or the whole month) — asking is the correct response.

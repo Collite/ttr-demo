@@ -7,5 +7,6 @@ question:
 expected_route: ASK
 xfail:
   cs: 'ttr-demo#62 — „prodejna“ binds the store_sales measure / entity, store names are not members: the 2.4 ask is gone'
+  en: "ttr-demo#62 — `store` binds the store_sales measure: no ask"
 tags:
 - MH-E3

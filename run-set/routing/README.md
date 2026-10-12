@@ -29,7 +29,7 @@ question:
   en: What was marketplace revenue in 2025 by month?
 persona: analyst                     # analyst | dc_manager → personas.yaml → marketa/maya, petr/sam
 expected_route: FAST                 # FAST | LLM | ASK | REFUSE — the same in both worlds (C-9·2)
-expected_reason: PRIOR_VIEW          # LLM only, optional: the fall-through reason's prefix (C-1·3)
+expected_reason: PRIOR_VIEW          # LLM only, optional: the fall-through reason's prefix (C-1·3); or {cs: …, en: …}
 validation: marketplace-2025-by-month.yaml   # under validation/; none = the route is the assertion
 session: a4                          # optional: cases of one session run in one Iris session, in id order
 resume: {pick: {cs: místo, en: place}}   # instead of a question: answer the previous turn's ask

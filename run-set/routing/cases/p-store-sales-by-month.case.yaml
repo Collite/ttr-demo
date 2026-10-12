@@ -6,6 +6,8 @@ question:
   en: Store revenue by month
 expected_route: LLM
 validation: non-empty.yaml
+xfail:
+  en: "ttr-server#152 — `by month` is also grounded as the current month: FAST, 1 row (October 2026)"
 tags:
 - q.hartland.store_sales_by_month
 notes: |

@@ -8,5 +8,6 @@ expected_route: FAST
 validation: non-empty.yaml
 xfail:
   cs: 'ttr-demo#62 — „prodejna“ binds the store_sales measure / entity, store names are not members: the 2.4 ask is gone („vratky“ is not a term)'
+  en: "ttr-demo#62 — `Store returns` ends in a parameter ask"
 tags:
 - MH-E6
