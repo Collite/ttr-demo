@@ -1,0 +1,11 @@
+id: e5-compare-stores-web
+title: E5 — coordinated with another channel word
+shape: compare
+question:
+  cs: Srovnej prodejny a web
+  en: Compare stores vs. web
+expected_route: ASK
+tags:
+- MH-E5
+notes: |
+  No period: the composer picks a comparison and asks for the years (PARAM_FILL_CLARIFICATION) — the right outcome.

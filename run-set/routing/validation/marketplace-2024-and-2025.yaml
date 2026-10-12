@@ -1,0 +1,14 @@
+notes: |
+  Both years, each its own figure — never the two ranges ANDed into nothing.
+core: |
+  SELECT d.d_year AS year, SUM(cs.cs_ext_sales_price) AS revenue
+  FROM catalog_sales cs
+  JOIN date_dim d ON cs.cs_sold_date_sk = d.d_date_sk
+  WHERE d.d_year IN (2024, 2025)
+  GROUP BY d.d_year
+assert:
+  row_set:
+    keys: []
+    value: revenue
+    tolerance: 0.001
+    pop: false

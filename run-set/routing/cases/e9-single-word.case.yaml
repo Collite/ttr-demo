@@ -1,0 +1,9 @@
+id: e9-single-word
+title: E9 — one word, genuinely underspecified
+shape: homonym
+question:
+  cs: prodejna
+  en: stores
+expected_route: ASK
+tags:
+- MH-E9

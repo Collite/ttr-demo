@@ -1,0 +1,9 @@
+id: a2-4c-declared-phrase
+title: The declared phrase dissolves the ambiguity
+act: '2.4'
+shape: total
+question:
+  cs: Tržba z prodejen v roce 2025
+  en: Store revenue in 2025
+expected_route: FAST
+validation: store-channel-2025.yaml

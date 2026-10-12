@@ -1,0 +1,6 @@
+notes: |
+  Profit and margin are not in the model (D-6a): the planner refuses with kind NOT_IN_DATA and golem writes the fixed sentence (kantheon#174).
+assert:
+  text_contains:
+    cs: údaje potřebné k odpovědi neobsahují
+    en: does not hold what this question needs

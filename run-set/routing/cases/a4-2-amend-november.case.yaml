@@ -1,0 +1,11 @@
+id: a4-2-amend-november
+title: AMEND the previous view
+act: '4.2'
+shape: elliptic
+question:
+  cs: A jen za listopad?
+  en: And just for November?
+expected_route: LLM
+expected_reason: PRIOR_VIEW
+validation: marketplace-nov-2025-by-dc.yaml
+session: a4

@@ -1,0 +1,6 @@
+notes: |
+  A write request: refusal kind WRITE (kantheon#174).
+assert:
+  text_contains:
+    cs: Data umím pouze číst
+    en: I can only read data

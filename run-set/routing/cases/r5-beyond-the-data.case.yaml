@@ -1,0 +1,9 @@
+id: r5-beyond-the-data
+title: 'A year beyond the data: an honest „no data“'
+act: R5
+shape: empty
+question:
+  cs: Tržby z tržiště v roce 2031
+  en: Marketplace revenue in 2031
+expected_route: FAST
+validation: no-data.yaml

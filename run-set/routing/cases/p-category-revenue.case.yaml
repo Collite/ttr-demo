@@ -1,0 +1,14 @@
+id: p-category-revenue
+title: The saved query `q.hartland.category_revenue` — its own example question
+shape: pattern
+question:
+  cs: Které kategorie způsobily propad v 2. pol. 2025?
+  en: Which categories drove the H2 2025 drop?
+expected_route: LLM
+validation: non-empty.yaml
+xfail:
+  cs: kantheon#185 — the plan gate refuses the saved query's own example (PLAN_GATE_REFUSED)
+tags:
+- q.hartland.category_revenue
+notes: |
+  A pattern question: the composer should pick this saved query (statement source PATTERN). Recorded, not asserted: which saved query ran.

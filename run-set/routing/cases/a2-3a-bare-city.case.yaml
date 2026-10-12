@@ -1,0 +1,11 @@
+id: a2-3a-bare-city
+title: A bare city that is also a store and a DC — binds the DC through the fact's reach
+act: '2.3'
+shape: homonym
+question:
+  cs: Tržby z tržiště v roce 2025 pro Brno
+  en: Marketplace revenue in 2025 for Memphis
+expected_route: FAST
+validation: dc5-2025.yaml
+notes: |
+  Rehearsal (2026-10-09) recorded FAST in cs. An ASK naming the store and the DC would be an equally good outcome — if it asks, change the route here, with the date.

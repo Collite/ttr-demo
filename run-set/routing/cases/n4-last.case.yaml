@@ -1,0 +1,10 @@
+id: n4-last
+title: last — a snapshot measure summed over weeks would be wrong
+shape: last
+question:
+  cs: Jaký byl stav zásob v Brno DC na konci roku 2025?
+  en: What was the stock on hand at Memphis DC at the end of 2025?
+expected_route: LLM
+expected_reason: AGGREGATION
+tags:
+- C-1·3

@@ -1,0 +1,11 @@
+id: a5-3-out-of-area
+title: Another area's data, no role for it
+act: '5.3'
+shape: out-of-area
+question:
+  cs: Jaká je hodnota portfolií našich klientů?
+  en: What is the value of our clients' portfolios?
+expected_route: REFUSE
+xfail:
+  cs: kantheon#184 — out-of-area refusal lost since the investment estate left this lexicon (TI); asks instead
+  en: kantheon#184 — out-of-area refusal lost since the investment estate left this lexicon (TI); asks instead

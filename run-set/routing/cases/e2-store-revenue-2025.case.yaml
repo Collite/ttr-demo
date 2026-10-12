@@ -1,0 +1,12 @@
+id: e2-store-revenue-2025
+title: E2 — the channel ≡ the dimension join on this estate
+shape: total
+question:
+  cs: Tržby z prodejen za 2025
+  en: Store revenue 2025
+expected_route: FAST
+validation: store-channel-2025.yaml
+xfail:
+  cs: 'ttr-demo#62 — „prodejna“ binds the store_sales measure / entity, store names are not members: the 2.4 ask is gone'
+tags:
+- MH-E2

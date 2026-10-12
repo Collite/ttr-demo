@@ -1,0 +1,9 @@
+id: a3-5-stockout-weeks
+title: Stockout weeks at the DC — a saved query (semi-additive inventory never reaches the door)
+act: '3.5'
+shape: last
+question:
+  cs: Kolik týdnů v roce 2025 mělo Brno DC výpadky zásob?
+  en: How many weeks in 2025 did Memphis DC have stockouts?
+expected_route: LLM
+validation: dc5-stockout-weeks-2025.yaml

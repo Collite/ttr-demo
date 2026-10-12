@@ -1,0 +1,11 @@
+id: e3-revenue-by-store
+title: E3 — group by the dimension, or the channel? (asks)
+shape: homonym
+question:
+  cs: Tržby podle prodejen
+  en: Revenue by store
+expected_route: ASK
+xfail:
+  cs: 'ttr-demo#62 — „prodejna“ binds the store_sales measure / entity, store names are not members: the 2.4 ask is gone'
+tags:
+- MH-E3

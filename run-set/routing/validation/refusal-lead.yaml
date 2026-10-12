@@ -1,0 +1,6 @@
+notes: |
+  Any refusal: the fixed lead sentence, never a number.
+assert:
+  text_contains:
+    cs: Na tuto otázku nemohu odpovědět
+    en: I can't answer this question

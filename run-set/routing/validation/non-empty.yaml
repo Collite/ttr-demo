@@ -1,0 +1,5 @@
+notes: |
+  The answer has rows; the case asserts the route and that something came back.
+assert:
+  row_count:
+    min: 1

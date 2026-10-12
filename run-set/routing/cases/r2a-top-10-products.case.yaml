@@ -1,0 +1,13 @@
+id: r2a-top-10-products
+title: Top 10 — ORDER BY + LIMIT on the door
+act: R2
+shape: top-n
+question:
+  cs: 10 nejprodávanějších produktů na tržišti v roce 2025
+  en: Top 10 best-selling products on the marketplace in 2025
+expected_route: FAST
+validation: top-10.yaml
+session: r2
+xfail:
+  cs: ttr-server#197 — Resolve fails UNKNOWN on a Czech question that starts with a numeral ⇒ legacy route, 200 rows (kantheon#183)
+  en: kantheon#183 — the LLM lanes return the 200-row ceiling for a top-N

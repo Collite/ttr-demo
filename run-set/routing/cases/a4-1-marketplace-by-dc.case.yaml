@@ -1,0 +1,10 @@
+id: a4-1-marketplace-by-dc
+title: Marketplace revenue 2025 by DC — the view the follow-ups build on
+act: '4.1'
+shape: breakdown
+question:
+  cs: Tržby z tržiště podle distribučního centra v roce 2025
+  en: Marketplace revenue by distribution center in 2025
+expected_route: FAST
+validation: marketplace-2025-by-dc.yaml
+session: a4

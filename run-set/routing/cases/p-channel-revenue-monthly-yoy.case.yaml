@@ -1,0 +1,12 @@
+id: p-channel-revenue-monthly-yoy
+title: The saved query `q.hartland.channel_revenue_monthly_yoy` — its own example question
+shape: pattern
+question:
+  cs: Které měsíce roku 2025 měly na tržišti největší meziroční pokles?
+  en: Which months of 2025 saw the biggest year-over-year drop on the marketplace?
+expected_route: LLM
+validation: non-empty.yaml
+tags:
+- q.hartland.channel_revenue_monthly_yoy
+notes: |
+  A pattern question: the composer should pick this saved query (statement source PATTERN). Recorded, not asserted: which saved query ran.

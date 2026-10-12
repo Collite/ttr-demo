@@ -1,0 +1,11 @@
+id: p-channel-revenue-monthly
+title: The saved query `q.hartland.channel_revenue_monthly` — its own example question
+shape: pattern
+question:
+  cs: Měsíční tržby podle kanálu
+  en: Monthly revenue by channel
+expected_route: ASK
+tags:
+- q.hartland.channel_revenue_monthly
+notes: |
+  The example names no year (or channel), so the planner asks for it — the composer found the query.

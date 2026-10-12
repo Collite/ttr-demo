@@ -1,0 +1,11 @@
+id: p-returns-by-reason
+title: The saved query `q.hartland.returns_by_reason` — its own example question
+shape: pattern
+question:
+  cs: Reklamace podle důvodu
+  en: Returns by reason for Marketplace
+expected_route: ASK
+tags:
+- q.hartland.returns_by_reason
+notes: |
+  The example names no year (or channel), so the planner asks for it — the composer found the query.

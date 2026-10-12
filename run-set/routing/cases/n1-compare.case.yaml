@@ -1,0 +1,10 @@
+id: n1-compare
+title: compare — the door would answer one side
+shape: compare
+question:
+  cs: Porovnej tržby z tržiště a z webu v roce 2025
+  en: Compare marketplace and web revenue in 2025
+expected_route: LLM
+expected_reason: UNHONOURED_OP
+tags:
+- C-1·3

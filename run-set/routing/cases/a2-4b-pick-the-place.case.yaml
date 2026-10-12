@@ -1,0 +1,15 @@
+id: a2-4b-pick-the-place
+title: 'Answer the ask: the stores as places ⇒ six rows by name'
+act: '2.4'
+shape: homonym
+resume:
+  pick:
+    cs: místo
+    en: place
+expected_route: FAST
+validation: store-revenue-2025-by-store.yaml
+session: a2-4
+xfail:
+  cs: 'ttr-demo#62 — „prodejna“ binds the store_sales measure / entity, store names are not members: the 2.4 ask is gone'
+notes: |
+  The option label is matched by substring; if the ask's wording changes, change the pick.

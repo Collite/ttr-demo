@@ -1,0 +1,6 @@
+notes: |
+  The DRILL of 4.2: DC × category. Ten categories (+ the unclassified items) per DC; the DC split must survive.
+assert:
+  row_count:
+    min: 50
+    max: 66

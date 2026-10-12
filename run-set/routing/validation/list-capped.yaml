@@ -1,0 +1,6 @@
+notes: |
+  The validator's TopN ceiling (200) cuts the list.
+assert:
+  row_count:
+    min: 200
+    max: 200

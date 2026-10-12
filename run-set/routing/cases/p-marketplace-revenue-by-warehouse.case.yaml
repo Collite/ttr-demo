@@ -1,0 +1,11 @@
+id: p-marketplace-revenue-by-warehouse
+title: The saved query `q.hartland.marketplace_revenue_by_warehouse` — its own example question
+shape: pattern
+question:
+  cs: Tržby z tržiště podle skladu
+  en: Marketplace revenue by distribution center
+expected_route: ASK
+tags:
+- q.hartland.marketplace_revenue_by_warehouse
+notes: |
+  The example names no year (or channel), so the planner asks for it — the composer found the query.

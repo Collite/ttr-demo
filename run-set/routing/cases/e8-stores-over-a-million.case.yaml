@@ -1,0 +1,9 @@
+id: e8-stores-over-a-million
+title: E8 — count with a measure condition
+shape: count
+question:
+  cs: Kolik prodejen prodalo přes milion?
+  en: How many stores sold over a million?
+expected_route: LLM
+tags:
+- MH-E8

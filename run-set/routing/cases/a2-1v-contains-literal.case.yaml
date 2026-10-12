@@ -1,0 +1,11 @@
+id: a2-1v-contains-literal
+title: A quoted contains literal
+act: '2.1'
+shape: literal
+question:
+  cs: Tržby z tržiště v roce 2025 za produkty obsahující „Televizor“ podle kategorie
+  en: Marketplace revenue in 2025 for products containing "Television" by category
+expected_route: FAST
+validation: marketplace-2025-contains-by-category.yaml
+notes: |
+  The rehearsed wording. „… za produkty, jejichž název obsahuje „Televizor““ leaves „jejichž název“ unbound (EMPTY_ASK ⇒ the composer, 2 LLM calls, 2026-10-12).

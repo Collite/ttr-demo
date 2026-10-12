@@ -1,0 +1,12 @@
+id: e6-store-returns
+title: E6 — the store dimension joined to returns
+shape: total
+question:
+  cs: Vratky z prodejen
+  en: Store returns
+expected_route: FAST
+validation: non-empty.yaml
+xfail:
+  cs: 'ttr-demo#62 — „prodejna“ binds the store_sales measure / entity, store names are not members: the 2.4 ask is gone („vratky“ is not a term)'
+tags:
+- MH-E6

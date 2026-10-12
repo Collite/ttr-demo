@@ -1,0 +1,12 @@
+id: e4-store-member
+title: E4 — a store by name (a governed value)
+shape: member
+question:
+  cs: Tržby prodejny Praha v roce 2025
+  en: Revenue of the Nashville store in 2025
+expected_route: FAST
+validation: store1-2025.yaml
+xfail:
+  cs: 'ttr-demo#62 — „prodejna“ binds the store_sales measure / entity, store names are not members: the 2.4 ask is gone'
+tags:
+- MH-E4

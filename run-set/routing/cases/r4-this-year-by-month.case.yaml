@@ -1,0 +1,11 @@
+id: r4-this-year-by-month
+title: This year by month
+act: R4
+shape: grain
+question:
+  cs: Jak se vyvíjely tržby z tržiště letos po měsících?
+  en: How did marketplace revenue develop this year by month?
+expected_route: FAST
+validation: this-year-by-month.yaml
+xfail:
+  en: ttr-server#152 — the grain word inside `by month` is also grounded as the current month ⇒ two periods ⇒ MULTI_PERIOD ⇒ LLM lane

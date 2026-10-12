@@ -1,0 +1,11 @@
+id: p-promo-share
+title: The saved query `q.hartland.promo_share` — its own example question
+shape: pattern
+question:
+  cs: Podíl akčních tržeb
+  en: Promo share for Web
+expected_route: ASK
+tags:
+- q.hartland.promo_share
+notes: |
+  The example names no year (or channel), so the planner asks for it — the composer found the query.

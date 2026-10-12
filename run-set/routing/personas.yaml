@@ -1,0 +1,8 @@
+# The case's `persona` → the realm user per world (olymp platform/auth/keycloak/overlays/hartland/realm).
+# cz runs the cs question, us the en one (one world per delivery, ⚑LR-8 v1).
+analyst:
+  cz: marketa
+  us: maya
+dc_manager:
+  cz: petr
+  us: sam

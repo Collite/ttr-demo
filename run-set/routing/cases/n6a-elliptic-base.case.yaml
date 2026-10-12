@@ -1,0 +1,11 @@
+id: n6a-elliptic-base
+title: elliptic follow-up — the base turn
+shape: total
+question:
+  cs: Tržby z tržiště v roce 2025
+  en: Marketplace revenue in 2025
+expected_route: FAST
+validation: marketplace-2025.yaml
+session: n6
+tags:
+- C-1·3

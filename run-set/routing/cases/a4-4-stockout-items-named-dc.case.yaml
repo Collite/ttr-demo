@@ -1,0 +1,9 @@
+id: a4-4-stockout-items-named-dc
+title: Items out of stock at the DC — the row click is FE-only (kantheon#178), so the DC is named
+act: '4.4'
+shape: last
+question:
+  cs: Které položky byly v říjnu 2025 vyprodané v Brno DC?
+  en: Which items were out of stock at Memphis DC in October 2025?
+expected_route: LLM
+validation: non-empty.yaml

@@ -1,0 +1,9 @@
+id: r1-last-month-dc
+title: A member + relative time on the real clock
+act: R1
+shape: relative-period
+question:
+  cs: Tržby z tržiště za minulý měsíc pro Brno DC
+  en: Marketplace revenue last month for Memphis DC
+expected_route: FAST
+validation: dc5-last-month.yaml

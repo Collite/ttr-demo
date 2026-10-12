@@ -1,0 +1,11 @@
+id: n3-average
+title: avg — not a sum
+shape: avg
+question:
+  cs: Jaká byla průměrná tržba z tržiště na položku v roce 2025?
+  en: What was the average marketplace revenue per line item in 2025?
+expected_route: LLM
+xfail:
+  cs: 'kantheon#182 — the fast path answers a plain SUM: the lattice lost the breakdown / count / average (ttr-core#178: no average operator)'
+tags:
+- C-1·3

@@ -1,0 +1,9 @@
+id: a3-4-late-reason-share-by-dc
+title: A member + a period + a ratio + a join to the DC
+act: '3.4'
+shape: ratio
+question:
+  cs: Které distribuční centrum mělo ve 2. pololetí 2025 nejvyšší podíl reklamací s důvodem Nedorazilo včas?
+  en: Which distribution center had the highest share of returns with the reason Did not get it on time in the second half of 2025?
+expected_route: LLM
+validation: late-reason-share-top-dc-h2-2025.yaml

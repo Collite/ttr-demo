@@ -1,0 +1,8 @@
+id: r6-zero-stock-yes-no
+title: A yes/no question over inventory
+act: R6
+shape: last
+question:
+  cs: Měl Brno DC v říjnu 2025 nulové zásoby?
+  en: Did Memphis DC have zero stock in October 2025?
+expected_route: LLM

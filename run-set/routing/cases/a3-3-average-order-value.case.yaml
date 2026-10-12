@@ -1,0 +1,9 @@
+id: a3-3-average-order-value
+title: Average order value — COUNT DISTINCT
+act: '3.3'
+shape: avg
+question:
+  cs: Jaká byla průměrná hodnota objednávky na tržišti v roce 2025?
+  en: What was the average marketplace order value in 2025?
+expected_route: LLM
+validation: marketplace-2025-aov.yaml

@@ -1,0 +1,9 @@
+id: a2-3c-typo-dc
+title: A typo in a DC name
+act: '2.3'
+shape: typo
+question:
+  cs: Tržby z tržiště v roce 2025 pro Ostrva DC
+  en: Marketplace revenue in 2025 for Dalas DC
+expected_route: FAST
+validation: dc2-2025.yaml
