@@ -8,7 +8,6 @@ expected_route: FAST
 validation: marketplace-last-12-months-by-dc.yaml
 xfail:
   cs: "kantheon#194 — no period: until kantheon#196 is deployed the door answers all time, not the last 12 complete months"
-  en: "kantheon#194 — no period: until kantheon#196 is deployed the door answers all time, not the last 12 complete months"
 tags:
 - q.hartland.marketplace_revenue_by_warehouse
 notes: |

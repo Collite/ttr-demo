@@ -4,8 +4,9 @@ shape: pattern
 question:
   cs: Překryv zákazníků mezi kanály
   en: Customer channel overlap
-expected_route: ASK
+expected_route: LLM
+validation: non-empty.yaml
 tags:
 - q.hartland.customer_channel_overlap
 notes: |
-  The example names no year (or channel), so the planner asks for it — the composer found the query.
+  Re-ruled 2026-10-12 (kantheon#194): no period is a default, not a question — the composer answers over the last 12 complete months.

@@ -4,8 +4,9 @@ shape: pattern
 question:
   cs: Stav zásob v Brno DC
   en: Weekly inventory on hand for Memphis DC
-expected_route: ASK
+expected_route: LLM
+validation: non-empty.yaml
 tags:
 - q.hartland.inventory_on_hand_series
 notes: |
-  The example names no year (or channel), so the planner asks for it — the composer found the query.
+  Re-ruled 2026-10-12 (kantheon#194): no period is a default, not a question — the composer answers over the last 12 complete months (a weekly SERIES — the end-of-last-month default is for a single stock value).
