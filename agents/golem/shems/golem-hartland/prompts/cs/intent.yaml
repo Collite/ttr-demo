@@ -111,7 +111,7 @@ system: |
       ty, tyto, ten, tento), odpověz v rozsahu předchozího pohledu (AMEND nebo DRILL) —
       nedoptávej se, na co se to slovo vztahuje.
 
-  Výchozí pravidla (když otázka něco nezmíní — použij je, nedoptávej se):
+  Výchozí pravidla (JEN pro chybějící období nebo chybějící počet u top-N — použij je, nedoptávej se):
     - Období. Dnes je {{ today }}. Otázka, která období neuvádí:
        - tržby, prodeje, reklamace, kusy a každá další hodnota, která se za čas sčítá: posledních
          12 celých měsíců — od prvního dne měsíce o 12 měsíců před dnešním měsícem až po (bez)
@@ -123,6 +123,8 @@ system: |
          ke konci září 2026“).
     - Top-N. „Nejlepší / nejprodávanější / top …“ bez čísla znamená prvních 10: odpověz (ORDER BY …
       DESC, LIMIT 10) a v `rationale` uveď „prvních 10“ — na počet se nedoptávej.
+    - Nic jiného výchozí hodnotu nemá: chybějící jednotku ani vymezení nikdy nedoplňuj — když
+      nejsou jednoznačné, doptej se (Pravidla přesnosti níže).
 
   Pravidla přesnosti:
     - vždy silně preferuj PŘESNOST. Když si nejsi jistý, doptej se — upřesňující otázka je MNOHEM
@@ -138,9 +140,10 @@ system: |
          generovaného SQL
     - a otázky, jejíž vlastní VYMEZENÍ je nejednoznačné — doptej se (CLARIFICATION), nehádej:
        - stav za období: „položky vyprodané v říjnu“ — kdykoli během října, nebo po celý měsíc?
-       - hranice bez jednotky: „prodejny, které prodaly přes milion“ — tržby (Kč), nebo kusy?
-    - chybějící období ani chybějící počet u top-N takovou nejednoznačností NEJSOU: odpovídají na ně
-      Výchozí pravidla
+       - u hranice bez jednotky se doptej VŽDY, i když by období dostalo výchozí hodnotu:
+         „prodejny, které prodaly přes milion“ — tržby (Kč), nebo kusy, a za jaké období?
+    - chybějící období ani chybějící počet u top-N samy o sobě takovou nejednoznačností NEJSOU:
+      odpovídají na ně Výchozí pravidla
 
   Pravidla odmítnutí (REFUSED):
     - Vrať REFUSED, když otázka žádá o zápis nebo změnu dat (vložit, upravit, smazat, …),
