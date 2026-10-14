@@ -78,6 +78,29 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-14 (evening)**: master (ttr-demo#72, the query patterns) merged into the
+store family (ttr-demo#73), and the toolchain moved to **`grammar/v0.15.1`** (ttr-core#188: the stdlib operators
+`op:count` and `op:avg`, and `op:top-n`'s missing superlatives). `.github/workflows/model-gate.yml` pins the
+same tag. The model id is the merge's; the vocabulary moved only in the stdlib's operator rows:
+
+| | |
+|---|---|
+| archive id | `sha256:dd5c24d9775db0e951b1bc68f5d972515a7b17c668c56c1a17d5094551384a23` |
+| model id | `sha256:5459c860fec3e6c09854963d5fdec992aeabb4dede3a18024124dbd253253131` (#72's patterns + #73's store family) |
+| schema | `ttr-lexicon-compiled/v5` (unchanged, so the serving readers need no roll) |
+| toolchain | `Collite/ttr-core` **`grammar/v0.15.1`** (= `0ef4a8e`) |
+| entries | **576** (was 520) — **+56 `OPERATOR`**; every other class unchanged (`MODEL_OBJECT` 189, `MEMBER` 100, `GROUNDING_TRIGGER` 98, `STRING_PREDICATE` 98) |
+| operators | **8** (was 6) — `op:count`, `op:avg` |
+| build warnings | **24**, the same 24 as #73's |
+| size | 11,971 bytes |
+
+The same merged tree compiled with `grammar/v0.15.0` gives 520 entries (`sha256:3e8ec646…`), so the 56 rows are
+the toolchain's, not the estate's: the stdlib's `count.md` / `avg.md` triggers („kolik“, „počet“, "how many",
+„průměr“, "average", …) and `top-n.md`'s superlatives („nejvyšší“, „nejprodávanějších“, "highest", …). How each
+is matched (and why some are EXACT) is in ttr-core's `lexicon-stdlib/skills/*.md`.
+
+### 2026-10-14 (ttr-demo#73, the store family)
+
 From `just build-lexicon`, **2026-10-14**: the store family (ttr-demo#62, Bora's ruling of 2026-10-12 — a bare
 store word reads by its role). Built with the **pinned** toolchain `grammar/v0.15.0`:
 
@@ -124,6 +147,27 @@ to create; the four from before are unchanged. The model id moved for the lexico
 columns (`rec_start_date` / `rec_end_date`, `valid_from` / `valid_to`), the store_sales label, and
 `q.hartland.store_sales_by_month`'s Czech wording, which now names the channel by «tržby z prodejen» (its
 description, patterns and example; a bare «tržby prodejen» is a store-word FILTER, which asks).
+
+### 2026-10-14 (ttr-demo#72, query patterns)
+
+From `just build-lexicon`, **2026-10-14**: no lexicon change. The archive embeds the model snapshot, and
+`q.hartland.category_revenue`'s `search` block changed: its examples and patterns now say what it answers
+(revenue by category for one channel in one year), and the "drop" / „propad“ ones are gone. After review, its
+patterns are two per language, each naming a placeholder once and ending with its last one (veles refused the cs
+one, a group named twice, and matched the en one short). `warehouse_stockout_week_count`'s `stock ?outs?` became
+`stock( |)out(s|)` (veles escapes `?`, so it never matched). Query patterns and examples are not vocabulary, so the
+entry table is byte-identical; only the model id moved. Built with the **pinned** toolchain `grammar/v0.15.0`
+(the model gate's pin since `cadf369`):
+
+| | |
+|---|---|
+| archive id | `sha256:ee5b29920ab6f990cbeb8d1c881c856c119ebbc927a07237be4703beac1c0dfe` |
+| model id | `sha256:de4e4a089026fe5bdfe761e8e8cb66e8f1dfc0c3d546c4c9b0f249c4a8ee206b` (was `10cb6460…`) |
+| schema | `ttr-lexicon-compiled/v5` |
+| toolchain | `Collite/ttr-core` **`grammar/v0.15.0`** (= `a0ab059`) |
+| entries | **492** (unchanged) — the per-class counts are unchanged too |
+| build warnings | **4**, the same four |
+| size | 10,121 bytes |
 
 ### 2026-10-11 (night)
 
