@@ -157,3 +157,22 @@ test('LR ⚑LR-9 — channel_sales and web_sales reach the distribution centre; 
     assert.equal(objectEntry(bound?.def.target, 'column')?.path, column, `${entity}.warehouse binds to ${column}`);
   }
 });
+
+// ttr-demo#62 remedy 3 (Bora, 2026-10-12) — "How many stores do we have?" is 6, not 12. `store` keeps
+// SCD-2 history (12 rows for 6 stores), and the composer once counted the rows. TTR-M says it in its own
+// vocabulary — the `valid_from`/`valid_to` validity pair on the row's history dates — and in the one
+// place today's reader looks: the composer is shown the FIRST line of an entity's description
+// (kantheon PlanComposer.describeFirstLine) and no semantic role, so that line names both ways to count.
+test('#62 — store says it is SCD-2: the validity pair on its history columns, and how to count it', () => {
+  const store = allDefsOfKind('entity').find((d) => d.def.name === 'store')?.def;
+  assert.ok(store, 'no entity store');
+  const roleOf = (name) => store.attributes.find((a) => a.name === name)?.semantics?.entries?.role;
+  assert.equal(roleOf('rec_start_date'), 'valid_from', 'store.rec_start_date is not role valid_from');
+  assert.equal(roleOf('rec_end_date'), 'valid_to', 'store.rec_end_date is not role valid_to');
+  for (const [attr, column] of [['rec_start_date', 'db.dbo.store.s_rec_start_date'], ['rec_end_date', 'db.dbo.store.s_rec_end_date']]) {
+    const bound = allDefsOfKind('er2dbAttribute').find((a) => a.def.attribute.path === `er.entity.store.${attr}`);
+    assert.equal(objectEntry(bound?.def.target, 'column')?.path, column, `store.${attr} binds to ${column}`);
+  }
+  const firstLine = store.description.value.split('\n').map((l) => l.trim()).find(Boolean);
+  for (const needle of ['store_id', 'rec_end_date']) assert.ok(firstLine.includes(needle), `the description's first line names no ${needle}: ${firstLine}`);
+});

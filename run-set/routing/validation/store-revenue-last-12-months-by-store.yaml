@@ -1,0 +1,19 @@
+notes: |
+  ttr-demo#62 — "Revenue by store" with no period: the six stores by NAME over the last 12 complete months before
+  {reference_date} (kantheon#194). `store` is SCD-2 (12 rows for 6 stores), so grouping by its key would split a
+  store into its history rows.
+core: |
+  SELECT s.s_store_name AS store, SUM(ss.ss_ext_sales_price) AS revenue
+  FROM store_sales ss
+  JOIN store s ON ss.ss_store_sk = s.s_store_sk
+  JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk
+  WHERE d.d_date >= date_trunc('month', DATE '{reference_date}') - interval '12 months'
+    AND d.d_date < date_trunc('month', DATE '{reference_date}')
+  GROUP BY s.s_store_name
+assert:
+  row_count: 6
+  row_set:
+    keys:
+    - store
+    value: revenue
+    tolerance: 0.001

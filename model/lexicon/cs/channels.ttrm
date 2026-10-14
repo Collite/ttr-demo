@@ -25,11 +25,22 @@ def term store_channel_cs {
     // the fact this channel term is pinned to. That is the collision the MH effort exists for,
     // and an MH resolver decides it from the sentence: `kolik prodejen` counts the dimension,
     // `srovnej prodejny a web` compares channels, `tržby z prodejen` binds the dimension and
-    // records the channel as an equal reading, `prodejna` alone still asks. Dropping the word
+    // records the channel as an equal reading (superseded: since ttr-demo#62 it is a declared
+    // phrase, the channel's measure), `prodejna` alone still asks. Dropping the word
     // would erase the channel meaning instead of differentiating it (design.md T1 §4).
     // See project/server/features/mention-homonymy/.
+    //
+    // ttr-demo#62 (Bora, 2026-10-12): the bare word reads by its ROLE — grouped by („podle
+    // prodejen“) it is the dimension, as a restriction it asks between the two, and a declared
+    // phrase („tržba z prodejen“) is this channel's measure. So the word needs BOTH readings in
+    // every case it is written in, and the resolver's slot decides. The case forms are declared
+    // here AND on store_dimension_cs below, because the lemma alone did not reach them: the
+    // resolver re-asks a one-word mention by its dictionary form at a 0.1 penalty, while
+    // «prodejen» as written met a TOKENS word of «obrat z prodejen» (the measure) at 1.003 — so
+    // the measure bound alone, out of the tie band, and the slot never saw the dimension.
+    // Declared as written, both readings tie in the EXACT class, which outranks a TOKENS hit.
     // ttr-disable-next-line lexicon-form-collides-with-name
-    forms: ["prodejna", "kamenná prodejna", "obchod"]
+    forms: ["prodejna", "prodejny", "prodejně", "prodejnu", "prodejnou", "prodejen", "prodejnám", "prodejnách", "prodejnami", "kamenná prodejna", "obchod"]
 }
 
 def term store_dimension_cs {
@@ -41,6 +52,10 @@ def term store_dimension_cs {
     // quoted literal to. This term gives the dimension its own Czech form. The word is claimed
     // by both refs ON PURPOSE (MH-D6): the MH resolver decides from the sentence, and the
     // channel term keeps its meaning. Only the bare word; no invented synonyms.
+    //
+    // ttr-demo#62: and its case forms, the same list as store_channel_cs above and for the same
+    // reason — the two readings must meet in one tie band for the slot to choose (GROUPING → this
+    // dimension; COUNT → this dimension; a store name it governs → this dimension).
     // ttr-disable-next-line lexicon-form-collides-with-name
-    forms: ["prodejna"]
+    forms: ["prodejna", "prodejny", "prodejně", "prodejnu", "prodejnou", "prodejen", "prodejnám", "prodejnách", "prodejnami"]
 }

@@ -140,6 +140,8 @@ def er2db_attribute store_store_id_map     { attribute: er.entity.store.store_id
 def er2db_attribute store_store_name_map    { attribute: er.entity.store.store_name,  target: { column: db.dbo.store.s_store_name } }
 def er2db_attribute store_city_map          { attribute: er.entity.store.city,        target: { column: db.dbo.store.s_city } }
 def er2db_attribute store_state_map         { attribute: er.entity.store.state,       target: { column: db.dbo.store.s_state } }
+def er2db_attribute store_rec_start_date_map { attribute: er.entity.store.rec_start_date, target: { column: db.dbo.store.s_rec_start_date } }
+def er2db_attribute store_rec_end_date_map   { attribute: er.entity.store.rec_end_date,   target: { column: db.dbo.store.s_rec_end_date } }
 
 // ===== item =====
 def er2db_entity item_map { entity: er.entity.item, target: { table: db.dbo.item } }

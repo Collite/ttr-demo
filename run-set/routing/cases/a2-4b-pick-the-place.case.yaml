@@ -1,16 +1,18 @@
 id: a2-4b-pick-the-place
-title: 'Answer the ask: the stores as places ⇒ six rows by name'
+title: 'Answer the FILTER ask: the stores as places ⇒ six rows by name'
 act: '2.4'
 shape: homonym
 resume:
   pick:
     cs: místo
     en: place
-expected_route: FAST
+expected_route: LLM
 validation: store-revenue-2025-by-store.yaml
 session: a2-4
 xfail:
-  cs: 'ttr-demo#62 — „prodejna“ binds the store_sales measure / entity, store names are not members: the 2.4 ask is gone'
-  en: "ttr-demo#62 — the 2.4 ask is gone, so there is nothing to pick"
+  cs: 'ttr-demo#62 (the resolver half) — the FILTER phrasing does not ask yet (a2-4a-filter-asks), so there is nothing to pick'
+  en: 'ttr-demo#62 (the resolver half) — the FILTER phrasing does not ask yet (a2-4a-filter-asks), so there is nothing to pick'
 notes: |
   The option label is matched by substring; if the ask's wording changes, change the pick.
+  ttr-demo#62 (2026-10-12): it answers the FILTER ask now (a2-4a-filter-asks), since the GROUPING question no
+  longer asks. LLM, not FAST: revenue by store goes to the composer (`channel_sales.store_sk` is ruled out).

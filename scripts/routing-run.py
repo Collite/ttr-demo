@@ -149,6 +149,13 @@ def load_corpus(root: pathlib.Path) -> tuple[list[Case], dict, list[str]]:
     for name, group in sessions.items():
         if group[0].raw.get("resume"):
             problems.append(f"session {name!r}: its first case ({group[0].id}) is a resume")
+        # …and what a resume answers is an ASK: a pick after a turn expected to answer has nothing to
+        # pick (ttr-demo#62 moved 2.4's ask, and the pick had to move with it).
+        for prev, c in zip(group, group[1:]):
+            if c.raw.get("resume") and prev.raw.get("expected_route") != "ASK":
+                problems.append(
+                    f"session {name!r}: {c.id} answers {prev.id}, which expects {prev.raw.get('expected_route')}, not ASK"
+                )
     return cases, personas, problems
 
 

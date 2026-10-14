@@ -78,6 +78,46 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-14**: the store family (ttr-demo#62, Bora's ruling of 2026-10-12 — a bare
+store word reads by its role). Built with the **pinned** toolchain `grammar/v0.15.0`:
+
+| | |
+|---|---|
+| archive id | `sha256:54dae6c358a6edffe9003496e116777502076b2c9950d327fd4f37e4c8823a4a` |
+| model id | `sha256:50c949a21a255ec0a26a41066f733856ec4724ab541e64dd4865568b7d9c3e46` (was `10cb6460…`) |
+| schema | `ttr-lexicon-compiled/v5` |
+| toolchain | `Collite/ttr-core` **`grammar/v0.15.0`** |
+| entries | **519** (was 492) — 27 more `MODEL_OBJECT` (one relabelled) |
+| build warnings | **20** (was 4) — see below |
+| targets | 102 (was 99) — the three `*_returns.return_amt`, kind `measure` |
+| size | 10,342 bytes |
+
+What changed, row by row (`lexicon/tests/store-family.test.mjs` asserts each one against this archive):
+
+- **+16 `DECLARED` `EXACT`**: the case forms of „prodejna“ — `prodejny`, `prodejně`, `prodejnu`, `prodejnou`,
+  `prodejen`, `prodejnám`, `prodejnách`, `prodejnami` — each for **both** `er.entity.store` (the dimension) and
+  `er.entity.store_sales` (the channel), beside the citation form both already had. The resolver's slot rules
+  choose between the two, but only when both readings tie in one class: as written, «prodejen» met only a TOKENS
+  word of «obrat z prodejen» (the store-channel measure, `DECLARED_ALIAS` 1.003), and the dimension came back
+  through the lemma alone, 0.1 lower and out of the band. Now «Tržby podle prodejen» binds the dimension
+  (GROUPING), «Kolik máme prodejen?» the dimension (COUNT), «Srovnej prodejny a web» the channel, and a bare
+  «Prodejny» asks. Measured on a local resolver (0.11.21 code) over this archive.
+- **+2 `DECLARED` `TOKENS`**: `tržby z prodejen`, `tržeb z prodejen` → `store_sales.ext_sales_price`, beside the
+  singular. **−1 / +1 `METADATA`**: `store_sales.displayLabel.cs` was „Tržby z prodejen“, the measure phrase, and
+  a label is matched `EXACT` at 1.168 on three words — no declared phrase can outrank it, so «Tržby z prodejen
+  za 2025» bound the entity, not its revenue. The label is now „Prodeje v prodejnách“ (the fact, as the other two
+  channels' labels name theirs).
+- **+9 `DECLARED` `TOKENS`**: `vratky / vratka / vratek z prodejen | z webu | z tržiště` → each channel's
+  `return_amt`. The web and marketplace rows keep a bare «vratky» from binding the store channel's returns by
+  one word (see the file's RETURNS block).
+
+⚑ **The 16 new warnings are deliberate.** Each is `RG-LEXC-004`, a case form claimed by both the dimension and the
+channel term, which is the collision this change exists to create; the four from before are unchanged. The model
+id moved for the store's SCD-2 history columns (`rec_start_date` / `rec_end_date`, `valid_from` / `valid_to`) and
+the store_sales label.
+
+### 2026-10-11 (night)
+
 From `just build-lexicon`, **2026-10-11 (night)**: thirty entries fewer, none of them hartland's. The
 investment package (`model/investment/`, synced from kantheon) moved out of this repository with the
 investment estate's Shem and scripts, so its 30 `METADATA` rows (`asset`, `client`, `portfolio`,

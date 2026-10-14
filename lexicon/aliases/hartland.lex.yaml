@@ -67,12 +67,13 @@
 # come from `design/demo-transcript.md` and both Shems' `example_questions`.
 #
 # ── What this file deliberately does NOT declare ─────────────────────────────────────
-# `tržby z prodejen` — the exact string is already a METADATA row (harvested from
-#   `store_sales.displayLabel.cs`, "Tržby z prodejen") pointing at the ENTITY. Declaring it
-#   here at attribute depth would make the estate's clearest Czech revenue phrase ambiguous
-#   between an entity and its column. `tržba z prodejen` (singular) and `store revenue`
-#   carry the measure instead. ⚑ The clean fix is a `displayLabel.cs` that is a label
-#   ("Prodejny") rather than a measure phrase; that is a model change, not a lexicon one.
+# ✅ `tržby z prodejen` — DECLARED since ttr-demo#62 (2026-10-14), on the measure, beside its
+#   singular. Until then the exact string was a METADATA row (harvested from
+#   `store_sales.displayLabel.cs`, "Tržby z prodejen") pointing at the ENTITY, and a label beats
+#   any declared phrase (EXACT 1.168 on three words; a profiled EXACT scores 1.000 and a TOKENS
+#   phrase is a class below), so «Tržby z prodejen za 2025» bound the entity and the door could
+#   not answer. The clean fix this note asked for is done: the label is now "Prodeje v prodejnách",
+#   which names the fact, as the other two channels' labels do.
 # Bare channel words (`marketplace`, `web`, `prodejna`, …) — declared once already, on the
 #   `.ttrm` sugar surface (`model/lexicon/{cs,en}/channels.ttrm`). Restating one here is
 #   the same declared layer speaking twice, and `tests/area.test.mjs`'s T4 guard fails it.
@@ -83,6 +84,9 @@
 #   the same md/modelling exercise as the bare words above.
 #   ✅ UNITS SOLD landed 2026-09-24 on `channel_sales.quantity` (the modelling exercise). RETURNED
 #   AMOUNT still waits: returns are three entities with no all-channel view yet.
+#   ✅ The channel-qualified half of RETURNED AMOUNT landed 2026-10-14 (ttr-demo#62, Bora's ruling
+#   „vratka / vratky“ → the returns measure): «vratky z prodejen» and its twins, see "RETURNS"
+#   below. The bare «vratky» still waits for the all-channel view, for the same reason as above.
 # `return rate` / `míra vrácení` — a RATIO of `return_amt` to `ext_sales_price`, which live
 #   on two different entities. The door refuses a two-object question, so a word for it
 #   would resolve into a refusal. It belongs to a pattern query, not to this layer.
@@ -144,10 +148,13 @@ entries:
     target: er.entity.web_sales.ext_sales_price
 
   # ── Store revenue → er.entity.store_sales.ext_sales_price ────────────────────────────
-  # Same two patterns, the "store |"/"z prodejen " arm. See the header for why the plural
-  # `tržby z prodejen` is NOT declared here.
+  # Same two patterns, the "store |"/"z prodejen " arm. The plural `tržby z prodejen` (MH E2,
+  # «Tržby z prodejen za 2025») and the genitive `tržeb z prodejen` joined on 2026-10-14 —
+  # ttr-demo#62 remedy 1, and see the header for why they could not before.
   - terms:
+      - { text: "tržby z prodejen", method: TOKENS }
       - { text: "tržba z prodejen", method: TOKENS }
+      - { text: "tržeb z prodejen", method: TOKENS }
       - { text: "obrat z prodejen", method: TOKENS }
       - { text: "obratu z prodejen", method: TOKENS }
       - { text: "store revenue", lang: en, method: TOKENS }
@@ -200,6 +207,35 @@ entries:
       - { text: "prodané kusy", method: TOKENS }
       - { text: "prodaných kusů", method: TOKENS }
     target: er.entity.channel_sales.quantity
+
+  # ══ RETURNS — channel-qualified → er.entity.<channel>_returns.return_amt ══════════════
+  # 2026-10-14, ttr-demo#62 (Bora's ruling of 2026-10-12): „vratka / vratky“ → the returns
+  # measure. MH E6 asked «Vratky z prodejen» and got a parameter ask, because «Vratky» was no
+  # term at all. `return_amt` is each returns entity's FIRST declared measure (the refunded value,
+  # model/er/returns.ttrm), so the phrase binds what «reklamace» is asked about by value.
+  #
+  # ⚑ Attested: the store phrase only (MH E6). The web and marketplace twins are here for the
+  # BARE word, not for their own sake. A TOKENS phrase is reached by one of its words too, so with
+  # only «vratky z prodejen» declared a bare «vratky» would bind the store channel's returns
+  # uniquely — a guess at the channel. With all three it reaches three targets equally, the matcher
+  # reports it non-discriminative, and the bare word stays a gap, as the header rules for bare words.
+  # `vratka` is the citation form the resolver's anchors read; `vratek` (genitive plural) is spelled
+  # out because MorphoDiTa lemmatises it to «vratek», which neither the anchor nor the lemma axis meets.
+  - terms:
+      - { text: "vratky z prodejen", method: TOKENS }
+      - { text: "vratka z prodejen", method: TOKENS }
+      - { text: "vratek z prodejen", method: TOKENS }
+    target: er.entity.store_returns.return_amt
+  - terms:
+      - { text: "vratky z webu", method: TOKENS }
+      - { text: "vratka z webu", method: TOKENS }
+      - { text: "vratek z webu", method: TOKENS }
+    target: er.entity.web_returns.return_amt
+  - terms:
+      - { text: "vratky z tržiště", method: TOKENS }
+      - { text: "vratka z tržiště", method: TOKENS }
+      - { text: "vratek z tržiště", method: TOKENS }
+    target: er.entity.catalog_returns.return_amt
 
   # ══ PRODUCT CATEGORY → er.entity.item.category ═══════════════════════════════════════
   # 2026-09-24. `item.category` had no declared word, so "revenue by category" gapped (G1) on

@@ -12,10 +12,17 @@ def entity store_sales {
     description: "Stores-channel sales lines — store / brick-and-mortar revenue (sales) = SUM(ext_sales_price), units sold = quantity, dated by sold_date."
     labelPlural: "Store Sales"
     roles: [fact]
-    displayLabel: { en: "Store Sales", cs: "Tržby z prodejen" }
+    // ttr-demo#62 (2026-10-14): the Czech label names the FACT, like the en "Store Sales" and the
+    // other channels' „Webové objednávky“ / „Objednávky z tržiště“. It used to be „Tržby z prodejen“
+    // — the measure phrase — and a label is a METADATA term matched EXACT at 1.168 on three words,
+    // so «Tržby z prodejen za 2025» bound this ENTITY instead of its revenue, the door could not
+    // answer, and the composer ran a 3-channel monthly query. No declared term can outrank that
+    // (a profiled EXACT scores 1.000, a TOKENS phrase is a class below), so the phrase moved to
+    // `lexicon/aliases/hartland.lex.yaml`, on the measure, beside its singular.
+    displayLabel: { en: "Store Sales", cs: "Prodeje v prodejnách" }
     // MS (mention semantics, vocabulary v3): the MENTION facet — what a human is asking
     // for when they mention this entity. Declared order is load-bearing: ext_sales_price
-    // is FIRST, so revenue is the default measure of a bare "tržby z prodejen". Both are
+    // is FIRST, so revenue is the default measure of a bare "store sales". Both are
     // `sum`, which is the bare-id default, so neither needs an item object. This is what
     // makes store_sales resolve as `entity_with_measures` rather than a plain `entity`,
     // which is what wakes FrameRoles R2 and the R3–R6 `podle`/"by" exemptions.
