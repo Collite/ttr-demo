@@ -78,6 +78,37 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-14 (night)**: the Czech grain adjectives (ttr-server#237). Built with the **pinned**
+toolchain `grammar/v0.15.1`, which first rebuilt master's archive byte for byte (`sha256:dd5c24d9…`):
+
+| | |
+|---|---|
+| archive id | `sha256:584cbb7e8dbe78e7a1471c9b44327493ce4fe548591de1345890bb5653d742e5` |
+| model id | `sha256:5459c860fec3e6c09854963d5fdec992aeabb4dede3a18024124dbd253253131` (unchanged: only `lexicon/aliases/` moved) |
+| schema | `ttr-lexicon-compiled/v5` (unchanged) |
+| toolchain | `Collite/ttr-core` **`grammar/v0.15.1`** |
+| entries | **600** (was 576) — **+24 `MODEL_OBJECT`** (213, was 189), all `DECLARED`, `TYPOS(1)`; every other class unchanged (`MEMBER` 100, `OPERATOR` 91, `GROUNDING_TRIGGER` 98, `STRING_PREDICATE` 98) |
+| build warnings | **24**, the same 24 as before |
+| size | 12,224 bytes |
+
+The 24 rows are the six case forms (`-í`, `-ího`, `-ímu`, `-ím`, `-ích`, `-ími`) of the four calendar adjectives the
+estate has a grain for, in `aliases/hartland.lex.yaml` beside the adverb each grain already had: `měsíční…` →
+`date_dim.month`, `roční…` → `date_dim.year`, `čtvrtletní…` → `date_dim.quarter`, `týdenní…` → `date_dim.week_seq`.
+„Měsíční tržby z tržiště v roce 2025“ asks for months; the estate declared only `měsíčně` and `po měsících`, so the
+adjective bound nothing — in front of a declared phrase it vanished and the question was answered as one total, and
+before a bare noun („Měsíční tržby“, `p-channel-revenue-monthly`) the phrase was a G1. Declared, the adjective is an
+anchor of its own, as `monthly` is, and the resolver reads a calendar adjective bound to an attribute as the
+GROUPING (R6"). No `denní` / `pololetní`: the estate declares no day or half-year grain, so such a word stays a G1
+the user is asked about. `lexicon/tests/grain-adjectives.test.mjs` asserts every row against this archive.
+
+Measured offline (hartland was down): the resolver at ttr-server master + ttr-server#239, lex-matcher 0.11.3 with no
+nlp, the questions' recorded live parses. „Měsíční tržby“ → `Měsíční` → month GROUPING + `tržby` → the all-channel
+measure (was one G1 over both words); „Měsíční tržby z tržiště v roce 2025“ → month GROUPING, bound EXACT in the
+broad pass (was the resolver's own fuzzy reading of `měsíčně`, 0.95, in a lookup round); „Týdenní …“ → week GROUPING
+(was a G1 without nlp's lemma axis); „Denní …“ / „Pololetní …“ / „Akční …“ → a G1, unchanged.
+
+### 2026-10-14 (evening, ttr-demo#72 + #73 merged, `grammar/v0.15.1`)
+
 From `just build-lexicon`, **2026-10-14 (evening)**: master (ttr-demo#72, the query patterns) merged into the
 store family (ttr-demo#73), and the toolchain moved to **`grammar/v0.15.1`** (ttr-core#188: the stdlib operators
 `op:count` and `op:avg`, and `op:top-n`'s missing superlatives). `.github/workflows/model-gate.yml` pins the
