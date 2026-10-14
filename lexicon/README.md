@@ -78,6 +78,27 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-14**: no lexicon change. The archive embeds the model snapshot, and
+`q.hartland.category_revenue`'s `search` block changed: its examples and patterns now say what it answers
+(revenue by category for one channel in one year), and the "drop" / „propad“ ones are gone. After review, its
+patterns are two per language, each naming a placeholder once and ending with its last one (veles refused the cs
+one, a group named twice, and matched the en one short). `warehouse_stockout_week_count`'s `stock ?outs?` became
+`stock( |)out(s|)` (veles escapes `?`, so it never matched). Query patterns and examples are not vocabulary, so the
+entry table is byte-identical; only the model id moved. Built with the **pinned** toolchain `grammar/v0.15.0`
+(the model gate's pin since `cadf369`):
+
+| | |
+|---|---|
+| archive id | `sha256:ee5b29920ab6f990cbeb8d1c881c856c119ebbc927a07237be4703beac1c0dfe` |
+| model id | `sha256:de4e4a089026fe5bdfe761e8e8cb66e8f1dfc0c3d546c4c9b0f249c4a8ee206b` (was `10cb6460…`) |
+| schema | `ttr-lexicon-compiled/v5` |
+| toolchain | `Collite/ttr-core` **`grammar/v0.15.0`** (= `a0ab059`) |
+| entries | **492** (unchanged) — the per-class counts are unchanged too |
+| build warnings | **4**, the same four |
+| size | 10,121 bytes |
+
+### 2026-10-11 (night)
+
 From `just build-lexicon`, **2026-10-11 (night)**: thirty entries fewer, none of them hartland's. The
 investment package (`model/investment/`, synced from kantheon) moved out of this repository with the
 investment estate's Shem and scripts, so its 30 `METADATA` rows (`asset`, `client`, `portfolio`,

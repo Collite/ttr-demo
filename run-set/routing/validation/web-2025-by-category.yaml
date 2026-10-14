@@ -1,0 +1,24 @@
+notes: |
+  Web revenue in 2025 by product category, the largest first — what `q.hartland.category_revenue` returns for
+  channel web, year 2025. The query keeps the items without a category, so the answer may carry an 11th row
+  (category NULL) that no key can match: the core leaves it out and the row count allows it.
+core: |
+  SELECT i.i_category AS category, SUM(ws.ws_ext_sales_price) AS revenue
+  FROM web_sales ws
+  JOIN date_dim d ON ws.ws_sold_date_sk = d.d_date_sk
+  JOIN item i ON ws.ws_item_sk = i.i_item_sk
+  WHERE d.d_year = 2025 AND i.i_category IS NOT NULL
+  GROUP BY i.i_category
+  ORDER BY revenue DESC
+assert:
+  row_count:
+    min: 10
+    max: 11
+  row_set:
+    keys:
+    - category
+    value: revenue
+    tolerance: 0.001
+  first_row:
+    keys:
+    - category

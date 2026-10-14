@@ -2,15 +2,18 @@ id: p-category-revenue
 title: The saved query `q.hartland.category_revenue` — its own example question
 shape: pattern
 question:
-  cs: Které kategorie způsobily propad v 2. pol. 2025?
-  en: Which categories drove the H2 2025 drop?
+  cs: Tržby podle kategorie pro web v roce 2025
+  en: Revenue by category for Web in 2025
 expected_route: LLM
-xfail:
-  cs: kantheon#185 — the plan gate refuses the saved query's own example (PLAN_GATE_REFUSED)
+validation: web-2025-by-category.yaml
 tags:
 - q.hartland.category_revenue
 notes: |
   A pattern question: the composer should pick this saved query (statement source PATTERN). Recorded, not asserted: which saved query ran.
-  No validation (2026-10-12, the en half): neither world has an H2 2025 drop — H2 is ~2.3× H1 in both (hartland_cz
-  4.80 → 10.91 bn Kč; hartland_us every category doubles), so the example question's premise is false and an EMPTY
-  answer („no category fell“) is the correct one. Route only.
+  2026-10-14: the query's examples now say what it answers — revenue per category for one channel in one whole year. The
+  old example, „Které kategorie způsobily propad v 2. pol. 2025?“ / "Which categories drove the H2 2025 drop?", asked
+  for a drop the query does not compute and a half-year it cannot take, on a false premise (H2 2025 is ~2.3× H1 in both
+  worlds). Live, cs was refused on 2026-10-12 (REFUSE · PLAN_GATE_REFUSED) and asked back on 2026-10-14 (ASK ·
+  NO_OBJECT_BINDING, golem 0.11.37); en answered ten category rows to a question about a drop that did not happen.
+  Measured cs 2026-10-14 (golem 0.11.37): LLM · UNHONOURED_OBJECT:web, one LLM call; the composer ran this saved query
+  for web and 2025: 11 rows, the ten categories and the items without one. The en half is not measured yet.
