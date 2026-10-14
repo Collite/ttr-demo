@@ -1,12 +1,16 @@
 id: e3-revenue-by-store
-title: E3 — group by the dimension, or the channel? (asks)
+title: E3 — grouped by the store word — the store dimension, six rows by name, no ask
 shape: homonym
 question:
   cs: Tržby podle prodejen
   en: Revenue by store
-expected_route: ASK
-xfail:
-  cs: 'ttr-demo#62 — „prodejna“ binds the store_sales measure / entity, store names are not members: the 2.4 ask is gone'
-  en: "ttr-demo#62 — `store` binds the store_sales measure: no ask"
+expected_route: LLM
+validation: store-revenue-last-12-months-by-store.yaml
 tags:
 - MH-E3
+notes: |
+  ttr-demo#62, ruled 2026-10-12 (Bora): grouped by („podle prodejen“, "by store") a bare store word is the store
+  dimension, and nothing asks (it used to expect ASK). No period: the last 12 complete months. LLM: revenue by
+  store goes to the composer (`channel_sales.store_sk` is ruled out for now).
+  Measured 2026-10-14 (cz): LLM · NO_OBJECT_BINDING, 6 rows over 2025-10…2026-09 — right, though `prodejen` still
+  bound the store_sales measure; #62's lexicon makes it er.entity.store, GROUPING (local resolver probe).

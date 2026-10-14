@@ -694,9 +694,11 @@ def query promo_share {
 
 def query store_sales_by_month {
     // Demo notes (not shown to users): Stores-channel texture (seed heritage).
+    // ttr-demo#62: the Czech wording names the channel by the declared phrase «tržby z prodejen». A bare
+    // «tržby prodejen» is a restriction by the store word, and that asks (dimension or channel?).
     description: {
         en: "Store revenue by month. One row per year and month, over all years.",
-        cs: "Tržby prodejen po měsících. Jeden řádek za rok a měsíc, za všechny roky."
+        cs: "Tržby z prodejen po měsících. Jeden řádek za rok a měsíc, za všechny roky."
     }
     language: SQL
     sourceText: """
@@ -710,12 +712,12 @@ def query store_sales_by_month {
         patterns: [
             "store (channel |)revenue by month",
             "monthly store sales",
-            "trzby prodejen (podle|po) (mesici|mesicich)",
-            "mesicni trzby prodejen"
+            "trzby z prodejen (podle|po) (mesici|mesicich)",
+            "mesicni trzby z prodejen"
         ],
         examples: [
             "Store revenue by month",
-            "Měsíční tržby prodejen"
+            "Měsíční tržby z prodejen"
         ]
     }
     parameters: []

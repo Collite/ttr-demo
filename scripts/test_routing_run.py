@@ -179,6 +179,37 @@ class CorpusCheckSpec(unittest.TestCase):
         """)
         self.assertIn("is a resume", "\n".join(rr.load_corpus(self.root)[2]))
 
+    def test_a_resume_answers_a_case_that_expects_an_ask(self):
+        # ttr-demo#62: when 2.4's „Tržby podle prodejen“ stopped asking (a GROUPING reads the store
+        # dimension), the pick after it had nothing to answer. A recalibration that moves the ask must
+        # move the pick with it, and the corpus check says so instead of a live run.
+        self.write("s1", """
+            id: s1
+            title: t
+            shape: homonym
+            question: {cs: "Tržby podle prodejen", en: "Revenue by store"}
+            session: s
+            expected_route: LLM
+        """)
+        self.write("s2", """
+            id: s2
+            title: t
+            shape: homonym
+            resume: {pick: place}
+            session: s
+            expected_route: LLM
+        """)
+        self.assertIn("s2 answers s1, which expects LLM, not ASK", "\n".join(rr.load_corpus(self.root)[2]))
+        self.write("s1", """
+            id: s1
+            title: t
+            shape: homonym
+            question: {cs: "Tržby prodejen", en: "Revenue of stores"}
+            session: s
+            expected_route: ASK
+        """)
+        self.assertEqual(rr.load_corpus(self.root)[2], [])
+
 
 if __name__ == "__main__":
     unittest.main()

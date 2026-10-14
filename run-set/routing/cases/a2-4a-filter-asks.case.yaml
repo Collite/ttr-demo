@@ -1,0 +1,21 @@
+id: a2-4a-filter-asks
+title: '„prodejen“ / stores as a FILTER — asks: the store dimension or the store channel? 0 LLM calls'
+act: '2.4'
+shape: homonym
+question:
+  cs: Tržby prodejen v roce 2025
+  en: Revenue of stores in 2025
+expected_route: ASK
+session: a2-4
+xfail:
+  cs: 'ttr-demo#62 (the resolver half) — a FILTER slot under a measure prefers the channel reading: `prodejen` binds the store-channel measure and nothing asks'
+  en: 'ttr-demo#62 (the resolver half) — a FILTER slot under a measure prefers the channel reading: `stores` binds store_sales and nothing asks'
+notes: |
+  ttr-demo#62, ruled 2026-10-12 (Bora): a bare store word as a restriction asks, offering both readings — the
+  store dimension and the store channel ("store revenue"). This is where the 2.4 homonymy ask moved. The
+  question is the CANDIDATE phrasing; the demo's own is chosen at rehearsal, and this case follows it.
+  The lexicon half is done: the word has both readings in one tie band (the store dimension and the store-channel
+  measure). The resolver's FILTER preference (`Binder.preferredKinds`: entity_with_measures / measure under a
+  measure head) then picks the channel, so the ask needs the resolver half. Measured 2026-10-14 on a local resolver
+  (0.11.21 code) with #62's lexicon: `prodejen` → store_sales.ext_sales_price, MEASURE, no gap — what it binds live
+  today; live en (`stores` already had both readings): → er.entity.store_sales, no ask.

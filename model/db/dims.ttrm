@@ -102,7 +102,11 @@ def table store {
         def column s_store_id   { type: { type: char, length: 16 } },
         def column s_store_name { type: varchar },
         def column s_city       { type: varchar },
-        def column s_state      { type: { type: char, length: 2 } }
+        def column s_state      { type: { type: char, length: 2 } },
+        // ttr-demo#62 — the SCD-2 history dates (TPC-DS keeps several rows per store; the
+        // current row has no end date). Present in both worlds' dumps.
+        def column s_rec_start_date { type: date },
+        def column s_rec_end_date   { type: date }
     ]
 }
 

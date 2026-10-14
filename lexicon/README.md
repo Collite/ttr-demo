@@ -78,6 +78,78 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-14 (evening)**: master (ttr-demo#72, the query patterns) merged into the
+store family (ttr-demo#73), and the toolchain moved to **`grammar/v0.15.1`** (ttr-core#188: the stdlib operators
+`op:count` and `op:avg`, and `op:top-n`'s missing superlatives). `.github/workflows/model-gate.yml` pins the
+same tag. The model id is the merge's; the vocabulary moved only in the stdlib's operator rows:
+
+| | |
+|---|---|
+| archive id | `sha256:dd5c24d9775db0e951b1bc68f5d972515a7b17c668c56c1a17d5094551384a23` |
+| model id | `sha256:5459c860fec3e6c09854963d5fdec992aeabb4dede3a18024124dbd253253131` (#72's patterns + #73's store family) |
+| schema | `ttr-lexicon-compiled/v5` (unchanged, so the serving readers need no roll) |
+| toolchain | `Collite/ttr-core` **`grammar/v0.15.1`** (= `0ef4a8e`) |
+| entries | **576** (was 520) — **+56 `OPERATOR`**; every other class unchanged (`MODEL_OBJECT` 189, `MEMBER` 100, `GROUNDING_TRIGGER` 98, `STRING_PREDICATE` 98) |
+| operators | **8** (was 6) — `op:count`, `op:avg` |
+| build warnings | **24**, the same 24 as #73's |
+| size | 11,971 bytes |
+
+The same merged tree compiled with `grammar/v0.15.0` gives 520 entries (`sha256:3e8ec646…`), so the 56 rows are
+the toolchain's, not the estate's: the stdlib's `count.md` / `avg.md` triggers („kolik“, „počet“, "how many",
+„průměr“, "average", …) and `top-n.md`'s superlatives („nejvyšší“, „nejprodávanějších“, "highest", …). How each
+is matched (and why some are EXACT) is in ttr-core's `lexicon-stdlib/skills/*.md`.
+
+### 2026-10-14 (ttr-demo#73, the store family)
+
+From `just build-lexicon`, **2026-10-14**: the store family (ttr-demo#62, Bora's ruling of 2026-10-12 — a bare
+store word reads by its role). Built with the **pinned** toolchain `grammar/v0.15.0`:
+
+| | |
+|---|---|
+| archive id | `sha256:1955aa5486b1252e564560bb28009cd8e3c42113a2a6684c922bba3a3588e244` |
+| model id | `sha256:d605fb2a9b40fe398e1fc6c84a3bd5dbb7fb98ebc56d1ccb1b339e5252da96ff` (was `10cb6460…`) |
+| schema | `ttr-lexicon-compiled/v5` |
+| toolchain | `Collite/ttr-core` **`grammar/v0.15.0`** |
+| entries | **520** (was 492) — 28 more `MODEL_OBJECT` (one relabelled) |
+| build warnings | **24** (was 4) — see below |
+| targets | 102 (was 99) — the three `*_returns.return_amt`, kind `measure` |
+| size | 10,340 bytes |
+
+What changed, row by row (`lexicon/tests/store-family.test.mjs` asserts each one against this archive):
+
+- **+17 `DECLARED` `EXACT`** (`model/lexicon/cs/channels.ttrm`): the case forms of „prodejna“ — `prodejny`,
+  `prodejně`, `prodejnu`, `prodejnou`, `prodejen`, `prodejnám`, `prodejnách`, `prodejnami` — for **both** the store
+  dimension (`store_dimension_cs` → `er.entity.store`) and the store channel's revenue (the new `store_revenue_cs`
+  → `er.entity.store_sales.ext_sales_price`, which also takes the citation form). The resolver's slot rules choose
+  between the two, but only when both readings tie in one class: as written, «prodejen» met only a TOKENS word of
+  «obrat z prodejen» (that same measure, `DECLARED_ALIAS` 1.003), and the dimension came back through the lemma
+  alone, 0.1 lower and out of the band. Now «Tržby podle prodejen» binds the dimension (GROUPING), «Kolik máme
+  prodejen?» the dimension (COUNT), and a bare «Prodejny» asks; every other position keeps the measure it bound
+  before. The second reading is the MEASURE, not the channel entity, so that nothing the ruling does not decide moves.
+- **+2 `DECLARED` `TOKENS`**: `tržby z prodejen`, `tržeb z prodejen` → `store_sales.ext_sales_price`, beside the
+  singular. **−1 / +1 `METADATA`**: `store_sales.displayLabel.cs` was „Tržby z prodejen“, the measure phrase, and
+  a label is matched `EXACT` at 1.168 on three words — no declared phrase can outrank it, so «Tržby z prodejen
+  za 2025» bound the entity, not its revenue. The label is now „Prodeje v prodejnách“ (the fact, as the other two
+  channels' labels name theirs).
+- **+9 `DECLARED`, whole phrase** (the file's default profile, **not** TOKENS): `vratky / vratka / vratek z prodejen |
+  z webu | z tržiště` → each channel's `return_amt`. ⛔ A TOKENS phrase is reached by one of its words, and the first
+  build of this change had them TOKENS: «webu» and «tržišti» then reached revenue and returns alike, went
+  non-discriminative and bound nothing (demo 3.2, 3.3, 5.1, r2a; «A na webu?»). The test pins every channel word to
+  one target through the TOKENS phrases that hold it.
+
+Measured on a local resolver (0.11.21 + lex-matcher 0.11.3, the live NLP and chrono) over this archive and over
+master's, every routing-corpus question in both languages plus probes (195): 31 lattices change, all cs, each one
+the ruling's or explained in ttr-demo#73; two master runs differ in none.
+
+⚑ **The 20 new warnings are deliberate.** Each is `RG-LEXC-004`, a case form claimed by both the dimension and the
+store-channel measure (and the citation form by the channel entity too), which is the collision this change exists
+to create; the four from before are unchanged. The model id moved for the lexicon terms, the store's SCD-2 history
+columns (`rec_start_date` / `rec_end_date`, `valid_from` / `valid_to`), the store_sales label, and
+`q.hartland.store_sales_by_month`'s Czech wording, which now names the channel by «tržby z prodejen» (its
+description, patterns and example; a bare «tržby prodejen» is a store-word FILTER, which asks).
+
+### 2026-10-14 (ttr-demo#72, query patterns)
+
 From `just build-lexicon`, **2026-10-14**: no lexicon change. The archive embeds the model snapshot, and
 `q.hartland.category_revenue`'s `search` block changed: its examples and patterns now say what it answers
 (revenue by category for one channel in one year), and the "drop" / „propad“ ones are gone. After review, its

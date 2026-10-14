@@ -1,13 +1,17 @@
 id: e4-store-member
-title: E4 — a store by name (a governed value)
+title: E4 — a store by name (a governed value) — the composer filters that store
 shape: member
 question:
   cs: Tržby prodejny Praha v roce 2025
   en: Revenue of the Nashville store in 2025
-expected_route: FAST
+expected_route: LLM
 validation: store1-2025.yaml
 xfail:
-  cs: 'ttr-demo#62 — „prodejna“ binds the store_sales measure / entity, store names are not members: the 2.4 ask is gone'
-  en: "ttr-demo#62 — store names are not members; the composer filters store.city = Nashville (a wrong figure)"
+  en: "ttr-demo#62 — a store name BEFORE its noun is not attributed: in `the Nashville store` the head `the store` stays G1 and the name G3 (live 2026-10-14, probed in the cz world with `the Praha store`), so the composer filtered store.city (2026-10-12, a wrong figure)"
 tags:
 - MH-E4
+notes: |
+  ttr-demo#62 (2026-10-12): `store.store_name` is a member vocabulary, so the name binds as a store; revenue by
+  store goes to the composer (`channel_sales.store_sk` is ruled out), so LLM, not FAST.
+  Measured 2026-10-14 (cz): «Praha» → er.entity.store.store_name (resolver), LLM · NO_OBJECT_BINDING, the
+  composer filtered store_name = 'Praha' — the right figure.

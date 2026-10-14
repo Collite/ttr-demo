@@ -7,7 +7,11 @@ question:
 expected_route: FAST
 validation: store-channel-2025.yaml
 xfail:
-  cs: 'ttr-demo#62 — „prodejna“ binds the store_sales measure / entity, store names are not members: the 2.4 ask is gone'
+  cs: 'ttr-demo#62 — fixed by its lexicon (the plural «tržby z prodejen» → the store-channel measure; the store_sales label no longer says it; measured on a local resolver), not deployed when written: drop once a run passes'
   en: "ttr-server#206 — the bare year after `Store revenue` is left G3_UNATTRIBUTED: the door declines, the composer runs the 3-channel monthly query"
 tags:
 - MH-E2
+notes: |
+  ttr-demo#62 remedy 1 (2026-10-12). Before (2026-10-14, cz): `Tržby z prodejen` bound the ENTITY store_sales through
+  its Czech label (METADATA EXACT 1.168), so LLM · NO_OBJECT_BINDING and the 3-channel monthly query (12 rows).
+  With #62: the label is „Prodeje v prodejnách“ and the phrase → er.entity.store_sales.ext_sales_price, MEASURE.

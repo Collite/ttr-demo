@@ -1,5 +1,5 @@
 id: e6-store-returns
-title: E6 — the store dimension joined to returns
+title: E6 — the store channel's returns
 shape: total
 question:
   cs: Vratky z prodejen
@@ -7,7 +7,11 @@ question:
 expected_route: FAST
 validation: non-empty.yaml
 xfail:
-  cs: 'ttr-demo#62 — „prodejna“ binds the store_sales measure / entity, store names are not members: the 2.4 ask is gone („vratky“ is not a term)'
-  en: "ttr-demo#62 — `Store returns` ends in a parameter ask"
+  cs: 'ttr-demo#62 — fixed by its lexicon («vratky z prodejen» → store_returns.return_amt, a MEASURE; measured on a local resolver), not deployed when written: drop once a run passes'
+  en: "ttr-demo#62 — `Store returns` binds the store_returns ENTITY (its label), not return_amt, and the turn ends in an ask (2026-10-12); the „vratky“ ruling has no en twin"
 tags:
 - MH-E6
+notes: |
+  ttr-demo#62, ruled 2026-10-12 (Bora): „vratka / vratky“ → the returns measure. Before (2026-10-14, cz):
+  «Vratky» was no term (G1) and the turn went to the composer (EMPTY_ASK:Vratky, 3 LLM calls). With the lexicon:
+  `Vratky z prodejen` → er.entity.store_returns.return_amt, MEASURE — the door's SUM over the default period.

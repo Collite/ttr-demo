@@ -25,9 +25,13 @@ def term store_channel_cs {
     // the fact this channel term is pinned to. That is the collision the MH effort exists for,
     // and an MH resolver decides it from the sentence: `kolik prodejen` counts the dimension,
     // `srovnej prodejny a web` compares channels, `tržby z prodejen` binds the dimension and
-    // records the channel as an equal reading, `prodejna` alone still asks. Dropping the word
+    // records the channel as an equal reading (superseded: since ttr-demo#62 it is a declared
+    // phrase, the channel's measure), `prodejna` alone still asks. Dropping the word
     // would erase the channel meaning instead of differentiating it (design.md T1 §4).
     // See project/server/features/mention-homonymy/.
+    //
+    // ttr-demo#62: the bare word's case forms are on `store_revenue_cs` below (the channel's MEASURE)
+    // and on `store_dimension_cs`, not here; this term keeps master's forms.
     // ttr-disable-next-line lexicon-form-collides-with-name
     forms: ["prodejna", "kamenná prodejna", "obchod"]
 }
@@ -41,6 +45,33 @@ def term store_dimension_cs {
     // quoted literal to. This term gives the dimension its own Czech form. The word is claimed
     // by both refs ON PURPOSE (MH-D6): the MH resolver decides from the sentence, and the
     // channel term keeps its meaning. Only the bare word; no invented synonyms.
+    //
+    // ttr-demo#62: and its case forms — the same list as store_revenue_cs below, for the reason given
+    // there. GROUPING and COUNT choose this dimension; see store_revenue_cs.
     // ttr-disable-next-line lexicon-form-collides-with-name
-    forms: ["prodejna"]
+    forms: ["prodejna", "prodejny", "prodejně", "prodejnu", "prodejnou", "prodejen", "prodejnám", "prodejnách", "prodejnami"]
+}
+
+def term store_revenue_cs {
+    description: "prodejna — the store channel's revenue (the bare word's measure reading)"
+    for: er.entity.store_sales.ext_sales_price
+    // ttr-demo#62 (Bora, 2026-10-12): a bare store word reads by its ROLE. Grouped by („podle
+    // prodejen“) it is the dimension, counted („kolik prodejen“) it is the dimension, as a
+    // restriction it asks between the dimension and the store channel ("store revenue"), and a
+    // declared phrase („tržba z prodejen“) is this measure. So every case of the word carries BOTH
+    // readings — this one and store_dimension_cs's — and the resolver's slot decides.
+    //
+    // Why declared as written: until #62 «prodejen» met only a TOKENS word of «obrat z prodejen»
+    // (this same measure, 1.003), and the dimension reached it through the lemma alone, 0.1 lower
+    // and out of the tie band — so the measure bound alone in every role. Declared here, both
+    // readings tie in the EXACT class, which outranks a TOKENS hit.
+    //
+    // Why the MEASURE and not the channel entity (`store_channel_cs`): the measure is what the word
+    // bound live in every role, and the ruling's second reading is "store revenue". Every position
+    // the ruling does not decide (a restriction under a measure, a word the parse hangs off another
+    // mention) therefore reads exactly as it does today. For the citation form `prodejna` the entity
+    // term above still matches too, and the resolver folds it into this measure: declared
+    // containment, the entity owns the attribute.
+    // ttr-disable-next-line lexicon-form-collides-with-name
+    forms: ["prodejna", "prodejny", "prodejně", "prodejnu", "prodejnou", "prodejen", "prodejnám", "prodejnách", "prodejnami"]
 }

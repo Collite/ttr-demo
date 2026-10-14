@@ -1,12 +1,19 @@
 id: a2-4a-by-store-asks
-title: „prodejny“ / store — the dimension or the channel? Asked with 0 LLM calls
+title: „prodejen“ / store as a GROUPING — the store dimension, six rows by name, no ask
 act: '2.4'
 shape: homonym
 question:
   cs: Tržby podle prodejen v roce 2025
   en: Revenue by store in 2025
-expected_route: ASK
-session: a2-4
-xfail:
-  cs: 'ttr-demo#62 — „prodejna“ binds the store_sales measure / entity, store names are not members: the 2.4 ask is gone'
-  en: "ttr-demo#62 — `store` binds the store_sales measure, store names are not members: no ask"
+expected_route: LLM
+validation: store-revenue-2025-by-store.yaml
+notes: |
+  ttr-demo#62, ruled 2026-10-12 (Bora): a bare store word reads by its role. Grouped by („podle prodejen“,
+  "by store") it is the store dimension and nothing asks. The 2.4 ask moved to a FILTER phrasing
+  (a2-4a-filter-asks); the id keeps its old name so the baselines still line up.
+  LLM, not FAST: all-channel revenue (`channel_sales`) has no relation to the store (`channel_sales.store_sk`
+  is ruled out for now), so the composer answers it, and it does so correctly.
+  Measured 2026-10-14 (cz, golem 0.11.37, resolver 0.11.21): LLM · NO_OBJECT_BINDING, 6 rows, right — but the
+  lattice read `prodejen` as the store_sales MEASURE (a TOKENS hit on «obrat z prodejen»). With #62's lexicon,
+  on a local resolver (0.11.21 code): `prodejen` → er.entity.store, GROUPING. en (2026-10-12 baseline): the same
+  route and rows, `store` → er.entity.store, GROUPING.
