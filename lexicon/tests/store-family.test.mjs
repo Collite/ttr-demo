@@ -163,3 +163,30 @@ test('#62 — «vratka / vratky / vratek z <kanálu>» is that channel\'s return
   }
   assert.deepEqual(problems, [], problems.join('; '));
 });
+
+// The saved queries' own Czech wording — description, patterns, examples — names the store channel by the
+// DECLARED phrase («tržby z prodejen»), never as a bare «prodejen» restricting revenue («tržby prodejen»).
+// Under the ruling that bare word is a FILTER, and a FILTER asks between the store dimension and the store
+// channel; a query's example is what golem offers as a follow-up chip and what its corpus case asks
+// (`p-store-sales-by-month`), so an example that asks is a query nobody reaches. Line-oriented over the
+// strings of model/queries/q_hartland.ttrm, folded (diacritics off, lower case), as the patterns are written.
+const queriesFile = path.join(repoRoot, 'model', 'queries', 'q_hartland.ttrm');
+const fold = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const BARE_STORE_AFTER_REVENUE = /\b(trzb[a-z]*|obrat[a-z]*) (prodejen|prodejny|prodejnam|prodejnach|prodejnami|prodejne|prodejnu|prodejnou|prodejna)\b/;
+
+test('#62 — no saved query words the store channel as a bare «prodejen» restricting revenue; store_sales_by_month uses «tržby z prodejen»', () => {
+  const text = readFileSync(queriesFile, 'utf-8');
+  const offenders = [];
+  for (const [i, line] of text.split('\n').entries()) {
+    for (const m of line.matchAll(/"([^"]*)"/g)) {
+      if (BARE_STORE_AFTER_REVENUE.test(fold(m[1]))) offenders.push(`q_hartland.ttrm:${i + 1}: «${m[1]}»`);
+    }
+  }
+  assert.deepEqual(offenders, [], offenders.join('; '));
+
+  const block = text.slice(text.indexOf('def query store_sales_by_month'), text.indexOf('def query customer_running_total'));
+  const examples = [...block.slice(block.indexOf('examples:')).matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+  const cs = examples.filter((e) => /[ěščřžýáíéůú]/i.test(e));
+  assert.ok(cs.length > 0, `store_sales_by_month has no Czech example: ${examples.join(' | ')}`);
+  for (const e of cs) assert.ok(fold(e).includes('trzby z prodejen'), `the Czech example «${e}» does not name the store channel by «tržby z prodejen»`);
+});

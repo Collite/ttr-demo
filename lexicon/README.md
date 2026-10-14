@@ -83,14 +83,14 @@ store word reads by its role). Built with the **pinned** toolchain `grammar/v0.1
 
 | | |
 |---|---|
-| archive id | `sha256:cbd7470402ac2aab66e927a3cefb14d3b6676f8894fc23d22f0d69fcf9e5b21c` |
-| model id | `sha256:68a54a22841c4d85804260a10a4487c22808d9678e1a14c18d2913f7805c488e` (was `10cb6460…`) |
+| archive id | `sha256:1955aa5486b1252e564560bb28009cd8e3c42113a2a6684c922bba3a3588e244` |
+| model id | `sha256:d605fb2a9b40fe398e1fc6c84a3bd5dbb7fb98ebc56d1ccb1b339e5252da96ff` (was `10cb6460…`) |
 | schema | `ttr-lexicon-compiled/v5` |
 | toolchain | `Collite/ttr-core` **`grammar/v0.15.0`** |
 | entries | **520** (was 492) — 28 more `MODEL_OBJECT` (one relabelled) |
 | build warnings | **24** (was 4) — see below |
 | targets | 102 (was 99) — the three `*_returns.return_amt`, kind `measure` |
-| size | 10,345 bytes |
+| size | 10,340 bytes |
 
 What changed, row by row (`lexicon/tests/store-family.test.mjs` asserts each one against this archive):
 
@@ -121,7 +121,9 @@ the ruling's or explained in ttr-demo#73; two master runs differ in none.
 ⚑ **The 20 new warnings are deliberate.** Each is `RG-LEXC-004`, a case form claimed by both the dimension and the
 store-channel measure (and the citation form by the channel entity too), which is the collision this change exists
 to create; the four from before are unchanged. The model id moved for the lexicon terms, the store's SCD-2 history
-columns (`rec_start_date` / `rec_end_date`, `valid_from` / `valid_to`) and the store_sales label.
+columns (`rec_start_date` / `rec_end_date`, `valid_from` / `valid_to`), the store_sales label, and
+`q.hartland.store_sales_by_month`'s Czech wording, which now names the channel by «tržby z prodejen» (its
+description, patterns and example; a bare «tržby prodejen» is a store-word FILTER, which asks).
 
 ### 2026-10-11 (night)
 
