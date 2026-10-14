@@ -454,7 +454,7 @@ def query warehouse_stockout_week_count {
     search {
         patterns: [
             "(how many |)stockout weeks (at|for|did) {warehouse}",
-            "(how many |)weeks (did |){warehouse} (have |)(a |)stock ?outs?",
+            "(how many |)weeks (did |){warehouse} (have |)(a |)stock( |)out(s|)",
             "kolik tydnu (melo |mel |mela |)(dc |sklad |){warehouse} vypadky zasob",
             "vypadky zasob (v |ve |)(dc |skladu |){warehouse}"
         ],

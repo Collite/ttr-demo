@@ -265,6 +265,13 @@ test('T6.9 — every query pattern compiles the way veles compiles it: no placeh
         problems.push(`${at} — group ${[...new Set(twice)].join(', ')} named twice (Java refuses it; veles drops the pattern)`);
         continue;
       }
+      // `\ . * + ? [ ] ^ $` are escaped, so each is matched as the character itself: `stock ?outs?`
+      // asked for a literal "?" and never matched "stockouts". `( |)` / `(s|)` say "optional".
+      const literal = pattern.replace(CURLY_PARAM, '').replace(AT_PARAM, '').match(/[\\.*+?[\]^$]/g);
+      if (literal) {
+        problems.push(`${at} — ${[...new Set(literal)].join(' ')} is matched literally (veles escapes it); write ( |) / (s|) instead`);
+        continue;
+      }
       const { source } = buildCapturingRegex(pattern);
       try {
         new RegExp(source, 'i');
@@ -281,6 +288,21 @@ test('T6.9 — every query pattern compiles the way veles compiles it: no placeh
     }
   }
   assert.deepEqual(problems, [], `patterns veles would drop or match short:\n${problems.join('\n')}`);
+});
+
+test('T6.11 — warehouse_stockout_week_count: its en phrasings with "stockouts" are matched', () => {
+  // 2026-10-14 (ttr-demo#72 review). `…(a |)stock ?outs?` was escaped to a literal "stock ?outs?", so no
+  // question ever matched it; only its "stockout weeks" twin did.
+  const def = queryNamed('warehouse_stockout_week_count');
+  const compiled = def.search.patterns.map((p) => new RegExp(buildCapturingRegex(p).source, 'i'));
+  for (const question of [
+    'How many weeks did Memphis DC have stockouts in 2025?',
+    'How many weeks did Memphis DC have a stock out?',
+  ]) {
+    const hit = compiled.map((re) => re.exec(fold(question))).find((m) => m?.groups?.warehouse);
+    assert.ok(hit, `no pattern matches ${question}`);
+    assert.equal(hit.groups.warehouse, 'memphis dc', `${question}: extracted ${JSON.stringify(hit.groups)}`);
+  }
 });
 
 test('T6.10 — category_revenue: each example is matched whole and gives its channel and year', () => {
