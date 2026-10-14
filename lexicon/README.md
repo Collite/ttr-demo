@@ -80,14 +80,16 @@ step rather than a local recipe.
 
 From `just build-lexicon`, **2026-10-14**: no lexicon change. The archive embeds the model snapshot, and
 `q.hartland.category_revenue`'s `search` block changed: its examples and patterns now say what it answers
-(revenue by category for one channel in one year), and the "drop" / „propad“ ones are gone. Query patterns
-and examples are not vocabulary, so the entry table is byte-identical; only the model id moved. Built with
-the **pinned** toolchain `grammar/v0.15.0` (the model gate's pin since `cadf369`):
+(revenue by category for one channel in one year), and the "drop" / „propad“ ones are gone. After review, its
+patterns are two per language, each naming a placeholder once and ending with its last one (veles refused the cs
+one, a group named twice, and matched the en one short). Query patterns and examples are not vocabulary, so the
+entry table is byte-identical; only the model id moved. Built with the **pinned** toolchain `grammar/v0.15.0`
+(the model gate's pin since `cadf369`):
 
 | | |
 |---|---|
-| archive id | `sha256:6f463974e18caa03b58abcd8194d89922d9f60c6bb60f9d70794e2e3ee0ac219` |
-| model id | `sha256:3268a6873a64de2edfff036d298db1ff1e18a3a83646160fa6c694c73a870c6a` (was `10cb6460…`) |
+| archive id | `sha256:c7724d728ca771c636061935779574e3723aba1fb563f9427ac23777b0e6a53f` |
+| model id | `sha256:1acc734a172c6266ea502318831a3d0b86f318fa9ede06f13f5febf35f00fa10` (was `10cb6460…`) |
 | schema | `ttr-lexicon-compiled/v5` |
 | toolchain | `Collite/ttr-core` **`grammar/v0.15.0`** (= `a0ab059`) |
 | entries | **492** (unchanged) — the per-class counts are unchanged too |

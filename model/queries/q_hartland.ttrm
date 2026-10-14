@@ -183,6 +183,10 @@ def query category_revenue {
     // is false in both worlds, too: H2 2025 is ~2.3× H1). Every example names a channel and a year — both
     // are required — and golem shows the FIRST example as a follow-up chip, verbatim. Guarded by
     // model/queries/tests/queries.test.mjs T6.7; the corpus case p-category-revenue asks the examples (T6.8).
+    // Each pattern names a placeholder once and ends with its last one: veles (ttr-metadata RegexAlgorithm)
+    // refuses a group named twice, and only a placeholder that ends the pattern captures greedily, so an
+    // optional `( in {year}|)` tail left `{channel}` one character long. The year-and-channel pattern comes
+    // first because veles keeps the first of two whole matches (T6.9, T6.10).
     description: {
         en: "Revenue by product category for one channel. One row per category in a year, the largest first.",
         cs: "Tržby podle kategorie produktu pro jeden kanál. Jeden řádek za kategorii v daném roce, největší první."
@@ -210,8 +214,10 @@ def query category_revenue {
     """
     search {
         patterns: [
-            "revenue by (product |)category (for |)(channel |){channel}( in {year}|)",
-            "trzby (podle|dle) kategorie (pro |)(kanal |){channel}( v roce {year}| za rok {year}|)"
+            "revenue by (product |)category (for |)(channel |){channel} in {year}",
+            "revenue by (product |)category (for |)(channel |){channel}",
+            "trzby (podle|dle) kategorie (pro |)(kanal |){channel} (v roce|za rok) {year}",
+            "trzby (podle|dle) kategorie (pro |)(kanal |){channel}"
         ],
         examples: [
             "Revenue by category for Web in 2025",
