@@ -66,19 +66,26 @@ test('control — the archive decodes, and a row every build carries is in it', 
 
 // Every case of „prodejna“, singular and plural (the vocative left out). The corpus asks
 // «prodejen» (2.4, E1, E3, E6) and «prodejny» (E4, E5); the rest is the same word.
+//
+// The two readings the ruling names: the store DIMENSION, and the store channel as "store revenue" —
+// its MEASURE, which is what the bare word bound live in every role (through a TOKENS hit). Keeping the
+// measure as the second reading leaves every non-GROUPING, non-COUNT position as it reads live today;
+// only the slots the ruling decides move. The citation form also keeps master's channel ENTITY term
+// (`store_channel_cs`), which the resolver folds into its own measure (declared containment).
 const PRODEJNA_FORMS = ['prodejna', 'prodejny', 'prodejně', 'prodejnu', 'prodejnou', 'prodejen', 'prodejnám', 'prodejnách', 'prodejnami'];
-const BOTH_READINGS = ['er.entity.store', 'er.entity.store_sales'];
+const STORE_READINGS = ['er.entity.store', 'er.entity.store_sales.ext_sales_price'];
 
-test('#62 — every case form of «prodejna» is an EXACT declared term of BOTH the store dimension and the store channel', () => {
+test('#62 — every case form of «prodejna» is an EXACT declared term of BOTH the store dimension and the store-channel measure', () => {
   const problems = [];
   for (const form of PRODEJNA_FORMS) {
     const rows = rowsOf(form, isCs);
-    for (const ref of BOTH_READINGS) {
-      const row = rows.find((e) => e.targetRef === ref);
-      if (!row) problems.push(`«${form}» does not reach ${ref}`);
-      else if (row.method !== 'EXACT' || row.sourceTag !== 'DECLARED') problems.push(`«${form}» → ${ref} is ${row.sourceTag}/${row.method}, not DECLARED/EXACT`);
+    for (const ref of STORE_READINGS) {
+      const row = rows.find((e) => e.targetRef === ref && e.sourceTag === 'DECLARED');
+      if (!row) problems.push(`«${form}» does not reach ${ref} (declared)`);
+      else if (row.method !== 'EXACT') problems.push(`«${form}» → ${ref} is ${row.method}, not EXACT`);
     }
-    const stray = rows.filter((e) => !BOTH_READINGS.includes(e.targetRef)).map((e) => e.targetRef);
+    const allowed = form === 'prodejna' ? [...STORE_READINGS, 'er.entity.store_sales'] : STORE_READINGS;
+    const stray = rows.filter((e) => !allowed.includes(e.targetRef)).map((e) => e.targetRef);
     if (stray.length) problems.push(`«${form}» also reaches ${stray.join(', ')}`);
   }
   assert.deepEqual(problems, [], problems.join('; '));
@@ -88,7 +95,7 @@ test('#62 — en «stores» keeps both readings (the dimension label and the cha
   // The en half already had the shape the cs half gains: live, "Revenue by stores in 2025" binds the
   // dimension (GROUPING) and the bare "Stores" asks (G2). A guard, so neither reading goes missing.
   const refs = new Set(rowsOf('stores', isEn).map((e) => e.targetRef));
-  for (const ref of BOTH_READINGS) assert.ok(refs.has(ref), `"stores" does not reach ${ref}`);
+  for (const ref of ['er.entity.store', 'er.entity.store_sales']) assert.ok(refs.has(ref), `"stores" does not reach ${ref}`);
 });
 
 test('#62 — the plural «tržby z prodejen» is the store-channel MEASURE, and no label claims it for the entity', () => {
@@ -100,25 +107,53 @@ test('#62 — the plural «tržby z prodejen» is the store-channel MEASURE, and
   assert.equal(lexicon.targets['er.entity.store_sales.ext_sales_price']?.objectKind, 'measure');
 });
 
-// „vratka / vratky“ — the returns MEASURE of each channel, the shape the revenue phrases have. Only
-// the store phrase is attested («Vratky z prodejen», MH E6); the web and marketplace twins are there
-// so that the bare word stays undecided. «vratek» (genitive plural) is declared as written: MorphoDiTa
-// lemmatises it to «vratek», not «vratka», so neither the anchor nor the lemma axis reaches it otherwise. A TOKENS phrase is also reached by ONE of its words: with
-// only the store phrase declared, a bare «vratky» would bind the store channel's returns uniquely —
-// a guess. Three channels make it non-discriminative, and the matcher says so (auto_bindable=false).
+// A TOKENS term is reached by ONE of its words, not only as the whole phrase. That is how an inflected
+// channel word binds live: «webu», «tržišti», «prodejen» are not terms, and each reaches its channel's
+// revenue through the TOKENS phrases it appears in («tržby z webu», «obrat z tržiště», …). It works
+// only while every TOKENS phrase holding the word targets ONE ref; a second target makes the word
+// non-discriminative (auto_bindable=false), and it binds nothing (G1). The first build of #62 broke
+// exactly this: its TOKENS returns phrases («vratky z webu») tied «webu» and «tržišti» with the returns
+// measures, and «A na webu?», «… na tržišti …» went G1.
+const CHANNEL_WORDS = {
+  webu: 'er.entity.web_sales.ext_sales_price',
+  tržiště: 'er.entity.catalog_sales.ext_sales_price',
+  prodejen: 'er.entity.store_sales.ext_sales_price',
+};
+
+test('#62 — a channel word reaches ONE target through the TOKENS phrases holding it («webu», «z webu», «tržiště», «z tržiště», …)', () => {
+  const problems = [];
+  const tokensRows = lexicon.entries.filter((e) => e.method === 'TOKENS' && isCs(e));
+  for (const [word, ref] of Object.entries(CHANNEL_WORDS)) {
+    for (const probe of [word, `z ${word}`]) {
+      const holding = tokensRows.filter((e) => ` ${e.termNormalized} `.includes(` ${probe} `));
+      const refs = [...new Set(holding.map((e) => e.targetRef))];
+      if (!holding.length) problems.push(`no TOKENS phrase holds «${probe}» (the control is gone)`);
+      else if (refs.length !== 1 || refs[0] !== ref) problems.push(`«${probe}» reaches ${refs.join(', ')} through ${holding.map((e) => `«${e.termNormalized}»`).join(', ')}`);
+    }
+  }
+  assert.deepEqual(problems, [], problems.join('; '));
+});
+
+// „vratka / vratky“ — the returns MEASURE of each channel. Only the store phrase is attested («Vratky
+// z prodejen», MH E6); the web and marketplace twins keep the three channels symmetric. They match as
+// WHOLE phrases (the file's default profile, not TOKENS), for the reason the test above states: a
+// TOKENS returns phrase is reached by its channel word, and by «vratky» alone. «vratek» (genitive
+// plural) is declared as written: MorphoDiTa lemmatises it to «vratek», not «vratka».
 const RETURNS = {
   prodejen: 'er.entity.store_returns.return_amt',
   webu: 'er.entity.web_returns.return_amt',
   tržiště: 'er.entity.catalog_returns.return_amt',
 };
 
-test('#62 — «vratka / vratky z <kanálu>» is that channel\'s returns measure; the bare word is not a term', () => {
+test('#62 — «vratka / vratky / vratek z <kanálu>» is that channel\'s returns measure, as a whole phrase; the bare word is not a term', () => {
   const problems = [];
   for (const [channel, ref] of Object.entries(RETURNS)) {
     for (const head of ['vratky', 'vratka', 'vratek']) {
       const term = `${head} z ${channel}`;
-      const refs = [...new Set(rowsOf(term, isCs).map((e) => e.targetRef))];
+      const rows = rowsOf(term, isCs);
+      const refs = [...new Set(rows.map((e) => e.targetRef))];
       if (refs.length !== 1 || refs[0] !== ref) problems.push(`«${term}» → ${refs.join(', ') || 'nothing'}`);
+      for (const e of rows) if (e.method === 'TOKENS') problems.push(`«${term}» is TOKENS: «${channel}» and «${head}» alone would reach it`);
     }
     if (lexicon.targets[ref]?.objectKind !== 'measure') problems.push(`${ref} is ${lexicon.targets[ref]?.objectKind ?? 'not a target'}, not a measure`);
   }
