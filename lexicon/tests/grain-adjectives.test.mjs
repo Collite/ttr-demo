@@ -15,33 +15,8 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { zstdDecompressSync } from 'node:zlib';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { isCs, lexicon } from './archive.mjs';
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const archivePath = path.join(repoRoot, 'generated', 'lexicon.tar.zst');
-
-/** The members of a plain ustar archive (what the lexicon packer writes), by name. */
-function untar(buf) {
-  const files = new Map();
-  for (let off = 0; off + 512 <= buf.length; ) {
-    const header = buf.subarray(off, off + 512);
-    if (header.every((b) => b === 0)) break;
-    const field = (start, len) => header.subarray(start, start + len).toString('utf-8').replace(/\0.*$/s, '');
-    const name = [field(345, 155), field(0, 100)].filter(Boolean).join('/');
-    const size = parseInt(field(124, 12).trim() || '0', 8);
-    const type = field(156, 1);
-    off += 512;
-    if (type === '0' || type === '') files.set(name, buf.subarray(off, off + size));
-    off += Math.ceil(size / 512) * 512;
-  }
-  return files;
-}
-
-const lexicon = JSON.parse(untar(zstdDecompressSync(readFileSync(archivePath))).get('docs/lexicon.json').toString('utf-8'));
-const isCs = (e) => e.lang.split('|').includes('cs');
 const rowsOf = (term) => lexicon.entries.filter((e) => e.termNormalized === term && isCs(e));
 
 /** The six case forms of a soft adjective (jarní type), singular and plural share them. */
@@ -154,4 +129,44 @@ test('#237 — every grain adjective is still read as written and without diacri
     if (!reaches(row, folded(row.termNormalized))) problems.push(`${row.termNormalized}: not without diacritics`);
   }
   assert.deepEqual(problems, []);
+});
+
+// The test above asks the GRAIN rows about a fixed list of neighbours. A grounding-trigger row has a
+// profile of its own, and the other direction is what a term-by-term check cannot see: a trigger whose
+// typo budget reaches a grain adjective. The resolver asks the trigger class about every broad-pass
+// candidate (`GroundingTriggers`), so once a form is declared, a trigger one edit from it gives the word
+// a period reading beside the breakdown — the reading this change keeps off it.
+//
+// One such row exists, and it is not this repo's: the stdlib's chrono trigger `čtvrtletí` (TYPOS(1)) is
+// one edit from `čtvrtletní` (an inserted `n`). lex-matcher answers «čtvrtletní» with it at 0.95
+// (recorded in ttr-server's `declared-phrase-modifier` resolver fixtures). This repo cannot narrow a
+// stdlib row, and keeping the adjective out of its reach would mean not declaring the adjective, so
+// keeping the trigger reading off a word that bound a grain attribute is the resolver's job
+// (ttr-server#239). The pin is exact: a trigger from this repo's own files, or any new collision, fails;
+// so does this one going away — then take it off the list.
+const KNOWN_TRIGGER_REACH = ['čtvrtletní ← čtvrtletí (ground:chrono, TYPOS(1), stdlib/grounding/chrono.lex.yaml)'];
+
+const triggerRows = () => lexicon.entries.filter((e) => e.targetClass === 'GROUNDING_TRIGGER' && isCs(e));
+
+test('#237 — no grounding trigger reaches a grain adjective, but the one stdlib row the resolver handles', () => {
+  const reached = [];
+  for (const row of triggerRows()) {
+    for (const word of Object.values(GRAINS).flat()) {
+      if (reaches(row, word)) {
+        reached.push(`${word} ← ${row.termNormalized} (${row.targetRef}, ${row.method}, ${row.provenance?.file})`);
+      }
+    }
+  }
+  assert.deepEqual(reached, KNOWN_TRIGGER_REACH);
+});
+
+test('#237 — no grain adjective reaches a grounding trigger\'s term: the period words stay the kernels\'', () => {
+  assert.ok(triggerRows().length > 0, 'no cs grounding-trigger rows in the archive');
+  const reached = [];
+  for (const row of grainRows()) {
+    for (const trigger of triggerRows()) {
+      if (reaches(row, trigger.termNormalized)) reached.push(`${trigger.termNormalized} → ${row.termNormalized} (${row.targetRef})`);
+    }
+  }
+  assert.deepEqual(reached, []);
 });
