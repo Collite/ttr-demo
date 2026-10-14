@@ -176,6 +176,13 @@ def query channel_revenue_monthly_yoy {
 
 def query category_revenue {
     // Demo notes (not shown to users): category drill (drop spans categories).
+    //
+    // 2026-10-14 — the examples and patterns say what the query answers: revenue per category for ONE
+    // channel in ONE whole year. It computes no drop and takes no half-year, so "which categories drove
+    // the H2 2025 drop" / „které kategorie způsobily propad v 2. pol. 2025“ is gone from both (its premise
+    // is false in both worlds, too: H2 2025 is ~2.3× H1). Every example names a channel and a year — both
+    // are required — and golem shows the FIRST example as a follow-up chip, verbatim. Guarded by
+    // model/queries/tests/queries.test.mjs T6.7; the corpus case p-category-revenue asks the examples (T6.8).
     description: {
         en: "Revenue by product category for one channel. One row per category in a year, the largest first.",
         cs: "Tržby podle kategorie produktu pro jeden kanál. Jeden řádek za kategorii v daném roce, největší první."
@@ -203,15 +210,12 @@ def query category_revenue {
     """
     search {
         patterns: [
-            "revenue by (product |)category (for |)(channel |){channel}",
-            "which (category|categories) (drove|caused) the (drop|decline)",
-            "trzby (podle|dle) kategorie (pro |)(kanal |){channel}",
-            "ktere kategorie (zpusobily|zapricinily) (propad|pokles)"
+            "revenue by (product |)category (for |)(channel |){channel}( in {year}|)",
+            "trzby (podle|dle) kategorie (pro |)(kanal |){channel}( v roce {year}| za rok {year}|)"
         ],
         examples: [
-            "Which categories drove the H2 2025 drop?",
-            "Revenue by category for Web",
-            "Které kategorie způsobily propad v 2. pol. 2025?"
+            "Revenue by category for Web in 2025",
+            "Tržby podle kategorie pro web v roce 2025"
         ]
     }
     parameters: [

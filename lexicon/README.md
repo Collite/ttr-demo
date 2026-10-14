@@ -78,6 +78,24 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-14**: no lexicon change. The archive embeds the model snapshot, and
+`q.hartland.category_revenue`'s `search` block changed: its examples and patterns now say what it answers
+(revenue by category for one channel in one year), and the "drop" / „propad“ ones are gone. Query patterns
+and examples are not vocabulary, so the entry table is byte-identical; only the model id moved. Built with
+the **pinned** toolchain `grammar/v0.15.0` (the model gate's pin since `cadf369`):
+
+| | |
+|---|---|
+| archive id | `sha256:6f463974e18caa03b58abcd8194d89922d9f60c6bb60f9d70794e2e3ee0ac219` |
+| model id | `sha256:3268a6873a64de2edfff036d298db1ff1e18a3a83646160fa6c694c73a870c6a` (was `10cb6460…`) |
+| schema | `ttr-lexicon-compiled/v5` |
+| toolchain | `Collite/ttr-core` **`grammar/v0.15.0`** (= `a0ab059`) |
+| entries | **492** (unchanged) — the per-class counts are unchanged too |
+| build warnings | **4**, the same four |
+| size | 10,120 bytes |
+
+### 2026-10-11 (night)
+
 From `just build-lexicon`, **2026-10-11 (night)**: thirty entries fewer, none of them hartland's. The
 investment package (`model/investment/`, synced from kantheon) moved out of this repository with the
 investment estate's Shem and scripts, so its 30 `METADATA` rows (`asset`, `client`, `portfolio`,

@@ -6,7 +6,16 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { loadHartlandProject, ACCEPTED_RESIDUAL_CODES } from '../../tests/project-harness.mjs';
+import { readFile, readdir } from 'node:fs/promises';
+import path from 'node:path';
+import { loadHartlandProject, ACCEPTED_RESIDUAL_CODES, hartlandRoot } from '../../tests/project-harness.mjs';
+
+// js-yaml borrowed from the tatrman checkout the harness reads (TATRMAN_PACKAGES, else the sibling),
+// exactly as agents/tests/shems.test.mjs borrows it — for T6.8's routing cases.
+const tatrmanPackages = process.env.TATRMAN_PACKAGES ?? path.resolve(hartlandRoot, '../tatrman/packages');
+const yaml = await import(
+  path.resolve(tatrmanPackages, '../node_modules/.pnpm/js-yaml@4.1.1/node_modules/js-yaml/dist/js-yaml.mjs')
+);
 
 const EXPECTED_QUERIES = [
   'channel_revenue_monthly', 'channel_revenue_yoy', 'category_revenue',
@@ -109,4 +118,63 @@ test('T6.6 — no query carries the legacy `search { keywords }` sub-block (RS-3
   // estate serves still HAS a search block for the golem to match on.
   const without = allQueries().filter(({ def }) => def.search == null).map(({ def }) => def.name);
   assert.deepEqual(without, [], `queries with no search block at all — undiscoverable: ${without.join(', ')}`);
+});
+
+function queryNamed(name) {
+  const hit = allQueries().find(({ def }) => def.name === name);
+  assert.ok(hit, `no query ${name}`);
+  return hit.def;
+}
+
+/** Lower-cased words, Unicode-aware (`tržiště` is one word, `(drop|decline)` is two). */
+const words = (s) => s.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+
+test('T6.7 — category_revenue: every example names a channel and a year; no example or pattern promises a drop or a half-year', () => {
+  // 2026-10-14. The query answers revenue per category for ONE channel in ONE whole year — `{channel,
+  // year}`, both required, one row per category, the largest first. Its examples were "Which categories
+  // drove the H2 2025 drop?" / „Které kategorie způsobily propad v 2. pol. 2025?“: a drop it does not
+  // compute, a half-year it cannot take, and a premise false in both worlds (H2 2025 ≈ 2.3× H1). Asked
+  // live, the estate refused or asked back instead of answering. And golem shows a query's FIRST example
+  // as a follow-up chip, verbatim, so an example is a question the estate suggests to the user.
+  const def = queryNamed('category_revenue');
+  const examples = def.search?.examples ?? [];
+  const patterns = def.search?.patterns ?? [];
+  assert.ok(examples.length >= 2, 'category_revenue needs an en and a cs example');
+  assert.ok(patterns.length >= 1, 'category_revenue needs a pattern, or veles stops serving it as a pattern query');
+
+  const CHANNEL = new Set(['web', 'webu', 'marketplace', 'tržiště', 'tržišti', 'store', 'stores', 'prodejna', 'prodejny', 'prodejen']);
+  for (const ex of examples) {
+    const w = words(ex);
+    assert.ok(w.some((x) => CHANNEL.has(x)), `example names no channel (the query takes one, required): ${ex}`);
+    assert.ok(w.some((x) => /^\d{4}$/.test(x)), `example names no year (the query takes one whole year, required): ${ex}`);
+  }
+
+  const PROMISES = new Set([
+    'drop', 'drops', 'dropped', 'decline', 'declined', 'drove', 'caused', 'fell',
+    'propad', 'propadu', 'pokles', 'poklesu', 'způsobily', 'zpusobily', 'zapříčinily', 'zapricinily',
+    'h1', 'h2', 'half', 'pol', 'pololetí', 'pololeti',
+  ]);
+  for (const s of [...examples, ...patterns]) {
+    const hits = words(s).filter((x) => PROMISES.has(x));
+    assert.deepEqual(hits, [], `promises a drop or a half-year the query does not compute: ${s}`);
+  }
+});
+
+test('T6.8 — every pattern case of the routing corpus asks one of its saved query\'s own examples, cs and en', async () => {
+  // run-set/routing `p-*`: "one example question per saved query". The case and the examples move
+  // together — a changed example with a stale case measures a question the model no longer suggests.
+  const dir = path.join(hartlandRoot, 'run-set/routing/cases');
+  const files = (await readdir(dir)).filter((f) => f.startsWith('p-') && f.endsWith('.case.yaml')).sort();
+  assert.ok(files.length > 0, `no p-*.case.yaml under ${dir}`);
+  const misses = [];
+  for (const f of files) {
+    const c = yaml.load(await readFile(path.join(dir, f), 'utf-8'));
+    const tag = (c.tags ?? []).find((t) => t.startsWith('q.hartland.'));
+    assert.ok(tag, `${f}: no q.hartland.* tag names its saved query`);
+    const examples = queryNamed(tag.slice('q.hartland.'.length)).search?.examples ?? [];
+    for (const loc of ['cs', 'en']) {
+      if (!examples.includes(c.question?.[loc])) misses.push(`${f} ${loc}: ${JSON.stringify(c.question?.[loc])}`);
+    }
+  }
+  assert.deepEqual(misses, [], `cases asking a question that is not one of their query's examples:\n${misses.join('\n')}`);
 });
