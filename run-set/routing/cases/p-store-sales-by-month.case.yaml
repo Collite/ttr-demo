@@ -7,6 +7,7 @@ question:
 expected_route: LLM
 validation: non-empty.yaml
 xfail:
+  cs: "ttr-server#237 — „Měsíční“ in front of the declared „tržby z prodejen“ is dropped without a gap: FAST, one 12-month total instead of monthly rows"
   en: "ttr-server#152 — `by month` is also grounded as the current month: FAST, 1 row (October 2026)"
 tags:
 - q.hartland.store_sales_by_month
