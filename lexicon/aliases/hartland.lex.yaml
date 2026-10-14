@@ -286,8 +286,32 @@ entries:
   # ⚠ `week_seq` is an ABSOLUTE week counter from the start of the calendar, not a week-of-year
   # — the demo's "weeks 31–47" language reads off it directly (`data/recon/R0.md`), so the word
   # points there rather than at a derived week-of-year the model does not carry.
+  #
+  # ⚑ **The Czech grain ADJECTIVES, every case form (ttr-server#237).** „Měsíční tržby z tržiště
+  # v roce 2025“ asks for months, but the estate declared only the adverb and the phrase, so the
+  # adjective bound nothing: in front of a declared phrase it vanished and the question was
+  # answered as one total, and before a bare noun („Měsíční tržby“) the phrase was a G1. The
+  # resolver now reports such a word (ttr-server#239) and finds the grain only through a fuzzy
+  # match of the adverb. Declared here, it is an anchor of its own, as `monthly` is, and the
+  # resolver's R6" reads a calendar adjective bound to an attribute as the GROUPING. All six case
+  # forms of the soft declension (`-í`, `-ího`, `-ímu`, `-ím`, `-ích`, `-ími`), because a lookup
+  # of the written form meets the written form. No `denní` / `pololetní`: the estate declares no
+  # day or half-year grain, and an undeclared grain adjective is a G1 the user is asked about.
+  #
+  # ⛔ **No typo budget on these forms**, unlike the file default: exact as written, and the same
+  # without diacritics (0.90, the default's `folded` rule). Every form is listed, so a typo budget
+  # buys nothing — and each form is ONE edit from a word that is no grain: the time kernel's own
+  # period noun (`čtvrtletní`/`čtvrtletí`, `čtvrtletním`/`čtvrtletím`, `čtvrtletních`/`čtvrtletích`
+  # — «v prvním čtvrtletí» would have reached the quarter ATTRIBUTE beside chrono's trigger, or tied
+  # with it), `ročník`, `ruční`, `měsíčník`. `lexicon/tests/grain-adjectives.test.mjs` pins both.
   - terms:
       - { text: "měsíčně" }
+      - { text: "měsíční", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "měsíčního", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "měsíčnímu", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "měsíčním", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "měsíčních", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "měsíčními", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
       - { text: "po měsících", method: TOKENS }
       - { text: "monthly", lang: en }
       - { text: "by month", lang: en, method: TOKENS }
@@ -295,6 +319,12 @@ entries:
     target: er.entity.date_dim.month
   - terms:
       - { text: "ročně" }
+      - { text: "roční", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "ročního", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "ročnímu", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "ročním", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "ročních", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "ročními", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
       - { text: "po letech", method: TOKENS }
       - { text: "za rok", method: TOKENS }
       - { text: "yearly", lang: en }
@@ -303,12 +333,24 @@ entries:
     target: er.entity.date_dim.year
   - terms:
       - { text: "čtvrtletně" }
+      - { text: "čtvrtletní", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "čtvrtletního", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "čtvrtletnímu", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "čtvrtletním", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "čtvrtletních", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "čtvrtletními", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
       - { text: "po čtvrtletích", method: TOKENS }
       - { text: "quarterly", lang: en }
       - { text: "by quarter", lang: en, method: TOKENS }
     target: er.entity.date_dim.quarter
   - terms:
       - { text: "týdně" }
+      - { text: "týdenní", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "týdenního", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "týdennímu", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "týdenním", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "týdenních", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
+      - { text: "týdenními", match: [{ norm: canonical, exact: 1.00 }, { norm: folded, exact: 0.90 }] }
       - { text: "po týdnech", method: TOKENS }
       - { text: "weekly", lang: en }
       - { text: "by week", lang: en, method: TOKENS }
