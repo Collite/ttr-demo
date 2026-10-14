@@ -96,3 +96,62 @@ test('#237 — no day or half-year adjective: the estate declares no such grain,
     assert.deepEqual(rowsOf(word).filter((e) => e.targetRef.startsWith('er.')), [], word);
   }
 });
+
+// The words one edit from a grain adjective — the period nouns the time kernel owns (`čtvrtletí`, in
+// every case the adjective shares an ending with), and ordinary words that are no grain at all
+// (`ročník` a vintage, `ruční` manual, `měsíčník` a monthly magazine). Under the file's default profile
+// (`typos: { distance: 1 }`) each new row reached its neighbour: lex-matcher 0.11.3 answered
+// «čtvrtletí» with `čtvrtletní` → the quarter attribute at 0.95 beside chrono's own trigger, and
+// «čtvrtletím» with `čtvrtletním` → the quarter in a tie with that trigger; «ročník» reached the year.
+const NEIGHBOURS = [
+  'čtvrtletí', 'čtvrtletím', 'čtvrtletích', 'čtvrtletími',
+  'ročník', 'ročníku', 'ruční', 'ručním', 'ručních', 'měsíčník', 'měsíčníku',
+];
+
+const canonical = (s) => s.normalize('NFC').toLowerCase();
+const folded = (s) => s.normalize('NFD').replace(/\p{M}+/gu, '').toLowerCase();
+
+function editDistance(a, b) {
+  const row = [...Array(b.length + 1).keys()];
+  for (let i = 1; i <= a.length; i++) {
+    let diagonal = row[0];
+    row[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const above = row[j];
+      row[j] = Math.min(row[j] + 1, row[j - 1] + 1, diagonal + (a[i - 1] === b[j - 1] ? 0 : 1));
+      diagonal = above;
+    }
+  }
+  return row[b.length];
+}
+
+/** Whether a row's declared profile admits [query] — the rules RV-44 profiles state, read literally. */
+function reaches(row, query) {
+  return row.matchProfile.rules.some((rule) => {
+    const norm = rule.norm === 'folded' ? folded : canonical;
+    const [term, asked] = [norm(row.termNormalized), norm(query)];
+    if (rule.exact != null && term === asked) return true;
+    return rule.typos != null && editDistance(term, asked) <= rule.typos.distance;
+  });
+}
+
+const grainRows = () => Object.values(GRAINS).flat().flatMap((word) => rowsOf(word));
+
+test('#237 — no grain adjective reaches a word one edit away: the period noun stays the time kernel\'s', () => {
+  const reached = [];
+  for (const row of grainRows()) {
+    for (const word of NEIGHBOURS) {
+      if (reaches(row, word)) reached.push(`${word} → ${row.termNormalized} (${row.targetRef})`);
+    }
+  }
+  assert.deepEqual(reached, []);
+});
+
+test('#237 — every grain adjective is still read as written and without diacritics', () => {
+  const problems = [];
+  for (const row of grainRows()) {
+    if (!reaches(row, row.termNormalized)) problems.push(`${row.termNormalized}: not as written`);
+    if (!reaches(row, folded(row.termNormalized))) problems.push(`${row.termNormalized}: not without diacritics`);
+  }
+  assert.deepEqual(problems, []);
+});

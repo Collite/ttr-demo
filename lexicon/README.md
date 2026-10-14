@@ -83,13 +83,13 @@ toolchain `grammar/v0.15.1`, which first rebuilt master's archive byte for byte 
 
 | | |
 |---|---|
-| archive id | `sha256:584cbb7e8dbe78e7a1471c9b44327493ce4fe548591de1345890bb5653d742e5` |
+| archive id | `sha256:6f6bcb9b3f577b9b54aa5797bcf9556692aa3fbd56f5d822e1c1594fd7b93ef5` |
 | model id | `sha256:5459c860fec3e6c09854963d5fdec992aeabb4dede3a18024124dbd253253131` (unchanged: only `lexicon/aliases/` moved) |
 | schema | `ttr-lexicon-compiled/v5` (unchanged) |
 | toolchain | `Collite/ttr-core` **`grammar/v0.15.1`** |
-| entries | **600** (was 576) — **+24 `MODEL_OBJECT`** (213, was 189), all `DECLARED`, `TYPOS(1)`; every other class unchanged (`MEMBER` 100, `OPERATOR` 91, `GROUNDING_TRIGGER` 98, `STRING_PREDICATE` 98) |
+| entries | **600** (was 576) — **+24 `MODEL_OBJECT`** (213, was 189), all `DECLARED`, `EXACT` (+ the `folded` 0.90 reading); every other class unchanged (`MEMBER` 100, `OPERATOR` 91, `GROUNDING_TRIGGER` 98, `STRING_PREDICATE` 98) |
 | build warnings | **24**, the same 24 as before |
-| size | 12,224 bytes |
+| size | 12,246 bytes |
 
 The 24 rows are the six case forms (`-í`, `-ího`, `-ímu`, `-ím`, `-ích`, `-ími`) of the four calendar adjectives the
 estate has a grain for, in `aliases/hartland.lex.yaml` beside the adverb each grain already had: `měsíční…` →
@@ -99,7 +99,16 @@ adjective bound nothing — in front of a declared phrase it vanished and the qu
 before a bare noun („Měsíční tržby“, `p-channel-revenue-monthly`) the phrase was a G1. Declared, the adjective is an
 anchor of its own, as `monthly` is, and the resolver reads a calendar adjective bound to an attribute as the
 GROUPING (R6"). No `denní` / `pololetní`: the estate declares no day or half-year grain, so such a word stays a G1
-the user is asked about. `lexicon/tests/grain-adjectives.test.mjs` asserts every row against this archive.
+the user is asked about.
+
+⛔ **The forms carry no typo budget** (a term-level `match:` — exact as written, and `folded` at 0.90 for typing
+without diacritics — instead of the file default's one-edit `typos`). Every form is listed, so a budget buys nothing,
+and each form is one edit from a word that is no grain. With the default profile, lex-matcher 0.11.3 answered
+«čtvrtletí» (scoped to the quarter and chrono) with `čtvrtletní` → `date_dim.quarter` at 0.95 beside chrono's own
+trigger, «čtvrtletím» with `čtvrtletním` → the quarter in a 0.95 tie with that trigger, and «ročník», «ruční»,
+«měsíčník» with the year and the month, where master's archive has no row at all. With this profile each of those
+questions gets exactly master's rows. `lexicon/tests/grain-adjectives.test.mjs` asserts every row against this archive,
+and that no new row admits those neighbours.
 
 Measured offline (hartland was down): the resolver at ttr-server master + ttr-server#239, lex-matcher 0.11.3 with no
 nlp, the questions' recorded live parses. „Měsíční tržby“ → `Měsíční` → month GROUPING + `tržby` → the all-channel
