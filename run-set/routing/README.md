@@ -30,13 +30,23 @@ question:
 persona: analyst                     # analyst | dc_manager → personas.yaml → marketa/maya, petr/sam
 expected_route: FAST                 # FAST | LLM | ASK | REFUSE — the same in both worlds (C-9·2)
 expected_reason: PRIOR_VIEW          # LLM only, optional: the fall-through reason's prefix (C-1·3); or {cs: …, en: …}
-validation: marketplace-2025-by-month.yaml   # under validation/; none = the route is the assertion
+validation: marketplace-2025-by-month.yaml   # under validation/; none = the route is the assertion; or {cs: …, en: …}
 session: a4                          # optional: cases of one session run in one Iris session, in id order
-resume: {pick: {cs: místo, en: place}}   # instead of a question: answer the previous turn's ask
+resume: {pick: {cs: prodejna, en: store}}   # instead of a question: answer the previous turn's ask (below)
 xfail: {en: "ttr-server#152 — …"}    # a deviation with a FILED issue: XFAIL, not FAIL; XPASS when fixed
 notes: |
   …
 ```
+
+`expected_reason` and `validation` take one value for both languages, or `{cs: …, en: …}` where the two
+questions legitimately differ: n6b's „A loni?“ is deictic (the year before today) while "And the year before?"
+is anaphoric (the year before the conversation's period), so the follow-up validates against 2025 in cs and 2024
+in en.
+
+A `resume` answers the previous turn's ask: `pick` chooses one of its options, `free` types an answer. The pick
+takes the option whose label (the envelope's `display`) IS the pick, case-insensitively; only when no label is,
+the first option whose JSON contains it. Exact first, because a homonym's labels can share a word — the store
+ask offers "Store" / "Store Sales", and `store` is in both.
 
 Routes are read from the turn's protocol (`turnResolution.route`): `ROUTE_FAST_PATH` = FAST (the
 query door, 0 LLM calls), `ROUTE_LLM_COMPOSE` = LLM (the composer wrote the query or picked a saved

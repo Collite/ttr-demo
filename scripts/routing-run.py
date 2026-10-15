@@ -85,6 +85,16 @@ class Case:
     def xfail(self, locale: str) -> str | None:
         return (self.raw.get("xfail") or {}).get(locale)
 
+    def validation(self, locale: str) -> str | None:
+        """The validation file for this locale: one name for both, or {cs, en} where the right answer differs."""
+        v = self.raw.get("validation")
+        return v.get(locale) if isinstance(v, dict) else v
+
+    def validations(self) -> list[str]:
+        """Every validation file the case names, in either locale."""
+        v = self.raw.get("validation")
+        return sorted({x for x in (v.values() if isinstance(v, dict) else [v]) if isinstance(x, str) and x})
+
 
 def load_corpus(root: pathlib.Path) -> tuple[list[Case], dict, list[str]]:
     """(cases sorted by id, personas, schema problems). Problems never raise: `check` lists them all."""
@@ -125,8 +135,15 @@ def load_corpus(root: pathlib.Path) -> tuple[list[Case], dict, list[str]]:
                 problems.append(f"{where}: xfail key {loc!r} must be cs or en")
         if not raw.get("shape"):
             problems.append(f"{where}: shape is required (the shadow report groups by it)")
-        v = raw.get("validation")
-        if v:
+        named = raw.get("validation")  # one file for both languages, or {cs, en}
+        if isinstance(named, dict) and set(named) - {"cs", "en"}:
+            problems.append(f"{where}: validation keys must be cs / en")
+        for v in (named.values() if isinstance(named, dict) else [named]):
+            if not v:
+                continue
+            if not isinstance(v, str):
+                problems.append(f"{where}: validation {v!r} is not a file name")
+                continue
             vp = root / "validation" / v
             if not vp.exists():
                 problems.append(f"{where}: validation/{v} does not exist")
@@ -320,6 +337,25 @@ def classify(route: str | None) -> str:
     return ROUTE_CLASS.get(route or "", "NONE")
 
 
+def option_label(option: dict) -> str:
+    """What the user sees on an ask's option: the envelope's `ClarificationOption.display`."""
+    return option.get("display") or option.get("label") or ""
+
+
+def pick_option(options: list[dict], pick: str) -> dict | None:
+    """The option a case's `resume.pick` chooses: the one LABELLED the pick (case-insensitive), else the first
+    whose JSON contains it.
+
+    Exact first, because a homonym's options can share a word: the store ask offers "Store" and "Store Sales",
+    and `store` is in both, so containment alone picks by order.
+    """
+    want = norm(pick)
+    exact = next((o for o in options if norm(option_label(o)) == want), None)
+    if exact is not None:
+        return exact
+    return next((o for o in options if want in norm(json.dumps(o, ensure_ascii=False))), None)
+
+
 def verdict(route_ok: bool, reason_ok: bool, fails: list[str], error: str | None, xfail: str | None) -> str:
     ok = route_ok and reason_ok and not fails and not error
     if xfail:
@@ -438,10 +474,10 @@ class Cluster:
                     return turn
                 body: dict[str, Any] = {"sessionId": sid, "resumeToken": pending.resume_token}
                 if "pick" in resume:
-                    want = norm(resume["pick"].get(locale) if isinstance(resume["pick"], dict) else resume["pick"])
-                    opt = next((o for o in pending.options if want in norm(json.dumps(o, ensure_ascii=False))), None)
+                    want = resume["pick"].get(locale) if isinstance(resume["pick"], dict) else resume["pick"]
+                    opt = pick_option(pending.options, want)
                     if not opt:
-                        turn.error = f"resume: no option matches {want!r} in {[o.get('label') for o in pending.options]}"
+                        turn.error = f"resume: no option matches {want!r} in {[option_label(o) for o in pending.options]}"
                         return turn
                     body["selectedOptionId"] = opt.get("id") or opt.get("optionId")
                 else:
@@ -696,7 +732,7 @@ def score(c: Case, turn: Turn, world: str, locale: str, user: str, ref: dt.date,
     reason_ok = not want_reason or (turn.reason or "").startswith(want_reason)
     fails: list[str] = []
     core_rows = None
-    v = c.raw.get("validation")
+    v = c.validation(locale)
     if v and not turn.error:
         doc = load_yaml(root / "validation" / v)
         if doc.get("core"):
@@ -742,7 +778,7 @@ def shadow_score(c: Case, forced: Turn, primary: dict, ref, cluster, root, world
         return {**out, "verdict": "ERROR", "detail": forced.error}
     if not honoured:
         return {**out, "verdict": "NOT_HONOURED", "detail": "golem did not force the LLM lane (GOLEM_EVAL_FORCE_ROUTE off, or a golem older than kantheon#181)"}
-    v = c.raw.get("validation")
+    v = c.validation(locale)
     if not v:
         return {**out, "verdict": "UNSCORED", "detail": "no validation: the case asserts the route only"}
     doc = load_yaml(root / "validation" / v)
@@ -847,7 +883,7 @@ def check(args) -> int:
     for c in cases:
         by_route[c.raw.get("expected_route")] = by_route.get(c.raw.get("expected_route"), 0) + 1
     print(f"{'✗' if problems else '✓'} {len(cases)} cases ({', '.join(f'{k} {v}' for k, v in sorted(by_route.items(), key=str))}), "
-          f"{len({c.raw.get('validation') for c in cases if c.raw.get('validation')})} validations, {len(problems)} problems")
+          f"{len({v for c in cases for v in c.validations()})} validations, {len(problems)} problems")
     bad_core = 0
     for world in args.core:
         # --core <world>: run every validation's `core` against that world DB — the SQL half of the
