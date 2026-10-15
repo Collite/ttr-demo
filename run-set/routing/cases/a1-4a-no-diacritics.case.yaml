@@ -6,9 +6,13 @@ question:
   cs: trzby z trziste v roce 2025 po mesicich
   en: marketplace revenu in 2025 by month
 expected_route: LLM
-expected_reason: UNDECIDED_AXIS
+expected_reason:
+  cs: UNDECIDED_AXIS
+  en: COMPOSE_REFUSED
 validation: marketplace-2025-by-month.yaml
 xfail:
   en: "kantheon#191 — the typo binds another fact's measure; the door emits it as a value filter on itself and the turn fails"
 notes: |
   Ruled 2026-10-09 (Bora, the Czech grain phrases): without diacritics `po` reads both as a breakdown (distributive) and as a restriction („po roce 2020“), and when the two readings disagree the resolver keeps both and the composer decides (UNDECIDED_AXIS). So this one is the LLM lane by design; the answer must still be the monthly series.
+  en: the typo `revenu` is read as a value bound to a model object (a measure), not to a member. Such a value never
+  restricts, so the door's query cannot be composed (COMPOSE_REFUSED) and the composer answers — the en reason.
