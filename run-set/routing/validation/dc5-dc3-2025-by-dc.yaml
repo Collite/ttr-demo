@@ -1,0 +1,18 @@
+notes: |
+  All-channel revenue 2025 of two DCs, one row each: warehouse 5 (Brno DC / Memphis DC) and warehouse 3
+  (Plzeň DC / Reno DC), through the channel_sales view (the object the bare word „tržby“ / revenue binds). Only
+  web and marketplace lines carry a warehouse; a store line's is NULL, so no store revenue is in either row.
+core: |
+  SELECT w.w_warehouse_name AS dc, SUM(c.ext_sales_price) AS revenue
+  FROM channel_sales c
+  JOIN date_dim d ON c.sold_date_sk = d.d_date_sk
+  JOIN warehouse w ON c.warehouse_sk = w.w_warehouse_sk
+  WHERE d.d_year = 2025 AND c.warehouse_sk IN (3, 5)
+  GROUP BY w.w_warehouse_name
+assert:
+  row_count: 2
+  row_set:
+    keys:
+    - dc
+    value: revenue
+    tolerance: 0.001
