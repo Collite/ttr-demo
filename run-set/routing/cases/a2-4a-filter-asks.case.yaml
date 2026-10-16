@@ -9,7 +9,7 @@ expected_route: ASK
 session: a2-4
 xfail:
   cs: 'ttr-demo#62 (the resolver half) — a FILTER slot under a measure prefers the channel reading: `prodejen` binds the store-channel measure and nothing asks'
-  en: 'ttr-demo#62 (the resolver half) — a FILTER slot under a measure prefers the channel reading: `stores` binds store_sales and nothing asks'
+  en: 'ttr-demo#62 — not deployed when written: `stores` as a FILTER is a two-reading gap with a filter role, and golem carries it instead of asking (the golem-py twin of the fix: ttr-server#240); drop once a run passes'
 notes: |
   ttr-demo#62, ruled 2026-10-12 (Bora): a bare store word as a restriction asks, offering both readings — the
   store dimension and the store channel ("store revenue"). This is where the 2.4 homonymy ask moved. The

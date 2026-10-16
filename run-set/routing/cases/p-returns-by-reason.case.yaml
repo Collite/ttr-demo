@@ -6,6 +6,8 @@ question:
   en: Returns by reason for Marketplace
 expected_route: LLM
 validation: non-empty.yaml
+xfail:
+  cs: "ttr-server#232 — the composed SQL carries a bare JOIN (no ON) the model has no relation for: it runs as a Cartesian product, with no warning, and the query times out"
 tags:
 - q.hartland.returns_by_reason
 notes: |

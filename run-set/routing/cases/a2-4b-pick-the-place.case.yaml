@@ -4,15 +4,19 @@ act: '2.4'
 shape: homonym
 resume:
   pick:
-    cs: místo
-    en: place
+    cs: prodejna
+    en: store
 expected_route: LLM
 validation: store-revenue-2025-by-store.yaml
 session: a2-4
 xfail:
-  cs: 'ttr-demo#62 (the resolver half) — the FILTER phrasing does not ask yet (a2-4a-filter-asks), so there is nothing to pick'
-  en: 'ttr-demo#62 (the resolver half) — the FILTER phrasing does not ask yet (a2-4a-filter-asks), so there is nothing to pick'
+  cs: 'ttr-demo#62 / ttr-server#236 — not deployed when written: the FILTER phrasing does not ask yet (a2-4a-filter-asks), and its options get their display labels in the same deploy, so there is nothing to pick; drop once a run passes'
+  en: 'ttr-demo#62 — not deployed when written: `stores` as a FILTER is a two-reading gap with a filter role, and golem carries it instead of asking (the golem-py twin of the fix: ttr-server#240), so there is nothing to pick; drop once a run passes'
 notes: |
-  The option label is matched by substring; if the ask's wording changes, change the pick.
+  The pick takes the option LABELLED „prodejna“ / "store" (case-insensitive); only when no label is the pick does
+  the runner fall back to the first option whose JSON contains it. golem labels the two readings of the store word
+  by their display labels — cs „Prodejna“ / „Prodeje v prodejnách“, en "Store" / "Store Sales" — so en `store`
+  is in both labels and only the exact rule picks the dimension whatever the order. The earlier pick „místo“ /
+  "place" could never match: nothing in the model calls a store a place. If the ask's labels change, change the pick.
   ttr-demo#62 (2026-10-12): it answers the FILTER ask now (a2-4a-filter-asks), since the GROUPING question no
   longer asks. LLM, not FAST: revenue by store goes to the composer (`channel_sales.store_sk` is ruled out).

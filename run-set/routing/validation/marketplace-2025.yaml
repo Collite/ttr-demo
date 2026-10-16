@@ -1,3 +1,6 @@
+notes: |
+  The elliptic pair's base (n6a), and its cs follow-up „A loni?“ (n6b): „loni“ is deictic, the year before
+  today, so in 2026 it is 2025 again.
 core: |
   SELECT SUM(cs.cs_ext_sales_price) AS revenue
   FROM catalog_sales cs
