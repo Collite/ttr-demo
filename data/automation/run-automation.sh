@@ -20,9 +20,10 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=lib.sh
 source "$DIR/lib.sh"
 
-# The build, in order. Every script records its step in `_automation_meta`; the views come after the tables
-# they read, the keys after the data (one validating scan each, not a trigger check per inserted row).
-STEPS="10-ddl 20-orders 21-pricing 22-invoices 23-outages 24-centers 25-calendar 26-stock"
+# The build, in order. Every script records its step in `_automation_meta`; 45-verify replays the recipes over
+# the plants and fails the build on any disagreement; the views come after the tables they read, the keys after
+# the data (one validating scan each, not a trigger check per inserted row).
+STEPS="10-ddl 20-orders 21-pricing 22-invoices 23-outages 24-centers 25-calendar 26-stock 30-returns 31-receipts 32-settlement 40-plant 45-verify"
 VIEWS="return_request document_flow"
 KEYS="80-keys"
 
@@ -74,7 +75,8 @@ t0=$(date +%s)
 t1=$(date +%s)
 
 echo "== ANALYZE =="
-pg "$DB" -q -c "ANALYZE sales_order, sales_line, price_list, customer_price, invoice, warehouse_outage, customer, date_dim;"
+pg "$DB" -q -c "ANALYZE sales_order, sales_line, price_list, customer_price, invoice, warehouse_outage, return_request_hdr,
+                       return_request_line, return_receipt, credit_note, refund_payment, replacement_shipment, customer, date_dim;"
 
 echo "== _automation_meta =="
 pg "$DB" -P footer=off -c "SELECT step, as_of, rows FROM _automation_meta ORDER BY step = 'build', step;"

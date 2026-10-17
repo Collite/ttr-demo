@@ -33,12 +33,19 @@ SELECT p.item, p.customer, make_date(:template_year, 1, 1),
 
 -- ── the open orders ──────────────────────────────────────────────────────────────────────────────────────────
 -- 17 §3's candidates are the orders in state placed/held. On the demo day they are the latest
--- :placed_orders orders placed on or before as_of (newest first; a day's ties by a hash of the number), among
--- those whose value at the price list stays under the cap (automation.conf). Their lines are RE-PRICED from
--- the price list, as an ERP prices an order — the customer's price where one is valid on the placement day,
--- else the channel's: 17 §3 compares a line with its applicable price to the cent (`ABS(unit_price - price) >
--- :tolerance`), so an open line at its fact's own price would be a price difference on almost every order.
--- History (released) keeps the facts' prices.
+-- :placed_orders + :held_orders orders placed on or before as_of (newest first; a day's ties by a hash of the
+-- number), among those whose value at the price list stays under the cap (automation.conf). Their lines are
+-- RE-PRICED from the price list, as an ERP prices an order — the customer's price where one is valid on the
+-- placement day, else the channel's: 17 §3 compares a line with its applicable price to the cent
+-- (`ABS(unit_price - price) > :tolerance`), so an open line at its fact's own price would be a price difference
+-- on almost every order. History (released) keeps the facts' prices.
+--
+-- THE OUTAGE CENTER. 40-plant.sql puts one center out of service over as_of, and 17 §3 then flags every open
+-- line that ships from it — so exactly :outage_orders open orders may have a line there (the `outage` plants);
+-- every other open order is picked among the orders with no line at it. The center is a hash pick.
+CREATE TEMP TABLE _au_demo ON COMMIT DROP AS
+SELECT (SELECT w_warehouse_sk FROM warehouse ORDER BY abs(hashtext('outage:' || w_warehouse_sk)), w_warehouse_sk LIMIT 1) AS outage_center;
+
 CREATE TEMP TABLE _au_open_line ON COMMIT DROP AS
 SELECT s.sl_order_number AS order_number, s.sl_line_no AS line_no, s.sl_quantity AS quantity,
        coalesce(cp.cp_price, pl.pl_price) AS price
@@ -51,14 +58,20 @@ SELECT s.sl_order_number AS order_number, s.sl_line_no AS line_no, s.sl_quantity
  WHERE o.so_placed_date > :'as_of'::date - 28;      -- the last four weeks: many times the orders that open
 
 CREATE TEMP TABLE _au_open ON COMMIT DROP AS
-SELECT o.so_order_number AS order_number, v.value
-  FROM sales_order o
-  JOIN (SELECT order_number, sum(round(price * quantity, 2)) AS value, bool_and(price IS NOT NULL) AS priced
-          FROM _au_open_line GROUP BY 1) v ON v.order_number = o.so_order_number
- WHERE v.priced
-   AND v.value <= :confirmation_threshold * :threshold_scale * :open_value_cap
- ORDER BY o.so_placed_date DESC, abs(hashtext(o.so_order_number::text)), o.so_order_number
- LIMIT :placed_orders;
+WITH v AS (
+  SELECT o.so_order_number AS order_number, o.so_placed_date, v.value,
+         EXISTS (SELECT 1 FROM sales_line s WHERE s.sl_order_number = o.so_order_number
+                    AND s.sl_warehouse_sk = (SELECT outage_center FROM _au_demo)) AS at_outage
+    FROM sales_order o
+    JOIN (SELECT order_number, sum(round(price * quantity, 2)) AS value, bool_and(price IS NOT NULL) AS priced
+            FROM _au_open_line GROUP BY 1) v ON v.order_number = o.so_order_number
+   WHERE v.priced AND v.value <= :confirmation_threshold * :open_value_cap
+), r AS (
+  SELECT v.*, row_number() OVER (PARTITION BY at_outage ORDER BY so_placed_date DESC, abs(hashtext(order_number::text)), order_number) AS rn
+    FROM v
+)
+SELECT order_number, value, at_outage FROM r
+ WHERE (NOT at_outage AND rn <= :placed_orders + :held_orders - :outage_orders) OR (at_outage AND rn <= :outage_orders);
 
 UPDATE sales_line s
    SET sl_unit_price = l.price, sl_ext_sales_price = round(l.price * l.quantity, 2)
