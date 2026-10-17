@@ -9,6 +9,7 @@ One model set (BM-2/BM-5), served over `pg-hartland-us` (USD) and `pg-hartland-c
 - `lexicon/` — `model lexicon locale en` + `locale cs`: the bilingual naming layer + valueLabels.
 - `queries/` — the `q.hartland.*` preferred queries (#1–15, D-2).
 - `binding/` — cross-model mapping: `er2db` (Stage 2.2) + `md2db` (Stage 2.4) `.ttrm` files.
+- `worlds/` — `model world`: `hartland.worlds.demo`, where the automation recipes run (AU P0, below).
 - `connections.toml` — the two connection descriptors (`pg-hartland-us`/`pg-hartland-cz`).
   **Not a TTR-M construct** (the grammar has no `connection` def and no per-connection
   currency `unit` — verified against `packages/grammar/src/TTR.g4`): this is a repo-level
@@ -105,3 +106,29 @@ checkout — see `agents/tests/shems.test.mjs`).
 
 **Phase 2 is done** — `model/tests/phase2-done.test.mjs` is the single-file roll-up of
 the DONE bar; 53 tests pass across all 6 stages (`just verify-model`).
+
+**Automation extension (AU P0, 2026-10-17).** The automation agents' documents — orders and their
+lines, price lists, invoices, outages, the return-request flow (`return_request` → lines → receipt,
+credit note, refund, replacement shipment, `document_flow`), reorder proposals and win-back mailings:
+14 tables, 2 views, 15 entities, 25 relations in `db/orders.ttrm`, `db/returns-flow.ttrm`,
+`er/orders.ttrm`, `er/returns-flow.ttrm`, `er/proposals.ttrm`. Designed and planned in
+`collite-gh/project/kantheon/features/automation-agents/` (the contract: `implementation/hartland/
+contracts.md` §1–§3); `model/tests/automation-extension.test.mjs` holds it as data. What a reader would
+not guess:
+- the entity `order` reads the table **`sales_order`** — `order` is reserved in SQL (D-119);
+- `return_request_line` carries the request's customer, **`rl_customer_sk`**, denormalized by the
+  generator: a relation is one hop, and the recipes join a line to its customer (D-127);
+- `return_request` and `document_flow` read **views**: the request's state is derived from its lines and
+  nothing writes it (D-84); the request's relations bind logical keys on the view (the `channel_sales`
+  precedent);
+- every extension relation states its **`join:` pairs** beside its fk — TTR-P's `on: relation X` builds
+  the join from join pairs only;
+- the states are `text` attributes with `valueLabels` until ttr-core P0 brings TTR-M `states:`
+  (hartland P2·S2.1). Value labels are member terms of the lexicon, so none repeats a word the pre-AU
+  vocabulary binds, and the `channel` attributes have none; the bare «reklamace» / «objednávka» are the
+  documents by rule (⚑AU-H-3, `lexicon/cs/automation.ttrm`), guarded by
+  `lexicon/tests/automation-lexicon.test.mjs`;
+- `worlds/demo.ttrm` is written in the pinned grammar (0.15.1); `writable:` is a comment until
+  ttr-core P0. Nothing in it names a world's database: the engine name is the credential name
+  (`TTR_CONN_ERP`, `TTR_CONN_AUTOMATION`), so one world file serves both worlds by connection.
+
