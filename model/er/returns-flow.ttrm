@@ -25,7 +25,15 @@ def entity return_request {
         def attribute order_number   { type: int, description: "The order the goods were bought on — FK to the 'order_number' attribute of the Order entity." },
         def attribute channel        { type: text, description: "Sales channel of the request: 'web' or 'marketplace'." },
         def attribute requested_date { type: date, description: "The day the return was requested." },
-        def attribute state          { type: text, description: "State of the request, derived from its lines (read-only): 'received', 'decided' or 'closed'." }
+        def attribute state {
+            type: text,
+            description: "State of the request, derived from its lines (read-only): 'received', 'decided' or 'closed'.",
+            valueLabels: {
+                "received": { en: "Received", cs: "Přijato" },
+                "decided":  { en: "Decided",  cs: "Rozhodnuto" },
+                "closed":   { en: "Closed",   cs: "Uzavřeno" }
+            }
+        }
     ]
 }
 
@@ -41,11 +49,49 @@ def entity return_request_line {
         def attribute item                 { type: int, description: "Returned product — FK to the 'sk' attribute of the Product (item) entity." },
         def attribute quantity             { type: int, description: "Units to return." },
         def attribute unit_price           { type: { type: decimal, length: 12, precision: 2 }, description: "Unit price the customer paid — quantity × unit price is the line's value." },
-        def attribute reason               { type: text, description: "Why the customer returns it: 'damaged', 'did_not_arrive', 'wrong_size' or 'other'." },
-        def attribute requested_resolution { type: text, description: "What the customer asks for: 'refund', 'exchange' or 'replacement'." },
+        def attribute reason {
+            type: text,
+            description: "Why the customer returns it: 'damaged', 'did_not_arrive', 'wrong_size' or 'other'.",
+            valueLabels: {
+                "damaged":        { en: "Arrived damaged",   cs: "Dorazilo poškozené" },
+                "did_not_arrive": { en: "Never arrived",     cs: "Zásilka nedorazila" },
+                "wrong_size":     { en: "Size does not fit", cs: "Nevhodná velikost" },
+                "other":          { en: "Another reason",    cs: "Jiná příčina" }
+            }
+        },
+        def attribute requested_resolution {
+            type: text,
+            description: "What the customer asks for: 'refund', 'exchange' or 'replacement'.",
+            valueLabels: {
+                "refund":      { en: "Refund",      cs: "Vrácení peněz" },
+                "exchange":    { en: "Exchange",    cs: "Výměna" },
+                "replacement": { en: "Replacement", cs: "Náhrada" }
+            }
+        },
         def attribute requested_variant    { type: int, description: "The product asked for in an exchange — FK to the 'sk' attribute of the Product (item) entity; empty otherwise." },
-        def attribute state                { type: text, description: "Handling state of the line: 'received', 'rejected', 'settling', 'awaiting_goods', 'goods_received', 'not_returned' or 'closed'." },
-        def attribute way                  { type: text, description: "How the line is being settled, once decided: 'refund_no_return', 'replacement_no_return', 'exchange' or 'refund_after_return'; empty until decided or when rejected." },
+        def attribute state {
+            type: text,
+            description: "Handling state of the line: 'received', 'rejected', 'settling', 'awaiting_goods', 'goods_received', 'not_returned' or 'closed'.",
+            valueLabels: {
+                "received":       { en: "Received",       cs: "Přijato" },
+                "rejected":       { en: "Rejected",       cs: "Zamítnuto" },
+                "settling":       { en: "Settling",       cs: "Vyřizuje se" },
+                "awaiting_goods": { en: "Awaiting goods", cs: "Čeká na zboží" },
+                "goods_received": { en: "Goods received", cs: "Zboží přijato" },
+                "not_returned":   { en: "Not returned",   cs: "Nevráceno" },
+                "closed":         { en: "Closed",         cs: "Uzavřeno" }
+            }
+        },
+        def attribute way {
+            type: text,
+            description: "How the line is being settled, once decided: 'refund_no_return', 'replacement_no_return', 'exchange' or 'refund_after_return'; empty until decided or when rejected.",
+            valueLabels: {
+                "refund_no_return":      { en: "Refund without return",      cs: "Vrácení peněz bez vratky" },
+                "replacement_no_return": { en: "Replacement without return", cs: "Náhrada bez vratky" },
+                "exchange":              { en: "Exchange",                   cs: "Výměna" },
+                "refund_after_return":   { en: "Refund after return",        cs: "Vrácení peněz po vratce" }
+            }
+        },
         // D-127 — the request's customer, denormalized onto the line by the generator: rel_line_customer is one hop.
         def attribute customer             { type: int, description: "Returning customer (the request's) — FK to the 'sk' attribute of the Customer entity." }
     ]
@@ -65,7 +111,15 @@ def entity return_receipt {
         def attribute received_date { type: date, description: "The day the goods arrived." },
         def attribute item          { type: int, description: "Received product — FK to the 'sk' attribute of the Product (item) entity." },
         def attribute quantity      { type: int, description: "Units received." },
-        def attribute condition     { type: text, description: "Condition of the received goods: 'ok', 'damaged' or 'missing'." }
+        def attribute condition {
+            type: text,
+            description: "Condition of the received goods: 'ok', 'damaged' or 'missing'.",
+            valueLabels: {
+                "ok":      { en: "In order",      cs: "V pořádku" },
+                "damaged": { en: "Damaged goods", cs: "Poškozené zboží" },
+                "missing": { en: "Goods missing", cs: "Zboží chybí" }
+            }
+        }
     ]
 }
 
@@ -80,7 +134,14 @@ def entity credit_note {
         def attribute customer       { type: int, description: "Credited customer — FK to the 'sk' attribute of the Customer entity." },
         def attribute issued_date    { type: date, description: "The day the credit note was issued." },
         def attribute amount         { type: { type: decimal, length: 12, precision: 2 }, description: "Credited amount." },
-        def attribute status         { type: text, description: "Status of the credit note: 'issued' or 'paid'." }
+        def attribute status {
+            type: text,
+            description: "Status of the credit note: 'issued' or 'paid'.",
+            valueLabels: {
+                "issued": { en: "Issued",   cs: "Vystaveno" },
+                "paid":   { en: "Paid out", cs: "Vyplaceno" }
+            }
+        }
     ]
 }
 

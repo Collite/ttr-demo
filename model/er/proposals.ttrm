@@ -18,7 +18,16 @@ def entity reorder_proposal {
         def attribute on_hand       { type: int, description: "Units on hand when the proposal was made." },
         def attribute weekly_demand { type: { type: decimal, length: 12, precision: 2 }, description: "Average units sold per week at that center." },
         def attribute proposed_qty  { type: int, description: "Units proposed for reorder." },
-        def attribute state         { type: text, description: "Proposal state: 'proposed', 'approved', 'rejected' or 'started' (handed to purchasing)." }
+        def attribute state {
+            type: text,
+            description: "Proposal state: 'proposed', 'approved', 'rejected' or 'started' (handed to purchasing).",
+            valueLabels: {
+                "proposed": { en: "Proposed",             cs: "Navrženo" },
+                "approved": { en: "Approved",             cs: "Schváleno" },
+                "rejected": { en: "Rejected",             cs: "Zamítnuto" },
+                "started":  { en: "Handed to purchasing", cs: "Předáno nákupu" }
+            }
+        }
     ]
 }
 
@@ -30,7 +39,14 @@ def entity winback_mail {
     attributes: [
         def attribute customer  { type: int, isKey: true, description: "Mailed customer — FK to the 'sk' attribute of the Customer entity." },
         def attribute quarter   { type: text, isKey: true, description: "The quarter of the mailing, e.g. '2026-Q4'." },
-        def attribute offer     { type: text, description: "The offer mailed: 'premium' or 'standard'." },
+        def attribute offer {
+            type: text,
+            description: "The offer mailed: 'premium' or 'standard'.",
+            valueLabels: {
+                "premium":  { en: "Premium offer",  cs: "Prémiová nabídka" },
+                "standard": { en: "Standard offer", cs: "Standardní nabídka" }
+            }
+        },
         def attribute run       { type: text, description: "The automation run that mailed it." },
         def attribute mailed_at { type: timestamp, description: "When the mail was sent." }
     ]

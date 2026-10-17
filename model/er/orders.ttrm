@@ -6,9 +6,14 @@ model er
 // project/kantheon/features/automation-agents/design/17-recipes-retyped.md §0: the names the hero recipes
 // are written against. Real dates, never date_dim sks (D-82).
 //
-// Every enumeration is named in the attribute's `description:` (and gets lexicon valueLabels at S0.2);
+// Every enumeration is named in the attribute's `description:` and labelled by `valueLabels` (S0.2);
 // the TTR-M `states:` keyword arrives with ttr-core P0 and lands on `order.state` and
 // `invoice.status` at hartland P2·S2.1.
+//
+// ⚠ A value label is a MEMBER term of the estate's lexicon, matched in every Golem question — so no label
+// here repeats a word the pre-AU vocabulary already binds (model/lexicon/tests/automation-lexicon.test.mjs).
+// That is why `held_for` says "Sales department", not "Sales", and why no `channel` attribute is labelled:
+// «web», «tržiště», "web", "marketplace" are the channel words of the three sales facts.
 //
 // ⚠ `sales_line` is the RECIPES' line, not a conversational fact: it declares no `semantics { measures }`.
 // The Golem's "revenue by channel" keeps `channel_sales`; a second entity offering the same revenue would
@@ -32,8 +37,25 @@ def entity order {
         def attribute delivered_date       { type: date, description: "The day the order was delivered; empty until then." },
         def attribute fulfilling_warehouse { type: int, description: "Distribution center that ships the order — FK to the 'sk' attribute of the Distribution Center (warehouse) entity." },
         def attribute value                { type: { type: decimal, length: 12, precision: 2 }, description: "Order value — the sum of its lines' extended sales prices." },
-        def attribute state                { type: text, description: "Release state of the order: 'placed' (waiting for the release check), 'held', 'released' or 'cancelled'." },
-        def attribute held_for             { type: text, description: "Who a held order waits for: 'Sales', 'AR' or 'both'; empty unless the order is held." },
+        def attribute state {
+            type: text,
+            description: "Release state of the order: 'placed' (waiting for the release check), 'held', 'released' or 'cancelled'.",
+            valueLabels: {
+                "placed":    { en: "Placed",    cs: "Pořízeno" },
+                "held":      { en: "Held",      cs: "Pozastaveno" },
+                "released":  { en: "Released",  cs: "Uvolněno" },
+                "cancelled": { en: "Cancelled", cs: "Zrušeno" }
+            }
+        },
+        def attribute held_for {
+            type: text,
+            description: "Who a held order waits for: 'Sales', 'AR' or 'both'; empty unless the order is held.",
+            valueLabels: {
+                "Sales": { en: "Sales department",       cs: "Obchodní oddělení" },
+                "AR":    { en: "Receivables department", cs: "Oddělení pohledávek" },
+                "both":  { en: "Both departments",       cs: "Obě oddělení" }
+            }
+        },
         def attribute placed_by            { type: text, description: "Who placed the order (the ordering user or system)." }
     ]
 }
@@ -98,7 +120,14 @@ def entity invoice {
         def attribute due          { type: date, description: "The day the invoice is due." },
         def attribute amount       { type: { type: decimal, length: 12, precision: 2 }, description: "Invoiced amount." },
         def attribute paid         { type: { type: decimal, length: 12, precision: 2 }, description: "Amount paid so far; amount − paid is still open." },
-        def attribute status       { type: text, description: "Payment status: 'open' or 'paid'." }
+        def attribute status {
+            type: text,
+            description: "Payment status: 'open' or 'paid'.",
+            valueLabels: {
+                "open": { en: "Unpaid", cs: "Neuhrazeno" },
+                "paid": { en: "Paid",   cs: "Uhrazeno" }
+            }
+        }
     ]
 }
 
@@ -106,7 +135,10 @@ def entity warehouse_outage {
     description: "Distribution-center outages — a center that cannot ship from from_date to to_date (both days included), and why."
     labelPlural: "Warehouse Outages"
     roles: [transaction]
-    displayLabel: { en: "Warehouse Outage", cs: "Výpadek" }
+    // NOT „Výpadek“ (contracts §2 had it): a label is an EXACT term, and the bare «výpadek / výpadky» is the
+    // demo's stockout word — «Kolik týdnů v roce 2025 mělo Brno DC výpadky zásob?» (act 3.5,
+    // q.hartland.warehouse_stockout_week_count). The phrase keeps the word and leaves the bare one unclaimed.
+    displayLabel: { en: "Warehouse Outage", cs: "Výpadek skladu" }
     attributes: [
         def attribute warehouse { type: int, isKey: true, description: "The distribution center that is out — FK to the 'sk' attribute of the Distribution Center (warehouse) entity." },
         def attribute from_date { type: date, isKey: true, description: "First day of the outage." },
