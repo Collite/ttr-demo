@@ -73,3 +73,52 @@ def fk fk_chs_item     { from: [db.dbo.channel_sales.item_sk],      to: [db.dbo.
 def fk fk_chs_customer { from: [db.dbo.channel_sales.customer_sk],  to: [db.dbo.customer.c_customer_sk] }
 // LR ⚑LR-9 — web and marketplace lines only: a store line's `warehouse_sk` is NULL.
 def fk fk_chs_warehouse { from: [db.dbo.channel_sales.warehouse_sk], to: [db.dbo.warehouse.w_warehouse_sk] }
+
+// ===== AU (automation agents) — the H-1/H-2 extension (orders.ttrm, returns-flow.ttrm) =====
+// contracts.md §1's 22 keys (the DDL's, name for name), the four its §2 relations need beside them,
+// and three LOGICAL keys on the return_request VIEW (below).
+
+// -- sales_order / sales_line --
+def fk fk_so_customer  { from: [db.dbo.sales_order.so_customer_sk],  to: [db.dbo.customer.c_customer_sk] }
+def fk fk_so_warehouse { from: [db.dbo.sales_order.so_warehouse_sk], to: [db.dbo.warehouse.w_warehouse_sk] }
+def fk fk_sl_order     { from: [db.dbo.sales_line.sl_order_number],  to: [db.dbo.sales_order.so_order_number] }
+def fk fk_sl_item      { from: [db.dbo.sales_line.sl_item_sk],       to: [db.dbo.item.i_item_sk] }
+def fk fk_sl_warehouse { from: [db.dbo.sales_line.sl_warehouse_sk],  to: [db.dbo.warehouse.w_warehouse_sk] }
+def fk fk_sl_customer  { from: [db.dbo.sales_line.sl_customer_sk],   to: [db.dbo.customer.c_customer_sk] }
+
+// -- prices, invoices, outages --
+def fk fk_pl_item      { from: [db.dbo.price_list.pl_item_sk],          to: [db.dbo.item.i_item_sk] }
+def fk fk_cp_item      { from: [db.dbo.customer_price.cp_item_sk],      to: [db.dbo.item.i_item_sk] }
+def fk fk_cp_customer  { from: [db.dbo.customer_price.cp_customer_sk],  to: [db.dbo.customer.c_customer_sk] }
+def fk fk_inv_customer { from: [db.dbo.invoice.inv_customer_sk],        to: [db.dbo.customer.c_customer_sk] }
+def fk fk_inv_order    { from: [db.dbo.invoice.inv_order_number],       to: [db.dbo.sales_order.so_order_number] }
+def fk fk_wo_warehouse { from: [db.dbo.warehouse_outage.wo_warehouse_sk], to: [db.dbo.warehouse.w_warehouse_sk] }
+
+// -- the return-request flow --
+def fk fk_rr_customer    { from: [db.dbo.return_request_hdr.rr_customer_sk],           to: [db.dbo.customer.c_customer_sk] }
+def fk fk_rr_order       { from: [db.dbo.return_request_hdr.rr_order_number],          to: [db.dbo.sales_order.so_order_number] }
+def fk fk_rl_request     { from: [db.dbo.return_request_line.rl_request_number],       to: [db.dbo.return_request_hdr.rr_request_number] }
+def fk fk_rl_item        { from: [db.dbo.return_request_line.rl_item_sk],              to: [db.dbo.item.i_item_sk] }
+def fk fk_rl_variant     { from: [db.dbo.return_request_line.rl_requested_variant_sk], to: [db.dbo.item.i_item_sk] }
+// D-127 — the denormalized customer of the line (rel_line_customer binds it).
+def fk fk_rl_customer    { from: [db.dbo.return_request_line.rl_customer_sk],          to: [db.dbo.customer.c_customer_sk] }
+def fk fk_rc_line        { from: [db.dbo.return_receipt.rc_line_id],                   to: [db.dbo.return_request_line.rl_line_id] }
+def fk fk_cn_line        { from: [db.dbo.credit_note.cn_line_id],                      to: [db.dbo.return_request_line.rl_line_id] }
+def fk fk_rp_credit_note { from: [db.dbo.refund_payment.rp_credit_note_id],            to: [db.dbo.credit_note.cn_credit_note_id] }
+def fk fk_rs_line        { from: [db.dbo.replacement_shipment.rs_line_id],             to: [db.dbo.return_request_line.rl_line_id] }
+
+// -- the H-3/H-5 write-back tables (the relations rel_proposal_item / _warehouse, rel_winback_customer) --
+def fk fk_rp_item      { from: [db.dbo.reorder_proposal.rp_item_sk],      to: [db.dbo.item.i_item_sk] }
+def fk fk_rp_warehouse { from: [db.dbo.reorder_proposal.rp_warehouse_sk], to: [db.dbo.warehouse.w_warehouse_sk] }
+def fk fk_wm_customer  { from: [db.dbo.winback_mail.wm_customer_sk],      to: [db.dbo.customer.c_customer_sk] }
+
+// -- customer's distribution center (D-83) --
+def fk fk_c_center { from: [db.dbo.customer.c_center_sk], to: [db.dbo.warehouse.w_warehouse_sk] }
+
+// -- return_request (a VIEW — returns-flow.ttrm) --
+// The entity reads the view, so its relations bind keys on the VIEW's columns — the same joins the
+// header table's own keys above declare, column for column (the channel_sales precedent). `rrv`/`rlv`
+// keep them apart from the DDL's names: those are real constraints on return_request_hdr.
+def fk fk_rrv_customer { from: [db.dbo.return_request.rr_customer_sk],         to: [db.dbo.customer.c_customer_sk] }
+def fk fk_rrv_order    { from: [db.dbo.return_request.rr_order_number],        to: [db.dbo.sales_order.so_order_number] }
+def fk fk_rlv_request  { from: [db.dbo.return_request_line.rl_request_number], to: [db.dbo.return_request.rr_request_number] }
