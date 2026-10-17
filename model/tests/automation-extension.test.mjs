@@ -390,9 +390,12 @@ test('S0.1 (a) — every extension entity exists with exactly the contract\'s at
   }
 });
 
-test('S0.1 (a) — every extension entity resolves in the project (hartland.er.entity.*)', () => {
-  const unresolved = Object.keys(ENTITIES).filter((name) =>
-    !project.resolver.resolveReference({ path: `er.entity.${name}`, parts: ['er', 'entity', name] }, { schemaCode: 'er', namespace: 'entity' }).resolved);
+test('S0.1 (a) — every extension entity resolves in the project to the ENTITY (hartland.er.entity.*)', () => {
+  // `resolved` alone is not enough: the resolver falls back to a same-named db table (return_receipt).
+  const unresolved = Object.keys(ENTITIES).filter((name) => {
+    const res = project.resolver.resolveReference({ path: `er.entity.${name}`, parts: ['er', 'entity', name] }, { schemaCode: 'er', namespace: 'entity' });
+    return !(res.resolved && res.symbol.kind === 'entity' && res.symbol.qname === `hartland.er.entity.${name}`);
+  });
   assert.deepEqual(unresolved, [], `unresolved: ${unresolved.join(', ')}`);
 });
 
