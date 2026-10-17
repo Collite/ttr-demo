@@ -418,17 +418,19 @@ test('S0.1 (b) — every relation exists with the contract\'s from/to/cardinalit
 
 test('S0.1 (b) — every relation carries its join pairs, and the fk joins the columns those attributes bind', () => {
   const problems = [];
-  for (const [name, [from, to, , , fk, pairs]] of Object.entries(RELATIONS)) {
+  for (const [name, [from, to, , cTo, fk, pairs]] of Object.entries(RELATIONS)) {
     const r = relations.get(name);
     if (!r) { problems.push(`no def relation ${name}`); continue; }
     const got = (r.join?.items ?? []).map((o) => [objectEntry(o, 'from')?.path, objectEntry(o, 'to')?.path]);
     const want = pairs.map(([f, t]) => [`er.entity.${from}.${f}`, `er.entity.${to}.${t}`]);
     if (JSON.stringify(got) !== JSON.stringify(want)) { problems.push(`${name} join ${JSON.stringify(got)}, want ${JSON.stringify(want)}`); continue; }
-    // The pair and the fk say the same join: each side's attribute binds the column the fk names on that side.
+    // The pair and the fk say the same join: each side's attribute binds a column the fk names. A 1 → 1..*
+    // relation (rel_order_line, rel_request_line) runs AGAINST its fk, which lives on the many side.
     const col = (attrPath) => last2(objectEntry(er2dbAttributes.get(attrPath)?.target, 'column') ?? { parts: [] });
     const [fkFrom, fkTo] = FKS[fk] ?? [];
     const [pf, pt] = want[0];
-    if (FKS[fk] && (col(pf) !== fkFrom || col(pt) !== fkTo)) problems.push(`${name}: join binds ${col(pf)} → ${col(pt)}, ${fk} joins ${fkFrom} → ${fkTo}`);
+    const [a, b] = cTo === '1..*' ? [col(pt), col(pf)] : [col(pf), col(pt)];
+    if (FKS[fk] && (a !== fkFrom || b !== fkTo)) problems.push(`${name}: join binds ${col(pf)} → ${col(pt)}, ${fk} joins ${fkFrom} → ${fkTo}`);
   }
   assert.deepEqual(problems, [], problems.join('; '));
 });
