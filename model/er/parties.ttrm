@@ -21,7 +21,9 @@ def entity customer {
         def attribute addr        { type: int, description: "Current address — FK to the 'sk' attribute of the Customer Address entity." },
         def attribute cdemo       { type: int, description: "Customer demographics — FK to the 'sk' attribute of the Customer Demographics entity." },
         def attribute hdemo       { type: int, description: "Household demographics — FK to the 'sk' attribute of the Household Demographics entity." },
-        def attribute birth_year  { type: int, description: "Customer's year of birth — buyer-age analyses derive age from this." }
+        def attribute birth_year  { type: int, description: "Customer's year of birth — buyer-age analyses derive age from this." },
+        // AU D-83 — derived by the data build from the modal warehouse of the customer's lines.
+        def attribute center      { type: int, description: "The customer's distribution center — the one that ships most of their orders; FK to the 'sk' attribute of the Distribution Center (warehouse) entity. Empty for a customer with no web or marketplace order." }
     ]
 }
 

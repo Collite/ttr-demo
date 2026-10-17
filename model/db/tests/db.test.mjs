@@ -31,7 +31,15 @@ const EXPECTED_DIM_TABLES = [
   'customer_demographics', 'household_demographics', 'income_band',
   'store', 'warehouse', 'promotion', 'reason', 'call_center',
 ];
-const EXPECTED_TABLES = [...EXPECTED_FACT_TABLES, ...EXPECTED_DIM_TABLES];
+// AU (automation agents) S0.1 — the H-1/H-2 extension (orders.ttrm, returns-flow.ttrm); their shape is
+// asserted by model/tests/automation-extension.test.mjs, this roster only keeps the count exact.
+const EXPECTED_AU_TABLES = [
+  'sales_order', 'sales_line', 'price_list', 'customer_price', 'invoice', 'warehouse_outage',
+  'reorder_proposal', 'winback_mail',
+  'return_request_hdr', 'return_request_line', 'return_receipt', 'credit_note', 'refund_payment',
+  'replacement_shipment',
+];
+const EXPECTED_TABLES = [...EXPECTED_FACT_TABLES, ...EXPECTED_DIM_TABLES, ...EXPECTED_AU_TABLES];
 
 // D-6a — deliberately excluded profit/cost/list-price/discount-internal columns.
 const BANNED_COLUMN_SUBSTRINGS = [

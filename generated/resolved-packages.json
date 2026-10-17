@@ -8,6 +8,12 @@
       "declaredName": "hartland",
       "nested": false,
       "directory": "model/binding"
+    },
+    {
+      "canonicalName": "hartland.worlds",
+      "declaredName": "hartland.worlds",
+      "nested": true,
+      "directory": "model/worlds"
     }
   ],
   "entities": [
@@ -32,6 +38,11 @@
       "schema": "er"
     },
     {
+      "qname": "hartland.er.entity.credit_note",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
       "qname": "hartland.er.entity.customer",
       "package": "hartland",
       "schema": "er"
@@ -47,7 +58,17 @@
       "schema": "er"
     },
     {
+      "qname": "hartland.er.entity.customer_price",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
       "qname": "hartland.er.entity.date_dim",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.er.entity.document_flow",
       "package": "hartland",
       "schema": "er"
     },
@@ -67,7 +88,22 @@
       "schema": "er"
     },
     {
+      "qname": "hartland.er.entity.invoice",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
       "qname": "hartland.er.entity.item",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.er.entity.order",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.er.entity.price_list",
       "package": "hartland",
       "schema": "er"
     },
@@ -78,6 +114,41 @@
     },
     {
       "qname": "hartland.er.entity.reason",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.er.entity.refund_payment",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.er.entity.reorder_proposal",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.er.entity.replacement_shipment",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.er.entity.return_receipt",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.er.entity.return_request",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.er.entity.return_request_line",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.er.entity.sales_line",
       "package": "hartland",
       "schema": "er"
     },
@@ -102,6 +173,11 @@
       "schema": "er"
     },
     {
+      "qname": "hartland.er.entity.warehouse_outage",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
       "qname": "hartland.er.entity.web_returns",
       "package": "hartland",
       "schema": "er"
@@ -110,13 +186,19 @@
       "qname": "hartland.er.entity.web_sales",
       "package": "hartland",
       "schema": "er"
+    },
+    {
+      "qname": "hartland.er.entity.winback_mail",
+      "package": "hartland",
+      "schema": "er"
     }
   ],
   "areas": [
     {
       "name": "hartland",
       "resolvedPackages": [
-        "hartland"
+        "hartland",
+        "hartland.worlds"
       ],
       "resolvedEntities": [
         "hartland.er.entity.catalog_sales",

@@ -19,7 +19,10 @@ def table date_dim {
         def column d_week_seq  { type: int },   // absolute week number — the seed's own unit
         def column d_day_name  { type: { type: char, length: 9 } },
         def column d_holiday   { type: { type: char, length: 1 } },
-        def column d_weekend   { type: { type: char, length: 1 } }
+        def column d_weekend   { type: { type: char, length: 1 } },
+        // AU D-82 — `d_holiday = 'N' AND d_weekend = 'N'`, filled by data/automation/25-calendar.sql.
+        // A real boolean (`bool` — TTR.g4's type list has one), not a Y/N char like its two sources.
+        def column d_working_day { type: bool }
     ]
 }
 
@@ -48,7 +51,10 @@ def table customer {
         def column c_current_addr_sk  { type: int },
         def column c_current_cdemo_sk { type: int },
         def column c_current_hdemo_sk { type: int },
-        def column c_birth_year       { type: int }
+        def column c_birth_year       { type: int },
+        // AU D-83 — the customer's distribution center: the modal warehouse of their web/marketplace
+        // lines (data/automation/24-centers.sql). NULL for a customer who never ordered from one.
+        def column c_center_sk        { type: int }
     ]
 }
 
