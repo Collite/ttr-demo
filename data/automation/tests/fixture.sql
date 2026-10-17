@@ -51,7 +51,8 @@ CREATE TABLE warehouse (
 );
 INSERT INTO warehouse SELECT n, 'WH' || n, 'Center ' || n FROM generate_series(1, 5) n;
 
--- 12 classes of 10 items: an exchange's variant is "another item of the same class" (S1.2).
+-- 60 classes of 10 items: an exchange's variant is "another item of the same class" (S1.2). One item in six is
+-- cheap (under 13), as plenty of TPC-DS prices are: the small-value refunds need some.
 CREATE TABLE item (
   i_item_sk       integer PRIMARY KEY,
   i_item_id       char(16) NOT NULL,
@@ -60,9 +61,9 @@ CREATE TABLE item (
   i_category      char(50)
 );
 INSERT INTO item
-SELECT n, 'ITEM' || n, 5 + pg_temp.h('price:' || n) % 200 + 0.99,
-       'class-' || lpad(((n - 1) / 10 + 1)::text, 2, '0'), 'category-' || ((n - 1) / 30 + 1)
-FROM generate_series(1, 120) n;
+SELECT n, 'ITEM' || n, CASE WHEN n % 6 = 0 THEN 2 + pg_temp.h('price:' || n) % 10 ELSE 5 + pg_temp.h('price:' || n) % 200 END + 0.99,  -- 1 in 6 cheap
+       'class-' || lpad(((n - 1) / 10 + 1)::text, 2, '0'), 'category-' || ((n - 1) / 150 + 1)
+FROM generate_series(1, 600) n;
 
 CREATE TABLE income_band (
   ib_income_band_sk integer PRIMARY KEY,
@@ -110,7 +111,7 @@ FROM (SELECT 'web' AS ch, n FROM generate_series(1, 3000) n
 
 CREATE TEMP TABLE fx_line AS
 SELECT o.ch, o.n, j, o.sold, o.cust, o.wh,
-       1 + (pg_temp.h(o.ch || ':i:' || o.n) + j * 37) % 120 AS item,    -- 37 ⟂ 120: distinct items in an order
+       1 + (pg_temp.h(o.ch || ':i:' || o.n) + j * 37) % 600 AS item,    -- 37 ⟂ 600: distinct items in an order
        k.k
 FROM fx_order o, generate_series(0, o.nlines - 1) j, LATERAL (SELECT o.ch || ':' || o.n || ':' || j AS k) k;
 
@@ -208,7 +209,7 @@ SELECT d.d_date_sk, i, w,
        CASE WHEN pg_temp.h('in:' || d.d_date_sk || ':' || i || ':' || w) % 25 = 0 THEN NULL
             WHEN pg_temp.h('iz:' || d.d_date_sk || ':' || i || ':' || w) % 33 = 0 THEN 0
             ELSE pg_temp.h('iq:' || d.d_date_sk || ':' || i || ':' || w) % 1000 END
-FROM date_dim d, generate_series(1, 120) i, generate_series(1, 5) w
+FROM date_dim d, generate_series(1, 600) i, generate_series(1, 5) w
 WHERE d.d_date BETWEEN DATE '2025-12-29' AND DATE '2026-10-26' AND extract(isodow FROM d.d_date) = 1
 ORDER BY 1, 2, 3;
 

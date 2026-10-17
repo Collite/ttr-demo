@@ -41,7 +41,7 @@ expect "no order placed after as_of" "$(q "SELECT count(*) FROM sales_order WHER
 expect "delivered 3–7 days after placement iff placed more than $(conf delivered_after) days before as_of" "$(q "SELECT count(*) FROM sales_order WHERE so_state = 'released' AND NOT (
     (so_placed_date < DATE '$A' - $(conf delivered_after) AND so_delivered_date - so_placed_date BETWEEN 3 AND 7)
  OR (so_placed_date >= DATE '$A' - $(conf delivered_after) AND so_delivered_date IS NULL))")" -eq 0
-expect "every order was placed by the shop" "$(q "SELECT count(*) FROM sales_order WHERE so_placed_by IS DISTINCT FROM 'shop' OR so_held_for IS NOT NULL")" -eq 0
+expect "every order was placed by the shop; only a held one is held for someone" "$(q "SELECT count(*) FROM sales_order WHERE so_placed_by IS DISTINCT FROM 'shop' OR (so_held_for IS NOT NULL) <> (so_state = 'held')")" -eq 0
 
 # ── the demo day's open orders ──────────────────────────────────────────────────────────────────────────────
 open=$(( $(conf placed_orders) + $(conf held_orders) ))
@@ -63,14 +63,14 @@ expect "the open orders are the latest under the cap with no line at the outage 
   "$(q "SELECT count(*) FROM sales_order r JOIN ($LISTV) lv ON lv.so_order_number = r.so_order_number
          WHERE r.so_state = 'released' AND lv.v <= $cap
            AND NOT EXISTS (SELECT 1 FROM sales_line s WHERE s.sl_order_number = r.so_order_number AND s.sl_warehouse_sk = $W)
-           AND r.so_placed_date > (SELECT min(so_placed_date) FROM sales_order o JOIN _automation_plan p ON p.key::int = o.so_order_number AND p.kind <> 'release:outage' AND p.kind LIKE 'release:%'))")" -eq 0
+           AND r.so_placed_date > (SELECT min(so_placed_date) FROM sales_order o JOIN _automation_plan p ON CASE WHEN p.key ~ '^[0-9]+$' THEN p.key::int END = o.so_order_number AND p.kind <> 'release:outage' AND p.kind LIKE 'release:%')")" -eq 0
 expect "some recent orders were passed over for the cap (the cap is live)" \
   "$(q "SELECT count(*) FROM sales_order r JOIN ($LISTV) lv ON lv.so_order_number = r.so_order_number
          WHERE r.so_state = 'released' AND lv.v > $cap
            AND r.so_placed_date >= (SELECT min(so_placed_date) FROM sales_order WHERE so_state IN ('placed', 'held'))")" -gt 0
 expect "no open order is delivered" "$(q "SELECT count(*) FROM sales_order WHERE so_state IN ('placed', 'held') AND so_delivered_date IS NOT NULL")" -eq 0
 expect "every open order but the confirm plants stays under the cap ($cap; +7 % on a price plant)" "$(q "SELECT count(*) FROM sales_order o WHERE so_state IN ('placed', 'held') AND so_value > $cap * 1.07
-    AND NOT EXISTS (SELECT 1 FROM _automation_plan p WHERE p.kind = 'release:confirm' AND p.key::int = o.so_order_number)")" -eq 0
+    AND NOT EXISTS (SELECT 1 FROM _automation_plan p WHERE p.kind = 'release:confirm' AND CASE WHEN p.key ~ '^[0-9]+$' THEN p.key::int END = o.so_order_number)")" -eq 0
 # The CLEAN open orders (every one not planted): 17 §3's own contexts find nothing on them (test-plants replays all).
 CLEAN="SELECT key FROM _automation_plan WHERE kind = 'release:clean'"
 for probe in "probe_shortfall $S $A" "probe_price $S $(param tolerance)" "probe_overdue $S $A"; do
@@ -89,9 +89,9 @@ expect "the year before is a closed window at 97 %" "$(q "SELECT count(*) FROM p
   "$(q "SELECT count(*) FROM price_list WHERE pl_valid_to IS NULL")"
 expect "no list price is zero or missing" "$(q "SELECT count(*) FROM price_list WHERE pl_price IS NULL OR pl_price <= 0")" -eq 0
 expect_between "individual prices on ~2 % of the (customer, item) pairs with lines (%)" \
-  "$(q "SELECT round(100.0 * (SELECT count(*) FROM customer_price) / count(*), 2) FROM (SELECT DISTINCT sl_customer_sk, sl_item_sk FROM sales_line) p")" 1 3
-expect "every individual price is below the item's lowest list price" "$(q "SELECT count(*) FROM customer_price cp
-    WHERE cp.cp_price >= (SELECT min(pl_price) FROM price_list WHERE pl_item_sk = cp.cp_item_sk AND pl_valid_to IS NULL)")" -eq 0
+  "$(q "SELECT round(100.0 * (SELECT count(*) FROM customer_price WHERE cp_valid_from = DATE '$ty-01-01') / count(*), 2) FROM (SELECT DISTINCT sl_customer_sk, sl_item_sk FROM sales_line) p")" 1 3
+expect "every individual price of the template year is below the item's lowest list price (the planted ones: test-plants)" "$(q "SELECT count(*) FROM customer_price cp
+    WHERE cp.cp_valid_from = DATE '$ty-01-01' AND cp.cp_price >= (SELECT min(pl_price) FROM price_list WHERE pl_item_sk = cp.cp_item_sk AND pl_valid_to IS NULL)")" -eq 0
 
 # ── invoices ────────────────────────────────────────────────────────────────────────────────────────────────
 expect "one invoice per released order, none for an open one" "$(q "SELECT count(*) FROM invoice")" -eq "$(q "SELECT count(*) FROM sales_order WHERE so_state = 'released'")"
@@ -100,7 +100,7 @@ expect "no invoice for an open order" "$(q "SELECT count(*) FROM invoice i JOIN 
 expect "invoice = the order's value, its customer, issued at delivery (else placement), due +$(conf payment_days), paid" "$(q "SELECT count(*) FROM invoice i JOIN sales_order o ON o.so_order_number = i.inv_order_number
     WHERE (i.inv_amount <> o.so_value OR i.inv_customer_sk <> o.so_customer_sk OR i.inv_issued <> coalesce(o.so_delivered_date, o.so_placed_date)
        OR i.inv_due <> i.inv_issued + $(conf payment_days) OR i.inv_paid <> i.inv_amount OR i.inv_status <> 'paid')
-      AND i.inv_customer_sk NOT IN (SELECT o2.so_customer_sk FROM _automation_plan p JOIN sales_order o2 ON o2.so_order_number = p.key::int WHERE p.kind IN ('release:overdue', 'release:both'))")" -eq 0
+      AND i.inv_customer_sk NOT IN (SELECT o2.so_customer_sk FROM _automation_plan p JOIN sales_order o2 ON o2.so_order_number = CASE WHEN p.key ~ '^[0-9]+$' THEN p.key::int END WHERE p.kind IN ('release:overdue', 'release:both'))")" -eq 0
 expect "the overdue plants: one open invoice each, due 10 days before as_of, nothing paid" "$(q "SELECT count(*) FROM invoice WHERE inv_status = 'open' AND inv_paid = 0 AND inv_due = DATE '$A' - 10")" -eq 7
 
 # ── outages, centers, calendar ──────────────────────────────────────────────────────────────────────────────

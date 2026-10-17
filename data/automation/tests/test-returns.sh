@@ -27,11 +27,12 @@ RET="SELECT wr_order_number + $off o, wr_item_sk i, d.d_date r FROM web_returns 
 added=$(q "SELECT count(*) FROM _automation_plan WHERE kind = 'request:added_line'")
 expect "lines = the returns of sold, delivered order lines + the lines the plan added ($added)" "$(q "SELECT count(*) FROM return_request_line")" -eq \
   "$(( $(q "SELECT count(*) FROM ($RET) r JOIN sales_line s ON s.sl_order_number = r.o AND s.sl_item_sk = r.i
-             JOIN sales_order o ON o.so_order_number = r.o WHERE greatest(r.r, o.so_delivered_date) <= DATE '$A'") + added ))"
+             JOIN sales_order o ON o.so_order_number = r.o
+            WHERE o.so_delivered_date IS NOT NULL AND greatest(r.r, o.so_delivered_date) <= DATE '$A'") + added ))"
 expect "some lines were added by the plan" "$added" -gt 0
 expect "a line carries its request's customer" "$(q "SELECT count(*) FROM return_request_line l JOIN return_request_hdr h ON h.rr_request_number = l.rl_request_number WHERE l.rl_customer_sk <> h.rr_customer_sk")" -eq 0
 expect "a request's customer is its order's (but the planted not-ours)" "$(q "SELECT count(*) FROM return_request_hdr h JOIN sales_order o ON o.so_order_number = h.rr_order_number
-    WHERE h.rr_customer_sk <> o.so_customer_sk AND h.rr_request_number NOT IN (SELECT rl_request_number FROM return_request_line l JOIN _automation_plan p ON p.key::int = l.rl_line_id AND p.kind = 'decide:not_ours')")" -eq 0
+    WHERE h.rr_customer_sk <> o.so_customer_sk AND h.rr_request_number NOT IN (SELECT rl_request_number FROM return_request_line l JOIN _automation_plan p ON CASE WHEN p.key ~ '^[0-9]+$' THEN p.key::int END = l.rl_line_id AND p.kind = 'decide:not_ours')")" -eq 0
 expect "a line is priced as it was sold" "$(q "SELECT count(*) FROM return_request_line l JOIN return_request_hdr h ON h.rr_request_number = l.rl_request_number
     JOIN sales_line s ON s.sl_order_number = h.rr_order_number AND s.sl_item_sk = l.rl_item_sk WHERE s.sl_unit_price <> l.rl_unit_price")" -eq 0
 expect "line numbers run 1..n per request" "$(q "SELECT count(*) FROM (SELECT rl_line_no, row_number() OVER (PARTITION BY rl_request_number ORDER BY rl_line_no) rn FROM return_request_line) z WHERE rl_line_no <> rn")" -eq 0
@@ -67,7 +68,7 @@ expect "a request's order was delivered before it was requested (but the planted
     WHERE (o.so_delivered_date IS NULL OR o.so_delivered_date > h.rr_requested_date) AND o.so_customer_sk = h.rr_customer_sk")" -eq 0
 
 # ── the derived request state (D-84), on three requests picked by their plan ───────────────────────────────────
-pick() { q "SELECT l.rl_request_number FROM _automation_plan p JOIN return_request_line l ON l.rl_line_id = p.key::int WHERE p.kind = '$1' ORDER BY 1 LIMIT 1"; }
+pick() { q "SELECT l.rl_request_number FROM _automation_plan p JOIN return_request_line l ON l.rl_line_id = CASE WHEN p.key ~ '^[0-9]+$' THEN p.key::int END WHERE p.kind = '$1' ORDER BY 1 LIMIT 1"; }
 expect "a request with a received line is received" "$(q "SELECT rr_state FROM return_request WHERE rr_request_number = $(pick decide:refund_after_return)")" = received
 expect "a request whose line awaits the goods is decided" "$(q "SELECT rr_state FROM return_request WHERE rr_request_number = $(pick inbound:none)")" = decided
 expect "a settled request is closed" "$(q "SELECT rr_state FROM return_request WHERE rr_request_number = (SELECT min(rl_request_number) FROM return_request_line GROUP BY rl_request_number HAVING bool_and(rl_state = 'closed') ORDER BY 1 LIMIT 1)")" = closed
