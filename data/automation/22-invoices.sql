@@ -9,4 +9,7 @@ SELECT row_number() OVER (ORDER BY so_order_number), so_customer_sk, so_order_nu
  WHERE so_state = 'released'
  ORDER BY so_order_number;
 
+CREATE INDEX IF NOT EXISTS ix_invoice_customer ON invoice (inv_customer_sk);   -- 17 §3 `overdue`: a customer's invoices
+ANALYZE invoice;
+
 INSERT INTO _automation_meta (step, as_of, rows) SELECT '22-invoices', :'as_of', count(*) FROM invoice;

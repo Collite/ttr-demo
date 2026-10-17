@@ -53,6 +53,13 @@ SELECT f.order_number, row_number() OVER (PARTITION BY f.order_number ORDER BY f
  WHERE f.complete
  ORDER BY 1, 2;
 
+-- The join paths the recipes take (17 §3: an order's lines, a customer's invoices; §4.1: a customer's 12 months of
+-- lines; H-3: an item's demand at a center) — indexed once the rows are in, as the build itself takes them too.
+CREATE INDEX IF NOT EXISTS ix_sales_order_customer ON sales_order (so_customer_sk);
+CREATE INDEX IF NOT EXISTS ix_sales_line_customer ON sales_line (sl_customer_sk, sl_sold_date);
+CREATE INDEX IF NOT EXISTS ix_sales_line_item_warehouse ON sales_line (sl_item_sk, sl_warehouse_sk);
+ANALYZE sales_order, sales_line;
+
 INSERT INTO _automation_base (fact, last_date, row_count)
 SELECT CASE channel WHEN 'web' THEN 'web_sales' ELSE 'catalog_sales' END, max(sold_date), count(*)
   FROM _au_fact GROUP BY 1;

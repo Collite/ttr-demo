@@ -211,4 +211,49 @@ BEGIN
   END IF;
 END $$;
 
+-- ── helpers for the steps that follow (session-scoped: gone when the build's session ends) ───────────────────
+-- The latest inventory snapshot of every (item, warehouse) — what 17 §3/§4.1 and H-3 read as "the stock" — in one
+-- pass: inventory's key leads with the date, so a per-pair "latest" lookup would walk the whole index.
+CREATE TEMP TABLE _au_inv_latest ON COMMIT DROP AS
+SELECT inv_item_sk AS item, inv_warehouse_sk AS wh, max(inv_date_sk) AS date_sk
+  FROM inventory GROUP BY 1, 2;
+ALTER TABLE _au_inv_latest ADD PRIMARY KEY (item, wh);
+
+-- au_stock(item, warehouse, below, new): when the pair's latest snapshot holds less than `below` (NULL: always),
+-- set it to `new` — journaling the old value first; a pair with no snapshot gets one at the latest snapshot date
+-- (journaled as inserted). Every stock edit of the build goes through here, so the reset finds every one.
+CREATE FUNCTION pg_temp.au_stock(p_item int, p_wh int, p_below int, p_new int) RETURNS void LANGUAGE plpgsql AS $$
+DECLARE d int; cur int;
+BEGIN
+  SELECT date_sk INTO d FROM _au_inv_latest WHERE item = p_item AND wh = p_wh;
+  IF d IS NULL THEN
+    d := (SELECT max(inv_date_sk) FROM inventory);
+    INSERT INTO _automation_undo (tbl, pk, col, old_value, inserted) VALUES ('inventory', ARRAY[d, p_item, p_wh], '*', NULL, true);
+    INSERT INTO inventory (inv_date_sk, inv_item_sk, inv_warehouse_sk, inv_quantity_on_hand) VALUES (d, p_item, p_wh, p_new);
+    INSERT INTO _au_inv_latest VALUES (p_item, p_wh, d);
+    RETURN;
+  END IF;
+  SELECT inv_quantity_on_hand INTO cur FROM inventory WHERE inv_date_sk = d AND inv_item_sk = p_item AND inv_warehouse_sk = p_wh;
+  IF p_below IS NULL OR coalesce(cur, 0) < p_below THEN
+    IF NOT EXISTS (SELECT 1 FROM _automation_undo WHERE tbl = 'inventory' AND pk = ARRAY[d, p_item, p_wh] AND inserted) THEN
+      INSERT INTO _automation_undo (tbl, pk, col, old_value) VALUES ('inventory', ARRAY[d, p_item, p_wh], 'inv_quantity_on_hand', cur::text)
+      ON CONFLICT DO NOTHING;
+    END IF;
+    UPDATE inventory SET inv_quantity_on_hand = p_new WHERE inv_date_sk = d AND inv_item_sk = p_item AND inv_warehouse_sk = p_wh;
+  END IF;
+END $$;
+
+-- au_stock_of(item, warehouse): the latest snapshot's quantity (no snapshot, or NULL: 0) — as the recipes read it.
+CREATE FUNCTION pg_temp.au_stock_of(p_item int, p_wh int) RETURNS int LANGUAGE sql STABLE AS $$
+  SELECT coalesce((SELECT i.inv_quantity_on_hand FROM _au_inv_latest l
+                     JOIN inventory i ON i.inv_date_sk = l.date_sk AND i.inv_item_sk = l.item AND i.inv_warehouse_sk = l.wh
+                    WHERE l.item = p_item AND l.wh = p_wh), 0)
+$$;
+
+-- au_wd_before(day, n): the working day with exactly n working days after it, up to and including `day`
+-- (so `working_days(between: it, and: day)` = n — the settlement rule's lateness).
+CREATE FUNCTION pg_temp.au_wd_before(p_day date, p_n int) RETURNS date LANGUAGE sql STABLE AS $$
+  SELECT d_date FROM date_dim WHERE d_working_day AND d_date <= p_day ORDER BY d_date DESC OFFSET p_n LIMIT 1
+$$;
+
 INSERT INTO _automation_meta (step, as_of, rows) VALUES ('10-ddl', :'as_of', 0);
