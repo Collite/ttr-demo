@@ -55,7 +55,10 @@ def entity return_receipt {
     description: "Return receipts — returned goods received back at the warehouse for a return line, and in what condition: ok · damaged · missing."
     labelPlural: "Return Receipts"
     roles: [transaction]
-    displayLabel: { en: "Return Receipt", cs: "Vratka" }
+    // NOT „Vratka“ (contracts §2 had it): ttr-demo#62 ruled the bare «vratka / vratky» a word of the three
+    // channels' returns measures that must not pick one entity (lexicon/tests/store-family.test.mjs), and a
+    // label is an EXACT metadata term. „Příjemka vratky“ — the warehouse receipt of a return — is a phrase.
+    displayLabel: { en: "Return Receipt", cs: "Příjemka vratky" }
     attributes: [
         def attribute receipt_id    { type: int, isKey: true, description: "Receipt number." },
         def attribute line_id       { type: int, description: "The return line received — FK to the 'line_id' attribute of the Return Request Line entity." },
