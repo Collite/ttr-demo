@@ -7,8 +7,11 @@ AUTO_DIR="$(cd "$HERE_A/.." && pwd)"
 source "$AUTO_DIR/../extend/tests/lib-test.sh"
 
 log_of() { echo "${TMPDIR:-/tmp}/automation-$1-$2.log"; }
-run_automation() { # run_automation <db> [as-of] — the real runner, quiet; its output in $(log_of build <db>)
-  "$AUTO_DIR/run-automation.sh" "$CTX" "$1" "${2:-}" "$POD" > "$(log_of build "$1")" 2>&1
+out_of() { echo "${TMPDIR:-/tmp}/automation-out-$1"; }   # where a test build writes expected/ and events/
+run_automation() { # run_automation <db> [as-of] — the real runner, quiet; its output in $(log_of build <db>), its
+  # CSVs under $(out_of <db>) — never over the committed data/automation/expected/ and events/
+  rm -rf "$(out_of "$1")"
+  AUTOMATION_OUT="$(out_of "$1")" "$AUTO_DIR/run-automation.sh" "$CTX" "$1" "${2:-}" "$POD" > "$(log_of build "$1")" 2>&1
 }
 run_reset() { # run_reset <db> — the real reset, quiet
   "$AUTO_DIR/run-reset.sh" "$CTX" "$1" "$POD" > "$(log_of reset "$1")" 2>&1
