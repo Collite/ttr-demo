@@ -14,6 +14,8 @@ Phase 1):
    tables' owner. Views read the facts live, so they need no re-run after a data rebuild — only
    after a DROP.
 7. `extend/` — copy 2024 forward so the facts reach a date you name (LR-P4); re-run before a show.
+8. `automation/` — the automation extension (AU): the H-1/H-2 ERP tables derived from the facts for one
+   demo day, with its planted cases (`just automation-data <us|cz> [as-of] [ctx]`; `automation/README.md`).
 
 All scripts idempotent + hash-keyed (deterministic). Item keys + category assignments are
 invariants (the seeds key on warehouse×week, not item).
@@ -41,6 +43,10 @@ snapshot-guarded:
    the template year 2024 forward week by week so the facts reach `<until>` (LR-P4, contracts C-8;
    `extend/README.md`). Incremental: `_extend_meta` holds the weeks already done. After a rebuild
    (steps 1–7) the world ends 2026-01-08 again — re-run this step.
+9. `automation/run-automation.sh <ctx> <db> [as-of]` (`just automation-data <us|cz> [as-of] [ctx]`) — after step
+   8, the H-1/H-2 tables of the automation recipes for one demo day (AU P1; `automation/README.md`). Guarded by
+   `_automation_meta`; a different day needs `just automation-reset` first. A rebuild (steps 1–7) drops the
+   world, so re-run this step too.
 
 **Prolong before a show.** The data does not move with the calendar: on the day of a show, run
 `just extend-data <world> <end of this month>` for the world on stage, then refresh the R1 figures
