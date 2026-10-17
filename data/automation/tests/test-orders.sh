@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # AU-hartland P1·S1.1 T1 (added: the derivation rules, README.md) — the H-1 tables say what the facts say, and
-# the demo day's open orders are CLEAN before S1.2 plants their defects: 17 §3's own context queries
-# (shortfall, price_differences, overdue — tests/lib-test.sh `probe_*`) find nothing on them.
+# the demo day's CLEAN open orders (every one S1.2 did not plant a defect on) are clean: 17 §3's own context
+# queries (shortfall, price_differences, overdue — tests/lib-test.sh `probe_*`) find nothing on them.
 # Works on a throwaway copy of <db>:   test-orders.sh <ctx> <db> [pod]
 set -uo pipefail
 CTX="${1:?usage: test-orders.sh <ctx> <db> [pod]}"; SRC="${2:?db}"; POD="${3:-hartland-pg-1}"; NS="${EXTEND_NS:-data}"
@@ -15,7 +15,7 @@ run_automation "$S"; rc=$?
 expect "the build exits 0" "$rc" -eq 0
 A=$(as_of_of "$S"); off=$(conf web_order_offset); ty=$(conf template_year)
 scale=1; [ "$(q "SELECT to_regclass('_localize_meta') IS NOT NULL")" = t ] && scale=$(conf threshold_scale_cz)
-cap=$(q "SELECT $(conf confirmation_threshold) * $(conf open_value_cap) * $scale")
+cap=$(q "SELECT $(param confirmation_threshold) * $(conf open_value_cap) * $scale")
 
 # ── sales_line / sales_order: one line per COMPLETE fact line of a kept order ────────────────────────────────
 # Complete = quantity > 0, amount and warehouse known; kept = a complete line, a bill customer and a sold date
@@ -44,8 +44,13 @@ expect "delivered 3–7 days after placement iff placed more than $(conf deliver
 expect "every order was placed by the shop" "$(q "SELECT count(*) FROM sales_order WHERE so_placed_by IS DISTINCT FROM 'shop' OR so_held_for IS NOT NULL")" -eq 0
 
 # ── the demo day's open orders ──────────────────────────────────────────────────────────────────────────────
-expect "exactly $(conf placed_orders) open orders (state placed), the rest released" "$(q "SELECT count(*) FILTER (WHERE so_state = 'placed') || '/' || count(*) FILTER (WHERE so_state NOT IN ('placed', 'released'))
-    FROM sales_order")" = "$(conf placed_orders)/0"
+open=$(( $(conf placed_orders) + $(conf held_orders) ))
+expect "exactly $open open orders (placed or held), the rest released" "$(q "SELECT count(*) FILTER (WHERE so_state IN ('placed', 'held')) || '/' || count(*) FILTER (WHERE so_state NOT IN ('placed', 'held', 'released'))
+    FROM sales_order")" = "$open/0"
+# The outage center (S1.2 plants its outage over as_of): only the $(conf outage_orders) planted orders have a line there.
+W=$(q "SELECT wo_warehouse_sk FROM warehouse_outage WHERE DATE '$A' BETWEEN wo_from_date AND wo_to_date")
+expect "only $(conf outage_orders) open orders have a line at the outage center ($W)" "$(q "SELECT count(DISTINCT s.sl_order_number) FROM sales_line s JOIN sales_order o ON o.so_order_number = s.sl_order_number
+    WHERE o.so_state IN ('placed', 'held') AND s.sl_warehouse_sk = $W")" -eq "$(conf outage_orders)"
 # An order's value at the price list (the customer's price where valid, else the channel's) — what opening it costs.
 LISTV="SELECT o.so_order_number, sum(round(coalesce(cp.cp_price, pl.pl_price) * s.sl_quantity, 2)) v
          FROM sales_order o JOIN sales_line s ON s.sl_order_number = o.so_order_number
@@ -54,21 +59,26 @@ LISTV="SELECT o.so_order_number, sum(round(coalesce(cp.cp_price, pl.pl_price) * 
          LEFT JOIN price_list pl ON pl.pl_item_sk = s.sl_item_sk AND pl.pl_channel = o.so_channel
               AND pl.pl_valid_from <= o.so_placed_date AND (pl.pl_valid_to IS NULL OR pl.pl_valid_to >= o.so_placed_date)
         GROUP BY o.so_order_number"
-expect "the open orders are the latest under the cap (no such released order is newer than the oldest open one's day)" \
+expect "the open orders are the latest under the cap with no line at the outage center (no such released order is newer than the oldest open one's day)" \
   "$(q "SELECT count(*) FROM sales_order r JOIN ($LISTV) lv ON lv.so_order_number = r.so_order_number
          WHERE r.so_state = 'released' AND lv.v <= $cap
-           AND r.so_placed_date > (SELECT min(so_placed_date) FROM sales_order WHERE so_state = 'placed')")" -eq 0
+           AND NOT EXISTS (SELECT 1 FROM sales_line s WHERE s.sl_order_number = r.so_order_number AND s.sl_warehouse_sk = $W)
+           AND r.so_placed_date > (SELECT min(so_placed_date) FROM sales_order o JOIN _automation_plan p ON p.key::int = o.so_order_number AND p.kind <> 'release:outage' AND p.kind LIKE 'release:%'))")" -eq 0
 expect "some recent orders were passed over for the cap (the cap is live)" \
   "$(q "SELECT count(*) FROM sales_order r JOIN ($LISTV) lv ON lv.so_order_number = r.so_order_number
          WHERE r.so_state = 'released' AND lv.v > $cap
-           AND r.so_placed_date >= (SELECT min(so_placed_date) FROM sales_order WHERE so_state = 'placed')")" -gt 0
-expect "no open order is delivered" "$(q "SELECT count(*) FROM sales_order WHERE so_state = 'placed' AND so_delivered_date IS NOT NULL")" -eq 0
-expect "every open order stays under the cap ($cap)" "$(q "SELECT count(*) FROM sales_order WHERE so_state = 'placed' AND so_value > $cap")" -eq 0
-expect "17 §3 shortfall finds no open order short (none planted yet)" "$(probe_shortfall "$S" "$A" | wc -l | tr -d ' ')" -eq 0
-expect "17 §3 price_differences finds no open line off its price" "$(probe_price "$S" 0.01 | wc -l | tr -d ' ')" -eq 0
-expect "17 §3 overdue finds no open order's customer overdue" "$(probe_overdue "$S" "$A" | wc -l | tr -d ' ')" -eq 0
+           AND r.so_placed_date >= (SELECT min(so_placed_date) FROM sales_order WHERE so_state IN ('placed', 'held'))")" -gt 0
+expect "no open order is delivered" "$(q "SELECT count(*) FROM sales_order WHERE so_state IN ('placed', 'held') AND so_delivered_date IS NOT NULL")" -eq 0
+expect "every open order but the confirm plants stays under the cap ($cap; +7 % on a price plant)" "$(q "SELECT count(*) FROM sales_order o WHERE so_state IN ('placed', 'held') AND so_value > $cap * 1.07
+    AND NOT EXISTS (SELECT 1 FROM _automation_plan p WHERE p.kind = 'release:confirm' AND p.key::int = o.so_order_number)")" -eq 0
+# The CLEAN open orders (every one not planted): 17 §3's own contexts find nothing on them (test-plants replays all).
+CLEAN="SELECT key FROM _automation_plan WHERE kind = 'release:clean'"
+for probe in "probe_shortfall $S $A" "probe_price $S $(param tolerance)" "probe_overdue $S $A"; do
+  expect "17 §3 ${probe%% *} finds nothing on a clean open order" "$($probe | awk '{print $1}' | grep -cxF -f <(q "$CLEAN"))" -eq 0
+done
+expect "the clean open orders are most of them" "$(q "SELECT count(*) FROM ($CLEAN) c")" -gt 100
 expect "some open lines are priced from an individual price (the customer_price path is live)" "$(q "SELECT count(*) FROM sales_line s
-    JOIN sales_order o ON o.so_order_number = s.sl_order_number AND o.so_state = 'placed'
+    JOIN sales_order o ON o.so_order_number = s.sl_order_number AND o.so_state IN ('placed', 'held')
     JOIN customer_price cp ON cp.cp_item_sk = s.sl_item_sk AND cp.cp_customer_sk = o.so_customer_sk AND cp.cp_price = s.sl_unit_price")" -gt 0
 
 # ── price_list / customer_price ─────────────────────────────────────────────────────────────────────────────
@@ -86,15 +96,18 @@ expect "every individual price is below the item's lowest list price" "$(q "SELE
 # ── invoices ────────────────────────────────────────────────────────────────────────────────────────────────
 expect "one invoice per released order, none for an open one" "$(q "SELECT count(*) FROM invoice")" -eq "$(q "SELECT count(*) FROM sales_order WHERE so_state = 'released'")"
 expect "no invoice for an open order" "$(q "SELECT count(*) FROM invoice i JOIN sales_order o ON o.so_order_number = i.inv_order_number WHERE o.so_state <> 'released'")" -eq 0
+# (the planted overdue customers' latest invoices are re-opened — test-plants)
 expect "invoice = the order's value, its customer, issued at delivery (else placement), due +$(conf payment_days), paid" "$(q "SELECT count(*) FROM invoice i JOIN sales_order o ON o.so_order_number = i.inv_order_number
-    WHERE i.inv_amount <> o.so_value OR i.inv_customer_sk <> o.so_customer_sk OR i.inv_issued <> coalesce(o.so_delivered_date, o.so_placed_date)
-       OR i.inv_due <> i.inv_issued + $(conf payment_days) OR i.inv_paid <> i.inv_amount OR i.inv_status <> 'paid'")" -eq 0
+    WHERE (i.inv_amount <> o.so_value OR i.inv_customer_sk <> o.so_customer_sk OR i.inv_issued <> coalesce(o.so_delivered_date, o.so_placed_date)
+       OR i.inv_due <> i.inv_issued + $(conf payment_days) OR i.inv_paid <> i.inv_amount OR i.inv_status <> 'paid')
+      AND i.inv_customer_sk NOT IN (SELECT o2.so_customer_sk FROM _automation_plan p JOIN sales_order o2 ON o2.so_order_number = p.key::int WHERE p.kind IN ('release:overdue', 'release:both'))")" -eq 0
+expect "the overdue plants: one open invoice each, due 10 days before as_of, nothing paid" "$(q "SELECT count(*) FROM invoice WHERE inv_status = 'open' AND inv_paid = 0 AND inv_due = DATE '$A' - 10")" -eq 7
 
 # ── outages, centers, calendar ──────────────────────────────────────────────────────────────────────────────
 n=$(conf outages_per_center)
-expect "$n outage windows per warehouse, all in $ty, 1–3 days" "$(q "SELECT count(*) FROM warehouse_outage WHERE extract(year FROM wo_from_date) = $ty AND extract(year FROM wo_to_date) = $ty AND wo_to_date - wo_from_date BETWEEN 0 AND 2")" -eq \
+expect "$n history outage windows per warehouse, all in $ty, 1–3 days" "$(q "SELECT count(*) FROM warehouse_outage WHERE extract(year FROM wo_from_date) = $ty AND extract(year FROM wo_to_date) = $ty AND wo_to_date - wo_from_date BETWEEN 0 AND 2")" -eq \
   "$(q "SELECT $n * count(*) FROM warehouse")"
-expect "no outage over as_of (S1.2 plants that one)" "$(q "SELECT count(*) FROM warehouse_outage WHERE DATE '$A' BETWEEN wo_from_date AND wo_to_date")" -eq 0
+expect "one outage over as_of: the planted one (test-plants)" "$(q "SELECT count(*) FROM warehouse_outage WHERE DATE '$A' BETWEEN wo_from_date AND wo_to_date")" -eq 1
 expect "a warehouse's windows do not overlap" "$(q "SELECT count(*) FROM warehouse_outage a JOIN warehouse_outage b ON a.wo_warehouse_sk = b.wo_warehouse_sk AND a.wo_from_date < b.wo_from_date AND b.wo_from_date <= a.wo_to_date")" -eq 0
 expect "a customer's center = the modal warehouse of their lines (ties: the lower sk)" "$(q "SELECT count(*) FROM customer c LEFT JOIN (
       SELECT DISTINCT ON (sl_customer_sk) sl_customer_sk, sl_warehouse_sk FROM sales_line

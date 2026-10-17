@@ -4,15 +4,16 @@
 -- that into `au_fixture_cz` with the CZK marker.
 --
 -- The real worlds' shapes it reproduces ON PURPOSE, because the generator has to survive them:
---   * web and marketplace order numbers OVERLAP — TPC-DS numbers each channel from 1 (orders 1..900 exist in both);
+--   * web and marketplace order numbers OVERLAP — TPC-DS numbers each channel from 1 (orders 1..3000 exist in both);
 --   * NULLs in the nullable fact columns (~2–4 %: warehouse, sold date, bill customer, quantity + amount);
 --   * one sold date and one bill customer per order, a per-line warehouse that is mostly the order's;
 --   * dense weekly inventory (every item × warehouse every week) with NULL and zero quantities;
 --   * returns that trail their sale, some with a NULL return date;
 --   * `_extend_meta` / `_extend_base` — the runner refuses a world that was never extended.
--- And the demo day's material: ~16 % of the orders in the last week before 2026-10-26 (the default as_of, the
--- Monday that ends the last extended week), and "sleepers" (customers 121–150) who ordered only between
--- 2025-05 and 2026-03 — the win-back population of H-5.
+-- And the demo day's material: a quarter of the orders in the 60 days before 2026-10-26 (the default as_of, the
+-- Monday that ends the last extended week) — enough open orders and recent returns for every plant — and
+-- "sleepers" (customers 361–390) who ordered only between 2025-05 and 2026-03: the win-back population of H-5.
+-- Customers 391–400 never order. Household demographics carry the income band H-5's offer splits on.
 \set ON_ERROR_STOP on
 SET client_min_messages = warning;
 
@@ -63,13 +64,28 @@ SELECT n, 'ITEM' || n, 5 + pg_temp.h('price:' || n) % 200 + 0.99,
        'class-' || lpad(((n - 1) / 10 + 1)::text, 2, '0'), 'category-' || ((n - 1) / 30 + 1)
 FROM generate_series(1, 120) n;
 
-CREATE TABLE customer (
-  c_customer_sk integer PRIMARY KEY,
-  c_customer_id char(16) NOT NULL,
-  c_first_name  char(20),
-  c_last_name   char(30)
+CREATE TABLE income_band (
+  ib_income_band_sk integer PRIMARY KEY,
+  ib_lower_bound    integer,
+  ib_upper_bound    integer
 );
-INSERT INTO customer SELECT n, 'CUST' || n, 'First' || n, 'Last' || n FROM generate_series(1, 160) n;  -- 151–160 never order
+INSERT INTO income_band SELECT n, (n - 1) * 10000 + 1, n * 10000 FROM generate_series(1, 20) n;
+
+CREATE TABLE household_demographics (
+  hd_demo_sk        integer PRIMARY KEY,
+  hd_income_band_sk integer
+);
+INSERT INTO household_demographics SELECT n, 1 + (n - 1) % 20 FROM generate_series(1, 200) n;
+
+CREATE TABLE customer (
+  c_customer_sk       integer PRIMARY KEY,
+  c_customer_id       char(16) NOT NULL,
+  c_current_hdemo_sk  integer,
+  c_first_name        char(20),
+  c_last_name         char(30)
+);
+INSERT INTO customer SELECT n, 'CUST' || n, 1 + pg_temp.h('hd:' || n) % 200, 'First' || n, 'Last' || n
+FROM generate_series(1, 400) n;  -- 391–400 never order
 
 CREATE TABLE reason (
   r_reason_sk   integer PRIMARY KEY,
@@ -82,15 +98,15 @@ INSERT INTO reason SELECT n, 'REASON' || n, 'reason ' || n FROM generate_series(
 CREATE TEMP TABLE fx_order AS
 SELECT ch, n, sleeper,
        CASE WHEN sleeper THEN DATE '2025-05-01' + pg_temp.h(ch || ':d:' || n) % 330
-            WHEN pg_temp.h(ch || ':r:' || n) % 1000 < 160 THEN DATE '2026-10-26' - pg_temp.h(ch || ':d:' || n) % 7
+            WHEN pg_temp.h(ch || ':r:' || n) % 4 = 0 THEN DATE '2026-10-26' - pg_temp.h(ch || ':d:' || n) % 60
             ELSE DATE '2024-01-01' + pg_temp.h(ch || ':d:' || n) % (DATE '2026-10-19' - DATE '2024-01-01' + 1)
        END AS sold,
-       CASE WHEN sleeper THEN 121 + pg_temp.h(ch || ':c:' || n) % 30 ELSE 1 + pg_temp.h(ch || ':c:' || n) % 120 END AS cust,
+       CASE WHEN sleeper THEN 361 + pg_temp.h(ch || ':c:' || n) % 30 ELSE 1 + pg_temp.h(ch || ':c:' || n) % 360 END AS cust,
        1 + pg_temp.h(ch || ':w:' || n) % 5 AS wh,
        1 + pg_temp.h(ch || ':l:' || n) % 6 AS nlines
-FROM (SELECT 'web' AS ch, n FROM generate_series(1, 900) n
-      UNION ALL SELECT 'marketplace', n FROM generate_series(1, 1100) n) o,
-     LATERAL (SELECT pg_temp.h(ch || ':s:' || n) % 10 = 0 AS sleeper) s;
+FROM (SELECT 'web' AS ch, n FROM generate_series(1, 3000) n
+      UNION ALL SELECT 'marketplace', n FROM generate_series(1, 3500) n) o,
+     LATERAL (SELECT pg_temp.h(ch || ':s:' || n) % 20 = 0 AS sleeper) s;
 
 CREATE TEMP TABLE fx_line AS
 SELECT o.ch, o.n, j, o.sold, o.cust, o.wh,
