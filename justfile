@@ -131,10 +131,39 @@ automation-reset world ctx=CTX:
     esac
     data/automation/run-reset.sh "{{ctx}}" "hartland_{{world}}" "$pod"
 
+# R-A of a built world (data/automation/90-recon.sql) against its committed baseline
+# data/automation/recon/R-A-<world>.md — exit 3 on drift, like check-model. After a deliberate change:
+# `AUTOMATION_RECON_WRITE=1 just automation-recon <world> [ctx]` writes the new baseline.
+automation-recon world ctx=CTX:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "{{world}}" in us|cz) ;; *) echo "world must be us or cz, got '{{world}}'" >&2; exit 2 ;; esac
+    case "{{ctx}}" in
+      dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
+      *) echo "no hartland-pg pod known for context '{{ctx}}' (dsk, collite-o1, hartland)" >&2; exit 2 ;;
+    esac
+    data/automation/run-recon.sh "{{ctx}}" "hartland_{{world}}" "{{world}}" "$pod"
+
+# The demo day's event driver (contracts §6): replays data/automation/events/<world>.csv as webhooks to the
+# Server's HTTP connector. `--dry-run` prints the bodies (no Server needed); `--demo` the runbook's subset.
+#
+#     just automation-events cz --dry-run --demo
+#     just automation-events cz --url https://…/automation/webhooks/events --speed 60 --token-env AUTOMATION_EVENTS_TOKEN
+automation-events world *FLAGS:
+    uv run scripts/automation-events.py replay --world {{world}} {{FLAGS}}
+
+# The timeline of a world, checked (no cluster): order, kinds, payload keys.
+automation-events-check world:
+    uv run scripts/automation-events.py check --world {{world}}
+
 # The generator's suite on a throwaway local Postgres (pgserver via uv — no Docker, no cluster) loaded
 # with data/automation/tests/fixture.sql. `ONLY=reset just automation-test` runs one script.
 automation-test:
     bash data/automation/tests/run-all.sh
+
+# The event driver's own specs (no cluster, no network).
+automation-events-test:
+    uv run --quiet --with pyyaml --with httpx python3 -B -m unittest scripts/test_automation_events.py
 
 # ── the routing corpus (LR P6, contracts C-9·3) ─────────────────────────────────────────────────
 # run-set/routing/README.md. `check` needs no cluster; `run` asks every case of the DELIVERED world

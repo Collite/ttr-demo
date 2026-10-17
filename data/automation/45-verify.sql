@@ -6,8 +6,8 @@
 -- monitor_inbound and settle read obligations, which exist from P4 on; their plants are checked by the suite.
 CREATE TEMP TABLE _au_verify (recipe text, key text, planned text, replayed text) ON COMMIT DROP;
 
--- 17 §3, end to end
-INSERT INTO _au_verify
+-- 17 §3, end to end — kept per order (_au_release_replay): 50-expected.sql takes its detail counts from it
+CREATE TEMP TABLE _au_release_replay ON COMMIT DROP AS
 WITH o AS (SELECT so_order_number, so_customer_sk, so_channel, so_placed_date, so_value FROM sales_order WHERE so_state IN ('placed', 'held')),
      lt AS (SELECT l.item, l.wh, i.inv_quantity_on_hand AS q FROM _au_inv_latest l
               JOIN inventory i ON i.inv_date_sk = l.date_sk AND i.inv_item_sk = l.item AND i.inv_warehouse_sk = l.wh),
@@ -25,16 +25,20 @@ WITH o AS (SELECT so_order_number, so_customer_sk, so_channel, so_placed_date, s
                 GROUP BY 1),
      due AS (SELECT o.so_order_number k, count(*) n FROM o JOIN invoice i ON i.inv_customer_sk = o.so_customer_sk
               WHERE i.inv_status = 'open' AND i.inv_due < :'as_of'::date GROUP BY 1),
-     r AS (SELECT o.so_order_number::text AS key, array_to_string(array_remove(ARRAY[
-             CASE WHEN coalesce(d.n, 0) > 0 THEN 'hold_ar' END,
-             CASE WHEN coalesce(sh.n, 0) + coalesce(pr.n, 0) > 0 THEN 'hold_sales' END,
-             CASE WHEN coalesce(sh.n, 0) + coalesce(pr.n, 0) + coalesce(d.n, 0) = 0 AND o.so_value <= :confirmation_threshold THEN 'release' END,
-             CASE WHEN coalesce(sh.n, 0) + coalesce(pr.n, 0) + coalesce(d.n, 0) = 0 AND o.so_value > :confirmation_threshold THEN 'release_confirmed' END], NULL), ',') AS route
+     c AS (SELECT o.so_order_number::text AS key, o.so_value, coalesce(sh.n, 0) AS n_short, coalesce(pr.n, 0) AS n_price, coalesce(d.n, 0) AS n_due
              FROM o LEFT JOIN short sh ON sh.k = o.so_order_number LEFT JOIN price pr ON pr.k = o.so_order_number
-             LEFT JOIN due d ON d.k = o.so_order_number),
-     pl AS (SELECT key, expected_route AS route FROM _automation_plan WHERE kind LIKE 'release:%')
-SELECT 'release_order', coalesce(pl.key, r.key), pl.route, r.route
-  FROM pl FULL JOIN r ON r.key = pl.key WHERE pl.route IS DISTINCT FROM r.route;
+             LEFT JOIN due d ON d.k = o.so_order_number)
+SELECT c.key, c.n_short, c.n_price, c.n_due, array_to_string(array_remove(ARRAY[
+         CASE WHEN n_due > 0 THEN 'hold_ar' END,
+         CASE WHEN n_short + n_price > 0 THEN 'hold_sales' END,
+         CASE WHEN n_short + n_price + n_due = 0 AND so_value <= :confirmation_threshold THEN 'release' END,
+         CASE WHEN n_short + n_price + n_due = 0 AND so_value > :confirmation_threshold THEN 'release_confirmed' END], NULL), ',') AS route
+  FROM c;
+INSERT INTO _au_verify
+SELECT 'release_order', coalesce(pl.key, r.key), pl.expected_route, r.route
+  FROM (SELECT key, expected_route FROM _automation_plan WHERE kind LIKE 'release:%') pl
+  FULL JOIN _au_release_replay r ON r.key = pl.key
+ WHERE pl.expected_route IS DISTINCT FROM r.route;
 
 -- 17 §4.1, end to end
 INSERT INTO _au_verify

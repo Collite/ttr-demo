@@ -73,7 +73,7 @@ expect "both: one overdue invoice under hold_ar" "$(row_of release_order "$k" ho
 k=$(q "SELECT key FROM _automation_plan WHERE kind = 'release:outage' ORDER BY key LIMIT 1")
 expect "an outage order: every line at the out center is a shortfall line" "$(row_of release_order "$k" hold_sales | cut -d, -f4)" = \
   "shortfall:$(q "SELECT count(*) FROM sales_line s JOIN warehouse_outage w ON w.wo_warehouse_sk = s.sl_warehouse_sk AND DATE '$(as_of_of "$S")' BETWEEN w.wo_from_date AND w.wo_to_date WHERE s.sl_order_number = $k") price_differences:0"
-k=$(q "SELECT key FROM _automation_plan WHERE kind = 'inbound:damaged' ORDER BY key DESC LIMIT 1")
+k=$(q "SELECT rc_line_id FROM return_receipt WHERE rc_line_id::text IN (SELECT key FROM _automation_plan WHERE kind = 'inbound:damaged') GROUP BY 1 HAVING count(*) = 2")
 expect "a short return: two receipt rows (one ok, one missing)" "$(row_of monitor_inbound "$k" damaged | cut -d, -f4)" = "receipts:2"
 k=$(q "SELECT key FROM _automation_plan WHERE kind = 'settle:unpaid' ORDER BY key LIMIT 1")
 expect "an unpaid refund: one open obligation (the payment, from P4)" "$(row_of settle "$k" money_overdue | cut -d, -f4)" = "open_obligations:1"

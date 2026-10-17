@@ -46,11 +46,13 @@ and rebuild too: the new weeks bring newer inventory snapshots than the ones the
 | `31-receipts.sql` · `32-settlement.sql` | `return_receipt` · `credit_note`, `refund_payment`, `replacement_shipment` |
 | `40-plant.sql` | the H-1, H-3 and H-5 plants (orders, invoices, prices, an outage, stock, `winback_mail`) |
 | `45-verify.sql` | nothing — replays the recipes over the plants and **fails the build** on any disagreement |
+| `50-expected.sql` · `60-events.sql` | `_automation_expected` (the golden seeds) · `_automation_events` (the demo day's timeline) |
 | `../views/return_request.sql`, `../views/document_flow.sql` | the two derived views (`CREATE OR REPLACE`) |
 | `80-keys.sql` | the 26 foreign keys, once the data is in (one validating scan each) |
 
 Every step records itself in `_automation_meta`; every planted case is a row of `_automation_plan` (below).
-S1.3 adds the expected verdicts, the event timeline and the recon (`50-`, `60-`, `90-`). The steps index the
+After the transaction the runner writes the seeds and the timeline out as files (below) and prints R-A
+(`90-recon.sql`). The steps index the
 join paths the recipes take (a customer's orders, lines, invoices and requests; an item at a center; a line's
 documents) — `ix_*`, dropped with their tables.
 
@@ -121,6 +123,50 @@ every pair with demand, and **fails the build** if any key routes differently fr
 routes at all — the picks are built against a fixture, and a real world differs from it in ways no pick foresees.
 `monitor_inbound` and `settle` read obligations (P4); their plants are checked by the suite.
 
+## Expected — the golden seeds (`expected/<world>/<recipe>.csv`)
+
+One file per recipe — `release_order`, `decide_return`, `monitor_inbound`, `settle`, `reorder_proposals`,
+`winback` — with one row per planted key and route (`_automation_expected`, from the plan):
+
+| column | holds |
+|---|---|
+| `key` | the recipe's key (order, line, `item:center`, customer) |
+| `route` | one route; an overlapping recipe's key has a row per route (`both` → `hold_ar` and `hold_sales`) |
+| `verdict_reason_template` | 17's `because:` with its `{fills}` left in (the comparison fills them first); empty for a recipe that has none yet (H-3, H-5 — P2's) |
+| `detail_count` | the rows each detail context of the route carries, `context:rows` (`shortfall:1 price_differences:0`; `receipts:2`; `open_obligations:1` — the obligation P4 seeds) |
+
+A `none` row (monitor_inbound inside the window; a customer mailed inside the win-back window) asserts the key
+gets **no** verdict row. The files are the seeds of each recipe's `tests/*.yaml` (contracts §7: no `pinned_from`
+— a seed); P3 pins goldens from debug runs. The committed files come from the certification builds (`dsk`); a
+build anywhere writes them under `AUTOMATION_OUT` (default: this directory) — the suite writes under `$TMPDIR`.
+
+## Events — the demo day's timeline (`events/<world>.csv`)
+
+`_automation_events (seq, kind, at, payload, demo)`, contracts §6, on the Prague clock: `order_placed
+{order_number}` for every open order on its placement day; `line_received {line_id}` for every received line on
+its request day; `receipt_posted` / `settlement_posted {line_id}` for every receipt, credit note, payment and
+shipment of a line **in flight** (the planted inbound / settle lines) on its day — history's documents are not
+events (those lines were settled before the platform ran). `seq` = time order; `demo` flags the 15 events of
+the demo day the runbook replays live, its documents first.
+
+`scripts/automation-events.py` (`just automation-events <world> [flags]`) replays the file as webhooks to the
+Server's HTTP connector: one `{deployment, event, payload, idempotencyKey: "events:<world>:<seq>"}` per event, the
+deployment per kind from `automation.conf` (`events_deployment_*`), the timeline's gaps ÷ `--speed`, 5xx retried
+three times, 409 = already posted (fine), any other 4xx stops. `--dry-run` posts nothing; `--demo` replays the
+subset; `--from` / `--to` cut the window. `just automation-events-check <world>` validates the file with no
+cluster.
+
+## Recon — R-A (`recon/R-A-<world>.md`)
+
+`90-recon.sql` prints, as markdown, every plant kind with its count and route, and every table the build writes
+with its rows and a fingerprint (Σ `hashtext(row)`). The build prints it; `just automation-recon <world> [ctx]`
+(`run-recon.sh`) diffs it against the committed baseline — exit 0 match · 3 drift (the diff printed) · 2 no
+baseline. **Refreshing R-A**: after a deliberate change (a new `as_of`, a changed `automation.conf`, a generator
+fix), rebuild (`just automation-reset <w> <ctx> && just automation-data <w> <as-of> <ctx>`), check the print, and
+write it with `AUTOMATION_RECON_WRITE=1 just automation-recon <w> <ctx>`; commit the baseline with the change that
+moved it. A drift nobody meant is the alarm: the world changed under the extension (a prolong without a rebuild,
+a data rebuild) or the generator is not deterministic.
+
 ## Reset
 
 `run-reset.sh <ctx> <db> [pod]` (= `just automation-reset <us|cz> [ctx]`), one transaction:
@@ -143,7 +189,8 @@ the first build wrote.
 | `_automation_base` | per fact, its last date and row count at build |
 | `_automation_undo` | the journal of base-row changes (`tbl`, `pk` int[], `col`, `old_value`, `inserted`) |
 | `_automation_plan` | every planted case (`kind`, `key`), what it hangs on (`note`) and the route the recipe must take |
-| `_automation_events` | the demo day's event timeline (S1.3) |
+| `_automation_events` | the demo day's event timeline (Events, above) |
+| `_automation_expected` | the golden seeds (Expected, above) |
 
 ## Tests (`tests/`)
 
@@ -165,6 +212,13 @@ only). `ONLY=<name>` picks scripts; `KEEP_SCRATCH=1` keeps the copies.
 | `test-returns.sh` | requests and lines from the return facts (+ the added lines), ≥ 90 % single-line, history settled with a full document set per way, dates in order and ≤ `as_of`, the derived request state on three requests |
 | `test-plants.sh` | every §5 kind at its count, and the recipes replayed in SQL (`probe_release`, `probe_decide`, `probe_reorder`) route every key as planned; the inbound / settle documents and working-day lateness; the win-back list |
 | `test-fx.sh` | a CZ world (made the localize-cz way on the scratch copy): every money parameter × 25 |
+| `test-expected.sh` | the six seed files, a row per planted key and route, 17's reasons with their `{fills}`, the detail counts |
+| `test-events.sh` | the timeline is monotone, every key real as its kind says, nothing after the demo day, the demo subset, the CSV = the table — and the driver's own `check` passes on it |
+| `test-recon.sh` | R-A against a baseline: none = 2, itself = 0, a changed row = 3 with the diff |
+
+`scripts/test_automation_events.py` (`just automation-events-test`) specs the driver: the timeline check, the
+body, `--dry-run`, the window and demo filters, the speed mapping, retry / 409 / stop (httpx's mock transport).
+CI: `.github/workflows/data-gate.yml` runs both suites and checks the committed timelines.
 
 ## Files
 
@@ -172,4 +226,5 @@ only). `ONLY=<name>` picks scripts; `KEEP_SCRATCH=1` keeps the copies.
   `open_value_cap`, `confirmation_threshold`, …).
 - `run-automation.sh`, `run-reset.sh` — the runners; `lib.sh` — sources `data/extend/lib.sh` (one place knows
   psql: `CTX=<kube-ctx>`, `docker:<container>` or `local`).
-- `NN-*.sql` — the steps above; `reset.sql` — the reset.
+- `NN-*.sql` — the steps above; `reset.sql` — the reset; `run-recon.sh` + `90-recon.sql` — R-A.
+- `expected/<world>/`, `events/<world>.csv`, `recon/R-A-<world>.md` — committed from the certification builds.

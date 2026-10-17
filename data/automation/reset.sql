@@ -42,5 +42,5 @@ BEGIN
   END IF;
 END $$;
 
-DROP TABLE IF EXISTS _automation_plan, _automation_events, _automation_undo, _automation_base, _automation_meta;
+DROP TABLE IF EXISTS _automation_expected, _automation_plan, _automation_events, _automation_undo, _automation_base, _automation_meta;
 RESET ROLE;

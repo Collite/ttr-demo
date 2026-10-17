@@ -23,7 +23,7 @@ conf() { # conf <name> — a frozen parameter of automation.conf (`\set name val
 # contracts §1: the extension's tables, its views, its internals; the base tables it changes and the ones it reads.
 AU_TABLES="sales_order sales_line price_list customer_price invoice warehouse_outage return_request_hdr return_request_line return_receipt credit_note refund_payment replacement_shipment reorder_proposal winback_mail"
 AU_VIEWS="return_request document_flow"
-AU_INTERNALS="_automation_meta _automation_base _automation_plan _automation_events _automation_undo"
+AU_INTERNALS="_automation_meta _automation_base _automation_plan _automation_events _automation_undo _automation_expected"
 BASE_CHANGED="customer date_dim inventory"
 BASE_READ="web_sales catalog_sales web_returns catalog_returns item warehouse reason _extend_meta _extend_base"
 

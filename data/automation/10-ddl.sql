@@ -177,6 +177,16 @@ CREATE TABLE IF NOT EXISTS _automation_plan (
   expected_route text,
   PRIMARY KEY (kind, key)
 );
+-- The golden seeds (S1.3, 50-expected.sql): one row per planted key and route of every recipe, as
+-- expected/<world>/<recipe>.csv renders them.
+CREATE TABLE IF NOT EXISTS _automation_expected (
+  recipe                  text NOT NULL,
+  key                     text NOT NULL,
+  route                   text NOT NULL,
+  verdict_reason_template text,                 -- NULL: no reason (a `none` route, a recipe without `because:` yet)
+  detail_count            text,                 -- NULL: the route carries no detail
+  PRIMARY KEY (recipe, key, route)
+);
 -- The demo day's event timeline (S1.3, contracts §6).
 CREATE TABLE IF NOT EXISTS _automation_events (
   seq     integer PRIMARY KEY,
