@@ -8,6 +8,12 @@
       "declaredName": "hartland",
       "nested": false,
       "directory": "model/binding"
+    },
+    {
+      "canonicalName": "hartland.worlds",
+      "declaredName": "hartland.worlds",
+      "nested": true,
+      "directory": "model/worlds"
     }
   ],
   "entities": [
@@ -191,7 +197,8 @@
     {
       "name": "hartland",
       "resolvedPackages": [
-        "hartland"
+        "hartland",
+        "hartland.worlds"
       ],
       "resolvedEntities": [
         "hartland.er.entity.catalog_sales",
