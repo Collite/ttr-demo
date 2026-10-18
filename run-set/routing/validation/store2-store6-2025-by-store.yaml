@@ -1,0 +1,19 @@
+notes: |
+  Store-channel revenue 2025 of two stores, one row each: store id AAAAAAAACAAAAAAA (Brno / Memphis) and
+  AAAAAAAAKAAAAAAA (Liberec / Murfreesboro) (data/seed/naming-us.sql, localize-cz 01). A store has no web or
+  marketplace lines, so this is the stores' revenue whichever channel word the question used. `store` carries
+  SCD history, so the rows group by NAME, not by key.
+core: |
+  SELECT s.s_store_name AS store, SUM(ss.ss_ext_sales_price) AS revenue
+  FROM store_sales ss
+  JOIN store s ON ss.ss_store_sk = s.s_store_sk
+  JOIN date_dim d ON ss.ss_sold_date_sk = d.d_date_sk
+  WHERE d.d_year = 2025 AND s.s_store_id IN ('AAAAAAAACAAAAAAA', 'AAAAAAAAKAAAAAAA')
+  GROUP BY s.s_store_name
+assert:
+  row_count: 2
+  row_set:
+    keys:
+    - store
+    value: revenue
+    tolerance: 0.001

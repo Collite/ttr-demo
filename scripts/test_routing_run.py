@@ -5,8 +5,10 @@
 
 from __future__ import annotations
 
+import contextlib
 import datetime as dt
 import importlib.util
+import io
 import pathlib
 import shutil
 import sys
@@ -103,6 +105,42 @@ class VerdictSpec(unittest.TestCase):
         self.assertEqual(out, "WHERE d >= DATE '2026-10-12' AND name LIKE '%O''Brien%'")
 
 
+class PickSpec(unittest.TestCase):
+    # The store homonym's ask, as the envelope carries it: the label is `display`, the id travels back.
+    EN = [
+        {"id": "o-2", "display": "Store Sales", "entityTypeRef": "entity", "resolvedId": "er.entity.store_sales"},
+        {"id": "o-1", "display": "Store", "entityTypeRef": "entity", "resolvedId": "er.entity.store"},
+        {"id": "escape", "display": "None of these"},
+    ]
+    CS = [
+        {"id": "o-2", "display": "Prodeje v prodejnách", "resolvedId": "er.entity.store_sales.ext_sales_price"},
+        {"id": "o-1", "display": "Prodejna", "resolvedId": "er.entity.store"},
+        {"id": "escape", "display": "nic z toho"},
+    ]
+
+    def test_an_exact_label_wins_over_an_earlier_option_that_contains_the_pick(self):
+        # `store` is in both "Store Sales" and "Store": containment alone would take whichever comes first.
+        self.assertEqual(rr.pick_option(self.EN, "store")["id"], "o-1")
+        self.assertEqual(rr.pick_option(list(reversed(self.EN)), "store")["id"], "o-1")
+        self.assertEqual(rr.pick_option(self.CS, "prodejna")["id"], "o-1")
+        self.assertEqual(rr.pick_option(self.EN, "  STORE ")["id"], "o-1")
+
+    def test_containment_is_the_fallback(self):
+        self.assertEqual(rr.pick_option(self.EN, "sales")["id"], "o-2")
+        self.assertEqual(rr.pick_option(self.CS, "v prodejnách")["id"], "o-2")
+        self.assertEqual(rr.pick_option(self.EN, "store_sales")["id"], "o-2")  # the JSON, not only the label
+
+    def test_no_option_matches(self):
+        self.assertIsNone(rr.pick_option(self.EN, "place"))
+        self.assertIsNone(rr.pick_option(self.CS, "místo"))
+        self.assertIsNone(rr.pick_option([], "store"))
+
+    def test_the_label_is_the_envelopes_display(self):
+        self.assertEqual(rr.option_label({"id": "x", "display": "Store"}), "Store")
+        self.assertEqual(rr.option_label({"id": "x", "label": "Store"}), "Store")
+        self.assertEqual(rr.option_label({"id": "x"}), "")
+
+
 class CorpusCheckSpec(unittest.TestCase):
     def setUp(self):
         self.root = pathlib.Path(tempfile.mkdtemp(prefix="routing-spec-"))
@@ -167,6 +205,58 @@ class CorpusCheckSpec(unittest.TestCase):
             expected_reason: {de: RATIO}
         """)
         self.assertIn("expected_reason keys", "\n".join(rr.load_corpus(self.root)[2]))
+
+    def test_validation_may_differ_per_language(self):
+        # „A loni?“ is deictic (last year from today) while "And the year before?" is anaphoric (the year
+        # before the conversation's): one follow-up, two right answers.
+        (self.root / "validation" / "v2.yaml").write_text("core: SELECT 2 AS x\nassert:\n  scalar: {value: x}\n")
+        self.write("p", """
+            id: p
+            title: t
+            shape: elliptic
+            question: {cs: "A loni?", en: "And the year before?"}
+            expected_route: LLM
+            validation: {cs: v.yaml, en: v2.yaml}
+        """)
+        cases, _, problems = rr.load_corpus(self.root)
+        self.assertEqual(problems, [])
+        self.assertEqual((cases[0].validation("cs"), cases[0].validation("en")), ("v.yaml", "v2.yaml"))
+        self.assertEqual(cases[0].validations(), ["v.yaml", "v2.yaml"])
+        args = type("Args", (), {"cases": str(self.root), "core": []})()
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            self.assertEqual(rr.check(args), 0)
+        self.assertIn("2 validations", out.getvalue())
+
+        self.write("p", """
+            id: p
+            title: t
+            shape: elliptic
+            question: {cs: "A loni?", en: "And the year before?"}
+            expected_route: LLM
+            validation: {cs: v.yaml, en: missing.yaml}
+        """)
+        self.assertIn("validation/missing.yaml does not exist", "\n".join(rr.load_corpus(self.root)[2]))
+        self.write("p", """
+            id: p
+            title: t
+            shape: elliptic
+            question: {cs: "A loni?", en: "And the year before?"}
+            expected_route: LLM
+            validation: {de: v.yaml}
+        """)
+        self.assertIn("validation keys", "\n".join(rr.load_corpus(self.root)[2]))
+
+    def test_a_plain_validation_is_both_languages(self):
+        self.write("ok", """
+            id: ok
+            title: t
+            shape: total
+            question: {cs: "Tržby", en: "Revenue"}
+            expected_route: FAST
+            validation: v.yaml
+        """)
+        c = rr.load_corpus(self.root)[0][0]
+        self.assertEqual((c.validation("cs"), c.validation("en"), c.validations()), ("v.yaml", "v.yaml", ["v.yaml"]))
 
     def test_a_resume_needs_a_session_that_asked_first(self):
         self.write("r1", """
