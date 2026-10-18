@@ -1,0 +1,22 @@
+key,route,verdict_reason_template,detail_count
+1217619,credit_note_issued,credit note {credit_note_id} issued,
+1217619,money_overdue,refund {max_late} working days late,open_obligations:1
+1217621,credit_note_issued,credit note {credit_note_id} issued,
+1217621,money_overdue,refund {max_late} working days late,open_obligations:1
+1218225,credit_note_issued,credit note {credit_note_id} issued,
+1218225,money_overdue,refund {max_late} working days late,open_obligations:1
+1218584,goods_overdue,replacement {max_late} working days late,open_obligations:1
+1218676,closed,settled,
+1218676,goods_shipped,replacement shipped on {shipped_date},
+1218677,closed,settled,
+1218677,credit_note_issued,credit note {credit_note_id} issued,
+1218677,money_received,refund paid on {paid_date},
+1219184,closed,settled,
+1219184,credit_note_issued,credit note {credit_note_id} issued,
+1219184,money_received,refund paid on {paid_date},
+1219185,closed,settled,
+1219185,credit_note_issued,credit note {credit_note_id} issued,
+1219185,money_received,refund paid on {paid_date},
+1219186,goods_overdue,replacement {max_late} working days late,open_obligations:1
+1219353,closed,settled,
+1219353,goods_shipped,replacement shipped on {shipped_date},

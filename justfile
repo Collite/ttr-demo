@@ -98,6 +98,73 @@ extend-reset world ctx=CTX:
     esac
     data/extend/run-reset.sh "{{ctx}}" "hartland_{{world}}" "$pod"
 
+# ── the automation extension (AU-hartland P1, contracts §1, §5) ────────────────────────────────
+# Build the H-1/H-2 ERP tables of a world from its facts, for one demo day (data/automation/README.md).
+# Needs the extended year (`just extend-data` first). Guarded: the same day again is a no-op, another
+# day is refused until `just automation-reset`. as-of `-` (or empty) = the Monday of the last extended week.
+#
+#     just automation-data cz                       # the hartland cluster, the default demo day
+#     just automation-data us 2026-10-26 dsk        # another day and cluster — positional, not `ctx=dsk`
+#     just automation-data us - dsk                 # the default day on another cluster
+automation-data world as_of="-" ctx=CTX:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "{{world}}" in us|cz) ;; *) echo "world must be us or cz, got '{{world}}'" >&2; exit 2 ;; esac
+    case "{{ctx}}" in
+      dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
+      *) echo "no hartland-pg pod known for context '{{ctx}}' (dsk, collite-o1, hartland)" >&2; exit 2 ;;
+    esac
+    as_of="{{as_of}}"; [ "$as_of" = "-" ] && as_of=""
+    data/automation/run-automation.sh "{{ctx}}" "hartland_{{world}}" "$as_of" "$pod"
+
+# Undo the automation extension of a world: the base rows it changed come back from its journal, its
+# tables go, the two added columns stay empty. Then `just automation-data` builds it again.
+#
+#     just automation-reset cz                      # the hartland cluster
+automation-reset world ctx=CTX:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "{{world}}" in us|cz) ;; *) echo "world must be us or cz, got '{{world}}'" >&2; exit 2 ;; esac
+    case "{{ctx}}" in
+      dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
+      *) echo "no hartland-pg pod known for context '{{ctx}}' (dsk, collite-o1, hartland)" >&2; exit 2 ;;
+    esac
+    data/automation/run-reset.sh "{{ctx}}" "hartland_{{world}}" "$pod"
+
+# R-A of a built world (data/automation/90-recon.sql) against its committed baseline
+# data/automation/recon/R-A-<world>.md — exit 3 on drift, like check-model. After a deliberate change:
+# `AUTOMATION_RECON_WRITE=1 just automation-recon <world> [ctx]` writes the new baseline.
+automation-recon world ctx=CTX:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "{{world}}" in us|cz) ;; *) echo "world must be us or cz, got '{{world}}'" >&2; exit 2 ;; esac
+    case "{{ctx}}" in
+      dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
+      *) echo "no hartland-pg pod known for context '{{ctx}}' (dsk, collite-o1, hartland)" >&2; exit 2 ;;
+    esac
+    data/automation/run-recon.sh "{{ctx}}" "hartland_{{world}}" "{{world}}" "$pod"
+
+# The demo day's event driver (contracts §6): replays data/automation/events/<world>.csv as webhooks to the
+# Server's HTTP connector. `--dry-run` prints the bodies (no Server needed); `--demo` the runbook's subset.
+#
+#     just automation-events cz --dry-run --demo
+#     just automation-events cz --url https://…/automation/webhooks/events --speed 60 --token-env AUTOMATION_EVENTS_TOKEN
+automation-events world *FLAGS:
+    uv run scripts/automation-events.py replay --world {{world}} {{FLAGS}}
+
+# The timeline of a world, checked (no cluster): order, kinds, payload keys.
+automation-events-check world:
+    uv run scripts/automation-events.py check --world {{world}}
+
+# The generator's suite on a throwaway local Postgres (pgserver via uv — no Docker, no cluster) loaded
+# with data/automation/tests/fixture.sql. `ONLY=reset just automation-test` runs one script.
+automation-test:
+    bash data/automation/tests/run-all.sh
+
+# The event driver's own specs (no cluster, no network).
+automation-events-test:
+    uv run --quiet --with pyyaml --with httpx python3 -B -m unittest scripts/test_automation_events.py
+
 # ── the routing corpus (LR P6, contracts C-9·3) ─────────────────────────────────────────────────
 # run-set/routing/README.md. `check` needs no cluster; `run` asks every case of the DELIVERED world
 # through the public iris-bff as the case's persona (HARTLAND_DEMO_PASSWORD, or the olymp realm file
