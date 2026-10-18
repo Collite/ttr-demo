@@ -92,6 +92,7 @@ may stay on the door, or may join it (G5).
 | `e*` | the mention-homonymy catalogue E1–E9 („prodejna“ / store) | MH design §catalogue |
 | `n*` | the six shapes the door must refuse with a named reason (compare, ratio, avg, last, two periods, an elliptic follow-up) | contracts C-1·3 |
 | `c*` | coordinated places: two places joined by „a“ / "and", read where they meet, one row per member | the coordination ruling (2026-10-14, ttr-demo#62) and the 2026-10-16 rulings |
+| `lq*` | the logical-query acceptance question (an average over the entity stacked on a logical query), with and without diacritics | LQ, ttr-demo#78 (2026-10-18) |
 
 Personas and their passwords come from the realm (olymp `platform/auth/keycloak/overlays/hartland/realm`);
 set `HARTLAND_DEMO_PASSWORD` or pass `--realm-file`.

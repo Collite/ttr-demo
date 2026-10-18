@@ -1,0 +1,23 @@
+notes: |
+  LQ (logical queries, ttr-demo#78) — the acceptance question. The average of each customer's ALL-TIME revenue
+  (every channel, every sale on record), per household buying potential: an aggregate of an aggregate, which
+  the stacked entity `customer_revenue` makes a plain AVG. The wrong answer this tells apart is the per-LINE
+  average (AVG over channel_sales grouped the same way), which is what a question that misses the customer-
+  revenue phrase and binds the bare revenue word gets — a plausible number per band, far smaller (hartland_us,
+  2026-10-18: ≈ 121,000 per customer against ≈ 2,200 per line, in every band).
+  Customers with no sales line have no row (the logical query is an inner JOIN), and the band is the
+  customer's CURRENT household (`c_current_hdemo_sk`), as `customer.hdemo` binds it.
+core: |
+  SELECT hd.hd_buy_potential AS buy_potential, AVG(r.revenue) AS avg_revenue
+  FROM (SELECT c.c_customer_sk, c.c_current_hdemo_sk, SUM(s.ext_sales_price) AS revenue
+        FROM channel_sales s JOIN customer c ON s.customer_sk = c.c_customer_sk
+        GROUP BY c.c_customer_sk, c.c_current_hdemo_sk) r
+  JOIN household_demographics hd ON r.c_current_hdemo_sk = hd.hd_demo_sk
+  GROUP BY hd.hd_buy_potential
+assert:
+  row_count: 6
+  row_set:
+    keys:
+    - buy_potential
+    value: avg_revenue
+    tolerance: 0.001
