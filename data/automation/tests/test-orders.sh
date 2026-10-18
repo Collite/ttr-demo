@@ -38,9 +38,11 @@ expect "every order's value is the sum of its lines" "$(q "SELECT count(*) FROM 
 expect "every line carries its order's customer" "$(q "SELECT count(*) FROM sales_line s JOIN sales_order o ON o.so_order_number = s.sl_order_number WHERE s.sl_customer_sk IS DISTINCT FROM o.so_customer_sk")" -eq 0
 expect "an order's warehouse is its lines' modal warehouse" "$(q "SELECT count(*) FROM sales_order o JOIN (SELECT sl_order_number, mode() WITHIN GROUP (ORDER BY sl_warehouse_sk) w FROM sales_line GROUP BY 1) l ON l.sl_order_number = o.so_order_number WHERE l.w <> o.so_warehouse_sk")" -eq 0
 expect "no order placed after as_of" "$(q "SELECT count(*) FROM sales_order WHERE so_placed_date > DATE '$A'")" -eq 0
+# (but the orders of the received plants that 30-returns.sql redelivered into the return window — test-plants)
 expect "delivered 3–7 days after placement iff placed more than $(conf delivered_after) days before as_of" "$(q "SELECT count(*) FROM sales_order WHERE so_state = 'released' AND NOT (
     (so_placed_date < DATE '$A' - $(conf delivered_after) AND so_delivered_date - so_placed_date BETWEEN 3 AND 7)
- OR (so_placed_date >= DATE '$A' - $(conf delivered_after) AND so_delivered_date IS NULL))")" -eq 0
+ OR (so_placed_date >= DATE '$A' - $(conf delivered_after) AND so_delivered_date IS NULL))
+   AND so_order_number::text NOT IN (SELECT key FROM _automation_plan WHERE kind = 'request:redelivered')")" -eq 0
 expect "every order was placed by the shop; only a held one is held for someone" "$(q "SELECT count(*) FROM sales_order WHERE so_placed_by IS DISTINCT FROM 'shop' OR (so_held_for IS NOT NULL) <> (so_state = 'held')")" -eq 0
 
 # ── the demo day's open orders ──────────────────────────────────────────────────────────────────────────────

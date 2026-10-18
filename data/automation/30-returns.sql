@@ -179,8 +179,11 @@ $$;
 
 -- ── decide_return · the 40 received lines (36 requests; 3 of them get more lines: the multi-line requests) ───────
 -- DECIDABLE (every route after the two rejections): delivered well inside the window, and a 12-month share well
--- under the limit even with this line (and its request's extra lines) returned.
-\set decidable 'f.delivered >= p.as_of - p.return_window + 2 AND f.bought > 0'
+-- under the limit even with this line (and its request's extra lines) returned. A TPC-DS return comes weeks after
+-- the delivery — on a real world a few dozen of the last three weeks' requests are inside the window, fewer than the
+-- plants — so a line outside it is decidable too when nothing else was returned from its order: the delivery is then
+-- moved into the window below (the redelivered orders), which dates no other request before its delivery.
+\set decidable 'f.bought > 0 AND (f.delivered >= p.as_of - p.return_window + 2 OR NOT EXISTS (SELECT 1 FROM _au_rl o WHERE o.order_number = f.order_number AND o.line_id <> f.line_id))'
 \set recent 'f.requested_date >= p.as_of - 21'
 -- One statement per pick, so the picks run in this order (`\gset` swallows the one-row result).
 -- The rarest first: small value — refund, no return. The first also gets a second line (refunded after return).
@@ -261,6 +264,20 @@ SELECT pg_temp.au_pick('settle:missing', 'goods_overdue', 'replacement_no_return
          'f.requested_date BETWEEN pg_temp.au_wd_before(p.as_of, p.settlement + 1) - 12 AND pg_temp.au_wd_before(p.as_of, p.settlement + 1) - 1') AS picked \gset au_
 SELECT pg_temp.au_pick('settle:missing', 'goods_overdue', 'exchange', 1,
          'f.requested_date BETWEEN pg_temp.au_wd_before(p.as_of, p.settlement + 1) - 19 AND pg_temp.au_wd_before(p.as_of, p.settlement + 1) - 8' || :'variant_') AS picked \gset au_
+
+-- ── the redelivered orders: a decidable plant outside the window (its order has no other return line) is
+--    delivered 1–5 days before its request instead — later than it was, inside the window; its invoice with it
+--    (issued at the delivery, 22-invoices.sql). The two rejections keep theirs: late is late by its delivery. ─────
+CREATE TEMP TABLE _au_redeliver ON COMMIT DROP AS
+SELECT l.order_number, l.delivered AS was,
+       l.requested_date - 1 - abs(hashtext('deliver:' || l.order_number)) % 5 AS delivered
+  FROM _au_h2 h JOIN _au_rl l ON l.line_id = h.line_id
+ WHERE h.kind LIKE 'decide:%' AND h.kind NOT IN ('decide:late', 'decide:not_ours')
+   AND l.delivered < :'as_of'::date - :p_return_window + 2;
+UPDATE _au_rl l SET delivered = r.delivered FROM _au_redeliver r WHERE l.order_number = r.order_number;
+UPDATE sales_order o SET so_delivered_date = r.delivered FROM _au_redeliver r WHERE o.so_order_number = r.order_number;
+UPDATE invoice i SET inv_issued = r.delivered, inv_due = r.delivered + :payment_days
+  FROM _au_redeliver r WHERE i.inv_order_number = r.order_number;
 
 -- ── the planted lines' fields: what their route needs, and nothing of the history's documents ────────────────
 -- A line's reason, resolution and variant agree with its way: refund/replacement no return = damaged (or
@@ -453,6 +470,9 @@ SELECT 'request:added_line', line_id::text, added, NULL FROM _au_rl WHERE added 
 INSERT INTO _automation_plan (kind, key, note, expected_route)
 SELECT 'request:abuse_history', request_number::text, 'customer ' || customer || ' returns order ' || order_number, NULL
   FROM _au_abuse ORDER BY request_number;
+INSERT INTO _automation_plan (kind, key, note, expected_route)
+SELECT 'request:redelivered', order_number::text, 'delivered ' || delivered || ' (was ' || was || ')', NULL
+  FROM _au_redeliver ORDER BY order_number;
 
 INSERT INTO _automation_base (fact, last_date, row_count)
 SELECT 'web_returns', max(d.d_date), count(*) FROM web_returns LEFT JOIN date_dim d ON d.d_date_sk = wr_returned_date_sk

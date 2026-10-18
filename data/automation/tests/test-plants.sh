@@ -82,6 +82,21 @@ expect "one care request is one task: a multi-line request whose lines all go to
                                                          WHERE l.rl_request_number = CASE WHEN m.key ~ '^[0-9]+$' THEN m.key::int END AND d.key IS NULL)")" -eq 1
 expect "the abuse customers' 12-month return share was pushed over $(param abuse_share) by closed requests" "$(q "SELECT count(DISTINCT r.rr_customer_sk) FROM _automation_plan p
     JOIN return_request_hdr r ON r.rr_request_number = CASE WHEN p.key ~ '^[0-9]+$' THEN p.key::int END WHERE p.kind = 'request:abuse_history'")" -eq 3
+# A real world's recent requests are mostly outside the return window (TPC-DS returns come weeks late): a decidable
+# plant's order with no other return line is redelivered into it — later than it was, 1–5 days before the request.
+expect "some received plants' orders were redelivered into the window (the fixture's returns come late too)" "$(n_kind request:redelivered)" -gt 0
+expect "the redelivered orders: a received plant's, nothing else returned from it, delivered 1–5 days before its request, later than it was" "$(q "SELECT count(*) FROM _automation_plan p
+    JOIN sales_order o ON o.so_order_number::text = p.key
+   WHERE p.kind = 'request:redelivered' AND NOT (
+         (SELECT count(DISTINCT h.rr_request_number) FROM return_request_hdr h WHERE h.rr_order_number = o.so_order_number) = 1
+     AND EXISTS (SELECT 1 FROM return_request_hdr h JOIN return_request_line l ON l.rl_request_number = h.rr_request_number
+                  WHERE h.rr_order_number = o.so_order_number AND l.rl_state = 'received'
+                    AND h.rr_requested_date - o.so_delivered_date BETWEEN 1 AND 5)
+     AND o.so_delivered_date > substring(p.note FROM 'was ([0-9-]+)')::date
+     AND o.so_delivered_date >= DATE '$A' - $(param return_window))")" -eq 0
+expect "a redelivered order's invoice was issued at the new delivery" "$(q "SELECT count(*) FROM _automation_plan p JOIN sales_order o ON o.so_order_number::text = p.key
+    JOIN invoice i ON i.inv_order_number = o.so_order_number
+   WHERE p.kind = 'request:redelivered' AND (i.inv_issued <> o.so_delivered_date OR i.inv_due <> o.so_delivered_date + $(conf payment_days))")" -eq 0
 
 # ── H-2: the lines decide_return already decided — states, ways, documents (monitor_inbound / settle) ──────────
 expect "inbound plants are awaiting_goods with a return-expected way" "$(q "SELECT count(*) FROM _automation_plan p JOIN return_request_line l ON l.rl_line_id = CASE WHEN p.key ~ '^[0-9]+$' THEN p.key::int END
