@@ -4,10 +4,14 @@ One model set (BM-2/BM-5), served over `pg-hartland-us` (USD) and `pg-hartland-c
 
 - `db/` — `model db`: the physical TPC-DS subset (facts + used dims), types, PK/FK.
 - `er/` — `model er` + `er2db` binding: the 19 curated entities + relationships (05-d/D-5).
-  Plus one **logical query** (LQ, 2026-10-18): `er/customer_revenue.ttrm` declares `er.query.customer_revenue`
+  Plus one **logical query** (LQ, 2026-10-18): `er/customer_revenue.ttrm` declares `er.query.revenue_per_customer`
   (written over entities — `channel_sales JOIN customer` — because it sits in a `model er` file) and the
-  entity `customer_revenue` stacked on it, with `join:` relations to household demographics and customer.
-  It is not a `q.hartland.*` pattern: agents ask over the entity; the query is never discovered.
+  entity `customer_revenue` stacked on it (all-time totals, one row per customer), with `join:` relations to
+  household demographics and customer. It is not a `q.hartland.*` pattern: agents are meant to ask over the
+  entity (LQ-6). ⚑ veles 0.11.11 still LISTS it — ListQueries returns 18 (the 17 `q.hartland.*` + this one),
+  and GetModel carries it in `namedQueries` — so meta-mcp `list_queries` offers it, and running it is refused
+  (`query_ref_logical_query`). Its name is deliberately not the entity's: golem's descriptor lookup tries a
+  query's local name before an entity's.
 - `md/` — `model md` + `md2db`/`md2er` binding: the ROLAP star (cubelets, measures, conformed
   dimensions incl. the Product hierarchy Category→Class→Brand→Manufacturer→Item).
 - `lexicon/` — `model lexicon locale en` + `locale cs`: the bilingual naming layer + valueLabels.

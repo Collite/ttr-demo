@@ -78,28 +78,36 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
-From `just build-lexicon`, **2026-10-18**: the stacked entity `customer_revenue` (LQ — logical queries, branch
-`feat/lq-stacked-entity`, master `47e7320` merged in). Built with the toolchain **`grammar/v0.15.2`**, the first whose
-loader accepts a `def query` in a `model er` file, and the tag `model-gate` pins from this change on. v0.15.2 first
-rebuilt master's archive byte for byte (`sha256:cd772681…`, below) and master's `resolved-packages.json`:
+From `just build-lexicon`, **2026-10-18**, the ttr-demo#78 review round: the stacked entity `customer_revenue` (LQ —
+logical queries, branch `feat/lq-stacked-entity`, master `47e7320` merged in). Built with the toolchain
+**`grammar/v0.15.2`**, the first whose loader accepts a `def query` in a `model er` file, and the tag `model-gate` pins
+from this change on. v0.15.2 first rebuilt master's archive byte for byte (`sha256:cd772681…`, below) and master's
+`resolved-packages.json`, and again the branch's previous archive (`sha256:53d0df5a…`) before this one:
 
 | | |
 |---|---|
-| archive id | `sha256:53d0df5a1540ac06643fbd669b0ebe26d2b96332138e50e9b45a74ef2485a2a9` |
-| model id | `sha256:799e350f7855499b9f64e3305a7e0b8da9dc838331982b0599e9817e10beb8a2` (was `a653f749…`: `model/er/customer_revenue.ttrm`) |
+| archive id | `sha256:d0789ffa4f58e56ad7d786d20bcc31bb141f3d92b4ed3f3dac55883ac8f33196` |
+| model id | `sha256:847bc8b72fa0be4b636c9c5458a1df6bb3e545185e5ca333856e9206a2c65543` (was `a653f749…`: `model/er/customer_revenue.ttrm`) |
 | schema | `ttr-lexicon-compiled/v5` (unchanged) |
 | toolchain | `Collite/ttr-core` **`grammar/v0.15.2`** |
-| entries | **798** (was 791) — **+7 `MODEL_OBJECT`** (329, was 322); none removed, every other class unchanged |
+| entries | **803** (was 791) — **+12 `MODEL_OBJECT`** (334, was 322); none removed, every other class unchanged |
 | targets | **60** (was 58) — `er.entity.customer_revenue` and its measure `revenue`; `customer` and `household_demographics` are also reached from `customer_revenue` (its two relations) |
 | build warnings | **24**, the same 24 as before |
-| size | 14,800 bytes |
+| size | 14,857 bytes |
 
-The 7 rows, read from the archive: the four DECLARED phrases in `aliases/hartland.lex.yaml` on the measure
-`er.entity.customer_revenue.revenue` (`customer revenue`, `revenue per customer`, `tržby zákazníka`,
-`tržby na zákazníka`, all `TOKENS`), and three METADATA rows harvested from the entity's own labels onto
-`er.entity.customer_revenue` (`customer totals` en and cs|en, `souhrny zákazníků` cs). The label names the object, not
-the measure phrase, for the ttr-demo#62 reason: a label outranks a declared phrase, so "Customer Revenue" as a label
-would have bound the entity where the measure is meant.
+The 12 rows, read from the archive: nine DECLARED phrases in `aliases/hartland.lex.yaml` on the measure
+`er.entity.customer_revenue.revenue` — `customer revenue`, `customer revenues`, `revenue per customer`, and
+`tržby` / `tržba` / `tržeb zákazníka`, `tržby` / `tržeb zákazníků`, `tržby na zákazníka` — all WHOLE phrases under the
+file's default profile (`TYPOS(1)` with the `folded` rule), none `TOKENS`; and three METADATA rows harvested from the
+entity's own labels onto `er.entity.customer_revenue` (`customer totals` en and cs|en, `souhrny zákazníků` cs). The
+label names the object, not the measure phrase, for the ttr-demo#62 reason: a label outranks a declared phrase, so
+"Customer Revenue" as a label would have bound the entity where the measure is meant. The entity carries no `code`
+facet (its target's `codeRef` is null): a code-shaped literal lands on `customer` alone.
+
+The first build of #78 (`sha256:53d0df5a…`) declared four of these phrases `TOKENS`. A TOKENS row has its own profile
+(no `folded` rule) and is reached by its fragments, so «prumerne trzby zakazniku …» bound the bare `tržby` — the
+per-line average — and `per` / `na` questions could reach the measure. `lexicon/tests/customer-revenue.test.mjs` holds
+the replacement; the routing corpus asks both wordings (`run-set/routing/cases/lq1*`).
 
 ### 2026-10-18 (AU, the documents' days)
 

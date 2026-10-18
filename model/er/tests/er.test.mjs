@@ -9,7 +9,7 @@ import { loadHartlandProject, ACCEPTED_RESIDUAL_CODES } from '../../tests/projec
 // D-5 roster (05-d-ttrm-spec.md) — the 19 D-5 entities, no D-5-Out entity (time_dim, web_site,
 // web_page, catalog_page, ship_mode, dbgen_version) — plus `channel_sales` (2026-09-24), the
 // all-channel view-backed fact that lets "revenue by channel" be asked on the fast path — plus
-// `customer_revenue` (LQ, 2026-10-18), stacked on the logical query `er.query.customer_revenue`.
+// `customer_revenue` (LQ, 2026-10-18), stacked on the logical query `er.query.revenue_per_customer`.
 const EXPECTED_ENTITIES = [
   'store_sales', 'web_sales', 'catalog_sales', 'channel_sales', 'customer_revenue',
   'store_returns', 'web_returns', 'catalog_returns',
@@ -197,25 +197,47 @@ test('T-LQ — customer_revenue is stacked on a logical query: declared in a mod
   const { def: entity, uri } = stacked[0];
 
   const target = entity.binding.target.entries.find((e) => e.key === 'query').value;
-  assert.equal(target.path, 'er.query.customer_revenue', 'the binding names the logical query by its er.query qname');
+  assert.equal(target.path, 'er.query.revenue_per_customer', 'the binding names the logical query by its er.query qname');
 
   const ast = project.asts.get(uri);
   assert.equal(ast.modelDirective?.modelCode, 'er', 'the query lives in a `model er` file — that is what makes it logical');
-  const query = (ast.definitions ?? []).find((d) => d.kind === 'query' && d.name === 'customer_revenue');
+  const query = (ast.definitions ?? []).find((d) => d.kind === 'query' && d.name === 'revenue_per_customer');
   assert.ok(query, 'the logical query is declared beside the entity');
   assert.equal(query.parameters ?? undefined, undefined, 'a logical query takes no parameters');
+  // Not named after the entity: veles still lists a logical query (ListQueries, GetModel namedQueries), and
+  // golem's descriptor lookup tries a query's local name before an entity's (model/er/customer_revenue.ttrm).
+  const entityNames = new Set(allDefsOfKind('entity').map(({ def }) => def.name));
+  assert.ok(!entityNames.has(query.name), `the logical query shares its local name with an entity: ${query.name}`);
 
   // Every attribute is unbound, so each names the query output column of its own name: the SELECT list
   // must produce exactly those names (the metadata service's output check, mirrored statically).
-  const body = query.sourceTextBlock?.content ?? query.sourceText?.value ?? '';
+  // `sourceText.value` is the body as the TS AST carries it (the queries suite reads the same field).
+  const body = query.sourceText?.value ?? '';
+  assert.match(body, /^\s*select\b[\s\S]*\bfrom\b/i, `the body is no SELECT … FROM: ${JSON.stringify(body)}`);
   const select = body.slice(body.search(/select/i) + 6, body.search(/\bfrom\b/i));
   const outputs = select.split(',').map((c) => c.trim().split(/\s+as\s+|\./i).pop().trim());
   assert.deepEqual(outputs.sort(), (entity.attributes ?? []).map((a) => a.name).sort());
 
+  // No foreign key in ANY form: neither `binding: { fk: db.dbo.fk_x }` nor the bare `binding: db.dbo.fk_x`.
+  // A stacked entity has no table, so a relation from it states `join:` pairs and binds nothing.
   for (const name of ['rel_customer_revenue_hdemo', 'rel_customer_revenue_customer']) {
     const rel = allDefsOfKind('relation').find(({ def }) => def.name === name)?.def;
     assert.ok(rel, `${name} is declared`);
-    assert.equal(rel.binding?.fk, undefined, `${name}: a stacked entity has no foreign key`);
+    assert.equal(rel.binding ?? undefined, undefined, `${name}: a stacked entity has no foreign key, so the relation has no binding`);
     assert.ok(rel.join, `${name} states join: pairs`);
   }
+
+  // All time: no date attribute and no relation to the calendar, and the descriptions say so.
+  const attrs = (entity.attributes ?? []).map((a) => a.name);
+  assert.ok(!attrs.some((a) => /date|year_month|month|quarter/.test(a)), `customer_revenue gained a date-like attribute: ${attrs}`);
+  const toCalendar = allDefsOfKind('relation').filter(({ def }) => def.from?.path === 'er.entity.customer_revenue' && def.to?.path === 'er.entity.date_dim');
+  assert.deepEqual(toCalendar.map(({ def }) => def.name), [], 'customer_revenue reaches the calendar');
+  for (const [what, text] of [['entity', entity.description?.value], ['query', query.description?.value]]) {
+    assert.match(text ?? '', /all[- ]time/i, `the ${what}'s description does not say it is all time: ${text}`);
+  }
+
+  // No code facet: `customer` holds `customer_id` as its code; a second head with the same pattern would split a
+  // code-shaped literal between the two.
+  assert.equal(entity.semantics?.entries?.code ?? undefined, undefined, 'customer_revenue declares a code facet');
+  assert.deepEqual(entity.semantics?.entries?.measures, ['revenue'], 'revenue stays the measure');
 });
