@@ -137,8 +137,9 @@ One file per recipe — `release_order`, `decide_return`, `monitor_inbound`, `se
 
 A `none` row (monitor_inbound inside the window; a customer mailed inside the win-back window) asserts the key
 gets **no** verdict row. The files are the seeds of each recipe's `tests/*.yaml` (contracts §7: no `pinned_from`
-— a seed); P3 pins goldens from debug runs. The committed files come from the certification builds (`dsk`); a
-build anywhere writes them under `AUTOMATION_OUT` (default: this directory) — the suite writes under `$TMPDIR`.
+— a seed); P3 pins goldens from debug runs. The committed files come from the certification builds (`hartland`, the
+demo machine's own worlds, both as of 2026-11-02); a build anywhere writes them under `AUTOMATION_OUT` (default: this
+directory) — the suite writes under `$TMPDIR`.
 
 ## Events — the demo day's timeline (`events/<world>.csv`)
 
