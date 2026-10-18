@@ -78,6 +78,45 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-17**: the automation extension (AU P0, branch `feat/au-p0-extension`) — the
+documents the automation agents read and write (`model/er/{orders,returns-flow,proposals}.ttrm`), their words, and
+their states. Built with the **pinned** toolchain `grammar/v0.15.1`:
+
+| | |
+|---|---|
+| archive id | `sha256:ac0ef5bf41d9157d7d2323a689b3399c8708b537c900b11697af253e9e9adbfa` |
+| model id | `sha256:b57b2b130104b727ea913cb5726ac3fa7c767f82b7c6dc309c4ecb0325a0d438` |
+| schema | `ttr-lexicon-compiled/v5` (unchanged) |
+| toolchain | `Collite/ttr-core` **`grammar/v0.15.1`** |
+| entries | **791** (was 600) — **+45 `MODEL_OBJECT` `METADATA`** (the 15 entities' labels and plurals), **+64 `MODEL_OBJECT` `DECLARED`** (`model/lexicon/{cs,en}/automation.ttrm`), **+82 `MEMBER` `METADATA`** (41 value labels × 2 locales); every other class unchanged |
+| targets | **58** (was 43) — the 15 documents, kind `entity` (none declares measures) |
+| build warnings | **24**, the same 24 as before |
+| size | 14,712 bytes |
+
+What it adds, and the rule it adds it under (`lexicon/tests/automation-lexicon.test.mjs` asserts each against this
+archive):
+
+- **The documents' words.** Each of the 15 entities has its label and a plural in both locales. Czech multi-word
+  labels get their case forms declared (the resolver looks up a dictionary form for one-word mentions only).
+- **The states as members.** The `valueLabels` of the enumerated attributes (order state, who a hold waits for,
+  invoice / credit-note status, the request's and the line's state, reason, requested resolution, way, receipt
+  condition, proposal state, win-back offer) are `MEMBER` rows. A value label is matched in every Golem question, so
+  **AU claims no word the pre-AU vocabulary binds** — any class, either locale, diacritics folded. Hence "Sales
+  department" not "Sales", „Nevhodná velikost“ not the reason dimension's „Špatná velikost“, and no labels on the
+  `channel` attributes («web», «tržiště» are the sales facts' channel words). The 8 words AU shares within itself
+  (received / closed / rejected / exchange, both locales) are one meaning on two attributes, pinned by the suite.
+- **⚑AU-H-3 (Bora, 2026-10-17): «reklamace» and «objednávka» are the documents, by rule.** Before AU neither bare
+  word bound anything; the facts' labels hold them only in phrases („Reklamace z prodejen“, „Objednávky z tržiště“).
+  The labels „Reklamace“ / „Objednávka“ stay, and (1) every case form of the bare word is an EXACT term of
+  `return_request` / `order` alone, (2) the facts keep their channel-qualified names, longer spans than the bare
+  word, (3) no TOKENS phrase holds either word. The routing cases that ask the bare word about the facts
+  (`p-returns-by-reason`, `a3-3`, `a3-4`) are re-measured at the AU P0 exit.
+- **Two labels moved off a bare estate word:** `return_receipt` is „Příjemka vratky“, not „Vratka“ (#62's guard
+  above), and `warehouse_outage` „Výpadek skladu“, not „Výpadek“ — the bare «výpadky» is the demo's stockout word
+  (act 3.5, «… výpadky zásob?»).
+
+### 2026-10-14 (night, ttr-server#237, the grain adjectives)
+
 From `just build-lexicon`, **2026-10-14 (night)**: the Czech grain adjectives (ttr-server#237). Built with the **pinned**
 toolchain `grammar/v0.15.1`, which first rebuilt master's archive byte for byte (`sha256:dd5c24d9…`):
 

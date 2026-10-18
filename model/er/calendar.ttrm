@@ -28,6 +28,8 @@ def entity date_dim {
         def attribute week_seq  { type: int, description: "Absolute  week number from the beginning of this calendar." },
         def attribute day_name  { type: text, description: "Name of the day of the week. English only" },
         def attribute holiday   { type: { type: char, length: 1 }, description: "Is this a holiday? Y/N" },
-        def attribute weekend   { type: { type: char, length: 1 }, description: "Is this a weekend? Y/N" }
+        def attribute weekend   { type: { type: char, length: 1 }, description: "Is this a weekend? Y/N" },
+        // AU D-82 — what working_days(…) counts in the automation recipes.
+        def attribute working_day { type: bool, description: "Is this a working day? True when the day is neither a holiday nor a weekend." }
     ]
 }
