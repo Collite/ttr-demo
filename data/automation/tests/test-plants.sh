@@ -133,11 +133,18 @@ expect "H-3's cover rule finds exactly the planted reorder pairs" "$(probe_reord
   "$(q "SELECT key FROM _automation_plan WHERE kind = 'reorder:propose' ORDER BY key" | digest)"
 expect "win-back: the mailed customers were mailed $(param winback_mail_window) days or less before as_of" "$(q "SELECT count(*) FROM winback_mail w JOIN _automation_plan p ON CASE WHEN p.key ~ '^[0-9]+$' THEN p.key::int END = w.wm_customer_sk AND p.kind = 'winback:mailed'
     WHERE w.wm_mailed_at::date > DATE '$A' - $(param winback_mail_window)")" -eq 10
-expect "win-back: the list = customers with >= 2 orders in months -18..-6 and none since, minus the mailed" "$(q "SELECT key FROM _automation_plan WHERE kind = 'winback:list' ORDER BY CASE WHEN key ~ '^[0-9]+$' THEN key::int END" | digest)" = \
-  "$(q "SELECT so_customer_sk FROM sales_order GROUP BY 1
-         HAVING count(*) FILTER (WHERE so_placed_date >= DATE '$A' - interval '18 months' AND so_placed_date < DATE '$A' - interval '6 months') >= 2
-            AND count(*) FILTER (WHERE so_placed_date >= DATE '$A' - interval '6 months') = 0
-         EXCEPT SELECT wm_customer_sk FROM winback_mail ORDER BY 1" | digest)"
+# H-5 (D-129) as SQL: >= <orders> orders in the twelve months before the last <quiet>, none in the last <quiet>.
+winback_of() { q "SELECT so_customer_sk FROM sales_order GROUP BY 1
+         HAVING count(*) FILTER (WHERE so_placed_date >= DATE '$A' - interval '$(( $2 + 12 )) months' AND so_placed_date < DATE '$A' - interval '$2 months') >= $1
+            AND count(*) FILTER (WHERE so_placed_date >= DATE '$A' - interval '$2 months') = 0 ORDER BY 1"; }
+WO=$(param winback_active_orders); WQ=$(param winback_quiet_months)
+expect "win-back: the list = customers with >= $WO orders in months -$(( WQ + 12 ))..-$WQ and none since, minus the mailed" "$(q "SELECT key FROM _automation_plan WHERE kind = 'winback:list' ORDER BY CASE WHEN key ~ '^[0-9]+$' THEN key::int END" | digest)" = \
+  "$(comm -23 <(winback_of "$WO" "$WQ" | sort) <(q "SELECT wm_customer_sk FROM winback_mail" | sort) | sort -n | digest)"
+# The fixture's bands (fixture.sql header) keep both of D-129's narrowings live: the first 04 rule (2 orders, 6 quiet
+# months) lists the light sleepers 381–386 and the few-order 387–390 too; D-129's lists neither.
+expect "win-back: every candidate is a deep sleeper (361–380)" "$(winback_of "$WO" "$WQ" | awk '$1 < 361 || $1 > 380' | wc -l | tr -d ' ')" -eq 0
+expect "win-back: 12 quiet months, not 6 — the light sleepers would be listed at 6" "$(winback_of "$WO" 6 | awk '$1 >= 381 && $1 <= 386' | wc -l | tr -d ' ')" -gt 0
+expect "win-back: $WO orders, not 2 — the few-order sleepers would be listed at 2" "$(winback_of 2 "$WQ" | awk '$1 >= 387 && $1 <= 390' | wc -l | tr -d ' ')" -gt 0
 expect "win-back: premium = the top two income bands" "$(q "SELECT count(*) FROM _automation_plan p JOIN customer c ON c.c_customer_sk = CASE WHEN p.key ~ '^[0-9]+$' THEN p.key::int END
     LEFT JOIN household_demographics hd ON hd.hd_demo_sk = c.c_current_hdemo_sk
     WHERE p.kind = 'winback:list' AND p.expected_route IS DISTINCT FROM

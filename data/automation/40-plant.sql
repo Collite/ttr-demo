@@ -177,9 +177,9 @@ SELECT 'reorder:propose', item || ':' || wh, 'on hand ' || on_hand || '; weekly 
   FROM _au_reorder ORDER BY 2;
 
 -- ── H-5 · the win-back list ─────────────────────────────────────────────────────────────────────────────────────
--- 04 H-5: customers with two or more orders in the twelve months before the last six and none since; the premium
--- offer for the top two income bands. Ten of them were mailed a month ago — inside the mail window, so they are
--- off this list (route `none`: the seed asserts their absence).
+-- 04 H-5 (D-129): customers with :p_winback_active_orders or more orders in the twelve months before the last
+-- :p_winback_quiet_months and none since; the premium offer for the top two income bands. Ten of them were mailed a
+-- month ago — inside the mail window, so they are off this list (route `none`: the seed asserts their absence).
 CREATE TEMP TABLE _au_winback ON COMMIT DROP AS
 SELECT o.so_customer_sk AS customer,
        CASE WHEN hd.hd_income_band_sk IN (SELECT ib_income_band_sk FROM income_band ORDER BY ib_lower_bound DESC LIMIT 2)
@@ -187,9 +187,9 @@ SELECT o.so_customer_sk AS customer,
   FROM sales_order o JOIN customer c ON c.c_customer_sk = o.so_customer_sk
   LEFT JOIN household_demographics hd ON hd.hd_demo_sk = c.c_current_hdemo_sk
  GROUP BY o.so_customer_sk, hd.hd_income_band_sk
-HAVING count(*) FILTER (WHERE o.so_placed_date >= :'as_of'::date - interval '18 months'
-                          AND o.so_placed_date <  :'as_of'::date - interval '6 months') >= 2
-   AND count(*) FILTER (WHERE o.so_placed_date >= :'as_of'::date - interval '6 months') = 0;
+HAVING count(*) FILTER (WHERE o.so_placed_date >= :'as_of'::date - make_interval(months => :p_winback_quiet_months + 12)
+                          AND o.so_placed_date <  :'as_of'::date - make_interval(months => :p_winback_quiet_months)) >= :p_winback_active_orders
+   AND count(*) FILTER (WHERE o.so_placed_date >= :'as_of'::date - make_interval(months => :p_winback_quiet_months)) = 0;
 INSERT INTO winback_mail (wm_customer_sk, wm_quarter, wm_offer, wm_run, wm_mailed_at)
 SELECT customer, to_char(:'as_of'::date - 30, 'YYYY-"Q"Q'), offer, 'automation-data',
        ((:'as_of'::date - 30) + time '10:00') AT TIME ZONE 'Europe/Prague'

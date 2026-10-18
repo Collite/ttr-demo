@@ -116,7 +116,7 @@ hartland/`) — one source; this is how each is made and what `_automation_plan.
 | `inbound:expired` · `remind` · `none` · `complete` · `damaged` | line | awaiting the goods, decided 35 / 20 / 10 / 7 / 7 days ago (half exchanges, half refunds after return); complete = received today in full, damaged = one back damaged, one back short. The obligations they hang on are P4's (the note says when) |
 | `settle:paid` · `unpaid` · `shipped` · `missing` | line | settling / goods received: credit notes paid today, or issued 12 working days ago and unpaid (7 late); shipments today, or none with the obligation 1 working day late |
 | `reorder:propose` | `item:center` | every pair with 8-week demand first has ≥ 4 weeks of stock; 25 hashed pairs nothing else reads then hold 1.5 weeks |
-| `winback:list` · `winback:mailed` | customer | 04 H-5 over `sales_order`: ≥ 2 orders in months −18…−6 and none since; premium = the top two income bands. Ten were mailed a month ago (`winback_mail`) and are off the list (route `none`) |
+| `winback:list` · `winback:mailed` | customer | 04 H-5 over `sales_order` as narrowed by D-129: ≥ `p_winback_active_orders` (4) orders in the twelve months before the last `p_winback_quiet_months` (12), none since — 63 customers of a hartland world (the first rule, 2 orders / 6 months, listed 5 895); premium = the top two income bands. Ten were mailed a month ago (`winback_mail`) and are off the list (route `none`) |
 
 **`45-verify.sql`** replays 17 §3 over every candidate, 17 §4.1 over every received line and H-3's cover rule over
 every pair with demand, and **fails the build** if any key routes differently from the plan or any unplanned key

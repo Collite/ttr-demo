@@ -12,7 +12,10 @@
 --   * `_extend_meta` / `_extend_base` — the runner refuses a world that was never extended.
 -- And the demo day's material: a quarter of the orders in the 60 days before 2026-10-26 (the default as_of, the
 -- Monday that ends the last extended week) — enough open orders and recent returns for every plant — and
--- "sleepers" (customers 361–390) who ordered only between 2025-05 and 2026-03: the win-back population of H-5.
+-- "sleepers" (customers 361–390), H-5's population (D-129: >= 4 orders in the twelve months before the last twelve,
+-- none since), laid out by order, not hashed, so each band is certain: 361–380 order often (~14 each) and only
+-- between 2024-11 and 2025-10 — the list; 381–386 order 5 times each but only from 2025-11 (quiet 7–11 months: the
+-- first 04 rule's six would list them); 387–390 order 2–3 times in the active months (the first rule's two would).
 -- Customers 391–400 never order. Household demographics carry the income band H-5's offer splits on.
 \set ON_ERROR_STOP on
 SET client_min_messages = warning;
@@ -97,17 +100,28 @@ INSERT INTO reason SELECT n, 'REASON' || n, 'reason ' || n FROM generate_series(
 
 -- ── the orders (one sold date, one bill customer, one main warehouse per order) ───────────────────────────
 CREATE TEMP TABLE fx_order AS
-SELECT ch, n, sleeper,
-       CASE WHEN sleeper THEN DATE '2025-05-01' + pg_temp.h(ch || ':d:' || n) % 330
-            WHEN pg_temp.h(ch || ':r:' || n) % 4 = 0 THEN DATE '2026-10-26' - pg_temp.h(ch || ':d:' || n) % 60
-            ELSE DATE '2024-01-01' + pg_temp.h(ch || ':d:' || n) % (DATE '2026-10-19' - DATE '2024-01-01' + 1)
+WITH o AS (
+  SELECT ch, n, pg_temp.h(ch || ':s:' || n) % 20 = 0 AS sleeper
+    FROM (SELECT 'web' AS ch, n FROM generate_series(1, 3000) n
+          UNION ALL SELECT 'marketplace', n FROM generate_series(1, 3500) n) x
+), s AS (       -- the sleepers' orders (~325), numbered: 30 light, 10 few, the rest deep (header)
+  SELECT ch, n, r,
+         CASE WHEN r BETWEEN 201 AND 230 THEN 381 + r % 6
+              WHEN r BETWEEN 231 AND 233 THEN 387 WHEN r BETWEEN 234 AND 236 THEN 388
+              WHEN r BETWEEN 237 AND 238 THEN 389 WHEN r BETWEEN 239 AND 240 THEN 390
+              ELSE 361 + r % 20 END AS cust
+    FROM (SELECT ch, n, row_number() OVER (ORDER BY ch, n) AS r FROM o WHERE sleeper) z
+)
+SELECT o.ch, o.n, o.sleeper,
+       CASE WHEN s.cust BETWEEN 381 AND 386 THEN DATE '2025-11-15' + pg_temp.h(o.ch || ':d:' || o.n) % 120
+            WHEN o.sleeper THEN DATE '2024-11-01' + pg_temp.h(o.ch || ':d:' || o.n) % 350
+            WHEN pg_temp.h(o.ch || ':r:' || o.n) % 4 = 0 THEN DATE '2026-10-26' - pg_temp.h(o.ch || ':d:' || o.n) % 60
+            ELSE DATE '2024-01-01' + pg_temp.h(o.ch || ':d:' || o.n) % (DATE '2026-10-19' - DATE '2024-01-01' + 1)
        END AS sold,
-       CASE WHEN sleeper THEN 361 + pg_temp.h(ch || ':c:' || n) % 30 ELSE 1 + pg_temp.h(ch || ':c:' || n) % 360 END AS cust,
-       1 + pg_temp.h(ch || ':w:' || n) % 5 AS wh,
-       1 + pg_temp.h(ch || ':l:' || n) % 6 AS nlines
-FROM (SELECT 'web' AS ch, n FROM generate_series(1, 3000) n
-      UNION ALL SELECT 'marketplace', n FROM generate_series(1, 3500) n) o,
-     LATERAL (SELECT pg_temp.h(ch || ':s:' || n) % 20 = 0 AS sleeper) s;
+       coalesce(s.cust, 1 + pg_temp.h(o.ch || ':c:' || o.n) % 360) AS cust,
+       1 + pg_temp.h(o.ch || ':w:' || o.n) % 5 AS wh,
+       1 + pg_temp.h(o.ch || ':l:' || o.n) % 6 AS nlines
+  FROM o LEFT JOIN s ON s.ch = o.ch AND s.n = o.n;
 
 CREATE TEMP TABLE fx_line AS
 SELECT o.ch, o.n, j, o.sold, o.cust, o.wh,
