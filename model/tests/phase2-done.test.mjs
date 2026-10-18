@@ -37,6 +37,8 @@ test('DONE 3 — ResolveArea("hartland") is green', () => {
 test('DONE 4 — ListQueries returns exactly 17 q.hartland.* with params', () => {
   let n = 0;
   for (const [, ast] of project.asts) {
+    // A `def query` in a `model er` file is a logical query (LQ), not a q.hartland.* pattern.
+    if (ast.modelDirective?.modelCode === 'er') continue;
     for (const def of ast.definitions ?? []) {
       if (def.kind === 'query') n++;
     }

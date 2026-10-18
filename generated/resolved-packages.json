@@ -47,6 +47,11 @@
       "schema": "er"
     },
     {
+      "qname": "hartland.er.entity.customer_revenue",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
       "qname": "hartland.er.entity.date_dim",
       "package": "hartland",
       "schema": "er"

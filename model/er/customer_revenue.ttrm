@@ -1,0 +1,67 @@
+package hartland
+
+model er
+
+// LQ — logical queries (ttr-core#191, ttr-server#245). A saved query written over ENTITIES, and an
+// entity stacked on it. Declared in a `model er` file, the query is the logical query
+// `er.query.customer_revenue`: its body names entities and attributes, never tables, and its bare
+// `JOIN` is conditioned by the model — here from `rel_channel_sales_customer`'s foreign key (the
+// FK-only relation needs no `join:` pairs for that). The entity `customer_revenue` reads the query;
+// an agent asks over the entity and never sees the query itself.
+//
+// Why a query: "average customer revenue by household buying potential" is an aggregate OF an
+// aggregate — revenue summed per customer, then averaged per band. Over `channel_sales` that is a
+// nested query no agent should have to write; over `customer_revenue` it is a plain AVG.
+//
+// Security rides along: the body reads `channel_sales`, which the DC-scope row rule (olymp, validate
+// `dc-scope`) narrows for a `kantheon-scope-dc-5` caller to DC 5's web and marketplace lines. The body
+// is inlined into the plan where the entity is read, so that caller's customer revenue counts only
+// those lines — Sam's and Maya's answers to the same question differ.
+
+def query customer_revenue {
+    description: "Revenue per customer across all channels — one row per customer, with the customer's household and year of birth."
+    tags: ["sales", "customers"]
+    sourceText: """sql
+SELECT customer.sk, customer.customer_id, customer.hdemo, customer.birth_year,
+       SUM(channel_sales.ext_sales_price) AS revenue
+FROM channel_sales JOIN customer
+GROUP BY customer.sk, customer.customer_id, customer.hdemo, customer.birth_year
+"""
+}
+
+// Stacked on the query: its attributes bind to the query's OUTPUT columns — unbound, so each names
+// the column of its own name (the metadata service checks them against the query's output when it
+// parses the body). It has no foreign key, so its relations state `join:` pairs.
+//
+// The label names the OBJECT, not the measure phrase: a label is a METADATA term and outranks any
+// declared phrase (ttr-demo#62), so "Customer Revenue" as a label would bind the entity where the
+// measure is meant. "customer revenue" is declared on the measure in `lexicon/aliases/hartland.lex.yaml`.
+def entity customer_revenue {
+    description: "Customer revenue totals — one row per customer: the customer's revenue across all channels (store, web, marketplace), their household and year of birth. Average, rank or band it across customers; it is already a SUM per customer."
+    labelPlural: "Customer Totals"
+    roles: [fact]
+    displayLabel: { en: "Customer Totals", cs: "Souhrny zákazníků" }
+    semantics { code: customer_id, code_pattern: "^[A-P]{16}$", measures: [ revenue ] }
+    binding: { target: { query: er.query.customer_revenue } },
+    attributes: [
+        def attribute sk          { type: int, isKey: true, description: "Customer sequence key — the 'sk' attribute of the Customer entity. Internal key only." },
+        def attribute customer_id { type: text, description: "Unique customer identifier (code)." },
+        def attribute hdemo       { type: int, description: "Household demographics — FK to the 'sk' attribute of the Household Demographics entity." },
+        def attribute birth_year  { type: int, description: "Customer's year of birth — buyer-age analyses derive age from this." },
+        def attribute revenue     { type: { type: decimal, length: 12, precision: 2 }, description: "The customer's revenue across all channels — the SUM of their lines' ext_sales_price." }
+    ]
+}
+
+def relation rel_customer_revenue_hdemo {
+    description: "A customer's revenue total belongs to the customer's household demographics."
+    from: er.entity.customer_revenue, to: er.entity.household_demographics,
+    cardinality: { from: "0..*", to: "1" },
+    join: [{ from: er.entity.customer_revenue.hdemo, to: er.entity.household_demographics.sk }]
+}
+
+def relation rel_customer_revenue_customer {
+    description: "A customer's revenue total is the total of one customer."
+    from: er.entity.customer_revenue, to: er.entity.customer,
+    cardinality: { from: "0..1", to: "1" },
+    join: [{ from: er.entity.customer_revenue.sk, to: er.entity.customer.sk }]
+}

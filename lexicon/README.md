@@ -78,6 +78,27 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-18**: the stacked entity `customer_revenue` (LQ — logical queries). Built with
+the toolchain at `Collite/ttr-core` master `5b48317` (`grammar/v0.15.2`, the first that loads a `def query` in a
+`model er` file), which first rebuilt master's archive byte for byte (`sha256:6f6bcb9b…`):
+
+| | |
+|---|---|
+| archive id | `sha256:a014e1bc41865207861662a82cb8c4e19622e86f0f19beb98440bac5cef9e3d1` |
+| model id | `sha256:849b40eb127f9017edd795c0dcd813f2e8c1a93a95b3d212e7d2d90c87d46503` (was `5459c860…`: `model/er/customer_revenue.ttrm`) |
+| schema | `ttr-lexicon-compiled/v5` (unchanged) |
+| toolchain | `Collite/ttr-core` **`grammar/v0.15.2`** |
+| entries | **607** (was 600) — **+7 `MODEL_OBJECT`** (220, was 213); every other class unchanged |
+| build warnings | **24**, the same 24 as before |
+| size | 12,408 bytes |
+
+The 7 rows, read from the archive: the four DECLARED phrases in `aliases/hartland.lex.yaml` on the measure
+`er.entity.customer_revenue.revenue` (`customer revenue`, `revenue per customer`, `tržby zákazníka`,
+`tržby na zákazníka`, all `TOKENS`), and three METADATA rows harvested from the entity's own labels onto
+`er.entity.customer_revenue` (`customer totals` en and cs|en, `souhrny zákazníků` cs). The label names the object, not
+the measure phrase, for the ttr-demo#62 reason: a label outranks a declared phrase, so "Customer Revenue" as a label
+would have bound the entity where the measure is meant.
+
 From `just build-lexicon`, **2026-10-14 (night)**: the Czech grain adjectives (ttr-server#237). Built with the **pinned**
 toolchain `grammar/v0.15.1`, which first rebuilt master's archive byte for byte (`sha256:dd5c24d9…`):
 

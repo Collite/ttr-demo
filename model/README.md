@@ -4,6 +4,10 @@ One model set (BM-2/BM-5), served over `pg-hartland-us` (USD) and `pg-hartland-c
 
 - `db/` — `model db`: the physical TPC-DS subset (facts + used dims), types, PK/FK.
 - `er/` — `model er` + `er2db` binding: the 19 curated entities + relationships (05-d/D-5).
+  Plus one **logical query** (LQ, 2026-10-18): `er/customer_revenue.ttrm` declares `er.query.customer_revenue`
+  (written over entities — `channel_sales JOIN customer` — because it sits in a `model er` file) and the
+  entity `customer_revenue` stacked on it, with `join:` relations to household demographics and customer.
+  It is not a `q.hartland.*` pattern: agents ask over the entity; the query is never discovered.
 - `md/` — `model md` + `md2db`/`md2er` binding: the ROLAP star (cubelets, measures, conformed
   dimensions incl. the Product hierarchy Category→Class→Brand→Manufacturer→Item).
 - `lexicon/` — `model lexicon locale en` + `locale cs`: the bilingual naming layer + valueLabels.

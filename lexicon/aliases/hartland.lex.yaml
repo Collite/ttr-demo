@@ -388,3 +388,21 @@ entries:
       - { text: "zero on hand", lang: en, method: TOKENS }
       - { text: "stockout", lang: en }
     target: er.entity.inventory.quantity_on_hand
+
+  # ══ CUSTOMER REVENUE → er.entity.customer_revenue.revenue ═════════════════════════
+  # LQ (logical queries), 2026-10-18. The measure of the entity stacked on the logical query
+  # `er.query.customer_revenue` (model/er/customer_revenue.ttrm): one customer's revenue across all
+  # channels, already SUMmed per customer — so "average customer revenue by buying potential" is a
+  # plain AVG over it. Declared on the MEASURE, not as the entity's label: a label is a METADATA term
+  # and would bind the entity where the measure is meant (the ttr-demo#62 lesson), so the entity is
+  # labelled "Customer Totals" / „Souhrny zákazníků“ and the phrase lives here.
+  # Sourcing: authored with the entity — the LQ acceptance question ("average customer revenue by
+  # household buying potential", „průměrné tržby zákazníka podle kupního potenciálu domácnosti“).
+  # The longer span wins over the bare `revenue` / `tržby` above (channel_sales), as the
+  # channel-qualified rows do.
+  - terms:
+      - { text: "customer revenue", lang: en, method: TOKENS }
+      - { text: "revenue per customer", lang: en, method: TOKENS }
+      - { text: "tržby zákazníka", method: TOKENS }
+      - { text: "tržby na zákazníka", method: TOKENS }
+    target: er.entity.customer_revenue.revenue

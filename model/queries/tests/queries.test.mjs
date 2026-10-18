@@ -34,9 +34,13 @@ const BANNED_TOKENS = ['net_profit', 'margin', 'wholesale_cost', 'list_price', '
 
 const project = await loadHartlandProject();
 
+// The q.hartland.* roster is the estate's DB queries — the preferred patterns the golem discovers. A
+// `def query` in a `model er` file is a LOGICAL query (LQ): read only through the entity stacked on it,
+// never a pattern, never discoverable (model/er/customer_revenue.ttrm; model/er/tests/er.test.mjs T-LQ).
 function allQueries() {
   const out = [];
   for (const [uri, ast] of project.asts) {
+    if (ast.modelDirective?.modelCode === 'er') continue;
     for (const def of ast.definitions ?? []) {
       if (def.kind === 'query') out.push({ def, uri });
     }
