@@ -189,8 +189,16 @@ Personas (realm `kantheon`, password `Hartland!2026`):
 - **en** (Maya): "What was the average marketplace order value in 2025?" — **$21,429.72** per order (31,889 orders).
 - **Expected:** **492 883,66 Kč/obj.** (R0), from 31 889 orders, about the same count as 2024. The drop is in lines per order, not orders. That is a nice aside.
 - **Shows:** COUNT DISTINCT. Bubble ② says „sestavil jsem sám“, and the protocol shows the entity SQL next to the physical SQL produced by the translator.
+- **Since AU (2026-10-18):** the bare «objednávka» is the order DOCUMENT (⚑AU-H-3), so the composer now answers from
+  `order`: `AVG(value)` over 2025's marketplace orders, the same figure within 0,2 %, but no COUNT DISTINCT.
+  This needs the order's relation to the calendar (ttr-demo#79). Before it, the year is not applied and the
+  figure spans every year.
 
-**3.4 „Které distribuční centrum mělo ve 2. pololetí 2025 nejvyšší podíl reklamací s důvodem Nedorazilo včas?“** — `LLM·SQL`
+**3.4 „Které distribuční centrum mělo ve 2. pololetí 2025 nejvyšší podíl reklamací z tržiště s důvodem Nedorazilo včas ze všech svých reklamací z tržiště?“** — `LLM·SQL`
+- **Reworded 2026-10-18 (⚑AU-H-5):** the earlier wording was „… nejvyšší podíl reklamací s důvodem Nedorazilo včas?“.
+  Since AU, the bare «reklamace» is the return-request document, and that composed over the documents and timed out.
+  „Reklamace z tržiště“ is the returns fact, and „ze všech svých reklamací z tržiště“ names the denominator: without
+  it, the composer read the share as returns ÷ sales.
 - **en** (Maya): "Which distribution center had the highest share of returns with the reason Did not get it on time in the second half of 2025?" — **Memphis DC, about 25 %** (the same shares as cs).
 - **Expected (LR ruling 2, 2026-10-11):** **Brno DC, about 25 %** for the 2nd half of 2025 — 25,1 % by
   returned units (13 538 / 53 852), 24,6 % by count of returns; the composer picks one and says which.

@@ -1,5 +1,8 @@
 notes: |
-  Reason 3 is the late-delivery reason („Nedorazilo včas“ / "Did not get it on time"). Only marketplace returns carry a warehouse. The top DC is warehouse 5; the share is ~25 % by count or by units, so only the winner is asserted.
+  Reason 3 is the late-delivery reason („Nedorazilo včas“ / "Did not get it on time"). Only marketplace returns carry a warehouse. The top DC is warehouse 5.
+  The share is ~25 % by count (the core, 24,6 %) or by units (25,1 %); the composer picks one, so the scalar takes 3 %
+  relative and either scale. It is there because the winner alone passed a wrong ratio (2026-10-18: late returns ÷ sales
+  also puts warehouse 5 first).
 core: |
   SELECT w.w_warehouse_name AS dc, AVG(CASE WHEN cr.cr_reason_sk = 3 THEN 1.0 ELSE 0 END) AS share
   FROM catalog_returns cr
@@ -13,3 +16,7 @@ assert:
   first_row:
     keys:
     - dc
+  scalar:
+    value: share
+    tolerance: 0.03
+    scale: [1, 100]

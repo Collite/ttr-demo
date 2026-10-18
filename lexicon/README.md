@@ -79,19 +79,20 @@ step rather than a local recipe.
 ## What is in the artifact today
 
 From `just build-lexicon`, **2026-10-18**: the documents' days (AU, branch `fix/au-document-dates`). Seven
-relations from each dated document to the calendar (`rel_order_date` … `rel_shipment_date`, `model/er/relations.ttrm`)
-move the model id and nothing else in the vocabulary. Built with the **pinned** toolchain `grammar/v0.15.1`:
+relations from each dated document to the calendar (`rel_order_date` … `rel_shipment_date`, `model/er/relations.ttrm`),
+and `returns_by_reason`'s cs example reworded to „Reklamace z tržiště podle důvodu“ (⚑AU-H-5), move the model id and
+nothing else in the vocabulary. Built with the **pinned** toolchain `grammar/v0.15.1`:
 
 | | |
 |---|---|
-| archive id | `sha256:3841dab4b6e9557104fa84ea0bae300795dff3a496be26ccb384d69270504278` |
-| model id | `sha256:58500556184db5dfb6ef9d8b67f77026d10e5755249b1f20933faa006e069b48` (was `b57b2b13…`) |
+| archive id | `sha256:cd7726817c058b28ff3d4a355cfff5952be125660bb91a15ba032c5a6766bd86` |
+| model id | `sha256:a653f74932ea3e515b209ff32b53ff5349203ef146c89650b9cf24dbe37211bb` (was `b57b2b13…`) |
 | schema | `ttr-lexicon-compiled/v5` (unchanged) |
 | toolchain | `Collite/ttr-core` **`grammar/v0.15.1`** |
 | entries | **791**, the same 791 rows as before |
 | targets | **58**; one changed: `er.entity.date_dim` is reached from the seven documents as well as the eight facts |
 | build warnings | **24**, the same 24 as before |
-| size | 14,730 bytes |
+| size | 14,724 bytes |
 
 Why: the P0-exit routing run on hartland (2026-10-18, cz) found the composer's bare `JOIN date_dim` under
 `order` / `return_request` left `ON TRUE`. With no relation to the calendar there is nothing for the model joins to
