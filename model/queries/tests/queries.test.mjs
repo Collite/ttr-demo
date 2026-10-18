@@ -34,9 +34,14 @@ const BANNED_TOKENS = ['net_profit', 'margin', 'wholesale_cost', 'list_price', '
 
 const project = await loadHartlandProject();
 
+// The q.hartland.* roster is the estate's DB queries — the preferred patterns the golem discovers. A
+// `def query` in a `model er` file is a LOGICAL query (LQ): not a pattern, and agents are meant to ask over
+// the entity stacked on it (LQ-6), so this roster leaves it out — its own checks are er.test.mjs's T-LQ.
+// veles' ListQueries does list it (18 = these 17 + the logical one; phase2-done DONE 4 pins both counts).
 function allQueries() {
   const out = [];
   for (const [uri, ast] of project.asts) {
+    if (ast.modelDirective?.modelCode === 'er') continue;
     for (const def of ast.definitions ?? []) {
       if (def.kind === 'query') out.push({ def, uri });
     }
@@ -50,7 +55,7 @@ test('T6.1 — parse-clean: q_hartland.ttrm parses with zero errors', () => {
   assert.deepEqual(errors, [], `parse errors: ${JSON.stringify(errors)}`);
 });
 
-test('T6.2 — ListQueries = 17, exactly the D-2 roster + LR\'s monthly YoY + stockout-week count, each with typed+labeled params', () => {
+test('T6.2 — the q.hartland.* DB roster = 17, exactly the D-2 roster + LR\'s monthly YoY + stockout-week count, each with typed+labeled params', () => {
   const queries = allQueries();
   const names = queries.map(({ def }) => def.name);
   assert.deepEqual([...names].sort(), [...EXPECTED_QUERIES].sort());

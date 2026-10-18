@@ -99,7 +99,8 @@
 # `defaults.match` carries RV-44's declared profile: exact canonical, one-edit typos, and a
 # `folded` rule at 0.90 because diacritic-free typing (`trzby`, `trziste`) is this estate's
 # most common input variance — and the q_hartland patterns are themselves written unfolded.
-# Every multiword phrase takes `method: TOKENS`.
+# Every multiword phrase takes `method: TOKENS` — except RETURNS and CUSTOMER REVENUE below, which
+# match as whole phrases under this default profile; each says why.
 schema: ttr-lexicon/v1
 defaults:
   lang: cs
@@ -388,3 +389,42 @@ entries:
       - { text: "zero on hand", lang: en, method: TOKENS }
       - { text: "stockout", lang: en }
     target: er.entity.inventory.quantity_on_hand
+
+  # ══ CUSTOMER REVENUE → er.entity.customer_revenue.revenue ═════════════════════════
+  # LQ (logical queries), 2026-10-18. The measure of the entity stacked on the logical query
+  # `er.query.revenue_per_customer` (model/er/customer_revenue.ttrm): one customer's ALL-TIME revenue
+  # across all channels, already SUMmed per customer — so "average customer revenue by buying potential"
+  # is a plain AVG over it. Declared on the MEASURE, not as the entity's label: a label is a METADATA
+  # term and would bind the entity where the measure is meant (the ttr-demo#62 lesson), so the entity is
+  # labelled "Customer Totals" / „Souhrny zákazníků“ and the phrase lives here.
+  # Sourcing: authored with the entity — the LQ acceptance question ("average customer revenue by
+  # household buying potential", „průměrné tržby zákazníka podle kupního potenciálu domácnosti“).
+  # The longer span wins over the bare `revenue` / `tržby` above (channel_sales), as the
+  # channel-qualified rows do.
+  #
+  # ⛔ NOT `method: TOKENS` — the RETURNS exception above, for two reasons of its own:
+  #   - a TOKENS row carries its own match profile (canonical tokens only), so it drops this file's
+  #     `folded` rule: «prumerne trzby zakaznika …», typed without diacritics — this estate's most
+  #     common input — would miss the phrase and bind the bare `tržby` (channel_sales): the average
+  #     SALES LINE, not the average customer, a plausible number nothing flags;
+  #   - a TOKENS row is reached by its fragments, and two of these are built on `per` / `na`, which the
+  #     stdlib's avg skill (ttr-core#178) refuses as triggers because they usually name a grouping or a
+  #     channel ("revenue per month", „tržby na tržišti“). The stdlib's rule for multi-word forms:
+  #     whole phrases, never TOKENS.
+  # With the file's default profile each row matches as a whole phrase (canonical exact, one typo,
+  # diacritics folded). The Czech cases are spelled out — a typo budget of one does not reach a form
+  # two edits away — for the forms a question about customers' revenue takes: the singular customer
+  # (`zákazníka`, „tržby zákazníka“) and the plural (`zákazníků`, „průměrné tržby zákazníků“), each with
+  # the nominative/genitive of the revenue word („průměr tržeb zákazníků“).
+  # Guarded by lexicon/tests/customer-revenue.test.mjs.
+  - terms:
+      - { text: "customer revenue", lang: en }
+      - { text: "customer revenues", lang: en }
+      - { text: "revenue per customer", lang: en }
+      - { text: "tržby zákazníka" }
+      - { text: "tržba zákazníka" }
+      - { text: "tržeb zákazníka" }
+      - { text: "tržby zákazníků" }
+      - { text: "tržeb zákazníků" }
+      - { text: "tržby na zákazníka" }
+    target: er.entity.customer_revenue.revenue

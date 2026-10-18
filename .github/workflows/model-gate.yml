@@ -56,10 +56,16 @@ jobs:
       # So this tag tracks the toolchain THE SERVING IMAGES WERE BUILT AGAINST. Bump it in the same
       # change that rolls the readers, never before, and rebuild `generated/lexicon.tar.zst` with
       # the same tag in the same commit.
+      #
+      # grammar/v0.15.2 (2026-10-18, LQ): the first toolchain whose loader accepts a `def query` in a
+      # `model er` file (`model/er/customer_revenue.ttrm`). It rolls with veles 0.11.11 (olymp#96), the
+      # serving reader that parses such a query. The lexicon readers are unaffected: the archive schema
+      # is still `ttr-lexicon-compiled/v5`, and v0.15.2 rebuilt master's archive byte for byte
+      # (`sha256:6f6bcb9b…`) before this branch's was built.
       - uses: actions/checkout@v4
         with:
           repository: Collite/ttr-core
-          ref: grammar/v0.15.1
+          ref: grammar/v0.15.2
           path: tatrman
 
       - uses: pnpm/action-setup@v4

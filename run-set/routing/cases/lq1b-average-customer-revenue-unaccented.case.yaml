@@ -1,0 +1,14 @@
+id: lq1b-average-customer-revenue-unaccented
+title: The same question without diacritics (cs) / as "revenue per customer" (en), and with the plural customer
+shape: avg
+question:
+  cs: prumerne trzby zakazniku podle kupniho potencialu domacnosti
+  en: Average revenue per customer by household buying potential
+expected_route: LLM
+validation: customer-revenue-avg-by-buy-potential.yaml
+tags:
+- LQ
+notes: |
+  ttr-demo#78 review: the first build declared the phrases `method: TOKENS`, which drops the lexicon's `folded` rule,
+  so this cs wording missed „tržby zákazníků“ and bound the bare `tržby` (channel_sales) — the per-line average. Whole
+  phrases under the file's default profile match it folded (lexicon/tests/customer-revenue.test.mjs pins the rows).

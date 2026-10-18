@@ -34,14 +34,21 @@ test('DONE 3 — ResolveArea("hartland") is green', () => {
   assert.ok(resolved.resolvedEntities.length > 0);
 });
 
-test('DONE 4 — ListQueries returns exactly 17 q.hartland.* with params', () => {
-  let n = 0;
+test('DONE 4 — ListQueries returns 18: the 17 q.hartland.* with params + the one logical query', () => {
+  // veles lists every `def query` it loaded (ListQueries; GetModel's namedQueries), a logical query too.
+  // A `def query` in a `model er` file is a logical query (LQ): not a q.hartland.* pattern, and agents are
+  // meant to ask over the entity stacked on it (LQ-6) — model/er/customer_revenue.ttrm says why its name
+  // is its own. If veles stops listing logical queries, this becomes 17 again.
+  const db = [];
+  const logical = [];
   for (const [, ast] of project.asts) {
     for (const def of ast.definitions ?? []) {
-      if (def.kind === 'query') n++;
+      if (def.kind === 'query') (ast.modelDirective?.modelCode === 'er' ? logical : db).push(def.name);
     }
   }
-  assert.equal(n, 17, 'the D-2 roster + LR\'s channel_revenue_monthly_yoy (2026-10-10) + warehouse_stockout_week_count (2026-10-11)');
+  assert.equal(db.length, 17, 'the D-2 roster + LR\'s channel_revenue_monthly_yoy (2026-10-10) + warehouse_stockout_week_count (2026-10-11)');
+  assert.deepEqual(logical, ['revenue_per_customer'], 'the logical queries (LQ, 2026-10-18)');
+  assert.equal(db.length + logical.length, 18);
 });
 
 test('DONE 5 — cs + en lexicon resolves (zero unresolved for:, project-wide)', () => {
