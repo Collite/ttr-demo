@@ -122,3 +122,15 @@ def fk fk_c_center { from: [db.dbo.customer.c_center_sk], to: [db.dbo.warehouse.
 def fk fk_rrv_customer { from: [db.dbo.return_request.rr_customer_sk],         to: [db.dbo.customer.c_customer_sk] }
 def fk fk_rrv_order    { from: [db.dbo.return_request.rr_order_number],        to: [db.dbo.sales_order.so_order_number] }
 def fk fk_rlv_request  { from: [db.dbo.return_request_line.rl_request_number], to: [db.dbo.return_request.rr_request_number] }
+
+// -- each dated document's own day → the calendar (the relations rel_order_date … rel_shipment_date) --
+// LOGICAL keys, not constraints: a document dates itself by a DATE, the facts by a surrogate key, so the
+// target is the calendar's date column (one row per day), not its sk. `fk_invoice_date`, not `fk_inv_date`:
+// that name is inventory's.
+def fk fk_so_date      { from: [db.dbo.sales_order.so_placed_date],          to: [db.dbo.date_dim.d_date] }
+def fk fk_invoice_date { from: [db.dbo.invoice.inv_issued],                  to: [db.dbo.date_dim.d_date] }
+def fk fk_rrv_date     { from: [db.dbo.return_request.rr_requested_date],    to: [db.dbo.date_dim.d_date] }
+def fk fk_rc_date      { from: [db.dbo.return_receipt.rc_received_date],     to: [db.dbo.date_dim.d_date] }
+def fk fk_cn_date      { from: [db.dbo.credit_note.cn_issued_date],          to: [db.dbo.date_dim.d_date] }
+def fk fk_rp_paid_date { from: [db.dbo.refund_payment.rp_paid_date],         to: [db.dbo.date_dim.d_date] }
+def fk fk_rs_date      { from: [db.dbo.replacement_shipment.rs_shipped_date], to: [db.dbo.date_dim.d_date] }

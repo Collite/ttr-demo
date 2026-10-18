@@ -3,9 +3,15 @@ title: A member + a period + a ratio + a join to the DC
 act: '3.4'
 shape: ratio
 question:
-  cs: Které distribuční centrum mělo ve 2. pololetí 2025 nejvyšší podíl reklamací s důvodem Nedorazilo včas?
+  cs: Které distribuční centrum mělo ve 2. pololetí 2025 nejvyšší podíl reklamací z tržiště s důvodem Nedorazilo včas ze všech svých reklamací z tržiště?
   en: Which distribution center had the highest share of returns with the reason Did not get it on time in the second half of 2025?
 expected_route: LLM
 validation: late-reason-share-top-dc-h2-2025.yaml
 xfail:
   en: "ttr-server#204 — `the highest share` stays unbound (article and modifier folded into the mention); golem then asks what it means or composes — seen both"
+notes: |
+  Reworded 2026-10-18 (⚑AU-H-5, Bora: reword to the facts' labels). Since the AU extension the bare «reklamace» is the
+  return-request DOCUMENT (⚑AU-H-3), whose reason is not the reason dimension's, so the old „… podíl reklamací s důvodem
+  Nedorazilo včas?“ composed over the documents and timed out. „Reklamace z tržiště“ is the marketplace returns fact
+  (only marketplace returns carry a warehouse). „… ze všech svých reklamací z tržiště“ names the denominator: without it
+  the composer read the share once as returns ÷ sales and refused, once as returns ÷ sales and answered.

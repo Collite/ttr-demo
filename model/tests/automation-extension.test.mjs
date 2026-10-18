@@ -153,6 +153,14 @@ const FKS = {
   fk_rrv_customer: ['return_request.rr_customer_sk', 'customer.c_customer_sk'],
   fk_rrv_order: ['return_request.rr_order_number', 'sales_order.so_order_number'],
   fk_rlv_request: ['return_request_line.rl_request_number', 'return_request.rr_request_number'],
+  // LOGICAL keys from each dated document's own date to the calendar day (the date-relation fix, below).
+  fk_so_date: ['sales_order.so_placed_date', 'date_dim.d_date'],
+  fk_invoice_date: ['invoice.inv_issued', 'date_dim.d_date'],
+  fk_rrv_date: ['return_request.rr_requested_date', 'date_dim.d_date'],
+  fk_rc_date: ['return_receipt.rc_received_date', 'date_dim.d_date'],
+  fk_cn_date: ['credit_note.cn_issued_date', 'date_dim.d_date'],
+  fk_rp_paid_date: ['refund_payment.rp_paid_date', 'date_dim.d_date'],
+  fk_rs_date: ['replacement_shipment.rs_shipped_date', 'date_dim.d_date'],
 };
 
 // ── logical (contracts §2, 17 §0): entity → the table/view it reads + attributes [name, type, isKey, column] ─
@@ -314,6 +322,19 @@ const RELATIONS = {
   rel_customer_price_item: ['customer_price', 'item', '0..*', '1', 'fk_cp_item', [['item', 'sk']]],
   rel_customer_price_customer: ['customer_price', 'customer', '0..*', '1', 'fk_cp_customer', [['customer', 'sk']]],
   rel_line_item: ['return_request_line', 'item', '0..*', '1', 'fk_rl_item', [['item', 'sk']]],
+  // The date relations: every dated document head reaches the calendar day from its own date, as every fact
+  // does through its rel_*_date. Without one a bare `JOIN date_dim` (the composer's way of writing a period,
+  // completed by the translator's model joins) is left `ON TRUE` — the whole calendar under every document;
+  // found by the P0-exit routing run (a3-3, a3-4). One per document: `sales_line` dates with its order (a
+  // second date path would make every order ⋈ line ⋈ date_dim join ambiguous), the line with its request;
+  // ranges (price lists, outages) and the run artefacts (proposals, win-back mails) have no day to join.
+  rel_order_date: ['order', 'date_dim', '0..*', '1', 'fk_so_date', [['placed_date', 'cal_date']]],
+  rel_invoice_date: ['invoice', 'date_dim', '0..*', '1', 'fk_invoice_date', [['issued', 'cal_date']]],
+  rel_request_date: ['return_request', 'date_dim', '0..*', '1', 'fk_rrv_date', [['requested_date', 'cal_date']]],
+  rel_receipt_date: ['return_receipt', 'date_dim', '0..*', '1', 'fk_rc_date', [['received_date', 'cal_date']]],
+  rel_credit_note_date: ['credit_note', 'date_dim', '0..*', '1', 'fk_cn_date', [['issued_date', 'cal_date']]],
+  rel_payment_date: ['refund_payment', 'date_dim', '0..*', '1', 'fk_rp_paid_date', [['paid_date', 'cal_date']]],
+  rel_shipment_date: ['replacement_shipment', 'date_dim', '0..*', '1', 'fk_rs_date', [['shipped_date', 'cal_date']]],
 };
 
 // ── helpers ─────────────────────────────────────────────────────────────────────────────────────────
