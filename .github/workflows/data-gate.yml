@@ -1,0 +1,43 @@
+# The data gate (AU-hartland P1): the automation extension's generator and its event driver, on every push to
+# master and every pull request that touches them.
+#
+# The generator's suite needs a Postgres, not a world: data/automation/tests/run-all.sh starts a throwaway one
+# from pgserver's wheel (uv; the server binaries for linux and macOS are in the wheel — no Docker, no service
+# container) and loads tests/fixture.sql, a small TPC-DS-shaped world. Every test builds its own scratch copy.
+#
+# data/extend's suite is NOT here, and cannot be: its tests take scratch copies of a real, extended world (the
+# 2024 template year, all seven facts) — `data/extend/README.md` "Tests" — which no fixture this size stands in for.
+name: data-gate
+
+on:
+  push:
+    branches: [master]
+    paths: ['data/automation/**', 'data/extend/lib.sh', 'data/views/**', 'data/localize-cz/fx.conf', 'scripts/automation-events.py', 'scripts/test_automation_events.py', '.github/workflows/data-gate.yml']
+  pull_request:
+    paths: ['data/automation/**', 'data/extend/lib.sh', 'data/views/**', 'data/localize-cz/fx.conf', 'scripts/automation-events.py', 'scripts/test_automation_events.py', '.github/workflows/data-gate.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  automation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: extractions/setup-just@v2
+
+      - name: The generator's suite (a throwaway Postgres + the fixture)
+        run: just automation-test
+
+      - name: The event driver's specs
+        run: just automation-events-test
+
+      # The committed timelines (from the certification builds) must still check.
+      - name: The committed event timelines check
+        run: |
+          set -e
+          for w in us cz; do
+            if [ -f "data/automation/events/$w.csv" ]; then just automation-events-check "$w"; else echo "no events/$w.csv yet"; fi
+          done

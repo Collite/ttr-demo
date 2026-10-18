@@ -1,0 +1,18 @@
+key,route,verdict_reason_template,detail_count
+1216924,expired,nothing returned after {inbound_close} days,
+1216925,expired,nothing returned after {inbound_close} days,
+1216926,expired,nothing returned after {inbound_close} days,
+1216927,expired,nothing returned after {inbound_close} days,
+1218142,remind,nothing returned after {inbound_reminder} days,
+1218143,remind,nothing returned after {inbound_reminder} days,
+1218144,remind,nothing returned after {inbound_reminder} days,
+1218145,remind,nothing returned after {inbound_reminder} days,
+1219012,none,,
+1219013,none,,
+1219014,none,,
+1219015,none,,
+1219260,damaged,incomplete or damaged return,receipts:2
+1219261,damaged,incomplete or damaged return,receipts:1
+1219262,complete,returned in full,receipts:1
+1219263,complete,returned in full,receipts:1
+1219264,complete,returned in full,receipts:1

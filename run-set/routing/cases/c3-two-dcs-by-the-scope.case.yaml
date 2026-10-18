@@ -1,0 +1,20 @@
+id: c3-two-dcs-by-the-scope
+title: Two places that are each a store and a DC — the all-channel fact's scope reads both as DCs, one row per DC
+shape: coordination
+question:
+  cs: Tržby pro Brno a Plzeň v roce 2025
+  en: Revenue for Memphis and Reno in 2025
+expected_route: FAST
+validation: dc5-dc3-2025-by-dc.yaml
+xfail:
+  cs: "ttr-server#242 — not deployed when written: `Brno` binds Brno DC and `Plzeň`, the conjunct, stays a G3 (live 2026-10-14), so the fast path declines; with #242 both bind DCs, and the fast path must read two members of one attribute as one IN restriction with one row per member (ruled 2026-10-16), shipped with it; drop once a run passes"
+  en: "ttr-server#242 — not deployed when written (the en twin was never asked live), and it needs the same one-restriction reading of two members on the fast path; drop once a run passes"
+notes: |
+  `Brno` and `Plzeň` are each a store AND a DC (Brno DC, Plzeň DC): both conjuncts share both readings, so the
+  coordination decides nothing, and the all-channel fact's scope (it relates to the warehouse, not the store) reads
+  each as a DC — the reading a lone `Brno` already gets. Two members of `warehouse.warehouse_name` on the fast path:
+  one IN restriction and a breakdown by the DC, one row per DC (ruled 2026-10-16), still FAST.
+  The en twin keeps the keys (warehouses 5 and 3: Memphis DC, Reno DC), but the US world has no second city that is
+  both a store and a DC: Memphis is both, Reno only a DC. So the en question reaches the same two DCs by the other
+  half of the ruling — Memphis (store or DC) meets Reno (a DC) at the DC — not by the scope alone.
+  Not measured: the validation SQL has not been run (the demo estate was down when written).

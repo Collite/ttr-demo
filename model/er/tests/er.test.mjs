@@ -16,6 +16,11 @@ const EXPECTED_ENTITIES = [
   'inventory', 'date_dim', 'item', 'customer', 'customer_address',
   'customer_demographics', 'household_demographics', 'income_band',
   'store', 'warehouse', 'reason', 'promotion', 'call_center',
+  // AU (automation agents) S0.1 — the H-1/H-2 extension and the H-3/H-5 write-back entities; their shape
+  // is asserted by model/tests/automation-extension.test.mjs, this roster only keeps the count exact.
+  'order', 'sales_line', 'price_list', 'customer_price', 'invoice', 'warehouse_outage',
+  'return_request', 'return_request_line', 'return_receipt', 'credit_note', 'refund_payment',
+  'replacement_shipment', 'document_flow', 'reorder_proposal', 'winback_mail',
 ];
 const D5_OUT = ['time_dim', 'web_site', 'web_page', 'catalog_page', 'ship_mode', 'dbgen_version'];
 
@@ -43,7 +48,7 @@ test('T6.1 — parse-clean: every model/er + model/binding file parses with zero
   assert.deepEqual(offenders, [], `parse errors: ${offenders.join('; ')}`);
 });
 
-test('T6.2 — exactly the D-5 entities (+ channel_sales) are declared, no D-5-Out entity', () => {
+test('T6.2 — exactly the D-5 entities (+ channel_sales, + the AU extension) are declared, no D-5-Out entity', () => {
   const entities = allDefsOfKind('entity').map((e) => e.def.name);
   const missing = EXPECTED_ENTITIES.filter((e) => !entities.includes(e));
   const stray = D5_OUT.filter((e) => entities.includes(e));

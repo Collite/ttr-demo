@@ -1,0 +1,24 @@
+id: c1-two-places-meet-at-the-store
+title: Two places joined by „a“ meet at the reading they share — Brno (a store or a DC) and Liberec (a store) are two stores
+shape: coordination
+question:
+  cs: Tržby pro Brno a Liberec v roce 2025
+  en: Revenue for Memphis and Murfreesboro in 2025
+expected_route: LLM
+expected_reason: NO_OBJECT_BINDING
+validation: store2-store6-2025-by-store.yaml
+xfail:
+  cs: "ttr-server#242 — not deployed when written: `Brno` binds Brno DC by the all-channel fact's scope and `Liberec` stays a G3 (live 2026-10-14), so the question could be answered as Brno DC's revenue; drop once a run passes"
+  en: "ttr-server#242 — not deployed when written (the en twin was never asked live; the cs reading of 2026-10-14 holds for it: Memphis → Memphis DC, Murfreesboro a G3); drop once a run passes"
+notes: |
+  The coordination ruling (2026-10-14, ttr-demo#62) over member values: of two places joined by „a“ / "and", one
+  ambiguous and one not, the ambiguous one takes the reading where they intersect, and nothing is asked. `Brno` is
+  the store "Brno" and "Brno DC"; `Liberec` is only a store; they meet at the store. The en twin keeps the keys:
+  Memphis is the store AND Memphis DC, Murfreesboro only a store.
+  The two stores sit under `Tržby` / revenue, the all-channel fact, which the model does not relate to the store:
+  the query door finds no relation, and the composer answers (LLM · NO_OBJECT_BINDING), never the fast path.
+  Validation: one row per store. The composer may answer per store or as a total, and the corpus has no assertion
+  that accepts either (`scalar` wants the total in a cell or the prose, `row_set` one answer row per store). One row
+  per store is the shape ruled on 2026-10-16 for the fast path (c2), so the composer is held to it too; a total
+  alone would score FAIL, and is then a question for the composer's instructions, not for this case.
+  Not measured: the validation SQL has not been run (the demo estate was down when written).

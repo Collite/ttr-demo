@@ -1,5 +1,6 @@
 notes: |
-  The elliptic follow-up „A loni?“ re-asks the previous view for the year before.
+  The en elliptic follow-up "And the year before?" (n6b): anaphoric, the year before the conversation's
+  period (n6a's 2025). The cs „A loni?“ is deictic and validates against marketplace-2025.yaml (ruled 2026-10-14).
 core: |
   SELECT SUM(cs.cs_ext_sales_price) AS revenue
   FROM catalog_sales cs

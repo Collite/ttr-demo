@@ -78,19 +78,21 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
-From `just build-lexicon`, **2026-10-18**: the stacked entity `customer_revenue` (LQ — logical queries). Built with
-the toolchain at `Collite/ttr-core` master `5b48317` (`grammar/v0.15.2`, the first that loads a `def query` in a
-`model er` file), which first rebuilt master's archive byte for byte (`sha256:6f6bcb9b…`):
+From `just build-lexicon`, **2026-10-18**: the stacked entity `customer_revenue` (LQ — logical queries, branch
+`feat/lq-stacked-entity`, master `47e7320` merged in). Built with the toolchain **`grammar/v0.15.2`**, the first whose
+loader accepts a `def query` in a `model er` file, and the tag `model-gate` pins from this change on. v0.15.2 first
+rebuilt master's archive byte for byte (`sha256:cd772681…`, below) and master's `resolved-packages.json`:
 
 | | |
 |---|---|
-| archive id | `sha256:a014e1bc41865207861662a82cb8c4e19622e86f0f19beb98440bac5cef9e3d1` |
-| model id | `sha256:849b40eb127f9017edd795c0dcd813f2e8c1a93a95b3d212e7d2d90c87d46503` (was `5459c860…`: `model/er/customer_revenue.ttrm`) |
+| archive id | `sha256:53d0df5a1540ac06643fbd669b0ebe26d2b96332138e50e9b45a74ef2485a2a9` |
+| model id | `sha256:799e350f7855499b9f64e3305a7e0b8da9dc838331982b0599e9817e10beb8a2` (was `a653f749…`: `model/er/customer_revenue.ttrm`) |
 | schema | `ttr-lexicon-compiled/v5` (unchanged) |
 | toolchain | `Collite/ttr-core` **`grammar/v0.15.2`** |
-| entries | **607** (was 600) — **+7 `MODEL_OBJECT`** (220, was 213); every other class unchanged |
+| entries | **798** (was 791) — **+7 `MODEL_OBJECT`** (329, was 322); none removed, every other class unchanged |
+| targets | **60** (was 58) — `er.entity.customer_revenue` and its measure `revenue`; `customer` and `household_demographics` are also reached from `customer_revenue` (its two relations) |
 | build warnings | **24**, the same 24 as before |
-| size | 12,408 bytes |
+| size | 14,800 bytes |
 
 The 7 rows, read from the archive: the four DECLARED phrases in `aliases/hartland.lex.yaml` on the measure
 `er.entity.customer_revenue.revenue` (`customer revenue`, `revenue per customer`, `tržby zákazníka`,
@@ -98,6 +100,70 @@ The 7 rows, read from the archive: the four DECLARED phrases in `aliases/hartlan
 `er.entity.customer_revenue` (`customer totals` en and cs|en, `souhrny zákazníků` cs). The label names the object, not
 the measure phrase, for the ttr-demo#62 reason: a label outranks a declared phrase, so "Customer Revenue" as a label
 would have bound the entity where the measure is meant.
+
+### 2026-10-18 (AU, the documents' days)
+
+From `just build-lexicon`, **2026-10-18**: the documents' days (AU, branch `fix/au-document-dates`). Seven
+relations from each dated document to the calendar (`rel_order_date` … `rel_shipment_date`, `model/er/relations.ttrm`),
+and `returns_by_reason`'s cs example reworded to „Reklamace z tržiště podle důvodu“ (⚑AU-H-5), move the model id and
+nothing else in the vocabulary. Built with the **pinned** toolchain `grammar/v0.15.1`:
+
+| | |
+|---|---|
+| archive id | `sha256:cd7726817c058b28ff3d4a355cfff5952be125660bb91a15ba032c5a6766bd86` |
+| model id | `sha256:a653f74932ea3e515b209ff32b53ff5349203ef146c89650b9cf24dbe37211bb` (was `b57b2b13…`) |
+| schema | `ttr-lexicon-compiled/v5` (unchanged) |
+| toolchain | `Collite/ttr-core` **`grammar/v0.15.1`** |
+| entries | **791**, the same 791 rows as before |
+| targets | **58**; one changed: `er.entity.date_dim` is reached from the seven documents as well as the eight facts |
+| build warnings | **24**, the same 24 as before |
+| size | 14,724 bytes |
+
+Why: the P0-exit routing run on hartland (2026-10-18, cz) found the composer's bare `JOIN date_dim` under
+`order` / `return_request` left `ON TRUE`. With no relation to the calendar there is nothing for the model joins to
+condition it from, so every document is joined with the whole calendar (a3-3 averaged every year's orders, and a3-4
+timed out). The facts reach the calendar through their `rel_*_date`, and now the documents do too.
+
+### 2026-10-17 (AU P0, the automation extension)
+
+From `just build-lexicon`, **2026-10-17**: the automation extension (AU P0, branch `feat/au-p0-extension`) — the
+documents the automation agents read and write (`model/er/{orders,returns-flow,proposals}.ttrm`), their words, and
+their states. Built with the **pinned** toolchain `grammar/v0.15.1`:
+
+| | |
+|---|---|
+| archive id | `sha256:ac0ef5bf41d9157d7d2323a689b3399c8708b537c900b11697af253e9e9adbfa` |
+| model id | `sha256:b57b2b130104b727ea913cb5726ac3fa7c767f82b7c6dc309c4ecb0325a0d438` |
+| schema | `ttr-lexicon-compiled/v5` (unchanged) |
+| toolchain | `Collite/ttr-core` **`grammar/v0.15.1`** |
+| entries | **791** (was 600) — **+45 `MODEL_OBJECT` `METADATA`** (the 15 entities' labels and plurals), **+64 `MODEL_OBJECT` `DECLARED`** (`model/lexicon/{cs,en}/automation.ttrm`), **+82 `MEMBER` `METADATA`** (41 value labels × 2 locales); every other class unchanged |
+| targets | **58** (was 43) — the 15 documents, kind `entity` (none declares measures) |
+| build warnings | **24**, the same 24 as before |
+| size | 14,712 bytes |
+
+What it adds, and the rule it adds it under (`lexicon/tests/automation-lexicon.test.mjs` asserts each against this
+archive):
+
+- **The documents' words.** Each of the 15 entities has its label and a plural in both locales. Czech multi-word
+  labels get their case forms declared (the resolver looks up a dictionary form for one-word mentions only).
+- **The states as members.** The `valueLabels` of the enumerated attributes (order state, who a hold waits for,
+  invoice / credit-note status, the request's and the line's state, reason, requested resolution, way, receipt
+  condition, proposal state, win-back offer) are `MEMBER` rows. A value label is matched in every Golem question, so
+  **AU claims no word the pre-AU vocabulary binds** — any class, either locale, diacritics folded. Hence "Sales
+  department" not "Sales", „Nevhodná velikost“ not the reason dimension's „Špatná velikost“, and no labels on the
+  `channel` attributes («web», «tržiště» are the sales facts' channel words). The 8 words AU shares within itself
+  (received / closed / rejected / exchange, both locales) are one meaning on two attributes, pinned by the suite.
+- **⚑AU-H-3 (Bora, 2026-10-17): «reklamace» and «objednávka» are the documents, by rule.** Before AU neither bare
+  word bound anything; the facts' labels hold them only in phrases („Reklamace z prodejen“, „Objednávky z tržiště“).
+  The labels „Reklamace“ / „Objednávka“ stay, and (1) every case form of the bare word is an EXACT term of
+  `return_request` / `order` alone, (2) the facts keep their channel-qualified names, longer spans than the bare
+  word, (3) no TOKENS phrase holds either word. The routing cases that ask the bare word about the facts
+  (`p-returns-by-reason`, `a3-3`, `a3-4`) are re-measured at the AU P0 exit.
+- **Two labels moved off a bare estate word:** `return_receipt` is „Příjemka vratky“, not „Vratka“ (#62's guard
+  above), and `warehouse_outage` „Výpadek skladu“, not „Výpadek“ — the bare «výpadky» is the demo's stockout word
+  (act 3.5, «… výpadky zásob?»).
+
+### 2026-10-14 (night, ttr-server#237, the grain adjectives)
 
 From `just build-lexicon`, **2026-10-14 (night)**: the Czech grain adjectives (ttr-server#237). Built with the **pinned**
 toolchain `grammar/v0.15.1`, which first rebuilt master's archive byte for byte (`sha256:dd5c24d9…`):

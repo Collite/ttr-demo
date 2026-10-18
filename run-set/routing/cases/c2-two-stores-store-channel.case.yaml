@@ -1,0 +1,18 @@
+id: c2-two-stores-store-channel
+title: Two stores under the store channel's revenue — the fast path answers one row per store
+shape: coordination
+question:
+  cs: Tržby z prodejen pro Brno a Liberec v roce 2025
+  en: Store revenue for Memphis and Murfreesboro in 2025
+expected_route: FAST
+validation: store2-store6-2025-by-store.yaml
+xfail:
+  cs: "ttr-server#242 — not deployed when written: `Liberec`, the conjunct, stays a G3, so the fast path declines; with #242 both bind `store.store_name`, and the fast path must read two members of one attribute as one IN restriction with one row per member (ruled 2026-10-16), shipped with it — two equalities joined by AND would match no row; drop once a run passes"
+  en: "ttr-server#242 — not deployed when written (the en twin was never asked live), and it needs the same one-restriction reading of two members on the fast path; drop once a run passes"
+notes: |
+  The store channel's revenue („tržby z prodejen“ / "store revenue") relates to the store, so the measure's scope
+  already reads `Brno` as the store (the DC is out of it); with #242 the conjunct `Liberec` is governed by the same
+  anchor and binds the store too. Two members of `store.store_name` on the fast path: one IN restriction and a
+  breakdown by the store, one row per store (ruled 2026-10-16), still FAST. The validation is c1's: the same two
+  stores, the same figures.
+  Not measured: the validation SQL has not been run (the demo estate was down when written).

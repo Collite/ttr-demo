@@ -13,6 +13,11 @@
 #                                 was served and its words were not, so questions about it came back
 #                                 as "I don't recognise …". `check-model` already guards the other
 #                                 generated artifact; this is its missing twin.
+#   just routing-check            the routing corpus's schema (run-set/routing/) — ADDED 2026-10-15
+#   just routing-test             the corpus runner's own specs (scripts/test_routing_run.py) — ADDED
+#                                 2026-10-15. Both need no cluster and no secrets; before, they ran
+#                                 only locally, so a runner change could break the corpus with the
+#                                 gate green.
 name: model-gate
 
 on:
@@ -74,6 +79,21 @@ jobs:
           cache-dependency-path: tatrman/pnpm-lock.yaml
 
       - uses: extractions/setup-just@v2
+
+      # The routing corpus: uv runs the runner (inline script metadata: httpx + pyyaml). Python is
+      # PINNED: with no interpreter that satisfies requires-python, uv fetches the newest one and may
+      # have to build a dependency from source.
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: '3.12'
+
+      - name: Routing corpus schema
+        working-directory: hartland
+        run: just routing-check
+
+      - name: Routing runner specs
+        working-directory: hartland
+        run: just routing-test
 
       - name: Build the tatrman toolchain the recipes borrow
         working-directory: tatrman

@@ -2,7 +2,7 @@ id: p-returns-by-reason
 title: The saved query `q.hartland.returns_by_reason` — its own example question
 shape: pattern
 question:
-  cs: Reklamace podle důvodu
+  cs: Reklamace z tržiště podle důvodu
   en: Returns by reason for Marketplace
 expected_route: LLM
 validation: non-empty.yaml
@@ -10,3 +10,8 @@ tags:
 - q.hartland.returns_by_reason
 notes: |
   Re-ruled 2026-10-12 (kantheon#194): no period is a default, not a question — the composer answers over the last 12 complete months.
+  Reworded 2026-10-18 (⚑AU-H-5): the cs example was the bare „Reklamace podle důvodu“, which since the AU extension asks
+  about the return-request DOCUMENT (⚑AU-H-3) and joined its reason code to the reason dimension (0 rows). „Reklamace z
+  tržiště“ is the marketplace returns fact, as the en example names Marketplace. The cs xfail (ttr-server#232, a bare
+  JOIN run as a Cartesian product) is dropped: the reworded question composes catalog_returns ⋈ reason ⋈ date_dim with
+  every join conditioned. ttr-server#232 itself stays open.

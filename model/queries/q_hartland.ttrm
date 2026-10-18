@@ -335,7 +335,9 @@ def query returns_by_reason {
         ],
         examples: [
             "Returns by reason for Marketplace",
-            "Reklamace podle důvodu"
+            // ⚑AU-H-5 (2026-10-18): not the bare „Reklamace podle důvodu“ — the bare word is the return-request document
+            // (⚑AU-H-3); „Reklamace z tržiště“ is the fact, as the en example names Marketplace.
+            "Reklamace z tržiště podle důvodu"
         ]
     }
     parameters: [

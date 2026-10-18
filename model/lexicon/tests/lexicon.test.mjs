@@ -26,6 +26,9 @@ const LEXICON_FILES = [
   'model/lexicon/cs/reasons.ttrm',
   'model/lexicon/cs/warehouses.ttrm',
   'model/lexicon/en/warehouses.ttrm',
+  // AU-hartland P0·S0.2 — the automation extension's documents (D-21).
+  'model/lexicon/cs/automation.ttrm',
+  'model/lexicon/en/automation.ttrm',
 ];
 
 // All canonical lexicon entries across every lexicon file, tagged with their real
