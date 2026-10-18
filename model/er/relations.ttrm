@@ -120,3 +120,16 @@ def relation rel_shipment_line       { from: er.entity.replacement_shipment, to:
 def relation rel_proposal_item      { from: er.entity.reorder_proposal, to: er.entity.item,      cardinality: { from: "0..*", to: "1" }, join: [{ from: er.entity.reorder_proposal.item, to: er.entity.item.sk }], binding: { fk: db.dbo.fk_rp_item } }
 def relation rel_proposal_warehouse { from: er.entity.reorder_proposal, to: er.entity.warehouse, cardinality: { from: "0..*", to: "1" }, join: [{ from: er.entity.reorder_proposal.warehouse, to: er.entity.warehouse.sk }], binding: { fk: db.dbo.fk_rp_warehouse } }
 def relation rel_winback_customer   { from: er.entity.winback_mail,     to: er.entity.customer,  cardinality: { from: "0..*", to: "1" }, join: [{ from: er.entity.winback_mail.customer, to: er.entity.customer.sk }], binding: { fk: db.dbo.fk_wm_customer } }
+
+// -- the documents' days: each dated document head reaches the calendar from its own date, as every fact does
+// through its rel_*_date — so the composer's bare `JOIN date_dim` is conditioned by the model joins instead of
+// left ON TRUE (the whole calendar under every document). One per document: a line dates with its order or its
+// request (a second date path would make every order ⋈ line ⋈ date_dim join ambiguous); price lists and outages
+// are ranges, proposals and win-back mails run artefacts.
+def relation rel_order_date       { from: er.entity.order,                to: er.entity.date_dim, cardinality: { from: "0..*", to: "1" }, join: [{ from: er.entity.order.placed_date,                to: er.entity.date_dim.cal_date }], binding: { fk: db.dbo.fk_so_date } }
+def relation rel_invoice_date     { from: er.entity.invoice,              to: er.entity.date_dim, cardinality: { from: "0..*", to: "1" }, join: [{ from: er.entity.invoice.issued,                   to: er.entity.date_dim.cal_date }], binding: { fk: db.dbo.fk_invoice_date } }
+def relation rel_request_date     { from: er.entity.return_request,       to: er.entity.date_dim, cardinality: { from: "0..*", to: "1" }, join: [{ from: er.entity.return_request.requested_date,    to: er.entity.date_dim.cal_date }], binding: { fk: db.dbo.fk_rrv_date } }
+def relation rel_receipt_date     { from: er.entity.return_receipt,       to: er.entity.date_dim, cardinality: { from: "0..*", to: "1" }, join: [{ from: er.entity.return_receipt.received_date,     to: er.entity.date_dim.cal_date }], binding: { fk: db.dbo.fk_rc_date } }
+def relation rel_credit_note_date { from: er.entity.credit_note,          to: er.entity.date_dim, cardinality: { from: "0..*", to: "1" }, join: [{ from: er.entity.credit_note.issued_date,          to: er.entity.date_dim.cal_date }], binding: { fk: db.dbo.fk_cn_date } }
+def relation rel_payment_date     { from: er.entity.refund_payment,       to: er.entity.date_dim, cardinality: { from: "0..*", to: "1" }, join: [{ from: er.entity.refund_payment.paid_date,         to: er.entity.date_dim.cal_date }], binding: { fk: db.dbo.fk_rp_paid_date } }
+def relation rel_shipment_date    { from: er.entity.replacement_shipment, to: er.entity.date_dim, cardinality: { from: "0..*", to: "1" }, join: [{ from: er.entity.replacement_shipment.shipped_date, to: er.entity.date_dim.cal_date }], binding: { fk: db.dbo.fk_rs_date } }
