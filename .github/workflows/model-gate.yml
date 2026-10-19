@@ -62,10 +62,18 @@ jobs:
       # serving reader that parses such a query. The lexicon readers are unaffected: the archive schema
       # is still `ttr-lexicon-compiled/v5`, and v0.15.2 rebuilt master's archive byte for byte
       # (`sha256:6f6bcb9b…`) before this branch's was built.
+      #
+      # grammar/v0.16.0 (2026-10-19, AU-hartland-P2): the first toolchain that parses the automation package
+      # (`model automation`), the world's automation half (`def identity` / `grant` / `deployment` / `process` inside
+      # `def world`, `writable:`) and `states:` / `transitions:` on attributes — all of which `model/` carries from
+      # this change on. It rolls with a veles built on grammar 0.16 (the ttr-server bump): a 0.15 veles reading
+      # `model/worlds/demo.ttrm` or the `states:` attributes would not parse them. The lexicon readers are
+      # unaffected: the archive schema is still `ttr-lexicon-compiled/v5`, and v0.16.0 rebuilt master's archive
+      # byte for byte (`sha256:d0789ffa…`) and its resolved-packages.json before this branch changed the model.
       - uses: actions/checkout@v4
         with:
           repository: Collite/ttr-core
-          ref: grammar/v0.15.2
+          ref: grammar/v0.16.0
           path: tatrman
 
       - uses: pnpm/action-setup@v4
