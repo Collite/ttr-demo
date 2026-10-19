@@ -10,7 +10,7 @@
 # RV-P3.2: the root data area is a third authored surface, and its guards belong in the
 # same command as the model's.)
 verify-model:
-    node --test $(find model agents lexicon -name '*.test.mjs')
+    node --test $(find model agents lexicon automation -name '*.test.mjs')
 
 # GX (NLS-P6.2) — check every mounted `intent.yaml` against the plan-composer placeholder
 # contract. The kantheon sibling is `IntentPromptContractSpec`; this repo has no CI lane, and

@@ -1,5 +1,5 @@
-// AU-hartland-P0 · S0.1 — the H-1/H-2 data extension of the model (D-79, D-81…D-84, D-127), and S0.2's world
-// (contracts §3). Mocked/unit: parses the whole model/ tree as one project (project-harness.mjs), no live DB.
+// AU-hartland-P0 · S0.1 — the H-1/H-2 data extension of the model (D-79, D-81…D-84, D-127). S0.2's world moved to
+// automation/tests/package.test.mjs at P2. Mocked/unit: parses the whole model/ tree as one project (project-harness.mjs), no live DB.
 // Run: node --test model/tests/automation-extension.test.mjs (from the hartland repo root).
 //
 // The tables below ARE the contract — `project/kantheon/features/automation-agents/implementation/hartland/
@@ -8,11 +8,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import path from 'node:path';
-import { loadHartlandProject, ACCEPTED_RESIDUAL_CODES, hartlandRoot } from './project-harness.mjs';
-
-const tatrmanPackages = process.env.TATRMAN_PACKAGES ?? path.resolve(hartlandRoot, '../tatrman/packages');
-const { validateWorldDocument } = await import(path.join(tatrmanPackages, 'semantics/dist/index.js'));
+import { loadHartlandProject, ACCEPTED_RESIDUAL_CODES } from './project-harness.mjs';
 
 const MONEY = 'decimal(12,2)';
 
@@ -498,42 +494,7 @@ test('S0.1 (e) — the whole project parses, nothing is unresolved, and no diagn
   assert.deepEqual(offenders, [], offenders.join('; '));
 });
 
-// ── the world (contracts §3, S0.2): `hartland.worlds.demo`, in the pinned toolchain's `model world` grammar ──
-// engine → type; storage → [type, via, hosts, staging]. The engine's name is the credential name
-// (`TTR_CONN_ERP`, `TTR_CONN_AUTOMATION` — ttr-p contracts §5), so the names are part of the contract.
-const WORLD = {
-  qname: 'hartland.worlds.demo',
-  engines: { erp: 'postgres', automation: 'postgres' },
-  storages: {
-    erp_db: ['postgres', 'erp', ['hartland'], false],
-    automation_db: ['postgres', 'automation', [], false],
-    stage: ['local_dir', undefined, [], true],
-  },
-};
-
-const worldFiles = [...project.asts].filter(([uri, ast]) => !uri.startsWith('stock://') && ast.modelDirective?.modelCode === 'world');
-
-test('S0.2 world — `hartland.worlds.demo` is the one world, with the contract\'s engines and storages', () => {
-  const worlds = worldFiles.flatMap(([, ast]) => (ast.definitions ?? []).filter((d) => d.kind === 'world').map((w) => [`${ast.packageDecl?.name}.${w.name}`, w]));
-  assert.deepEqual(worlds.map(([q]) => q), [WORLD.qname]);
-  const [, world] = worlds[0];
-  assert.deepEqual(Object.fromEntries(world.engines.map((e) => [e.name, e.type])), WORLD.engines);
-  assert.deepEqual(
-    Object.fromEntries(world.storages.map((s) => [s.name, [s.type, s.via, s.hosts, s.staging === true]])),
-    WORLD.storages,
-  );
-});
-
-test('S0.2 world — the world file validates clean against the project\'s packages (one staging, known hosts)', () => {
-  const known = new Set([...project.asts].map(([, ast]) => ast.packageDecl?.name).filter(Boolean));
-  assert.ok(known.has('hartland'), 'the control: the project declares package hartland');
-  const diags = worldFiles.flatMap(([, ast]) => validateWorldDocument(ast, known));
-  assert.deepEqual(diags.map((d) => `${d.code}: ${d.message}`), []);
-});
-
-// D-79 / D-76: the writer's targets are a contract — `erp_db` may write exactly order.state, order.held_for,
-// return_request_line.state, return_request_line.way, reorder_proposal, winback_mail; `automation_db` exactly
-// obligation, state_history, "*_verdict", "*_verdict_detail", approvals. `writable:` is ttr-core P0's storage
-// property; on grammar 0.15.1 it is a comment in model/worlds/demo.ttrm. Becomes a test when the grammar has it.
-test.todo('S0.2 world — `writable:` on erp_db and automation_db is exactly contracts §3\'s list (ttr-core P0)');
-
+// ── the world (contracts §3, S0.2) ──────────────────────────────────────────────────────────────────────────────
+// Moved to automation/tests/package.test.mjs with the world itself at AU-hartland P2: the world's automation half
+// names the package's programs and roles, so it lives in `automation/worlds/demo.ttrm`, beside them — `model/` is
+// what veles and the lexicon build read, and nothing there may name an automation object.
