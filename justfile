@@ -174,6 +174,19 @@ automation-events-test:
 seed-goldens world="us" *FLAGS:
     uv run scripts/seed-goldens.py --world {{world}} {{FLAGS}}
 
+# The recipes through the toolchain (contracts §10). Today — ttr-core grammar 0.16 — a STUB: `ttrp explain` per recipe,
+# which parses it and fails on any diagnostic (`ttrp build` refuses a recipe with TTRP-REC-099 until ttr-core P2; the
+# literate `.md` sources and `--check` come at P3). automation/tests/recipes.test.mjs asserts what the skeleton says.
+build-recipes cli="../tatrman/packages/kotlin/ttrp-cli/build/install/ttrp-cli/bin/ttrp-cli":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    n=0
+    while IFS= read -r f; do
+      out="$("{{cli}}" explain "$f" 2>&1 | grep -v '^ANTLR ')" || { echo "$out" >&2; echo "build-recipes: $f does not parse" >&2; exit 1; }
+      n=$((n + 1))
+    done < <(find automation -name '*.ttrp' -not -path '*/stub/*' | sort)
+    echo "build-recipes: $n recipes parse clean (ttrp explain)"
+
 # The golden cases' own specs: every case is a contracts §7 case naming only its recipe's routes; the seeds are fresh.
 goldens-test:
     uv run --quiet --with pyyaml python3 -B -m unittest scripts/test_seed_goldens.py

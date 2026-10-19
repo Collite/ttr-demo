@@ -4,6 +4,12 @@
   "root": "",
   "packages": [
     {
+      "canonicalName": "automation.ops",
+      "declaredName": "automation.ops",
+      "nested": true,
+      "directory": "automation/ops/stub"
+    },
+    {
       "canonicalName": "hartland",
       "declaredName": "hartland",
       "nested": false,
@@ -23,6 +29,16 @@
     }
   ],
   "entities": [
+    {
+      "qname": "automation.ops.er.entity.deployment",
+      "package": "automation.ops",
+      "schema": "er"
+    },
+    {
+      "qname": "automation.ops.er.entity.run",
+      "package": "automation.ops",
+      "schema": "er"
+    },
     {
       "qname": "hartland.er.entity.call_center",
       "package": "hartland",
