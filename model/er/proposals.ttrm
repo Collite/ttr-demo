@@ -21,6 +21,7 @@ def entity reorder_proposal {
         def attribute state {
             type: text,
             description: "Proposal state: 'proposed', 'approved', 'rejected' or 'started' (handed to purchasing).",
+            states: [proposed, approved, rejected, started],         // AU D-67 — the writer proposes, the buyer's ask and purchasing move it
             valueLabels: {
                 "proposed": { en: "Proposed",             cs: "Navrženo" },
                 "approved": { en: "Approved",             cs: "Schváleno" },
