@@ -112,7 +112,7 @@ this table drifts).
 |---|---|---|---|---|---|
 | **Maya Chen** — Senior Category Manager | `maya@hartland.example` (`maya`) | `kantheon-area-hartland` | US / en-US | **1 card** (Hartland Analytics) | all |
 | **Sam Reyes** — Memphis DC Manager | `sam@hartland.example` (`sam`) | `kantheon-area-hartland` + `kantheon-scope-dc-5` | US / en-US | **1 card** | **Memphis DC only** (DC 5) |
-| **Dan Whitaker** — CFO | `cfo@hartland.example` (`dan`) | `kantheon-area-hartland` + `kantheon-role-finance` + `kantheon-area-investment` + `studio-operations` | US / en-US | **2 cards** (+ Hartland Finance) | all |
+| **Dan Whitaker** — CFO | `cfo@hartland.example` (`dan`) | `kantheon-area-hartland` + `kantheon-role-finance` | US / en-US | **2 cards** (+ Hartland Finance) | all |
 | **Markéta Nováková** — Senior Category Manager (CZ) | `marketa@hartland.example` (`marketa`) | `kantheon-area-hartland` | CZ / cs-CZ | **1 card** | all |
 | **Petr Svoboda** — Vedoucí distribučního centra Brno | `petr@hartland.example` (`petr`) | `kantheon-area-hartland` + `kantheon-scope-dc-5` | CZ / cs-CZ | **1 card** | **Brno DC only** (DC 5) |
 | **Tomáš Horák** — Finanční ředitel (CZ) | `cfo-cz@hartland.example` (`tomas`) | `kantheon-area-hartland` + `kantheon-role-finance` | CZ / cs-CZ | **2 cards** | all |
