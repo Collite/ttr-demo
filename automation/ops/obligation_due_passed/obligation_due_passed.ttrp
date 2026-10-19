@@ -1,0 +1,38 @@
+// obligation_due_passed.ttrp — derived from obligation-due-passed.md (an ops recipe: D-72, alert rules are recipes)
+// AU-hartland P2 (pre-literate — the `.md` comes at P3, S3.3 T3): an open obligation more than one working day past
+// its due date. Reads the toolchain's `obligation` (the automation stdlib) in the automation database.
+// The program (`obligation_due_passed_hourly`) writes the protocol only when a route fires (D-80).
+uses world "hartland.worlds.demo"
+import hartland.automation.*
+
+recipe {
+    key:        obligation.id
+    as of:      now
+    parameters: []
+    document:   "obligation-due-passed.md"
+
+    candidates past_due(out obligations) target automation """sql
+        SELECT ob.id, ob.recipe, ob.entity, ob.key, ob.kind, ob.due, ob.state
+        FROM   er.entity.obligation ob
+        WHERE  ob.state IN ('open', 'overdue', 'reopened') AND ob.due < :as_of
+    """
+
+    // per candidate: how many working days late (the calendar's working days, D-82)
+    context lateness(in obligations, out rows) target automation {
+        obligations -> calc(days_late = working_days(between: due, and: :as_of))
+                    -> select(id, kind, entity, key, due, days_late)
+                    -> rows
+    }
+
+    decision overdue(in obligations, in lateness) {
+        v = obligations -> join(right: lateness, kind: left, on: left.id = right.id)
+        v -> switch {
+            late: days_late > 1   because: "{kind} for {entity} {key}, due {due}, {days_late} working days late"   detail: lateness
+            else: none                                               // inside its grace day — no verdict, no protocol (D-80)
+        }
+    }
+
+    actions {
+        overdue.late -> notify { who: role.ops, detail: lateness }
+    }
+}
