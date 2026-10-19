@@ -13,14 +13,15 @@ recipe {
     parameters: [quiet_months, active_orders, mail_window]
     document:   "win-back.md"
 
-    // the lapsed customers: the two order windows (D-129), the quiet one by an anti-join
+    // the lapsed customers: the two order windows (D-129, the time sugar `within(<date>, from:, to:)` — a chain op
+    // ttr-core P1 types and P2 lowers), the quiet one by an anti-join
     candidates lapsed(out customers) target erp {
         before = load(er.entity.order)
-                 -> filter(placed_date >= :as_of - months(:quiet_months) - months(12) and placed_date < :as_of - months(:quiet_months))
+                 -> within(placed_date, from: :as_of - months(:quiet_months) - months(12), to: :as_of - months(:quiet_months))
                  -> aggregate { group_by: customer  orders_before = count(order_number) }
                  -> filter(orders_before >= :active_orders)
         since  = load(er.entity.order)
-                 -> filter(placed_date >= :as_of - months(:quiet_months) and placed_date <= :as_of)
+                 -> within(placed_date, from: :as_of - months(:quiet_months), to: :as_of)
                  -> aggregate { group_by: customer  orders_since = count(order_number) }
         before -> join(right: since, kind: anti, on: left.customer = right.customer)
                -> join(right: load(er.entity.customer), kind: inner, on: left.customer = right.sk)
