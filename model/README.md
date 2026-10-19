@@ -17,7 +17,8 @@ One model set (BM-2/BM-5), served over `pg-hartland-us` (USD) and `pg-hartland-c
 - `lexicon/` — `model lexicon locale en` + `locale cs`: the bilingual naming layer + valueLabels.
 - `queries/` — the `q.hartland.*` preferred queries (#1–15, D-2).
 - `binding/` — cross-model mapping: `er2db` (Stage 2.2) + `md2db` (Stage 2.4) `.ttrm` files.
-- `worlds/` — `model world`: `hartland.worlds.demo`, where the automation recipes run (AU P0, below).
+- (`worlds/` moved to `../automation/worlds/` at AU P2: the world names the automation package's programs and roles,
+  and veles and the lexicon build read `model/` alone — see the automation paragraph below.)
 - `connections.toml` — the two connection descriptors (`pg-hartland-us`/`pg-hartland-cz`).
   **Not a TTR-M construct** (the grammar has no `connection` def and no per-connection
   currency `unit` — verified against `packages/grammar/src/TTR.g4`): this is a repo-level
@@ -131,12 +132,15 @@ not guess:
   precedent);
 - every extension relation states its **`join:` pairs** beside its fk — TTR-P's `on: relation X` builds
   the join from join pairs only;
-- the states are `text` attributes with `valueLabels` until ttr-core P0 brings TTR-M `states:`
-  (hartland P2·S2.1). Value labels are member terms of the lexicon, so none repeats a word the pre-AU
+- the states are `text` attributes with `valueLabels` and, since AU P2 (grammar 0.16), `states:` /
+  `transitions:` — the lifecycle the automation actions are checked against (D-67). Value labels are member terms of the lexicon, so none repeats a word the pre-AU
   vocabulary binds, and the `channel` attributes have none; the bare «reklamace» / «objednávka» are the
   documents by rule (⚑AU-H-3, `lexicon/cs/automation.ttrm`), guarded by
   `lexicon/tests/automation-lexicon.test.mjs`;
-- `worlds/demo.ttrm` is written in the pinned grammar (0.15.1); `writable:` is a comment until
-  ttr-core P0. Nothing in it names a world's database: the engine name is the credential name
-  (`TTR_CONN_ERP`, `TTR_CONN_AUTOMATION`), so one world file serves both worlds by connection.
+- the world `hartland.worlds.demo` is in `../automation/worlds/demo.ttrm` (AU P2): its automation half names
+  the programs and roles of `../automation/*.ttrm`, and a reader of `model/` alone (veles, the lexicon build)
+  would report each unresolved — the lexicon build refuses such a model. Nothing under `model/` may name an
+  automation object (`automation/tests/package.test.mjs`). Nothing in the world names a world's database: the
+  engine name is the credential name (`TTR_CONN_ERP`, `TTR_CONN_AUTOMATION`), so one world file serves both
+  worlds by connection.
 
