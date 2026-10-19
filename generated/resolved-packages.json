@@ -10,10 +10,16 @@
       "directory": "model/binding"
     },
     {
+      "canonicalName": "hartland.automation",
+      "declaredName": "hartland.automation",
+      "nested": true,
+      "directory": "automation"
+    },
+    {
       "canonicalName": "hartland.worlds",
       "declaredName": "hartland.worlds",
       "nested": true,
-      "directory": "model/worlds"
+      "directory": "automation/worlds"
     }
   ],
   "entities": [
@@ -203,6 +209,7 @@
       "name": "hartland",
       "resolvedPackages": [
         "hartland",
+        "hartland.automation",
         "hartland.worlds"
       ],
       "resolvedEntities": [
