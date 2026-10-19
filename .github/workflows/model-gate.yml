@@ -135,7 +135,7 @@ jobs:
         working-directory: hartland
         run: just verify-model
 
-      - name: The recipes parse (ttrp explain)
+      - name: The recipes check clean (ttrp check)
         working-directory: hartland
         run: just build-recipes
 
