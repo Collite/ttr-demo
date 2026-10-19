@@ -15,7 +15,7 @@ As the hartland realm overlay wires them (olymp `platform/auth/keycloak/overlays
 | Markéta Nováková (Senior Category Manager) | `marketa` | CZ | `kantheon-area-hartland` | golem-hartland | — |
 | Sam Reyes (Memphis DC Manager) | `sam` | US | `kantheon-area-hartland`, `kantheon-scope-dc-5` | golem-hartland | distribution centre 5 (Memphis DC) |
 | Petr Svoboda (Vedoucí distribučního centra Brno) | `petr` | CZ | `kantheon-area-hartland`, `kantheon-scope-dc-5` | golem-hartland | distribution centre 5 (Brno DC) |
-| Dan Whitaker (CFO) | `dan` | US | `kantheon-area-hartland`, `kantheon-role-finance`, `kantheon-area-investment`, `studio-operations` | golem-hartland, golem-hartland-finance ("Hartland Finance"); `kantheon-area-investment` grants the investment estate's Golem, which no longer lives in this repo | — |
+| Dan Whitaker (CFO) | `dan` | US | `kantheon-area-hartland`, `kantheon-role-finance` | golem-hartland, golem-hartland-finance ("Hartland Finance") | — |
 | Tomáš Horák (Finanční ředitel) | `tomas` | CZ | `kantheon-area-hartland`, `kantheon-role-finance` | golem-hartland, golem-hartland-finance | — |
 
 **Row scope (LR C-5·4, ⚑LR-13).** `kantheon-scope-dc-5` grants no Shem. It is a row rule: for its
