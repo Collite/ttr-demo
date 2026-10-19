@@ -165,6 +165,19 @@ automation-test:
 automation-events-test:
     uv run --quiet --with pyyaml --with httpx python3 -B -m unittest scripts/test_automation_events.py
 
+# ── the recipes (AU-hartland P2, contracts §4, §7, §10) ──────────────────────────────────────────────────────
+# Seed the golden cases of the recipes from the generator's expected verdicts (data/automation/expected/<world>/):
+# one case per route, no `pinned_from`. `--check` exits 3 when a committed seed is stale.
+#
+#     just seed-goldens            # the us world → automation/<recipe>/tests/<case>.yaml
+#     just seed-goldens cz         # → <case>.cz.yaml (P3, with the CZ twins)
+seed-goldens world="us" *FLAGS:
+    uv run scripts/seed-goldens.py --world {{world}} {{FLAGS}}
+
+# The golden cases' own specs: every case is a contracts §7 case naming only its recipe's routes; the seeds are fresh.
+goldens-test:
+    uv run --quiet --with pyyaml python3 -B -m unittest scripts/test_seed_goldens.py
+
 # ── the routing corpus (LR P6, contracts C-9·3) ─────────────────────────────────────────────────
 # run-set/routing/README.md. `check` needs no cluster; `run` asks every case of the DELIVERED world
 # through the public iris-bff as the case's persona (HARTLAND_DEMO_PASSWORD, or the olymp realm file
