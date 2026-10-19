@@ -97,6 +97,10 @@ from this change on. v0.16.0 first rebuilt master's archive byte for byte (`sha2
 | build warnings | **24**, the same 24 as before |
 | size | 14,858 bytes |
 
+The model gate later moved to **`grammar/v0.16.1`**, ttr-core P1's recipe checker. That release changes only the TTR-P
+modules; the parser, semantics, metadata and lexicon modules are as in v0.16.0. `check-lexicon` on it finds this archive
+up to date, so the table above stands.
+
 **No terms for the automation package.** The P2 task list asked for lexicon terms naming the parameters and actions
 (`tolerance` → „cenová tolerance“, `release` → „uvolnit“). They are not here, for two reasons. First, a term's `for:`
 must name a model object of `model/`, and the parameters and actions are in `automation/`, so every such term would be

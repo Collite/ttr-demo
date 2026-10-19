@@ -1,7 +1,8 @@
 // A STUB of the `automation.ops` package (AU-hartland P2 · S2.2 T5) — what the ops recipes compile against until the
 // automation service serves the real one (ttr-server P4·S4.2, contracts §9). DELETE this file when it is served.
-// Entity shapes from ttr-server contracts §2 (the ledger's `runs`), named as §9 names them. Not bound to a table: the
-// recipes only need to resolve (the dry run against the served package is P3 · S3.3 T3).
+// Entity shapes from ttr-server contracts §2 (the ledger's `runs`), named as §9 names them. Bound to stub tables
+// (automation-ops-db.ttrm, automation-ops-binding.ttrm) only because ttr-core P1's checker resolves an entity load
+// through er2db: the recipes only need to check (the dry run against the served package is P3 · S3.3 T3).
 //
 // ⚑ `deployment` is NOT in contracts §9's list. `no_run_since` needs the deployments that have a schedule and their
 // period: the Server knows them from the served bundle (the world's `def deployment … trigger: schedule`). ttr-server P4

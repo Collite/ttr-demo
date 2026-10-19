@@ -45,3 +45,10 @@ layout = "off"
 # doesn't block resolution: er2db/relations/lexicon cross-refs into db/er all resolve
 # with zero ttr/unresolved-reference under this scheme (Stage 2.2 T6). Accepted trade-off
 # for a flat single-package model organized by kind-directory rather than domain-directory.
+
+[ttrp]
+# The TTR-P toolchain (`ttrp check` / `ttrp explain`, ttr-core grammar/v0.16.1+) loads its models from `models/` beside
+# this manifest. Hartland keeps them in `model/`, and the automation package, world and ops stub in `automation/`
+# (automation/worlds/demo.ttrm says why they stay out of `model/`), so both are named here. veles and the lexicon build
+# do not read this section.
+extra-model-roots = ["model", "automation"]

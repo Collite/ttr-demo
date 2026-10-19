@@ -1,0 +1,7 @@
+// The stub entities → the stub tables (automation-ops-db.ttrm). DELETE with the stub.
+package automation.ops
+
+model binding
+
+def er2db_entity run_map        { entity: er.entity.run,        target: { table: db.automation.runs } }
+def er2db_entity deployment_map { entity: er.entity.deployment, target: { table: db.automation.deployments } }

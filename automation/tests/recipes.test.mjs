@@ -1,9 +1,11 @@
 // AU-hartland-P2 · S2.2 — the eight recipes as `.ttrp` (D-25, D-80, D-85; `17` §3–§4, `04` H-3/H-5).
-// What ttr-core grammar 0.16 can check is checked here, through the toolchain's own CLI (`ttrp explain` — the recipe
-// skeleton, from the parse): every recipe parses with zero diagnostics; its parameters are declared, used and the
-// package's; every route of its switch is wired; the four `17` recipes ARE ttr-core's shared fixtures.
-// What 0.16 cannot check yet is `todo`, naming the ttr-core phase that brings it: the RecipeChecker and the mode
-// verdicts (P1), the recipe build and its manifest (P2 — `ttrp build` refuses a recipe with TTRP-REC-099 until then).
+// What ttr-core can check is checked here, through the toolchain's own CLI: `ttrp explain` (the recipe skeleton, from
+// the parse, and — from grammar/v0.16.1, ttr-core P1 — the RecipeChecker's section: the mode verdict and each
+// context's class) and `ttrp check` (the checker's findings). Every recipe checks with zero diagnostics and is mode
+// per-candidate; its parameters are declared, used and the package's; every route of its switch is wired; the four
+// `17` recipes ARE ttr-core's shared fixtures.
+// What the pinned toolchain cannot check yet is `todo`, naming the ttr-core phase that brings it: the recipe build and
+// its manifest (P2 — `ttrp build` refuses a recipe with TTRP-REC-099 until then).
 // Run: node --test automation/tests/recipes.test.mjs (from the hartland repo root).
 
 import { test } from 'node:test';
@@ -46,16 +48,17 @@ test('S2.2 — the eight recipes of contracts §4 are in the package, one folder
   }
 });
 
-/** `ttrp explain <file>` → { code, out } (stdout + stderr, the ANTLR version notices dropped). */
-async function explain(file) {
+/** `ttrp <command> <file>` → { code, out } (stdout + stderr, the ANTLR and SLF4J notices dropped). */
+async function ttrp(command, file) {
   try {
-    const { stdout, stderr } = await run(CLI, ['explain', file], { maxBuffer: 4 << 20 });
+    const { stdout, stderr } = await run(CLI, [command, file], { maxBuffer: 4 << 20 });
     return { code: 0, out: clean(stdout + stderr) };
   } catch (e) {
     return { code: e.code ?? 1, out: clean(`${e.stdout ?? ''}${e.stderr ?? ''}`) };
   }
 }
-const clean = (s) => s.split('\n').filter((l) => !l.startsWith('ANTLR ')).join('\n');
+const explain = (file) => ttrp('explain', file);
+const clean = (s) => s.split('\n').filter((l) => !l.startsWith('ANTLR ') && !l.startsWith('SLF4J(')).join('\n');
 
 /** The skeleton `ttrp explain` prints for a recipe: header, routes (+ the else target), wirings. */
 function skeleton(out) {
@@ -82,10 +85,12 @@ function skeleton(out) {
 const explained = cliMissing ? {} : Object.fromEntries(await Promise.all(Object.entries(recipeFiles).map(async ([n, f]) => [n, await explain(f)])));
 const sources = Object.fromEntries(await Promise.all(Object.entries(recipeFiles).map(async ([n, f]) => [n, await readFile(f, 'utf-8')])));
 
-test('S2.2 T1 — every recipe parses with zero diagnostics (`ttrp explain`, grammar 0.16)', { skip: cliMissing }, () => {
+test('S2.2 T1 — every recipe parses and checks with zero diagnostics (`ttrp explain`)', { skip: cliMissing }, () => {
   for (const [name, r] of Object.entries(explained)) {
     assert.equal(r.code, 0, `${name}:\n${r.out}`);
     assert.match(r.out, /^recipe · key /m, `${name}: the skeleton`);
+    assert.match(r.out, /^checker · mode /m, `${name}: the checker's section`);
+    assert.doesNotMatch(r.out, /TTRP-[A-Z]+-\d+/, `${name}: a finding`);
   }
 });
 
@@ -140,14 +145,9 @@ test('S2.2 T3 — monitor_inbound\'s two expects on `complete` are conditional o
 });
 
 // ── the four `17` recipes ARE ttr-core's shared fixtures ──────────────────────────────────────────────────────────
-// Compared without comments and blank lines. The one listed difference: the fixture still writes monitor_inbound's two
-// conditional expects as comments; here they carry `when:` (S2.2 T3) — the fixture takes them at ttr-core P1.
-const FIXTURE_DELTAS = {
-  monitor_inbound: [
-    [/(kind: credit_note,\s+due: working_days\(:settlement\) \})$/m, '$1  when: way = "refund_after_return"'],
-    [/(kind: replacement,\s+due: working_days\(:settlement\) \})$/m, '$1  when: way = "exchange"'],
-  ],
-};
+// Compared without comments and blank lines. No difference is left: from grammar/v0.16.1 the fixtures carry
+// monitor_inbound's `when:` (S2.2 T3) and decide_return's `days(365)` (ttr-core P1's F3), as these recipes do.
+const FIXTURE_DELTAS = {};
 const lines = (text) => code(text).split('\n').map((l) => l.trimEnd()).filter((l) => l.trim() !== '').join('\n');
 
 for (const name of ['release_order', 'decide_return', 'monitor_inbound', 'settle']) {
@@ -159,7 +159,25 @@ for (const name of ['release_order', 'decide_return', 'monitor_inbound', 'settle
   });
 }
 
-// ── what grammar 0.16 cannot check yet ────────────────────────────────────────────────────────────────────────────
-test.todo('S2.2 T1 — zero REC diagnostics from the RecipeChecker (`ttrp check`) — ttr-core P1 (S1.1–S1.3)');
-test.todo('S2.2 T1 — the mode verdicts: per-candidate for the six business recipes, `set-level, batch` for ops/no_run_since — ttr-core P1 (S1.2)');
+// ── the RecipeChecker (ttr-core P1, grammar/v0.16.1) ──────────────────────────────────────────────────────────────
+test('S2.2 T1 — zero diagnostics from the RecipeChecker (`ttrp check`)', { skip: cliMissing }, async () => {
+  for (const [name, file] of Object.entries(recipeFiles)) {
+    const r = await ttrp('check', file);
+    assert.equal(r.code, 0, `${name}:\n${r.out}`);
+    assert.equal(r.out.trim(), '', `${name}: findings`);
+  }
+});
+
+// Every recipe is per-candidate, ops/no_run_since too. The task list expected `set-level, batch` for it, but its one
+// context groups each deployment's runs by the deployment, the key, so its verdict depends on that deployment alone
+// (06 A-5). Its program runs it hourly in batch either way.
+test('S2.2 T1 — the mode verdicts: every recipe per-candidate, no context set-level', { skip: cliMissing }, () => {
+  for (const [name, r] of Object.entries(explained)) {
+    assert.match(r.out, /^checker · mode per-candidate · /m, `${name}: the mode verdict`);
+    const contexts = [...r.out.matchAll(/^ {2}context (\w+) .*\b(lookup|per-candidate|set-level)\b/gm)];
+    for (const m of contexts) assert.notEqual(m[2], 'set-level', `${name}: context ${m[1]}`);
+  }
+});
+
+// ── what the pinned toolchain cannot check yet ────────────────────────────────────────────────────────────────────
 test.todo('S2.2 T1 — `ttrp build --json` per recipe: the manifest\'s mode, `kinds` ([sql] + [builtin] where a sugar lowers to one) and parameters — ttr-core P2 (S2.3)');

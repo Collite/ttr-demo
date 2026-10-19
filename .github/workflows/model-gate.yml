@@ -72,10 +72,15 @@ jobs:
       # `model/worlds/demo.ttrm` or the `states:` attributes would not parse them. The lexicon readers are
       # unaffected: the archive schema is still `ttr-lexicon-compiled/v5`, and v0.16.0 rebuilt master's archive
       # byte for byte (`sha256:d0789ffa…`) and its resolved-packages.json before this branch changed the model.
+      #
+      # grammar/v0.16.1 (2026-10-19, AU-hartland-P2): ttr-core P1's RecipeChecker — `ttrp check`, and `ttrp explain`
+      # with the mode verdicts — which the recipes under automation/ are checked through. A TTR-P-only release: the
+      # parser, semantics, metadata and lexicon modules are unchanged from v0.16.0, so the serving readers need no roll
+      # and v0.16.1 rebuilt this branch's archive byte for byte.
       - uses: actions/checkout@v4
         with:
           repository: Collite/ttr-core
-          ref: grammar/v0.16.0
+          ref: grammar/v0.16.1
           path: tatrman
 
       - uses: pnpm/action-setup@v4
