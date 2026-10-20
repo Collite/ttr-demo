@@ -5,11 +5,11 @@ recipe: settle
 world: us
 as_of: "2026-11-02"
 parameters: { settlement: 5 }
-keys: [1218584, 1219186]
+keys: [1218404, 1219011]
 expected:
   verdicts:
-    - { key: 1218584, route: goods_overdue, verdict_reason: "replacement {max_late} working days late" }
-    - { key: 1219186, route: goods_overdue, verdict_reason: "replacement {max_late} working days late" }
+    - { key: 1218404, route: goods_overdue, verdict_reason: "replacement {max_late} working days late" }
+    - { key: 1219011, route: goods_overdue, verdict_reason: "replacement {max_late} working days late" }
   detail_counts:
-    1218584: { open_obligations: 1 }
-    1219186: { open_obligations: 1 }
+    1218404: { open_obligations: 1 }
+    1219011: { open_obligations: 1 }

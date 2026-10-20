@@ -71,7 +71,7 @@ base is byte-identical (the suite proves it).
 | `invoice` | one per `released` order | issued at delivery (at placement while on its way), due + `payment_days` (14), amount = value, **paid**. S1.2 re-opens the planted customers' |
 | `warehouse_outage` | `outages_per_center` (3) per warehouse | 1–3-day windows in the template year, one per third of it (never overlapping), a hashed reason code (`power_failure` · `system_outage` · `stock_count`). None over `as_of`: S1.2 plants that one |
 | `customer.c_center_sk` | every customer with lines | the modal warehouse of their lines (ties: the lower sk); NULL for a customer who never ordered |
-| `date_dim.d_working_day` | every day | `d_holiday = 'N' AND d_weekend = 'N'` |
+| `date_dim.d_working_day` | every day | `d_holiday = 'N' AND d_weekend = 'N'` — the flags `data/calendar/` corrected (Mon–Fri, the world's public holidays) |
 | `inventory` (base) | the open orders' (item, warehouse) pairs | 17 §3's `shortfall` reads the pair's **latest** snapshot. TPC-DS stock is uniform 0–1000 with NULLs, so a random open order would be short more often than not; the latest snapshot of every pair an open line needs is raised to the largest such line + a hashed 10–99 (a pair with none gets one at the latest snapshot date). Journaled in `_automation_undo` |
 | `return_request` · `document_flow` (views) | — | the model's `definitionSql`, verbatim (`data/views/`) |
 | `reorder_proposal` · `winback_mail` | none | written by the H-3 / H-5 recipes (`writable:`) |

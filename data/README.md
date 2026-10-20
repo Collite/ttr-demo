@@ -6,6 +6,11 @@ Phase 1):
 
 1. `redate/` — `run-redate.sh <host> 23 <db>` (+23y; refuses to run against `tpc-ds-1g`).
 2. `localize-cz/` — CZ geography (stores/addresses/DCs incl. Brno), CZK conversion, cs reasons.
+   2b. `calendar/` — `date_dim` corrected from `d_date` (`just calendar-data <us|cz> [ctx]`): dsdgen cuts the
+   quarters on a 366-day year (non-leap 04-01, 07-01, 10-01 fall in the quarter before), puts the weekend on
+   Friday + Saturday and dates two of its three holidays a day late. Quarters, weekday and a Saturday + Sunday
+   weekend from the date; the holidays become the world's own (cz: the 13 Czech days off, Easter computed; us:
+   the 11 federal holidays and their observed weekdays). Found by the D-134 routing case d1, 2026-10-20.
 3. `catalog/` — the bilingual per-item catalog: taxonomy + generator → `catalog/{us,cz}` UPDATEs.
 4. `seed/` — `02-seed-incident` — Memphis DC (us) / Brno DC (cz) meltdown S1–S4.
 5. `recon/` — the recon battery + committed baselines; R0 freeze; `pg_dump` → staging.
@@ -30,6 +35,9 @@ snapshot-guarded:
 2. `redate/run-redate.sh <ctx> 23 <db>` (guarded — refuses a second run).
 3. CZ only: `localize-cz/00-widen-money-columns.sql` → `01-geography.sql` → `02-czk-fx.sql`
    (guarded via `_localize_meta`) → `03-reasons.sql`.
+   3b. `calendar/run-calendar.sh <ctx> <db> <us|cz>` (idempotent; after step 3, whose `czk_fx` row tells it the
+   world). On a world whose automation extension is built: `just automation-reset` first, `just automation-data`
+   after — the working days and the due dates follow the calendar.
 4. `catalog/us.sql` / `catalog/cz.sql` (idempotent, PK-keyed).
 5. `seed/naming-us.sql` (US only) + `seed/reason-placeholders-fix.sql` (both, `:locale` param) +
    `seed/02-seed-incident/{s1,s2,s3}-*.sql` (guarded via `_seed_meta` — S2 is genuinely

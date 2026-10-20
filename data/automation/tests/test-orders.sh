@@ -117,7 +117,7 @@ expect "a customer's center = the modal warehouse of their lines (ties: the lowe
     WHERE c.c_center_sk IS DISTINCT FROM m.sl_warehouse_sk")" -eq 0
 expect "customers who never ordered have no center" "$(q "SELECT count(*) FROM customer WHERE c_center_sk IS NULL")" -gt 0
 expect "d_working_day = not a holiday and not a weekend, every day" "$(q "SELECT count(*) FROM date_dim WHERE d_working_day IS DISTINCT FROM (d_holiday = 'N' AND d_weekend = 'N')")" -eq 0
-expect "a Saturday is not a working day, a plain Tuesday is" "$(q "SELECT bool_or(d_working_day) FILTER (WHERE extract(isodow FROM d_date) = 6)::text || bool_and(d_working_day) FILTER (WHERE extract(isodow FROM d_date) = 2 AND d_holiday = 'N')::text FROM date_dim")" = falsetrue
+expect "Saturday and Sunday are not working days, a plain Tuesday and Friday are (dsdgen's weekend was Fri + Sat)" "$(q "SELECT bool_or(d_working_day) FILTER (WHERE extract(isodow FROM d_date) IN (6, 7))::text || bool_and(d_working_day) FILTER (WHERE extract(isodow FROM d_date) IN (2, 5) AND d_holiday = 'N')::text FROM date_dim")" = falsetrue
 
 drop_scratch "$S"
 finish
