@@ -128,9 +128,3 @@ def term winback_mail_cs {
     for: er.entity.winback_mail
     forms: ["win-back e-maily", "win-back e-mailů"]
 }
-
-def term return_request_claim_cs {
-    description: "reklamační nárok — the return request, by the word a customer-service desk uses (SO-1 write-path walk)"
-    for: er.entity.return_request
-    forms: ["reklamační nárok", "reklamační nároky", "reklamačních nároků"]
-}
