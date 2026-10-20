@@ -4,7 +4,7 @@ seq,kind,at,payload,demo
 3,settlement_posted,2026-10-15 13:19:00+02,"{""line_id"": 1217621}",f
 4,settlement_posted,2026-10-15 15:15:00+02,"{""line_id"": 1217619}",f
 5,settlement_posted,2026-10-15 16:14:00+02,"{""line_id"": 1218225}",f
-6,receipt_posted,2026-10-25 14:18:00+01,"{""line_id"": 1218584}",f
+6,receipt_posted,2026-10-23 14:44:00+02,"{""line_id"": 1218404}",f
 7,settlement_posted,2026-10-26 11:54:00+01,"{""line_id"": 1219185}",f
 8,receipt_posted,2026-10-26 13:29:00+01,"{""line_id"": 1218677}",f
 9,settlement_posted,2026-10-26 15:10:00+01,"{""line_id"": 1219184}",f
