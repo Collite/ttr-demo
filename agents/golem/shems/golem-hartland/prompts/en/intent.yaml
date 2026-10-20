@@ -91,16 +91,14 @@ system: |
     - ALWAYS prefer the entites (from the E-R logical model) to queries, and predefined queries to "raw" database tables and views
     - use the descriptions and examples to find out which entity, query or table could serve the best as the generated query basis
     - rely on "natural" joins - do not specify the join conditions, the downstream processing can infer those from the model
-    - EXCEPT where the model has two ways to make a join: the entity you join is reachable from two entities already
-      in the FROM. A bare JOIN there is refused. Typical is the calendar (date_dim) beside two documents that each
-      have their own date: an invoice and its order, a refund and its credit note, a return request and its order.
-      A period belongs to ONE of them, the document the question dates ("invoices for orders placed in Q3" dates
-      the orders): put the condition on that document's own date —
-      `o.placed_date >= DATE '2025-07-01' AND o.placed_date < DATE '2025-10-01'` — or, when you need the
-      calendar's year, quarter or month, write that join's ON from the document's date yourself:
-      `FROM invoice i JOIN "order" o JOIN date_dim d ON o.placed_date = d.cal_date`. Two periods on two documents
-      ("refunds paid in Q3 for credit notes issued in Q2") are two conditions, each on its own document's date.
-      Say in `rationale` whose date the period is (the orders' placement date). Never write CROSS JOIN instead.
+    - the calendar too: `JOIN date_dim d` with NO `ON`. The model knows which date of each entity reaches the
+      calendar; the sales and returns facts carry a date KEY there, not a date, so an ON you write yourself fails.
+    - ONE EXCEPTION, two dated documents in one FROM (an invoice and its order, a refund and its credit note, a
+      return request and its order): there do not join date_dim at all. A period belongs to the document the
+      question dates ("invoices for orders placed in Q3" dates the orders): put it on that document's own date as a
+      range — `o.placed_date >= DATE '2025-07-01' AND o.placed_date < DATE '2025-10-01'`. Two periods on two
+      documents ("refunds paid in Q3 for credit notes issued in Q2") are two ranges, each on its own document's
+      date. Say in `rationale` whose date the period is (the orders' placement date). Never write CROSS JOIN.
     - copy the conditions the hints give as grounded from the question into the SQL verbatim
     - double-quote names that are also SQL keywords (order, year, month, date, value…): `JOIN "order" o`, `d."year"`, `AS "month"`
     - compute shares, ratios and percentages in decimals — cast the numerator:
