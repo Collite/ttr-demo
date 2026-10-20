@@ -1,5 +1,5 @@
-# The data gate (AU-hartland P1): the automation extension's generator and its event driver, on every push to
-# master and every pull request that touches them.
+# The data gate (AU-hartland P1): the automation extension's generator, its event driver and the calendar
+# correction, on every push to master and every pull request that touches them.
 #
 # The generator's suite needs a Postgres, not a world: data/automation/tests/run-all.sh starts a throwaway one
 # from pgserver's wheel (uv; the server binaries for linux and macOS are in the wheel — no Docker, no service
@@ -12,9 +12,9 @@ name: data-gate
 on:
   push:
     branches: [master]
-    paths: ['data/automation/**', 'data/extend/lib.sh', 'data/views/**', 'data/localize-cz/fx.conf', 'scripts/automation-events.py', 'scripts/test_automation_events.py', '.github/workflows/data-gate.yml']
+    paths: ['data/automation/**', 'data/calendar/**', 'data/extend/lib.sh', 'data/views/**', 'data/localize-cz/fx.conf', 'scripts/automation-events.py', 'scripts/test_automation_events.py', '.github/workflows/data-gate.yml']
   pull_request:
-    paths: ['data/automation/**', 'data/extend/lib.sh', 'data/views/**', 'data/localize-cz/fx.conf', 'scripts/automation-events.py', 'scripts/test_automation_events.py', '.github/workflows/data-gate.yml']
+    paths: ['data/automation/**', 'data/calendar/**', 'data/extend/lib.sh', 'data/views/**', 'data/localize-cz/fx.conf', 'scripts/automation-events.py', 'scripts/test_automation_events.py', '.github/workflows/data-gate.yml']
   workflow_dispatch:
 
 permissions:
@@ -30,6 +30,9 @@ jobs:
 
       - name: The generator's suite (a throwaway Postgres + the fixture)
         run: just automation-test
+
+      - name: The calendar's suite (a throwaway Postgres, dsdgen's calendar defects)
+        run: just calendar-test
 
       - name: The event driver's specs
         run: just automation-events-test

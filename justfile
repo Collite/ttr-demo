@@ -98,6 +98,26 @@ extend-reset world ctx=CTX:
     esac
     data/extend/run-reset.sh "{{ctx}}" "hartland_{{world}}" "$pod"
 
+# ── the calendar (data/calendar/calendar.sql) ───────────────────────────────────────────────────
+# Correct a world's date_dim from d_date: the quarters, the weekday, a Saturday-and-Sunday weekend and the
+# world's public holidays. Idempotent. Refused while the automation extension is built (its working days
+# come from these flags): reset it first, build it again after.
+#
+#     just automation-reset cz && just calendar-data cz && just automation-data cz
+calendar-data world ctx=CTX:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "{{world}}" in us|cz) ;; *) echo "world must be us or cz, got '{{world}}'" >&2; exit 2 ;; esac
+    case "{{ctx}}" in
+      dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
+      *) echo "no hartland-pg pod known for context '{{ctx}}' (dsk, collite-o1, hartland)" >&2; exit 2 ;;
+    esac
+    data/calendar/run-calendar.sh "{{ctx}}" "hartland_{{world}}" "{{world}}" "$pod"
+
+# The calendar's suite on a throwaway local Postgres (pgserver via uv — no Docker, no cluster).
+calendar-test:
+    bash data/calendar/tests/test-calendar.sh
+
 # ── the automation extension (AU-hartland P1, contracts §1, §5) ────────────────────────────────
 # Build the H-1/H-2 ERP tables of a world from its facts, for one demo day (data/automation/README.md).
 # Needs the extended year (`just extend-data` first). Guarded: the same day again is a no-op, another
