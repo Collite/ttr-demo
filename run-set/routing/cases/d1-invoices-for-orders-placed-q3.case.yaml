@@ -1,0 +1,16 @@
+id: d1-invoices-for-orders-placed-q3
+title: Two dated documents, one period — the period dates the orders, not the invoices
+shape: date-path
+question:
+  cs: Kolik faktur bylo k objednávkám zadaným ve 3. čtvrtletí 2025?
+  en: How many invoices were there for orders placed in Q3 2025?
+expected_route: LLM
+validation: invoices-for-orders-placed-q3-2025.yaml
+notes: |
+  The date-path ruling (2026-10-20, the review of ttr-demo#79). Since #79 every dated document head reaches the
+  calendar from its own date, so an invoice and its order in one FROM give a bare `JOIN date_dim` two paths
+  (`rel_invoice_date`, `rel_order_date`). The translator has no tie-break for that (⚑MJ-8): it left the join
+  `ON TRUE`, the whole calendar under every invoice, and with ttr-core#211's refusal it refuses the statement. The
+  composer is told to put the period on the document the question dates (golem-hartland intent prompt, "EXCEPT
+  where the model has two ways to make a join"). Both worlds: 11 655 invoices for orders placed in Q3 2025; dating
+  the invoices instead (issued in Q3) gives 11 220, which the 0.001 tolerance rejects.

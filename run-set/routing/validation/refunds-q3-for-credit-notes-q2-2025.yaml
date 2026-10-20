@@ -1,0 +1,12 @@
+notes: |
+  Refunds paid in Q3 2025 against credit notes issued in Q2 2025: 2 payments, 14 635,70 Kč (cz) / $636.13 (us).
+core: |
+  SELECT SUM(rp.rp_amount) AS refunded
+  FROM refund_payment rp
+  JOIN credit_note cn ON rp.rp_credit_note_id = cn.cn_credit_note_id
+  WHERE rp.rp_paid_date >= DATE '2025-07-01' AND rp.rp_paid_date < DATE '2025-10-01'
+    AND cn.cn_issued_date >= DATE '2025-04-01' AND cn.cn_issued_date < DATE '2025-07-01'
+assert:
+  scalar:
+    value: refunded
+    tolerance: 0.001

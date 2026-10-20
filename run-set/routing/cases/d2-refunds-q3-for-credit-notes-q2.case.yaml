@@ -1,0 +1,14 @@
+id: d2-refunds-q3-for-credit-notes-q2
+title: Two dated documents, two periods — each period on its own document's date
+shape: date-path
+question:
+  cs: Kolik činily úhrady vyplacené ve 3. čtvrtletí 2025 za dobropisy vystavené ve 2. čtvrtletí 2025?
+  en: What was the total of refunds paid in Q3 2025 for credit notes issued in Q2 2025?
+expected_route: LLM
+validation: refunds-q3-for-credit-notes-q2-2025.yaml
+notes: |
+  The date-path ruling (2026-10-20), its two-period form: the refund's paid date and the credit note's issue date
+  each carry one period (`rel_payment_date`, `rel_credit_note_date` — a bare `JOIN date_dim` has two paths). A
+  refund is paid 1–4 days after its credit note, so only the notes of the last days of June 2025 paid in July
+  qualify: 2 payments, 14 635,70 Kč / $636.13. Both periods on one date give nothing (Q2 and Q3 do not meet); the
+  refunds paid in Q3 whatever their note are 143 (cz) / 144 (us); the notes issued in Q2 and paid in Q2, 118.

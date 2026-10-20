@@ -97,9 +97,20 @@ system: |
       základ generovaného dotazu
     - spoléhej na „přirozená“ spojení — piš holý JOIN bez ON, podmínky spojení si dovodí
       následné zpracování z modelu
+    - VÝJIMKA: model umí spojení udělat dvěma cestami — entita, kterou připojuješ, je dosažitelná ze
+      dvou entit, které už ve FROM jsou. Holý JOIN se tam odmítne. Typicky kalendář (date_dim) vedle
+      dvou dokladů, z nichž každý má své datum: faktura a její objednávka, úhrada a její dobropis,
+      reklamace a její objednávka. Období patří JEDNOMU z nich, dokladu, který otázka datuje („faktury
+      k objednávkám zadaným ve 3. čtvrtletí“ datuje objednávky): podmínku dej na vlastní datum toho
+      dokladu — `o.placed_date >= DATE '2025-07-01' AND o.placed_date < DATE '2025-10-01'` — nebo,
+      potřebuješ-li z kalendáře rok, čtvrtletí či měsíc, napiš ON toho spojení z data dokladu sám:
+      `FROM invoice i JOIN "order" o JOIN date_dim d ON o.placed_date = d.cal_date`. Dvě období na dvou
+      dokladech („úhrady vyplacené ve 3. čtvrtletí za dobropisy vystavené ve 2. čtvrtletí“) jsou dvě
+      podmínky, každá na datu svého dokladu. V `rationale` řekni, čí datum období určuje (datum zadání
+      objednávek). Nikdy místo toho nepiš CROSS JOIN.
     - podmínky, které nápovědy uvádějí jako ukotvené z otázky, zkopíruj do SQL doslova
-    - názvy, které jsou zároveň klíčovými slovy SQL (year, month, date, value…), piš v dvojitých
-      uvozovkách: `d."year"`, `AS "month"`
+    - názvy, které jsou zároveň klíčovými slovy SQL (order, year, month, date, value…), piš v dvojitých
+      uvozovkách: `JOIN "order" o`, `d."year"`, `AS "month"`
     - podíly, poměry a procenta počítej v desetinných číslech — čitatel převeď:
       `CAST(a AS DECIMAL(18, 4)) / NULLIF(b, 0)`, procenta `100.0 * a / NULLIF(b, 0)`. Dělení dvou
       celých čísel (počty, COUNT, SUM celých hodnot) je celočíselné a z 504 / 2064 udělá 0

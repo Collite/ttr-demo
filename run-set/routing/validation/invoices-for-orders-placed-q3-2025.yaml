@@ -1,0 +1,13 @@
+notes: |
+  Invoices whose ORDER was placed in Q3 2025 (11 655 in both worlds). The invoices issued in Q3 2025 are 11 220: an
+  invoice is issued at delivery, 3–7 days after the order, so the two periods differ by the orders of late
+  September.
+core: |
+  SELECT COUNT(*) AS invoices
+  FROM invoice i
+  JOIN sales_order o ON i.inv_order_number = o.so_order_number
+  WHERE o.so_placed_date >= DATE '2025-07-01' AND o.so_placed_date < DATE '2025-10-01'
+assert:
+  scalar:
+    value: invoices
+    tolerance: 0.001
