@@ -47,3 +47,9 @@ def term winback_mail_en {
     for: er.entity.winback_mail
     forms: ["win-back mail", "win-back mails"]
 }
+
+def term return_request_claim_en {
+    description: "return claims — the return request, by the word a customer-service desk uses (SO-1 write-path walk)"
+    for: er.entity.return_request
+    forms: ["return claim", "return claims"]
+}

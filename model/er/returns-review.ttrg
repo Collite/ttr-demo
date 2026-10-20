@@ -1,0 +1,6 @@
+import hartland
+
+graph returns_review {
+    model: er
+    objects: [hartland.er.entity.return_request, hartland.er.entity.return_request_line, hartland.er.entity.return_receipt, hartland.er.entity.credit_note, hartland.er.entity.refund_payment, hartland.er.entity.replacement_shipment]
+}
