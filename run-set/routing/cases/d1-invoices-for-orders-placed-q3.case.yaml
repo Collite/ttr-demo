@@ -11,6 +11,6 @@ notes: |
   calendar from its own date, so an invoice and its order in one FROM give a bare `JOIN date_dim` two paths
   (`rel_invoice_date`, `rel_order_date`). The translator has no tie-break for that (⚑MJ-8): it left the join
   `ON TRUE`, the whole calendar under every invoice, and with ttr-core#211's refusal it refuses the statement. The
-  composer is told to put the period on the document the question dates (golem-hartland intent prompt, "EXCEPT
-  where the model has two ways to make a join"). Both worlds: 11 655 invoices for orders placed in Q3 2025; dating
-  the invoices instead (issued in Q3) gives 11 220, which the 0.001 tolerance rejects.
+  composer is told to put the period on the document the question dates, as a range on that document's own date
+  (golem-hartland intent prompt, "ONE EXCEPTION, two dated documents"). Both worlds: 11 655 invoices for orders
+  placed in Q3 2025; dating the invoices instead (issued in Q3) gives 11 220, which the 0.001 tolerance rejects.

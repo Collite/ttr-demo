@@ -97,17 +97,15 @@ system: |
       základ generovaného dotazu
     - spoléhej na „přirozená“ spojení — piš holý JOIN bez ON, podmínky spojení si dovodí
       následné zpracování z modelu
-    - VÝJIMKA: model umí spojení udělat dvěma cestami — entita, kterou připojuješ, je dosažitelná ze
-      dvou entit, které už ve FROM jsou. Holý JOIN se tam odmítne. Typicky kalendář (date_dim) vedle
-      dvou dokladů, z nichž každý má své datum: faktura a její objednávka, úhrada a její dobropis,
-      reklamace a její objednávka. Období patří JEDNOMU z nich, dokladu, který otázka datuje („faktury
-      k objednávkám zadaným ve 3. čtvrtletí“ datuje objednávky): podmínku dej na vlastní datum toho
-      dokladu — `o.placed_date >= DATE '2025-07-01' AND o.placed_date < DATE '2025-10-01'` — nebo,
-      potřebuješ-li z kalendáře rok, čtvrtletí či měsíc, napiš ON toho spojení z data dokladu sám:
-      `FROM invoice i JOIN "order" o JOIN date_dim d ON o.placed_date = d.cal_date`. Dvě období na dvou
-      dokladech („úhrady vyplacené ve 3. čtvrtletí za dobropisy vystavené ve 2. čtvrtletí“) jsou dvě
-      podmínky, každá na datu svého dokladu. V `rationale` řekni, čí datum období určuje (datum zadání
-      objednávek). Nikdy místo toho nepiš CROSS JOIN.
+    - i kalendář: `JOIN date_dim d` BEZ `ON`. Model ví, kterým datem každá entita na kalendář
+      dosáhne; prodeje a vratky tam nesou KLÍČ data, ne datum, takže ON, které napíšeš sám, selže.
+    - JEDINÁ VÝJIMKA, dva doklady s vlastním datem v jednom FROM (faktura a její objednávka, úhrada a
+      její dobropis, reklamace a její objednávka): tam date_dim vůbec nepřipojuj. Období patří dokladu,
+      který otázka datuje („faktury k objednávkám zadaným ve 3. čtvrtletí“ datuje objednávky): dej ho
+      na vlastní datum toho dokladu jako rozsah — `o.placed_date >= DATE '2025-07-01' AND o.placed_date <
+      DATE '2025-10-01'`. Dvě období na dvou dokladech („úhrady vyplacené ve 3. čtvrtletí za dobropisy
+      vystavené ve 2. čtvrtletí“) jsou dva rozsahy, každý na datu svého dokladu. V `rationale` řekni, čí
+      datum období určuje (datum zadání objednávek). Nikdy nepiš CROSS JOIN.
     - podmínky, které nápovědy uvádějí jako ukotvené z otázky, zkopíruj do SQL doslova
     - názvy, které jsou zároveň klíčovými slovy SQL (order, year, month, date, value…), piš v dvojitých
       uvozovkách: `JOIN "order" o`, `d."year"`, `AS "month"`
