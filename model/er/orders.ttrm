@@ -40,6 +40,10 @@ def entity order {
         def attribute state {
             type: text,
             description: "Release state of the order: 'placed' (waiting for the release check), 'held', 'released' or 'cancelled'.",
+            // AU D-67: the lifecycle the automation actions are checked against (`release`, `hold`); held → held is the
+            // implicit silent self-transition (D-85).
+            states: [placed, held, released, cancelled],
+            transitions: { placed: [held, released, cancelled], held: [released, cancelled] },
             valueLabels: {
                 "placed":    { en: "Placed",    cs: "Pořízeno" },
                 "held":      { en: "Held",      cs: "Pozastaveno" },
@@ -123,6 +127,7 @@ def entity invoice {
         def attribute status {
             type: text,
             description: "Payment status: 'open' or 'paid'.",
+            states: [open, paid],                                    // AU D-67 — written by the ERP, never by a recipe
             valueLabels: {
                 "open": { en: "Unpaid", cs: "Neuhrazeno" },
                 "paid": { en: "Paid",   cs: "Uhrazeno" }

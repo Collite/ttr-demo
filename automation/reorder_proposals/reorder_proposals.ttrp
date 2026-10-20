@@ -1,0 +1,63 @@
+// reorder_proposals.ttrp — derived from reorder-proposals.md (H-3)
+// AU-hartland P2 (pre-literate — the `.md` comes at P3, S3.3): AU design `04` H-3 written in `17`'s style, against
+// the rule data/automation/40-plant.sql plants and 45-verify.sql replays — a pair (item, center) whose latest stock
+// covers less than :cover_target weeks of its average weekly demand over the last :demand_period weeks.
+// The composite key is a list (grammar 0.16 allows `key: [a.x, a.y]`); the pair's columns are the sales line's names.
+// The period is the time sugar `within(<date>, last: weeks(n))` — a chain op ttr-core P1 types and P2 lowers.
+// Pack sizes (04: "rounded up to the product's pack size") are not modelled — the proposal is the units to `order up to`.
+uses world "hartland.worlds.demo"
+import hartland.*
+import hartland.automation.*
+
+recipe {
+    key:        [sales_line.item, sales_line.warehouse]
+    as of:      now
+    parameters: [cover_target, order_up_to, demand_period]
+    document:   "reorder-proposals.md"
+
+    // the (item, center) pairs that sold in the demand period — web and marketplace lines, one row per pair
+    candidates selling(out pairs) target erp {
+        load(er.entity.sales_line)
+            -> within(sold_date, last: weeks(:demand_period))
+            -> aggregate { group_by: item, warehouse  lines = count(line_no) }
+            -> pairs
+    }
+
+    // per candidate: the latest stock snapshot of the pair (inventory is `aggregation: last` — never summed across snapshots)
+    context on_hand(in pairs, out rows) target erp {
+        stock = load(er.entity.inventory) -> latest(by: as_of_date, per: item, warehouse)
+        pairs -> join(right: stock, kind: left, on: left.item = right.item and left.warehouse = right.warehouse)
+              -> calc(on_hand = coalesce(stock.quantity_on_hand, 0))
+              -> select(item, warehouse, on_hand)
+              -> rows
+    }
+
+    // per candidate: the average weekly demand of the period (the pair's own lines, grouped by the key)
+    context weekly_demand(in pairs, out rows) target erp {
+        pairs -> join(right: load(er.entity.sales_line), kind: inner, on: left.item = right.item and left.warehouse = right.warehouse)
+              -> within(sold_date, last: weeks(:demand_period))
+              -> aggregate { group_by: item, warehouse  sold = sum(quantity) }
+              -> calc(weekly_demand = sold * 1.0 / :demand_period)
+              -> rows
+    }
+
+    decision cover(in pairs, in on_hand, in weekly_demand) {
+        v = pairs -> join(right: on_hand,       kind: left, on: left.item = right.item and left.warehouse = right.warehouse)
+                  -> join(right: weekly_demand, kind: left, on: left.item = right.item and left.warehouse = right.warehouse)
+                  -> calc(proposed_qty = ceil(:order_up_to * weekly_demand - on_hand))
+        v -> switch {
+            propose: on_hand < :cover_target * weekly_demand
+                     because: "{on_hand} on hand covers less than {cover_target} weeks of {weekly_demand} a week"
+            else:    none                                       // enough stock — no verdict row (D-80)
+        }
+    }
+
+    // the proposals are written held (the buyer's ask holds the batch, D-66); an approval starts purchasing (n8n
+    // plays the purchasing system — the exchange's outbound face)
+    actions {
+        cover.propose -> propose { item: item, warehouse: warehouse, on_hand: on_hand, weekly_demand: weekly_demand,
+                                   proposed_qty: proposed_qty }
+        cover.propose -> ask     { who: role.buyer, about: warehouse, action: start { process: "purchasing" },
+                                   group_by: warehouse, due: 2 working_days }
+    }
+}

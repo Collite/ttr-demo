@@ -1,0 +1,67 @@
+// winback.ttrp — derived from win-back.md (H-5)
+// AU-hartland P2 (pre-literate — the `.md` comes at P3, S3.3): AU design `04` H-5 written in `17`'s style, against
+// the rule data/automation/40-plant.sql plants (D-129): :active_orders or more orders in the twelve months before the
+// last :quiet_months, none since; the premium offer for the two highest income bands; a customer mailed in the last
+// :mail_window days is left out (no verdict row — "one mail per customer per quarter at most").
+uses world "hartland.worlds.demo"
+import hartland.*
+import hartland.automation.*
+
+recipe {
+    key:        customer.sk
+    as of:      now
+    parameters: [quiet_months, active_orders, mail_window]
+    document:   "win-back.md"
+
+    // the lapsed customers: the two order windows (D-129, the time sugar `within(<date>, from:, to:)` — a chain op
+    // ttr-core P1 types and P2 lowers), the quiet one by an anti-join
+    candidates lapsed(out customers) target erp {
+        before = load(er.entity.order)
+                 -> within(placed_date, from: :as_of - months(:quiet_months) - months(12), to: :as_of - months(:quiet_months))
+                 -> aggregate { group_by: customer  orders_before = count(order_number) }
+                 -> filter(orders_before >= :active_orders)
+        since  = load(er.entity.order)
+                 -> within(placed_date, from: :as_of - months(:quiet_months), to: :as_of)
+                 -> aggregate { group_by: customer  orders_since = count(order_number) }
+        before -> join(right: since, kind: anti, on: left.customer = right.customer)
+               -> join(right: load(er.entity.customer), kind: inner, on: left.customer = right.sk)
+               -> select(sk, hdemo, orders_before)
+               -> customers
+    }
+
+    // per candidate: is the household in one of the two highest income bands
+    context band(in customers, out rows) target erp """sql
+        WITH top_bands AS (
+            SELECT b.sk FROM er.entity.income_band b ORDER BY b.lower_bound DESC LIMIT 2
+        )
+        SELECT q.sk, hd.income_band,
+               CASE WHEN hd.income_band IN (SELECT t.sk FROM top_bands t) THEN 1 ELSE 0 END AS top_band
+        FROM   customers q LEFT JOIN er.entity.household_demographics hd ON hd.sk = q.hdemo
+    """
+
+    // per candidate: the last win-back mail inside the mail window — the recipe reads what it wrote (record)
+    context mailed(in customers, out rows) target erp """sql
+        SELECT q.sk, MAX(m.mailed_at) AS last_mailed
+        FROM   customers q JOIN er.entity.winback_mail m ON m.customer = q.sk
+        WHERE  m.mailed_at >= :as_of - :mail_window
+        GROUP  BY q.sk
+    """
+
+    decision offer(in customers, in band, in mailed) {
+        v = customers -> join(right: mailed, kind: anti, on: left.sk = right.sk)     // mailed lately: no verdict row
+                      -> join(right: band,   kind: left, on: left.sk = right.sk)
+        v -> switch {
+            mode: exclusive
+            premium: top_band = 1   because: "lapsed for {quiet_months} months, a top income band"
+            else:    standard       because: "lapsed for {quiet_months} months"
+        }
+    }
+
+    // the platform never sends a mail: `emit` is n8n's Send Email in the exported workflow (D-14), `record` the write-back
+    actions {
+        offer.premium  -> emit   { customer: sk, offer: "premium" }
+        offer.standard -> emit   { customer: sk, offer: "standard" }
+        offer.premium  -> record { customer: sk, offer: "premium" }
+        offer.standard -> record { customer: sk, offer: "standard" }
+    }
+}

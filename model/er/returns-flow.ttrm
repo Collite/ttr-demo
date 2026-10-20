@@ -72,6 +72,11 @@ def entity return_request_line {
         def attribute state {
             type: text,
             description: "Handling state of the line: 'received', 'rejected', 'settling', 'awaiting_goods', 'goods_received', 'not_returned' or 'closed'.",
+            // AU D-67 — the H-2 graph (17 §4): decide_return moves a received line, monitor_inbound an awaiting one,
+            // settle closes; rejected, not_returned and closed are final.
+            states: [received, rejected, settling, awaiting_goods, goods_received, not_returned, closed],
+            transitions: { received: [rejected, settling, awaiting_goods], awaiting_goods: [goods_received, not_returned],
+                           settling: [closed], goods_received: [closed] },
             valueLabels: {
                 "received":       { en: "Received",       cs: "Přijato" },
                 "rejected":       { en: "Rejected",       cs: "Zamítnuto" },

@@ -1,0 +1,40 @@
+// no_run_since.ttrp — derived from no-run-since.md (an ops recipe: D-72, alert rules are recipes)
+// AU-hartland P2 (pre-literate — the `.md` comes at P3, S3.3 T3): a scheduled deployment with no run for two of its
+// periods. Over the `automation.ops` package — a stub until the service serves it (automation/ops/stub/).
+// The program (`no_run_since_hourly`) writes the protocol only when a route fires (D-80).
+uses world "hartland.worlds.demo"
+import hartland.automation.*
+import automation.ops.*
+
+recipe {
+    key:        deployment.name
+    as of:      now
+    parameters: []
+    document:   "no-run-since.md"
+
+    candidates scheduled(out deployments) target automation """sql
+        SELECT d.name, d.recipe, d.schedule, d.period_minutes
+        FROM   er.entity.deployment d
+        WHERE  d.period_minutes IS NOT NULL
+    """
+
+    // per candidate: its last run (none yet ⇒ empty)
+    context last_run(in deployments, out rows) target automation """sql
+        SELECT q.name, MAX(r.started_at) AS last_run
+        FROM   deployments q LEFT JOIN er.entity.run r ON r.deployment = q.name
+        GROUP  BY q.name
+    """
+
+    decision silence(in deployments, in last_run) {
+        v = deployments -> join(right: last_run, kind: left, on: left.name = right.name)
+        v -> switch {
+            late: last_run is null or last_run < :as_of - minutes(2 * period_minutes)
+                  because: "{name} ({schedule}) has not run since {last_run}"   detail: last_run
+            else: none                                               // ran in time — no verdict, no protocol (D-80)
+        }
+    }
+
+    actions {
+        silence.late -> notify { who: role.ops, detail: last_run }
+    }
+}

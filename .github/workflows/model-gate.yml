@@ -6,7 +6,9 @@
 # side by side does.
 #
 # What it runs:
-#   just verify-model             every model/agents/lexicon suite
+#   just verify-model             every model/agents/lexicon/automation suite
+#   just build-recipes            every recipe under automation/ parses (ttrp explain) — ADDED 2026-10-19, AU P2
+#   just goldens-test             the recipes' golden cases and seeds — ADDED 2026-10-19, AU P2
 #   just check-model              generated/resolved-packages.json is not stale
 #   just check-lexicon            generated/lexicon.tar.zst is not stale — ADDED 2026-09-16, after a
 #                                 model change went live with an archive that predated it: the model
@@ -62,10 +64,23 @@ jobs:
       # serving reader that parses such a query. The lexicon readers are unaffected: the archive schema
       # is still `ttr-lexicon-compiled/v5`, and v0.15.2 rebuilt master's archive byte for byte
       # (`sha256:6f6bcb9b…`) before this branch's was built.
+      #
+      # grammar/v0.16.0 (2026-10-19, AU-hartland-P2): the first toolchain that parses the automation package
+      # (`model automation`), the world's automation half (`def identity` / `grant` / `deployment` / `process` inside
+      # `def world`, `writable:`) and `states:` / `transitions:` on attributes — all of which `model/` carries from
+      # this change on. It rolls with a veles built on grammar 0.16 (the ttr-server bump): a 0.15 veles reading
+      # `model/worlds/demo.ttrm` or the `states:` attributes would not parse them. The lexicon readers are
+      # unaffected: the archive schema is still `ttr-lexicon-compiled/v5`, and v0.16.0 rebuilt master's archive
+      # byte for byte (`sha256:d0789ffa…`) and its resolved-packages.json before this branch changed the model.
+      #
+      # grammar/v0.16.1 (2026-10-19, AU-hartland-P2): ttr-core P1's RecipeChecker — `ttrp check`, and `ttrp explain`
+      # with the mode verdicts — which the recipes under automation/ are checked through. A TTR-P-only release: the
+      # parser, semantics, metadata and lexicon modules are unchanged from v0.16.0, so the serving readers need no roll
+      # and v0.16.1 rebuilt this branch's archive byte for byte.
       - uses: actions/checkout@v4
         with:
           repository: Collite/ttr-core
-          ref: grammar/v0.15.2
+          ref: grammar/v0.16.1
           path: tatrman
 
       - uses: pnpm/action-setup@v4
@@ -110,13 +125,23 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Build the lexicon CLI the recipes borrow
+      # AU-hartland P2: the `ttrp` CLI too — the recipes under automation/ are checked through it
+      # (automation/tests/recipes.test.mjs, `just build-recipes`).
+      - name: Build the lexicon and ttrp CLIs the recipes borrow
         working-directory: tatrman
-        run: ./gradlew :packages:kotlin:ttr-lexicon-cli:installDist
+        run: ./gradlew :packages:kotlin:ttr-lexicon-cli:installDist :packages:kotlin:ttrp-cli:installDist
 
       - name: Model suites
         working-directory: hartland
         run: just verify-model
+
+      - name: The recipes check clean (ttrp check)
+        working-directory: hartland
+        run: just build-recipes
+
+      - name: The golden cases (contracts §7) and their seeds
+        working-directory: hartland
+        run: just goldens-test
 
       - name: resolved-packages.json is not stale
         working-directory: hartland

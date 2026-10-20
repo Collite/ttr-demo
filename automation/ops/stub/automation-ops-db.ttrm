@@ -1,0 +1,31 @@
+// The tables the `automation.ops` stub entities are bound to (automation-ops-binding.ttrm) — a STUB with the stub
+// (automation-ops.ttrm's header): DELETE all three files when the automation service serves the package. ttr-core P1's
+// checker resolves an entity load only through an er2db binding (TTRP-RES-005), so the stub carries one. `runs` is
+// the ledger's (ttr-server contracts §2, the columns the recipes read); `deployments` has no ledger table (the ⚑ in
+// the stub's header).
+package automation.ops
+
+model db schema automation
+
+def table runs {
+    columns: [
+        def column id         { type: text },
+        def column recipe     { type: text },
+        def column program    { type: text },
+        def column deployment { type: text },
+        def column status     { type: text },
+        def column as_of      { type: timestamp },
+        def column started_at { type: timestamp },
+        def column ended_at   { type: timestamp }
+    ]
+}
+
+def table deployments {
+    columns: [
+        def column name           { type: text },
+        def column program        { type: text },
+        def column recipe         { type: text },
+        def column schedule       { type: text },
+        def column period_minutes { type: int }
+    ]
+}

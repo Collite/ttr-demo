@@ -4,19 +4,41 @@
   "root": "",
   "packages": [
     {
+      "canonicalName": "automation.ops",
+      "declaredName": "automation.ops",
+      "nested": true,
+      "directory": "automation/ops/stub"
+    },
+    {
       "canonicalName": "hartland",
       "declaredName": "hartland",
       "nested": false,
       "directory": "model/binding"
     },
     {
+      "canonicalName": "hartland.automation",
+      "declaredName": "hartland.automation",
+      "nested": true,
+      "directory": "automation"
+    },
+    {
       "canonicalName": "hartland.worlds",
       "declaredName": "hartland.worlds",
       "nested": true,
-      "directory": "model/worlds"
+      "directory": "automation/worlds"
     }
   ],
   "entities": [
+    {
+      "qname": "automation.ops.er.entity.deployment",
+      "package": "automation.ops",
+      "schema": "er"
+    },
+    {
+      "qname": "automation.ops.er.entity.run",
+      "package": "automation.ops",
+      "schema": "er"
+    },
     {
       "qname": "hartland.er.entity.call_center",
       "package": "hartland",
@@ -203,6 +225,7 @@
       "name": "hartland",
       "resolvedPackages": [
         "hartland",
+        "hartland.automation",
         "hartland.worlds"
       ],
       "resolvedEntities": [

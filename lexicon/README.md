@@ -78,6 +78,38 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-19**, AU-hartland P2 (branch `feat/au-p2-package`): the lifecycles of the
+automation documents — `states:` / `transitions:` on `order.state`, `invoice.status`, `return_request_line.state` and
+`reorder_proposal.state` (D-67) — and the world `hartland.worlds.demo` leaving `model/` for `automation/worlds/` (its
+automation half names the automation package's programs and roles, which this build does not read: it loads `model/`
+alone and refuses a model with unresolved references). They move the model id and nothing else in the vocabulary.
+Built with the toolchain **`grammar/v0.16.0`**, the first whose loader parses `states:`, and the tag `model-gate` pins
+from this change on. v0.16.0 first rebuilt master's archive byte for byte (`sha256:d0789ffa…`, below) and master's
+`resolved-packages.json`:
+
+| | |
+|---|---|
+| archive id | `sha256:1682fa3ac8740330c4626ecd446607777759790061e43ebbb6edcbc2bd094216` |
+| model id | `sha256:03eb1213cdde5e56155ca083c5a56ac1143ac063ebef0e7a5732d03d851c019b` (was `847bc8b7…`) |
+| schema | `ttr-lexicon-compiled/v5` (unchanged) |
+| toolchain | `Collite/ttr-core` **`grammar/v0.16.0`** |
+| entries | **803** — every class unchanged (MODEL_OBJECT 334, MEMBER 182, OPERATOR 91, GROUNDING_TRIGGER 98, STRING_PREDICATE 98) |
+| build warnings | **24**, the same 24 as before |
+| size | 14,858 bytes |
+
+The model gate later moved to **`grammar/v0.16.1`**, ttr-core P1's recipe checker. That release changes only the TTR-P
+modules; the parser, semantics, metadata and lexicon modules are as in v0.16.0. `check-lexicon` on it finds this archive
+up to date, so the table above stands.
+
+**No terms for the automation package.** The P2 task list asked for lexicon terms naming the parameters and actions
+(`tolerance` → „cenová tolerance“, `release` → „uvolnit“). They are not here, for two reasons. First, a term's `for:`
+must name a model object of `model/`, and the parameters and actions are in `automation/`, so every such term would be
+a dangling ref (RG-LEXC-001). Second, a term is matched in every Golem question, so „uvolnit“ or „tolerance“ would claim
+demo words for objects no question can query. The names the automation surfaces show are the parameters' `label: { en,
+cs }` and the actions' `dry_run` texts (D-64), in `automation/automation.ttrm`.
+
+### 2026-10-18 (LQ, the stacked entity)
+
 From `just build-lexicon`, **2026-10-18**, the ttr-demo#78 review round: the stacked entity `customer_revenue` (LQ —
 logical queries, branch `feat/lq-stacked-entity`, master `47e7320` merged in). Built with the toolchain
 **`grammar/v0.15.2`**, the first whose loader accepts a `def query` in a `model er` file, and the tag `model-gate` pins

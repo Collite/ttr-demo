@@ -1,0 +1,39 @@
+// A STUB of the `automation.ops` package (AU-hartland P2 · S2.2 T5) — what the ops recipes compile against until the
+// automation service serves the real one (ttr-server P4·S4.2, contracts §9). DELETE this file when it is served.
+// Entity shapes from ttr-server contracts §2 (the ledger's `runs`), named as §9 names them. Bound to stub tables
+// (automation-ops-db.ttrm, automation-ops-binding.ttrm) only because ttr-core P1's checker resolves an entity load
+// through er2db: the recipes only need to check (the dry run against the served package is P3 · S3.3 T3).
+//
+// ⚑ `deployment` is NOT in contracts §9's list. `no_run_since` needs the deployments that have a schedule and their
+// period: the Server knows them from the served bundle (the world's `def deployment … trigger: schedule`). ttr-server P4
+// either serves such an entity or this recipe is restated — recorded in the hartland STATUS.
+//
+// Lives under automation/, never model/: veles and the lexicon build read model/, and an entity there is served to
+// the Golem and harvested into the lexicon.
+package automation.ops
+model er
+
+def entity run {
+    description: "A run of a recipe — one row per run the automation service opened (the ledger's `runs`)."
+    attributes: [
+        def attribute id         { type: text, isKey: true },
+        def attribute recipe     { type: text },
+        def attribute program    { type: text },
+        def attribute deployment { type: text },
+        def attribute status     { type: text },
+        def attribute as_of      { type: timestamp },
+        def attribute started_at { type: timestamp },
+        def attribute ended_at   { type: timestamp }
+    ]
+}
+
+def entity deployment {
+    description: "A deployment of the served bundle and its schedule (stub — see the header)."
+    attributes: [
+        def attribute name           { type: text, isKey: true },
+        def attribute program        { type: text },
+        def attribute recipe         { type: text },
+        def attribute schedule       { type: text },
+        def attribute period_minutes { type: int, description: "Minutes between two scheduled runs; empty for an unscheduled deployment." }
+    ]
+}

@@ -99,10 +99,13 @@ async function walkTtrm(dir, excludeDirs = ['.schema-ref', 'node_modules', '.git
  * Parse + resolve the whole hartland model/ tree as one project. Returns everything a
  * stage's T6 suite needs: per-file ASTs, per-file diagnostic codes, the symbol table,
  * resolver, package graph, area table, and manifest.
+ *
+ * `roots` (AU-hartland P2): the trees loaded as the one project. `model/` alone is what veles and the
+ * lexicon build read; the automation service reads `model/` + `automation/` (the package, the world).
  */
-export async function loadHartlandProject() {
+export async function loadHartlandProject({ roots = ['model'] } = {}) {
   const root = hartlandRoot.endsWith('/') ? hartlandRoot : hartlandRoot + '/';
-  const files = (await walkTtrm(path.join(hartlandRoot, 'model')));
+  const files = (await Promise.all(roots.map((r) => walkTtrm(path.join(hartlandRoot, r))))).flat();
 
   const manifestToml = await readFile(path.join(hartlandRoot, 'modeler.toml'), 'utf-8');
   const manifest = resolveManifest(parseManifest(manifestToml), root);

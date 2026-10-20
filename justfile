@@ -10,7 +10,7 @@
 # RV-P3.2: the root data area is a third authored surface, and its guards belong in the
 # same command as the model's.)
 verify-model:
-    node --test $(find model agents lexicon -name '*.test.mjs')
+    node --test $(find model agents lexicon automation -name '*.test.mjs')
 
 # GX (NLS-P6.2) — check every mounted `intent.yaml` against the plan-composer placeholder
 # contract. The kantheon sibling is `IntentPromptContractSpec`; this repo has no CI lane, and
@@ -164,6 +164,36 @@ automation-test:
 # The event driver's own specs (no cluster, no network).
 automation-events-test:
     uv run --quiet --with pyyaml --with httpx python3 -B -m unittest scripts/test_automation_events.py
+
+# ── the recipes (AU-hartland P2, contracts §4, §7, §10) ──────────────────────────────────────────────────────
+# Seed the golden cases of the recipes from the generator's expected verdicts (data/automation/expected/<world>/):
+# one case per route, no `pinned_from`. `--check` exits 3 when a committed seed is stale.
+#
+#     just seed-goldens            # the us world → automation/<recipe>/tests/<case>.yaml
+#     just seed-goldens cz         # → <case>.cz.yaml (P3, with the CZ twins)
+seed-goldens world="us" *FLAGS:
+    uv run scripts/seed-goldens.py --world {{world}} {{FLAGS}}
+
+# The recipes through the toolchain (contracts §10). Today — ttr-core grammar/v0.16.1 — `ttrp check` per recipe: the
+# parse and the RecipeChecker (ttr-core P1), failing on any finding, a warning too (`ttrp build` refuses a recipe with
+# TTRP-REC-099 until ttr-core P2; the literate `.md` sources and `--check` come at P3).
+# automation/tests/recipes.test.mjs asserts what `ttrp explain` says: the skeleton and the mode verdicts.
+build-recipes cli="../tatrman/packages/kotlin/ttrp-cli/build/install/ttrp-cli/bin/ttrp-cli":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    n=0
+    while IFS= read -r f; do
+      rc=0
+      raw="$("{{cli}}" check "$f" 2>&1)" || rc=$?
+      out="$(printf '%s\n' "$raw" | grep -v -e '^ANTLR ' -e '^SLF4J(' -e '^$' || true)"
+      [ "$rc" -eq 0 ] && [ -z "$out" ] || { echo "$out" >&2; echo "build-recipes: $f does not check clean" >&2; exit 1; }
+      n=$((n + 1))
+    done < <(find automation -name '*.ttrp' -not -path '*/stub/*' | sort)
+    echo "build-recipes: $n recipes check clean (ttrp check)"
+
+# The golden cases' own specs: every case is a contracts §7 case naming only its recipe's routes; the seeds are fresh.
+goldens-test:
+    uv run --quiet --with pyyaml python3 -B -m unittest scripts/test_seed_goldens.py
 
 # ── the routing corpus (LR P6, contracts C-9·3) ─────────────────────────────────────────────────
 # run-set/routing/README.md. `check` needs no cluster; `run` asks every case of the DELIVERED world
