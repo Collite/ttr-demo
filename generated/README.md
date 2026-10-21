@@ -28,4 +28,14 @@ and the serving readers were built for. Both files are a function of the model *
 toolchain, so an archive built with a newer ttr-core reads as stale to the gate, or worse, passes a
 gate that was moved with it while nothing serving can read it (`model-gate.yml`'s pin comment has
 both incidents). Locally: `../tatrman` checked out at the lock's ref and built, then
-`just resolve-packages && just build-lexicon`, committed with the model change.
+`scripts/regenerate-local.sh` (it refuses a `../tatrman` at another ref; exit 10 = rebuilt, commit
+it; exit 0 = nothing stale), committed with the model change.
+
+**The `regenerate` workflow** (`.github/workflows/regenerate.yml`, SO-demo P0) does the same on a
+change's branch: the Studio's *Propose* dispatches it on `model/<user>/<n>`
+(`POST /repos/Collite/ttr-demo/actions/workflows/regenerate.yml/dispatches {ref}`), and a pull
+request touching `model/`, `lexicon/`, `modeler.toml` or `toolchain.lock` runs it too. It runs
+`scripts/regenerate-local.sh` and, when `generated/` moved, commits it as the GitHub App and pushes —
+an App push triggers `model-gate` on the new head, a `GITHUB_TOKEN` push would not. The loop guard
+is idempotence: the push re-runs the workflow, which finds nothing stale and pushes nothing. It never
+commits `model/**`. Until the App's secrets exist the push is skipped with a warning.

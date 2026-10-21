@@ -36,5 +36,9 @@ request, the **`model-gate`** check green on it, one approving review, the merge
 and runs every suite, the two drift checks (`generated/` matches the model) and, once that toolchain
 ships the CLI, the Kotlin loader's strict load at the version veles serves with
 (`[veles].ttr-metadata`). Moving a pin is a change like any other: made in the PR that rolls the
-readers, with `generated/` rebuilt by the new toolchain in the same commit. Planned and tracked in
-`project/platform/features/studio/` (SO-demo).
+readers, with `generated/` rebuilt by the new toolchain in the same commit.
+
+The second workflow, **`regenerate`**, rebuilds `generated/` on a change's branch and pushes it as
+the Studio's GitHub App — dispatched by the Studio's *Propose*, and run on any pull request that
+touches the model (`generated/README.md` has the mechanics). Locally, `scripts/regenerate-local.sh`
+is the same job. Planned and tracked in `project/platform/features/studio/` (SO-demo).

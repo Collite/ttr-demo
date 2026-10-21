@@ -46,6 +46,11 @@ layout = "off"
 # with zero ttr/unresolved-reference under this scheme (Stage 2.2 T6). Accepted trade-off
 # for a flat single-package model organized by kind-directory rather than domain-directory.
 
+[bindings]
+required = true     # a Studio-authored entity/attribute must be bound at creation (D-22, D-25); the worker refuses
+                    # `entity-needs-binding` / `attribute-needs-binding`; the gate's T6.5 is the second check
+                    # (SO-demo P0, C-6 — read by ttr-core's TS manifest reader from SO-core P0; veles does not read it)
+
 [ttrp]
 # The TTR-P toolchain (`ttrp check` / `ttrp explain`, ttr-core grammar/v0.16.1+) loads its models from `models/` beside
 # this manifest. Hartland keeps them in `model/`, and the automation package, world and ops stub in `automation/`

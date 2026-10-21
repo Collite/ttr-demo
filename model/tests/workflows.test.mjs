@@ -20,10 +20,14 @@ const yaml = await import(
 const readText = (rel) => readFile(path.join(root, rel), 'utf-8');
 const gateText = await readText('.github/workflows/model-gate.yml');
 const actionText = await readText('.github/actions/toolchain/action.yml');
+const regenText = await readText('.github/workflows/regenerate.yml');
 const gate = yaml.load(gateText);
 const action = yaml.load(actionText);
+const regen = yaml.load(regenText);
 const gateSteps = gate.jobs['model-gate'].steps;
 const actionSteps = action.runs.steps;
+const regenJob = regen.jobs.regenerate;
+const regenSteps = regenJob.steps;
 
 test('W1 — the job is still `model-gate`: the required status check on master (#85) is that name', () => {
   assert.deepEqual(Object.keys(gate.jobs), ['model-gate']);
@@ -43,7 +47,7 @@ test('W3 — the ttr-core ref comes from toolchain.lock and is written nowhere e
   assert.ok(read >= 0 && checkout > read, 'the lock is read before the checkout');
   assert.match(actionSteps[read].run, /GITHUB_ENV/);
   assert.equal(actionSteps[checkout].with.ref, '${{ env.TTR_CORE_REF }}');
-  for (const [name, text] of [['model-gate.yml', gateText], ['action.yml', actionText]]) {
+  for (const [name, text] of [['model-gate.yml', gateText], ['action.yml', actionText], ['regenerate.yml', regenText]]) {
     const code = text.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
     assert.doesNotMatch(code, /grammar\/v\d/, `${name}: a grammar ref outside toolchain.lock`);
   }
@@ -79,4 +83,50 @@ test('W5 — the Kotlin loader: built and run only once the pinned ref has the C
   assert.match(step.run, /^just load-model\b/);
   // `| tee` under the runner's default `bash -e` (no pipefail) would turn a red load green.
   assert.equal(step.shell, 'bash');
+});
+
+// ── regenerate.yml (SO-demo P0·S0.2 T3, contracts §1, D-21) ──────────────────────────────────────────────────────
+
+test('G1 — triggered by the BFF\'s dispatch and by a pull request touching what generated/ is built from', () => {
+  assert.ok('workflow_dispatch' in regen.on);
+  for (const p of ['model/**', 'modeler.toml', 'lexicon/**']) assert.ok(regen.on.pull_request.paths.includes(p), p);
+  assert.deepEqual(regen.permissions, { contents: 'read' }, 'GITHUB_TOKEN stays read-only: the push is the App\'s');
+  assert.equal(regen.concurrency['cancel-in-progress'], false, 'the BFF waits for its dispatched run\'s conclusion');
+});
+
+test('G2 — the job runs on Studio branches and same-repo pull requests only', () => {
+  assert.match(regenJob.if, /startsWith\(github\.ref_name, 'model\/'\)/);
+  assert.match(regenJob.if, /startsWith\(github\.ref_name, 'demo\/'\)/);
+  assert.match(regenJob.if, /github\.event\.pull_request\.head\.repo\.full_name == github\.repository/);
+});
+
+test('G3 — the App token: minted only when the secret is set, read through the job env (a step `if:` cannot read secrets)', () => {
+  assert.equal(regenJob.env.STUDIO_APP_ID, '${{ secrets.STUDIO_APP_ID }}');
+  const mint = regenSteps.find((s) => s.uses?.startsWith('actions/create-github-app-token@'));
+  assert.equal(mint.if, "env.STUDIO_APP_ID != ''");
+  const checkout = regenSteps.find((s) => s.uses?.startsWith('actions/checkout@'));
+  assert.match(checkout.with.token, /steps\.app-token\.outputs\.token/, 'checked out with the App token, the push is the App\'s');
+  assert.equal(checkout.with.ref, '${{ env.BRANCH }}', 'the branch head, not a PR merge commit');
+});
+
+test('G4 — the job runs the local dry-run script itself, its exit code read with -e off', () => {
+  assert.ok(regenSteps.some((s) => s.uses === './hartland/.github/actions/toolchain'));
+  const step = regenSteps.find((s) => /regenerate-local\.sh/.test(s.run ?? ''));
+  assert.ok(step);
+  const lines = step.run.split('\n').map((l) => l.trim());
+  const call = lines.findIndex((l) => /regenerate-local\.sh/.test(l));
+  assert.ok(lines.slice(0, call).includes('set +e'), '`run:` is bash -e: exit 10 would end the step');
+  assert.match(step.run, /10\)\s*echo "stale=true"/);
+  assert.match(step.run, /0\)\s*echo "stale=false"/);
+});
+
+test('G5 — the push: only when stale and the App token exists; commits generated/ alone', () => {
+  const push = regenSteps.find((s) => /git push/.test(s.run ?? ''));
+  assert.match(push.if, /steps\.regen\.outputs\.stale == 'true'/);
+  assert.match(push.if, /steps\.app-token\.outputs\.token != ''/);
+  const adds = [...push.run.matchAll(/git add ([^\n]+)/g)].map((m) => m[1].trim());
+  assert.deepEqual(adds, ['-- generated']);
+  assert.match(push.run, /commit -m "regenerate: generated\/ for \$\(git rev-parse --short HEAD\)"/);
+  assert.match(push.run, /\[bot\]@users\.noreply\.github\.com/);
+  assert.ok(!/\$\{\{/.test(push.run), 'no ${{ }} inside run: — a branch name reaches the shell only through env');
 });

@@ -1,0 +1,97 @@
+# Regenerate generated/ on a change's branch (SO-demo P0·S0.2, contracts §1, D-21).
+#
+# The Studio BFF's Propose dispatches this on the change's branch (`model/<user>/<n>`; `demo/*` is the pre-authored
+# demo change), and a save to an already proposed change re-runs it through `pull_request`. It rebuilds
+# resolved-packages.json and lexicon.tar.zst with the toolchain toolchain.lock pins — scripts/regenerate-local.sh, the
+# script a person runs locally, so the local run is this job's dry run — and when they moved, commits them as the
+# GitHub App and pushes. The App's token, not GITHUB_TOKEN, is what makes the push trigger model-gate on the new head
+# (a GITHUB_TOKEN push triggers no workflow).
+#
+# The loop guard is idempotence: the bot's push re-runs this workflow (pull_request: synchronize), which finds
+# generated/ current and pushes nothing. The job never commits model/** — the script refuses a build that changed it.
+#
+# What the BFF reads: the dispatched run's conclusion (it finds the run as the first `workflow_dispatch` run on the
+# branch created after its dispatch — Actions returns no run id) and the branch head after it.
+#
+# Until the App's secrets exist (⚑SO-G1: STUDIO_APP_ID / STUDIO_APP_PRIVATE_KEY, Bora's) the job runs, reports stale or
+# nothing stale, and skips the commit and the push with a warning.
+name: regenerate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    # toolchain.lock too: a pin moved without generated/ rebuilt is exactly what this job repairs.
+    paths: ['model/**', 'modeler.toml', 'lexicon/**', 'toolchain.lock']
+
+permissions:
+  contents: read
+
+# One run per branch at a time, none cancelled: the BFF waits for its dispatched run's conclusion.
+concurrency:
+  group: regenerate-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  regenerate:
+    # A dispatch only on a Studio branch; a pull request only from this repository (a fork's branch is not ours to push).
+    if: >-
+      startsWith(github.ref_name, 'model/') || startsWith(github.ref_name, 'demo/') ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    env:
+      # A step's `if:` cannot read `secrets`; through the job's env it can.
+      STUDIO_APP_ID: ${{ secrets.STUDIO_APP_ID }}
+      BRANCH: ${{ github.head_ref || github.ref_name }}
+    steps:
+      - id: app-token
+        if: env.STUDIO_APP_ID != ''
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.STUDIO_APP_ID }}
+          private-key: ${{ secrets.STUDIO_APP_PRIVATE_KEY }}
+
+      # The branch head, not a pull request's merge commit: the commit goes onto the branch. Checked out with the App's
+      # token, the push below is the App's.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH }}
+          token: ${{ steps.app-token.outputs.token || github.token }}
+          fetch-depth: 0
+          path: hartland
+
+      - uses: ./hartland/.github/actions/toolchain
+
+      - name: Regenerate generated/ (scripts/regenerate-local.sh)
+        id: regen
+        working-directory: hartland
+        run: |
+          # `run:` is `bash -e`: read the script's exit code with -e off, or its exit 10 ends the step.
+          set +e
+          bash scripts/regenerate-local.sh
+          code=$?
+          set -e
+          case "$code" in
+            0)  echo "stale=false" >> "$GITHUB_OUTPUT"
+                echo "nothing stale — generated/ matches the model at ${BRANCH}" >> "$GITHUB_STEP_SUMMARY" ;;
+            10) echo "stale=true" >> "$GITHUB_OUTPUT"
+                echo "stale — generated/ rebuilt at ${BRANCH}" >> "$GITHUB_STEP_SUMMARY" ;;
+            *)  exit "$code" ;;
+          esac
+
+      - name: Commit and push generated/ as the App
+        if: steps.regen.outputs.stale == 'true' && steps.app-token.outputs.token != ''
+        working-directory: hartland
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: |
+          # The bot user's id (not the App's) makes GitHub attribute the commit to the App's bot account.
+          bot_id="$(gh api "/users/${APP_SLUG}%5Bbot%5D" --jq .id)"
+          git add -- generated
+          git -c user.name="${APP_SLUG}[bot]" -c user.email="${bot_id}+${APP_SLUG}[bot]@users.noreply.github.com" \
+            commit -m "regenerate: generated/ for $(git rev-parse --short HEAD)"
+          git push origin "HEAD:refs/heads/${BRANCH}"
+
+      - name: The push is skipped (no App secrets yet)
+        if: steps.regen.outputs.stale == 'true' && steps.app-token.outputs.token == ''
+        run: echo "::warning title=regenerate::generated/ is stale and was rebuilt, but STUDIO_APP_ID is not set (⚑SO-G1) — nothing is pushed"
