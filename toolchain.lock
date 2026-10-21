@@ -1,0 +1,13 @@
+# The toolchain the serving images were built against. Bump in the same change that rolls the readers;
+# rebuild generated/ with the same pins in the same commit. Read by model-gate.yml, regenerate.yml, and
+# olymp's release checklist (apps/veles), all through scripts/toolchain-lock.py. Why the pin is load-bearing:
+# the ⛔ PINNED comment block in .github/workflows/model-gate.yml. After moving a [veles] pin: `just check-veles-pin`.
+[ttr-core]
+ref = "grammar/v0.16.1"          # the gate's toolchain checkout (was inline in model-gate.yml)
+[veles]
+image = "0.11.14"                # the veles image olymp `clusters/hartland/apps/veles/values.yaml` deploys
+ttr-metadata = "0.16.0"          # `tatrman-ttr-metadata` in ttr-server's `gradle/libs.versions.toml` at `veles/v<image>`;
+                                 # the gate builds its Kotlin loader from ttr-core `grammar/v<this>`, stamped with it
+# Flip to true in the PR that rolls veles to the first ttr-metadata that ships ttr-metadata-cli (ttr-core SO-core
+# P0·S0.3 T6); true = the gate fails without the loader, false = the gate says it did not run it.
+strict-load = false

@@ -1,0 +1,117 @@
+# Regenerate generated/ on a change's branch (SO-demo P0·S0.2, contracts §1, D-21).
+#
+# The Studio BFF's Propose dispatches this on the change's branch (`model/<user>/<n>`; `demo/*` is the pre-authored
+# demo change), and a save to an already proposed change re-runs it through `pull_request`. It rebuilds
+# resolved-packages.json and lexicon.tar.zst with the toolchain toolchain.lock pins — scripts/regenerate-local.sh, the
+# script a person runs locally, so the local run is this job's dry run — and when they moved, commits them as the
+# GitHub App and pushes (scripts/regenerate-push.sh). The App token makes the push re-trigger `pull_request:
+# synchronize` (model-gate and this workflow on the new head) when the branch has an open PR, which a GITHUB_TOKEN push
+# would not. On Propose the push lands before the PR exists and triggers nothing; the gate's first run is the PR's
+# opening (review-121 R13).
+#
+# The loop guard is idempotence: the bot's push re-runs this workflow (pull_request: synchronize), which finds
+# generated/ current and pushes nothing. The job never commits model/** — the script refuses a build that changed it.
+#
+# What the BFF reads: the dispatched run's conclusion (it finds the run as the first `workflow_dispatch` run on the
+# branch created after its dispatch — Actions returns no run id) and the branch head after it. `success` = generated/
+# is current at that head (it was, or the run pushed it); `failure` = it is not, whatever the reason.
+#
+# The App's token is minted only after the build, when there is something to push (review-121 R11): the checkout
+# persists no credentials, so nothing the toolchain build runs (pnpm scripts, Gradle plugins) can read a write token.
+# Until the App's secrets exist (⚑SO-G1: STUDIO_APP_ID / STUDIO_APP_PRIVATE_KEY, Bora's) a stale branch cannot be
+# pushed: a dispatched run then fails (the BFF must not open a PR on it), a pull-request run warns (model-gate's
+# check-model reports the same branch red anyway).
+name: regenerate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    # Everything generated/ is built from: model/ and automation/ ([ttrp].extra-model-roots — resolved-packages.json
+    # lists the automation packages; review-121 R10), the lexicon area, the manifest, and toolchain.lock (a pin moved
+    # without generated/ rebuilt is exactly what this job repairs). model/tests/workflows.test.mjs G7 keeps it complete.
+    paths: ['model/**', 'automation/**', 'modeler.toml', 'lexicon/**', 'toolchain.lock']
+
+permissions:
+  contents: read
+
+# One group per event and branch (review-121 R8). Actions keeps one PENDING run per group and a newly queued run cancels
+# it, whatever `cancel-in-progress` says — so in a shared group a save's pull_request run could cancel the BFF's pending
+# dispatch. Apart, a pending dispatched run is replaced only by a newer dispatch on the same branch (the BFF dispatches
+# once per Propose; on `cancelled` it looks for the newer dispatched run), and an in-progress pull_request run is
+# cancelled by a newer head, which regenerates for that head. The two kinds may then overlap on a branch:
+# regenerate-push.sh's retry on a moved branch is what makes that safe.
+concurrency:
+  group: regenerate-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  regenerate:
+    # A dispatch only on a Studio branch; a pull request only from this repository (a fork's branch is not ours to push).
+    if: >-
+      startsWith(github.ref_name, 'model/') || startsWith(github.ref_name, 'demo/') ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    env:
+      # A step's `if:` cannot read `secrets`; through the job's env it can.
+      STUDIO_APP_ID: ${{ secrets.STUDIO_APP_ID }}
+      BRANCH: ${{ github.head_ref || github.ref_name }}
+    steps:
+      # The branch head, not a pull request's merge commit: the commit goes onto the branch. The default token, and no
+      # credentials left in .git/config (R11); the push authenticates per command with the App's token. Depth 1: the
+      # job needs the head only (R14).
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH }}
+          persist-credentials: false
+          path: hartland
+
+      - uses: ./hartland/.github/actions/toolchain
+
+      - name: Regenerate generated/ (scripts/regenerate-local.sh)
+        id: regen
+        working-directory: hartland
+        run: |
+          # `run:` is `bash -e`: read the script's exit code with -e off, or its exit 10 ends the step.
+          set +e
+          bash scripts/regenerate-local.sh
+          code=$?
+          set -e
+          case "$code" in
+            0)  echo "stale=false" >> "$GITHUB_OUTPUT"
+                echo "nothing stale — generated/ matches the model at ${BRANCH}" >> "$GITHUB_STEP_SUMMARY" ;;
+            10) echo "stale=true" >> "$GITHUB_OUTPUT"
+                echo "stale — generated/ rebuilt at ${BRANCH}" >> "$GITHUB_STEP_SUMMARY" ;;
+            *)  exit "$code" ;;
+          esac
+
+      # Minted after the build and only when there is something to push (R11).
+      - id: app-token
+        if: steps.regen.outputs.stale == 'true' && env.STUDIO_APP_ID != ''
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.STUDIO_APP_ID }}
+          private-key: ${{ secrets.STUDIO_APP_PRIVATE_KEY }}
+
+      - name: Commit and push generated/ as the App (scripts/regenerate-push.sh)
+        if: steps.regen.outputs.stale == 'true' && steps.app-token.outputs.token != ''
+        working-directory: hartland
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: |
+          # The bot user's id (not the App's) makes GitHub attribute the commit to the App's bot account.
+          bot_id="$(gh api "/users/${APP_SLUG}%5Bbot%5D" --jq .id)"
+          export BOT_NAME="${APP_SLUG}[bot]" BOT_EMAIL="${bot_id}+${APP_SLUG}[bot]@users.noreply.github.com"
+          bash scripts/regenerate-push.sh "$BRANCH"
+
+      # A dispatched run that cannot push a stale generated/ must not conclude success (R12): the BFF would open a PR
+      # on a head the gate then fails.
+      - name: Stale, and no App token to push with (a dispatch fails)
+        if: steps.regen.outputs.stale == 'true' && steps.app-token.outputs.token == '' && github.event_name == 'workflow_dispatch'
+        run: |
+          echo "::error title=regenerate::generated/ is stale and STUDIO_APP_ID is not set (⚑SO-G1) — nothing can be pushed"
+          exit 1
+
+      - name: Stale, and no App token to push with (a pull request warns)
+        if: steps.regen.outputs.stale == 'true' && steps.app-token.outputs.token == '' && github.event_name != 'workflow_dispatch'
+        run: echo "::warning title=regenerate::generated/ is stale and was rebuilt, but STUDIO_APP_ID is not set (⚑SO-G1) — nothing is pushed; model-gate's check-model reports it"

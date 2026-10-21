@@ -3,7 +3,10 @@
 # hartland is content only — it vendors no toolchain — so this job checks out the public
 # Collite/ttr-core repository beside it and builds the parser, semantics, lint and resolve-packages
 # CLI that the justfile and the model suites borrow from `../tatrman`, exactly as a local checkout
-# side by side does.
+# side by side does. The checkout and the build are the toolchain action's
+# (.github/actions/toolchain), at the ref toolchain.lock pins, cached per ref.
+#
+# The job's name is the required status check on master (ttr-demo#85) — renaming it unprotects master.
 #
 # What it runs:
 #   just verify-model             every model/agents/lexicon/automation suite
@@ -20,6 +23,12 @@
 #                                 2026-10-15. Both need no cluster and no secrets; before, they ran
 #                                 only locally, so a runner change could break the corpus with the
 #                                 gate green.
+#   just load-model               the model as veles loads it: the Kotlin loader, strict, built from
+#                                 ttr-core at veles's ttr-metadata version (grammar/v<[veles].ttr-metadata>,
+#                                 stamped with it) — ADDED 2026-10-21, SO-demo P0. Veles drops a file
+#                                 it cannot parse and only WARNs about a reconcile error (SO-1 memo
+#                                 [verify-4]); the TS suites above cannot see either. Runs when
+#                                 toolchain.lock's [veles].strict-load is true; a notice says when not.
 name: model-gate
 
 on:
@@ -77,23 +86,15 @@ jobs:
       # with the mode verdicts — which the recipes under automation/ are checked through. A TTR-P-only release: the
       # parser, semantics, metadata and lexicon modules are unchanged from v0.16.0, so the serving readers need no roll
       # and v0.16.1 rebuilt this branch's archive byte for byte.
-      - uses: actions/checkout@v4
+      #
+      # The pin lives in toolchain.lock ([ttr-core].ref) since 2026-10-21 (SO-demo P0, ⚑SO-P-4), beside the veles image
+      # hartland deploys and the ttr-metadata version it was built with ([veles].image, [veles].ttr-metadata) — one file
+      # read by this gate, regenerate.yml and olymp's release checklist. The history above is the lock's; the rule is
+      # unchanged: bump it in the change that rolls the readers, and rebuild generated/ with it in the same commit. The
+      # [veles] pins are not checked here (olymp is private): `just check-veles-pin` is the bump-time check.
+      - uses: ./hartland/.github/actions/toolchain
         with:
-          repository: Collite/ttr-core
-          ref: grammar/v0.16.1
-          path: tatrman
-
-      - uses: pnpm/action-setup@v4
-        with:
-          package_json_file: tatrman/package.json
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: pnpm
-          cache-dependency-path: tatrman/pnpm-lock.yaml
-
-      - uses: extractions/setup-just@v2
+          with-loader: 'true'
 
       # The routing corpus: uv runs the runner (inline script metadata: httpx + pyyaml). Python is
       # PINNED: with no interpreter that satisfies requires-python, uv fetches the newest one and may
@@ -109,27 +110,6 @@ jobs:
       - name: Routing runner specs
         working-directory: hartland
         run: just routing-test
-
-      - name: Build the tatrman toolchain the recipes borrow
-        working-directory: tatrman
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm --filter "@tatrman/migrate..." --filter "@tatrman/lint..." --filter "@tatrman/semantics..." build
-
-      # The lexicon compiler is KOTLIN (RV-P1.2's (a3) ruling), so it is not covered by the pnpm
-      # build above — `just check-lexicon` borrows `installDist`'s binary from ../tatrman exactly
-      # as a side-by-side local checkout does.
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-      - uses: gradle/actions/setup-gradle@v4
-
-      # AU-hartland P2: the `ttrp` CLI too — the recipes under automation/ are checked through it
-      # (automation/tests/recipes.test.mjs, `just build-recipes`).
-      - name: Build the lexicon and ttrp CLIs the recipes borrow
-        working-directory: tatrman
-        run: ./gradlew :packages:kotlin:ttr-lexicon-cli:installDist :packages:kotlin:ttrp-cli:installDist
 
       - name: Model suites
         working-directory: hartland
@@ -153,3 +133,26 @@ jobs:
       - name: lexicon.tar.zst is not stale
         working-directory: hartland
         run: just check-lexicon
+
+      # SO-demo P0 (D-28; review-121 ⚑R121-A/B): the files as veles loads them, with the loader built
+      # from ttr-core at veles's ttr-metadata version and stamped with it (the toolchain action). `--strict`
+      # fails on a dropped file or a reconcile error; `--expect-version` on a CLI that is not that version.
+      # The JSON on stdout is the diagnostics the Studio also shows; uploaded for people — the BFF reads the
+      # check's conclusion, not the artifact. Runs exactly when toolchain.lock's [veles].strict-load is true,
+      # and then a missing CLI is red; nothing is decided from what a build happened to produce.
+      - name: load with the Kotlin loader
+        if: env.STRICT_LOAD == 'true'
+        working-directory: hartland
+        shell: bash
+        run: just load-model | tee gate-diagnostics.json
+
+      - name: The strict load is off
+        if: env.STRICT_LOAD != 'true'
+        run: echo "::notice title=strict load off::toolchain.lock [veles].strict-load = false — the Kotlin loader did not run"
+
+      - name: Upload the loader's diagnostics
+        if: ${{ !cancelled() && hashFiles('hartland/gate-diagnostics.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-diagnostics
+          path: hartland/gate-diagnostics.json
