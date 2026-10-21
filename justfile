@@ -61,17 +61,43 @@ build-lexicon cli="../tatrman/packages/kotlin/ttr-lexicon-cli/build/install/ttr-
 check-lexicon cli="../tatrman/packages/kotlin/ttr-lexicon-cli/build/install/ttr-lexicon/bin/ttr-lexicon":
     {{cli}} build "$(pwd)" --check --out generated/lexicon.tar.zst
 
-# ── the Kotlin loader (SO-demo P0, ttr-core contracts §2.3) ──────────────────────────────────────
+# ── the Kotlin loader (SO-demo P0, ttr-core contracts §2.3, review-121 ⚑R121-A) ──────────────────
 # Load the model as veles does — the Kotlin loader, strict — and print its diagnostics JSON on stdout.
 # Non-zero when veles would drop a file it cannot parse or the loader finds a reconcile error (both
 # only WARN at serve time, SO-1 memo [verify-4]), and when the CLI is not the ttr-metadata version
-# toolchain.lock says veles serves with. Needs ttr-metadata-cli in ../tatrman (ttr-core SO-core P0·S0.3).
-load-model cli="../tatrman/packages/kotlin/ttr-metadata-cli/build/install/ttr-metadata/bin/ttr-metadata":
+# toolchain.lock says veles serves with. The loader veles serves with, not the ref's toolchain: it is
+# ../ttr-loader's, built by `just build-loader` (ttr-metadata-cli exists from ttr-core SO-core P0·S0.3).
+load-model cli="../ttr-loader/packages/kotlin/ttr-metadata-cli/build/install/ttr-metadata/bin/ttr-metadata":
     #!/usr/bin/env bash
     set -euo pipefail
     pins="$(python3 scripts/toolchain-lock.py)"   # its own line, so a failed read stops the recipe
     while IFS='=' read -r key value; do export "$key=$value"; done <<<"$pins"
     {{cli}} load "$(pwd)" --strict --expect-version "$VELES_TTR_METADATA" --json
+
+# Build the loader `load-model` runs — the loader veles serves with, not the ref's toolchain: ttr-metadata-cli from
+# ttr-core at grammar/v<[veles].ttr-metadata>, stamped with that version as a release is (-Pversion; without it every
+# module says 0.0.1-LOCAL and --expect-version fails). Needs ../ttr-loader at that tag; when it is not, prints the
+# command that makes it so and exits 2 — it creates and checks out nothing itself.
+build-loader:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    pins="$(python3 scripts/toolchain-lock.py)"
+    while IFS='=' read -r key value; do export "$key=$value"; done <<<"$pins"
+    tag="grammar/v$VELES_TTR_METADATA"
+    have="$(git -C ../ttr-loader rev-parse HEAD 2>/dev/null || true)"
+    want="$(git -C ../ttr-loader rev-parse --verify --quiet "$tag^{commit}" 2>/dev/null || true)"
+    if [ -z "$have" ]; then
+      echo "build-loader: no ../ttr-loader checkout. Make one at $tag (veles's ttr-metadata, toolchain.lock):" >&2
+      echo "  git -C ../tatrman fetch --tags origin && git -C ../tatrman worktree add --detach ../ttr-loader $tag" >&2
+      exit 2
+    fi
+    if [ "$have" != "$want" ]; then
+      echo "build-loader: ../ttr-loader is at ${have:0:12}, not $tag (veles's ttr-metadata, toolchain.lock):" >&2
+      echo "  git -C ../ttr-loader fetch --tags origin && git -C ../ttr-loader checkout --detach $tag" >&2
+      exit 2
+    fi
+    cd ../ttr-loader
+    ./gradlew --no-configuration-cache -Pversion="$VELES_TTR_METADATA" :packages:kotlin:ttr-metadata-cli:installDist
 
 # The bump-time check of toolchain.lock's [veles] pins (review-121 R6) — for whoever moves them, not CI (olymp is
 # private). The image olymp deploys on hartland (its origin/master) must be [veles].image, and ttr-server's

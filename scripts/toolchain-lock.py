@@ -20,11 +20,12 @@ from pathlib import Path  # noqa: E402
 
 VERSION = r"[0-9]+\.[0-9]+\.[0-9]+"
 
-# env name → (table, key, the shape the value must have, how to say it)
+# env name → (table, key, the shape the value must have — a regex, or bool for a TOML boolean — and how to say it)
 PINS = {
     "TTR_CORE_REF": ("ttr-core", "ref", rf"grammar/v{VERSION}", "grammar/vX.Y.Z"),
     "VELES_IMAGE": ("veles", "image", VERSION, "X.Y.Z"),
     "VELES_TTR_METADATA": ("veles", "ttr-metadata", VERSION, "X.Y.Z"),
+    "STRICT_LOAD": ("veles", "strict-load", bool, "true or false (a TOML boolean, unquoted)"),
 }
 
 
@@ -40,7 +41,11 @@ def main(argv: list[str]) -> None:
         value = section.get(key) if isinstance(section, dict) else None
         if value is None:
             sys.exit(f"{path}: [{table}].{key} is missing")
-        if not isinstance(value, str) or not re.fullmatch(shape, value):
+        if shape is bool:
+            if not isinstance(value, bool):
+                sys.exit(f"{path}: [{table}].{key} must be {said}, not {value!r}")
+            value = "true" if value else "false"
+        elif not isinstance(value, str) or not re.fullmatch(shape, value):
             sys.exit(f"{path}: [{table}].{key} must be {said}, not {value!r}")
         lines.append(f"{env}={value}")
     print("\n".join(lines))

@@ -48,16 +48,17 @@ async function readerOn(text) {
   }
 }
 
-test('T1.1 — the lock: [ttr-core] ref; [veles] image and ttr-metadata', () => {
+test('T1.1 — the lock: [ttr-core] ref; [veles] image, ttr-metadata and strict-load', () => {
   assert.deepEqual(Object.keys(lock).sort(), ['ttr-core', 'veles']);
   assert.deepEqual(Object.keys(lock['ttr-core']), ['ref']);
-  assert.deepEqual(Object.keys(lock.veles), ['image', 'ttr-metadata']);
+  assert.deepEqual(Object.keys(lock.veles), ['image', 'ttr-metadata', 'strict-load']);
 });
 
-test('T1.2 — [ttr-core].ref is a grammar release tag, the [veles] pins plain versions', () => {
+test('T1.2 — [ttr-core].ref is a grammar release tag, the [veles] pins plain versions, strict-load a boolean', () => {
   assert.match(lock['ttr-core'].ref, /^grammar\/v\d+\.\d+\.\d+$/);
   assert.match(lock.veles.image, /^\d+\.\d+\.\d+$/);
   assert.match(lock.veles['ttr-metadata'], /^\d+\.\d+\.\d+$/);
+  assert.equal(typeof lock.veles['strict-load'], 'boolean');
 });
 
 test('T1.3 — scripts/toolchain-lock.py (the reader the workflows use) prints the same pins', () => {
@@ -66,13 +67,15 @@ test('T1.3 — scripts/toolchain-lock.py (the reader the workflows use) prints t
     `TTR_CORE_REF=${lock['ttr-core'].ref}`,
     `VELES_IMAGE=${lock.veles.image}`,
     `VELES_TTR_METADATA=${lock.veles['ttr-metadata']}`,
+    `STRICT_LOAD=${lock.veles['strict-load']}`,
   ]);
 });
 
 test('T1.4 — a pin missing or empty is refused, naming it (an empty ref = an unpinned checkout)', async () => {
   for (const [name, text, key] of [
     ['no-veles', '[ttr-core]\nref = "grammar/v0.16.1"\n', '[veles].image'],
-    ['empty-ref', '[ttr-core]\nref = ""\n[veles]\nimage = "0.11.14"\nttr-metadata = "0.16.0"\n', '[ttr-core].ref'],
+    ['empty-ref', '[ttr-core]\nref = ""\n[veles]\nimage = "0.11.14"\nttr-metadata = "0.16.0"\nstrict-load = false\n', '[ttr-core].ref'],
+    ['no-strict-load', '[ttr-core]\nref = "grammar/v0.16.1"\n[veles]\nimage = "0.11.14"\nttr-metadata = "0.16.0"\n', '[veles].strict-load'],
   ]) {
     const run = await readerOn(text);
     assert.notEqual(run.status, 0, `${name}: the reader accepted it`);
@@ -90,6 +93,7 @@ test('T1.5 — a value of the wrong shape is refused, naming the key (they reach
     // A TOML escape: the decoded value carries a newline, i.e. a second env line.
     ['ttr-metadata = "0.16.0"', 'ttr-metadata = "0.16.0\\nX=1"', '[veles].ttr-metadata'],
     ['image = "0.11.14"', 'image = "v0.11.14"', '[veles].image'],
+    ['strict-load = false', 'strict-load = "yes"', '[veles].strict-load'],
   ];
   for (const [from, to, key] of cases) {
     const at = lockText.split('\n').findIndex((l) => l.startsWith(from));

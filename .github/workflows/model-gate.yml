@@ -23,11 +23,12 @@
 #                                 2026-10-15. Both need no cluster and no secrets; before, they ran
 #                                 only locally, so a runner change could break the corpus with the
 #                                 gate green.
-#   just load-model               the model as veles loads it: the Kotlin loader, strict, at the
-#                                 ttr-metadata version veles serves with — ADDED 2026-10-21, SO-demo
-#                                 P0. Veles drops a file it cannot parse and only WARNs about a
-#                                 reconcile error (SO-1 memo [verify-4]); the TS suites above cannot
-#                                 see either. Skipped until the pinned ttr-core ref ships the CLI.
+#   just load-model               the model as veles loads it: the Kotlin loader, strict, built from
+#                                 ttr-core at veles's ttr-metadata version (grammar/v<[veles].ttr-metadata>,
+#                                 stamped with it) — ADDED 2026-10-21, SO-demo P0. Veles drops a file
+#                                 it cannot parse and only WARNs about a reconcile error (SO-1 memo
+#                                 [verify-4]); the TS suites above cannot see either. Runs when
+#                                 toolchain.lock's [veles].strict-load is true; a notice says when not.
 name: model-gate
 
 on:
@@ -92,6 +93,8 @@ jobs:
       # unchanged: bump it in the change that rolls the readers, and rebuild generated/ with it in the same commit. The
       # [veles] pins are not checked here (olymp is private): `just check-veles-pin` is the bump-time check.
       - uses: ./hartland/.github/actions/toolchain
+        with:
+          with-loader: 'true'
 
       # The routing corpus: uv runs the runner (inline script metadata: httpx + pyyaml). Python is
       # PINNED: with no interpreter that satisfies requires-python, uv fetches the newest one and may
@@ -131,15 +134,21 @@ jobs:
         working-directory: hartland
         run: just check-lexicon
 
-      # SO-demo P0 (D-28): the files as veles loads them. `--strict` fails on a dropped file or a
-      # reconcile error; `--expect-version` on a CLI that is not the ttr-metadata veles serves with.
-      # The JSON on stdout is the diagnostics the Studio also shows; uploaded for people — the BFF
-      # reads the check's conclusion, not the artifact. Live once toolchain.lock's ref ships the CLI.
+      # SO-demo P0 (D-28; review-121 ⚑R121-A/B): the files as veles loads them, with the loader built
+      # from ttr-core at veles's ttr-metadata version and stamped with it (the toolchain action). `--strict`
+      # fails on a dropped file or a reconcile error; `--expect-version` on a CLI that is not that version.
+      # The JSON on stdout is the diagnostics the Studio also shows; uploaded for people — the BFF reads the
+      # check's conclusion, not the artifact. Runs exactly when toolchain.lock's [veles].strict-load is true,
+      # and then a missing CLI is red; nothing is decided from what a build happened to produce.
       - name: load with the Kotlin loader
-        if: hashFiles('tatrman/packages/kotlin/ttr-metadata-cli/build/install/**') != ''
+        if: env.STRICT_LOAD == 'true'
         working-directory: hartland
         shell: bash
         run: just load-model | tee gate-diagnostics.json
+
+      - name: The strict load is off
+        if: env.STRICT_LOAD != 'true'
+        run: echo "::notice title=strict load off::toolchain.lock [veles].strict-load = false — the Kotlin loader did not run"
 
       - name: Upload the loader's diagnostics
         if: ${{ !cancelled() && hashFiles('hartland/gate-diagnostics.json') != '' }}
