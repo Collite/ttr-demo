@@ -6,7 +6,7 @@
 // The scope is the agent's `shem.areas` (agents/hartland.yaml scopes by area, not by tags), closed the way the
 // semantics package closes an area (AreaTableBuilder: the recursive `packages:` closure + `entities:`) — every card in
 // a closed package, plus the entities listed outside one. An agent with no areas is the whole model (V-44). Tags are
-// refused: their closure is ai-platform's ScopeCloser, which this repo does not have.
+// refused: no agent here scopes by them, and their closure is not implemented here.
 //
 // `.ttrg`, not VL's `.yaml`: Veles serves only `.ttrg` files as layouts (ttr-metadata Source.kt, V-37). Written with
 // the toolchain's own `writeTtrg`, so the files are in VL's canonical form; the graph is named after the file. The
@@ -63,7 +63,7 @@ export async function readAgents(root = hartlandRoot) {
     const def = yaml.load(await readFile(path.join(root, 'agents', file), 'utf-8'));
     if (def?.kind !== 'golem') continue;
     if (def.shem?.tags?.length) {
-      throw new Error(`agents/${file} scopes by tags — only shem.areas is closed here (VL V-44's ScopeCloser is ai-platform's)`);
+      throw new Error(`agents/${file} scopes by tags — only shem.areas is closed here`);
     }
     agents.push({ id: def.id, file: `agents/${file}`, areas: def.shem?.areas ?? [] });
   }
