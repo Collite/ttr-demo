@@ -1,0 +1,33 @@
+graph sales {
+  model: er,
+  objects: [
+    hartland.er.entity.call_center,
+    hartland.er.entity.catalog_sales,
+    hartland.er.entity.channel_sales,
+    hartland.er.entity.customer,
+    hartland.er.entity.customer_address,
+    hartland.er.entity.date_dim,
+    hartland.er.entity.item,
+    hartland.er.entity.promotion,
+    hartland.er.entity.store,
+    hartland.er.entity.store_sales,
+    hartland.er.entity.warehouse,
+    hartland.er.entity.web_sales
+  ],
+  layout: {
+    nodes: {
+      hartland.er.entity.call_center: { x: 1040, y: 600 },
+      hartland.er.entity.catalog_sales: { x: 520, y: 600 },
+      hartland.er.entity.channel_sales: { x: 520, y: 900 },
+      hartland.er.entity.customer: { x: 0, y: 600 },
+      hartland.er.entity.customer_address: { x: 0, y: 900 },
+      hartland.er.entity.date_dim: { x: 0, y: 0 },
+      hartland.er.entity.item: { x: 0, y: 300 },
+      hartland.er.entity.promotion: { x: 1040, y: 300 },
+      hartland.er.entity.store: { x: 1040, y: 0 },
+      hartland.er.entity.store_sales: { x: 520, y: 0 },
+      hartland.er.entity.warehouse: { x: 1040, y: 900 },
+      hartland.er.entity.web_sales: { x: 520, y: 300 }
+    }
+  }
+}

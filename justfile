@@ -61,6 +61,12 @@ build-lexicon cli="../tatrman/packages/kotlin/ttr-lexicon-cli/build/install/ttr-
 check-lexicon cli="../tatrman/packages/kotlin/ttr-lexicon-cli/build/install/ttr-lexicon/bin/ttr-lexicon":
     {{cli}} build "$(pwd)" --check --out generated/lexicon.tar.zst
 
+# The Golem's own layouts (SO-demo P1·S1.1, VL V-44): model/layouts/agent/ rewritten from agents/*.yaml + the
+# model — the cards each Golem's area closes over. Run it after an agent's or the model's cards change and commit
+# the result; model/layouts/tests/layouts.test.mjs L5 fails while it is stale. `--check` writes nothing.
+gen-layouts *FLAGS:
+    node scripts/agent-layout.mjs {{FLAGS}}
+
 # ── the Kotlin loader (SO-demo P0, ttr-core contracts §2.3, review-121 ⚑R121-A) ──────────────────
 # Load the model as veles does — the Kotlin loader, strict — and print its diagnostics JSON on stdout.
 # Non-zero when veles would drop a file it cannot parse or the loader finds a reconcile error (both

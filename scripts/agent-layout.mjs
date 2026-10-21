@@ -1,0 +1,136 @@
+#!/usr/bin/env node
+// The Golem's own layouts (SO-demo P1·S1.1 T3; VL contracts V-44/V-45, ⚑VL-14): for every Golem agent def under
+// agents/, the cards its scope closes over, as two layouts in model/layouts/agent/ — `agent_<id>.ttrg` (the er
+// entities) and `agent_<id>_db.ttrg` (the db tables and views). No positions: the viewer lays them out.
+//
+// The scope is the agent's `shem.areas` (agents/hartland.yaml scopes by area, not by tags), closed the way the
+// semantics package closes an area (AreaTableBuilder: the recursive `packages:` closure + `entities:`) — every card in
+// a closed package, plus the entities listed outside one. An agent with no areas is the whole model (V-44). Tags are
+// refused: no agent here scopes by them, and their closure is not implemented here.
+//
+// `.ttrg`, not VL's `.yaml`: Veles serves only `.ttrg` files as layouts (ttr-metadata Source.kt, V-37). Written with
+// the toolchain's own `writeTtrg`, so the files are in VL's canonical form; the graph is named after the file. The
+// folder is this script's: a layout for an agent that no longer exists is deleted.
+//
+// Usage: node scripts/agent-layout.mjs [--check]   (`just gen-layouts`; --check writes nothing and exits 1 naming
+// each file that differs). model/layouts/tests/layouts.test.mjs L5 runs the same comparison.
+
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { hartlandRoot, loadHartlandProject } from '../model/tests/project-harness.mjs';
+
+const tatrmanPackages = process.env.TATRMAN_PACKAGES ?? path.resolve(hartlandRoot, '../tatrman/packages');
+const { sortAlphabetical, writeTtrg } = await import(path.join(tatrmanPackages, 'parser/dist/layout/index.js'));
+const yaml = await import(
+  path.resolve(tatrmanPackages, '../node_modules/.pnpm/js-yaml@4.1.1/node_modules/js-yaml/dist/js-yaml.mjs')
+);
+
+export const AGENT_LAYOUT_DIR = 'model/layouts/agent';
+
+/** The card kinds of each layout model (VL V-1): entities on er, tables and views on db. */
+export const CARD_KINDS = { er: ['entity'], db: ['table', 'view'] };
+
+/**
+ * A card's full qname as the catalog writes it (A-VL-6): the package + the catalog qname. The TS symbol table names a
+ * table `hartland.db.dbo.table.item`; the catalog's qname has no kind segment there, `hartland.db.dbo.item`.
+ */
+export function cardRef(symbol) {
+  const rel = symbol.packageName ? symbol.qname.slice(symbol.packageName.length + 1) : symbol.qname;
+  const parts = rel.split('.');
+  const qname = parts[0] === 'db' ? [parts[0], parts[1], ...parts.slice(3)].join('.') : rel;
+  return symbol.packageName ? `${symbol.packageName}.${qname}` : qname;
+}
+
+/** Every card of the project, by layout model: `{ er: Map<ref, symbol>, db: Map<ref, symbol> }`. */
+export function cardIndex(project) {
+  const index = { er: new Map(), db: new Map() };
+  for (const symbol of project.symbols.all()) {
+    for (const [model, kinds] of Object.entries(CARD_KINDS)) {
+      if (!kinds.includes(symbol.kind)) continue;
+      const ref = cardRef(symbol);
+      if (index[model].has(ref)) throw new Error(`two ${model} cards share the ref ${ref}`);
+      index[model].set(ref, symbol);
+    }
+  }
+  return index;
+}
+
+/** The Golem agent defs under agents/ (`kind: golem`), by id. */
+export async function readAgents(root = hartlandRoot) {
+  const agents = [];
+  for (const file of (await readdir(path.join(root, 'agents'))).filter((f) => f.endsWith('.yaml')).sort()) {
+    const def = yaml.load(await readFile(path.join(root, 'agents', file), 'utf-8'));
+    if (def?.kind !== 'golem') continue;
+    if (def.shem?.tags?.length) {
+      throw new Error(`agents/${file} scopes by tags — only shem.areas is closed here`);
+    }
+    agents.push({ id: def.id, file: `agents/${file}`, areas: def.shem?.areas ?? [] });
+  }
+  return agents.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+}
+
+/** The layouts `agents` close over in `project`: Map of the path under the repo root → the file's text. */
+export function agentLayouts(project, agents) {
+  const cards = cardIndex(project);
+  const out = new Map();
+  for (const agent of agents) {
+    const packages = new Set();
+    const entities = new Set();
+    for (const name of agent.areas) {
+      const area = project.areaTable.get(name);
+      if (!area) throw new Error(`${agent.file}: area ${name} is not declared in the model`);
+      area.resolvedPackages.forEach((p) => packages.add(p));
+      area.resolvedEntities.forEach((e) => entities.add(e));
+    }
+    const inScope = (symbol) =>
+      agent.areas.length === 0 || packages.has(symbol.packageName) || entities.has(symbol.qname);
+    const base = `agent_${agent.id.replace(/[^A-Za-z0-9_]/g, '_')}`;
+    const scope = agent.areas.length ? `areas [${agent.areas.join(', ')}]` : 'the whole model (no areas)';
+    const header =
+      `// GENERATED by scripts/agent-layout.mjs (\`just gen-layouts\`) from ${agent.file} — scope: ${scope}.\n` +
+      '// Edit the agent or the model, not this file.\n';
+    for (const [model, name] of [['er', base], ['db', `${base}_db`]]) {
+      const objects = sortAlphabetical([...cards[model]].filter(([, s]) => inScope(s)).map(([ref]) => ref));
+      out.set(`${AGENT_LAYOUT_DIR}/${name}.ttrg`, header + writeTtrg({ name, model, objects, positions: {} }));
+    }
+  }
+  return out;
+}
+
+/** The `.ttrg` files now in model/layouts/agent/: Map of the path under the repo root → text. */
+export async function committedAgentLayouts(root = hartlandRoot) {
+  const dir = path.join(root, AGENT_LAYOUT_DIR);
+  const files = await readdir(dir).catch(() => []);
+  const out = new Map();
+  for (const f of files.filter((f) => f.endsWith('.ttrg')).sort()) {
+    out.set(`${AGENT_LAYOUT_DIR}/${f}`, await readFile(path.join(dir, f), 'utf-8'));
+  }
+  return out;
+}
+
+/** The paths whose generated text differs from the committed one, or exists on one side only. */
+export function staleLayouts(generated, committed) {
+  return [...new Set([...generated.keys(), ...committed.keys()])]
+    .filter((p) => generated.get(p) !== committed.get(p))
+    .sort();
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const check = process.argv.includes('--check');
+  const generated = agentLayouts(await loadHartlandProject(), await readAgents());
+  const committed = await committedAgentLayouts();
+  const stale = staleLayouts(generated, committed);
+  if (check) {
+    for (const p of stale) console.error(`agent-layout: stale ${p}${generated.has(p) ? '' : ' (no agent makes it)'}`);
+    if (stale.length) console.error('agent-layout: run `just gen-layouts` and commit the result');
+    process.exit(stale.length ? 1 : 0);
+  }
+  await mkdir(path.join(hartlandRoot, AGENT_LAYOUT_DIR), { recursive: true });
+  for (const p of stale) {
+    if (generated.has(p)) await writeFile(path.join(hartlandRoot, p), generated.get(p));
+    else await rm(path.join(hartlandRoot, p));
+    console.log(`agent-layout: ${generated.has(p) ? 'wrote' : 'removed'} ${p}`);
+  }
+  if (!stale.length) console.log('agent-layout: model/layouts/agent/ is current');
+}
