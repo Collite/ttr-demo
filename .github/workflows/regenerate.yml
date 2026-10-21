@@ -4,8 +4,10 @@
 # demo change), and a save to an already proposed change re-runs it through `pull_request`. It rebuilds
 # resolved-packages.json and lexicon.tar.zst with the toolchain toolchain.lock pins — scripts/regenerate-local.sh, the
 # script a person runs locally, so the local run is this job's dry run — and when they moved, commits them as the
-# GitHub App and pushes (scripts/regenerate-push.sh). The App's token, not GITHUB_TOKEN, is what makes the push trigger
-# model-gate on the new head (a GITHUB_TOKEN push triggers no workflow).
+# GitHub App and pushes (scripts/regenerate-push.sh). The App token makes the push re-trigger `pull_request:
+# synchronize` (model-gate and this workflow on the new head) when the branch has an open PR, which a GITHUB_TOKEN push
+# would not. On Propose the push lands before the PR exists and triggers nothing; the gate's first run is the PR's
+# opening (review-121 R13).
 #
 # The loop guard is idempotence: the bot's push re-runs this workflow (pull_request: synchronize), which finds
 # generated/ current and pushes nothing. The job never commits model/** — the script refuses a build that changed it.
@@ -24,8 +26,10 @@ name: regenerate
 on:
   workflow_dispatch:
   pull_request:
-    # toolchain.lock too: a pin moved without generated/ rebuilt is exactly what this job repairs.
-    paths: ['model/**', 'modeler.toml', 'lexicon/**', 'toolchain.lock']
+    # Everything generated/ is built from: model/ and automation/ ([ttrp].extra-model-roots — resolved-packages.json
+    # lists the automation packages; review-121 R10), the lexicon area, the manifest, and toolchain.lock (a pin moved
+    # without generated/ rebuilt is exactly what this job repairs). model/tests/workflows.test.mjs G7 keeps it complete.
+    paths: ['model/**', 'automation/**', 'modeler.toml', 'lexicon/**', 'toolchain.lock']
 
 permissions:
   contents: read

@@ -34,8 +34,12 @@ it; exit 0 = nothing stale), committed with the model change.
 **The `regenerate` workflow** (`.github/workflows/regenerate.yml`, SO-demo P0) does the same on a
 change's branch: the Studio's *Propose* dispatches it on `model/<user>/<n>`
 (`POST /repos/Collite/ttr-demo/actions/workflows/regenerate.yml/dispatches {ref}`), and a pull
-request touching `model/`, `lexicon/`, `modeler.toml` or `toolchain.lock` runs it too. It runs
-`scripts/regenerate-local.sh` and, when `generated/` moved, commits it as the GitHub App and pushes —
-an App push triggers `model-gate` on the new head, a `GITHUB_TOKEN` push would not. The loop guard
-is idempotence: the push re-runs the workflow, which finds nothing stale and pushes nothing. It never
-commits `model/**`. Until the App's secrets exist the push is skipped with a warning.
+request touching `model/`, `automation/`, `lexicon/`, `modeler.toml` or `toolchain.lock` runs it
+too. It runs `scripts/regenerate-local.sh` and, when `generated/` moved, commits it as the GitHub App
+and pushes (`scripts/regenerate-push.sh` — if a save moved the branch during the build, it
+regenerates on the new head rather than failing). The App token makes the push re-trigger
+`pull_request: synchronize` (model-gate and this workflow on the new head) when the branch has an
+open PR, which a `GITHUB_TOKEN` push would not. On Propose the push lands before the PR exists and
+triggers nothing; the gate's first run is the PR's opening. The loop guard is idempotence: a re-run
+finds nothing stale and pushes nothing. It never commits `model/**`. Until the App's secrets exist a
+stale branch cannot be pushed: a dispatched run fails, a pull-request run warns.

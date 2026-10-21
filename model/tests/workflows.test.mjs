@@ -5,7 +5,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -135,7 +135,9 @@ test('W5 — the Kotlin loader: veles\'s version, stamped, run exactly when the 
 
 test('G1 — triggered by the BFF\'s dispatch and by a pull request touching what generated/ is built from', () => {
   assert.ok('workflow_dispatch' in regen.on);
-  for (const p of ['model/**', 'modeler.toml', 'lexicon/**']) assert.ok(regen.on.pull_request.paths.includes(p), p);
+  for (const p of ['model/**', 'automation/**', 'modeler.toml', 'lexicon/**', 'toolchain.lock']) {
+    assert.ok(regen.on.pull_request.paths.includes(p), p);
+  }
   assert.deepEqual(regen.permissions, { contents: 'read' }, 'GITHUB_TOKEN stays read-only: the push is the App\'s');
 });
 
@@ -192,6 +194,20 @@ test('G5 — the push: scripts/regenerate-push.sh, only when stale with a token;
   assert.match(onDispatch.run, /exit 1/);
   assert.match(onPr.run, /::warning /);
   assert.doesNotMatch(onPr.run, /exit [1-9]/);
+});
+
+test('G7 — the pull_request paths cover every source generated/ is built from (a new source root fails here, not the gate)', async () => {
+  const paths = regen.on.pull_request.paths;
+  assert.ok(paths.includes('automation/**'), 'resolved-packages.json is built from automation/ too');
+  const manifest = await readText('modeler.toml');
+  const roots = JSON.parse(manifest.match(/^extra-model-roots\s*=\s*(\[[^\]]*\])/m)[1]);
+  for (const r of roots) assert.ok(paths.includes(`${r}/**`), `[ttrp].extra-model-roots names ${r}, the paths do not`);
+  const prefixes = paths.filter((p) => p.endsWith('/**')).map((p) => p.slice(0, -2));
+  const sources = (await readdir(root, { recursive: true }))
+    .filter((f) => /\.ttr[a-z]*$/.test(f) && !f.split(path.sep).some((d) => d === '.git' || d === 'node_modules'));
+  assert.ok(sources.length > 0);
+  const uncovered = sources.filter((f) => !prefixes.some((p) => f.split(path.sep).join('/').startsWith(p)));
+  assert.deepEqual(uncovered, [], 'TTR sources outside every pull_request path');
 });
 
 test('G6 — concurrency per event and branch: a pull request run never cancels a dispatched one', () => {
