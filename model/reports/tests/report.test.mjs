@@ -1,6 +1,6 @@
 // The report folders (SO-demo P1·S1.1; report.yaml v1 = ttr-core SO-core contracts §3.1, C-8; LQ-5): every
 // model/reports/<id>/ is a report.yaml + template.xlsx whose program is a `def query` the model loads and whose tables
-// take only that program's output columns. master has no report yet — the first is the demo branch's (S1.2) — so R3
+// take only that program's output columns. master has no report yet — the first is the demo branch's (S1.2) — so RP3
 // runs the same check on inline cases: a check that never fails would pass an empty folder and a broken one alike.
 // The schema file (report.schema.json) is ttr-core SO-core P2's; until it ships, these are the rules by hand.
 // Run: node --test model/reports/tests/report.test.mjs.
@@ -121,7 +121,7 @@ export function reportProblems({ folder, report, hasTemplate }) {
 
 // ── The tests ─────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('R1 — the SELECT-list reader agrees with the model: customer_revenue is bound to exactly its query\'s output', () => {
+test('RP1 — the SELECT-list reader agrees with the model: customer_revenue is bound to exactly its query\'s output', () => {
   // LQ-3: a stacked entity's attributes are its query's output columns; the loader checks the same pair.
   const attributes = project.symbols.all()
     .filter((s) => s.kind === 'attribute' && s.parent === 'hartland.er.entity.customer_revenue').map((s) => s.name);
@@ -129,7 +129,7 @@ test('R1 — the SELECT-list reader agrees with the model: customer_revenue is b
   assert.deepEqual(outputColumns('WITH a AS (SELECT x FROM t) SELECT DISTINCT a.x, COUNT(*) n, y AS "z" FROM a'), ['x', 'n', 'z']);
 });
 
-test('R2 — every report folder under model/reports/ passes (none on master until the demo branch merges)', async () => {
+test('RP2 — every report folder under model/reports/ passes (none on master until the demo branch merges)', async () => {
   const folders = (await readdir(reportsDir, { withFileTypes: true }))
     .filter((e) => e.isDirectory() && e.name !== 'tests').map((e) => e.name);
   for (const folder of folders) {
@@ -140,7 +140,7 @@ test('R2 — every report folder under model/reports/ passes (none on master unt
   }
 });
 
-test('R3 — the rules catch what they are for (inline cases over er.query.revenue_per_customer)', () => {
+test('RP3 — the rules catch what they are for (inline cases over er.query.revenue_per_customer)', () => {
   const good = {
     id: 'customer_totals', title: { en: 'Customer totals' }, version: 1,
     program: 'er.query.revenue_per_customer', params: [], refresh: 'daily',
