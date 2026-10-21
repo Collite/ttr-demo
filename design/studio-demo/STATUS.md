@@ -2,15 +2,17 @@
 effort: SD — Tatrman Studio demo on Hartland (FO-A1 Designer + FO-A2 Planner)
 repo_home: Collite/ttr-demo/design/studio-demo
 code_home: [Collite/ttr-demo (model delta, data/plan, rig/), tatrman + tatrman-platform (consumed read-only at pinned SHAs)]
-state: ready
-phase: corpus authored 2026-07-23 + **⚑SD-1…5 ALL RULED same day** (A on Bora's machine / Rancher Desktop docker → C graduation; identity relaxed for A; ⚑3 per P0 probe; Satellite R out for A); nothing executed
-next: "SD-P0 (pre-flight probes T3–T5 on Rancher Desktop docker). Nothing blocks it; waits only on Bora's go."
+state: superseded
+phase: "SUPERSEDED 2026-10-20 by SO (collite-gh project/platform/features/studio/, D-9) — the Studio demo on Hartland is re-planned there as three beats (viewer · editor with two-way sync through git · reports); Beats D (Designer) and P (Planner) stay deferred (SO DEF-1) with this corpus as their record; the ops-manual facts stay authoritative. History:" corpus authored 2026-07-23 + **⚑SD-1…5 ALL RULED same day** (A on Bora's machine / Rancher Desktop docker → C graduation; identity relaxed for A; ⚑3 per P0 probe; Satellite R out for A); nothing executed
+next: "— (superseded; see SO)"
 blocked_on: []
 gates: ["SD-D2: demo consumes closed arcs — product defects route to owning repos", "P4b (cluster graduation) opens only after the P5 dry-run + freeze-calendar check (⚑5)", "real Keycloak/SSO + Satellite-R reconsideration ride P4b, not A"]
-updated: "2026-09-28 (Cowork refresh: blocked_on cleared)"
+updated: "2026-10-20 (superseded by SO)"
 stream: dev
 lane: unassigned (suggestion: one senior lane; P2 ∥ P3 fork if two)
 ---
+
+> **SUPERSEDED 2026-10-20 by effort SO** (`collite-gh/project/platform/features/studio/`, decision D-9): one modular, world-agnostic Studio per cluster; the Hartland demo = beats V (viewer) · E (editor, two-way sync through git) · R (reports). Beats D and P below are deferred (SO DEF-1); this corpus is their record. The ops-manual facts (`../demo-ops-manual.md`) remain authoritative.
 
 The demo of the closed FO-A1 (Studio Modeler + Studio Designer) and FO-A2 (Studio Planner)
 arcs on the Hartland world: February-2026 sequel to the January Kantheon demo — *"you
