@@ -1,32 +1,48 @@
 #!/usr/bin/env python3
-"""Print toolchain.lock's pins as env lines (KEY=value) — the one reader of the lock that the workflows'
-toolchain action, `just load-model` and scripts/regenerate-local.sh share (SO-demo P0, ⚑SO-P-4).
+"""Print toolchain.lock's pins as env lines (KEY=value) — the one reader of the lock that the workflows' toolchain
+action, the justfile's lock-reading recipes and scripts/regenerate-local.sh share (SO-demo P0, ⚑SO-P-4).
 
     python3 scripts/toolchain-lock.py [<lock>]      # default: toolchain.lock beside scripts/
 
-Fails on a missing table or key and never prints an empty pin: an empty TTR_CORE_REF would check out
-ttr-core's default branch — the unpinned toolchain the lock exists to prevent.
+All or nothing, and every value shape-checked (review-121 R4): the lines are appended to $GITHUB_ENV and `export`ed
+by shell callers, so a value that is not a plain tag or version — a `$(…)`, a space, an escaped newline — is refused
+with the key named, never printed. An empty TTR_CORE_REF in particular would check out ttr-core's default branch:
+the unpinned toolchain the lock exists to prevent. An `-rc` version is refused too; widening that is its own change.
 """
+import re
 import sys
-import tomllib
-from pathlib import Path
 
+if sys.version_info < (3, 11):
+    sys.exit(f"toolchain-lock.py needs Python >= 3.11 (tomllib); python3 is {sys.version.split()[0]}")
+
+import tomllib  # noqa: E402 — after the version check, which is the point
+from pathlib import Path  # noqa: E402
+
+VERSION = r"[0-9]+\.[0-9]+\.[0-9]+"
+
+# env name → (table, key, the shape the value must have, how to say it)
 PINS = {
-    "TTR_CORE_REF": ("ttr-core", "ref"),
-    "VELES_TTR_METADATA": ("veles", "ttr-metadata"),
+    "TTR_CORE_REF": ("ttr-core", "ref", rf"grammar/v{VERSION}", "grammar/vX.Y.Z"),
+    "VELES_IMAGE": ("veles", "image", VERSION, "X.Y.Z"),
+    "VELES_TTR_METADATA": ("veles", "ttr-metadata", VERSION, "X.Y.Z"),
 }
 
 
 def main(argv: list[str]) -> None:
     path = Path(argv[1]) if len(argv) > 1 else Path(__file__).resolve().parent.parent / "toolchain.lock"
-    lock = tomllib.loads(path.read_text(encoding="utf-8"))
+    try:
+        lock = tomllib.loads(path.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError) as e:
+        sys.exit(f"{path}: {e}")
     lines = []
-    for env, (table, key) in PINS.items():
-        value = lock.get(table, {}).get(key)
-        if not isinstance(value, str) or not value.strip():
-            sys.exit(f"{path}: [{table}].{key} is missing or empty")
+    for env, (table, key, shape, said) in PINS.items():
+        section = lock.get(table)
+        value = section.get(key) if isinstance(section, dict) else None
+        if value is None:
+            sys.exit(f"{path}: [{table}].{key} is missing")
+        if not isinstance(value, str) or not re.fullmatch(shape, value):
+            sys.exit(f"{path}: [{table}].{key} must be {said}, not {value!r}")
         lines.append(f"{env}={value}")
-    # All or nothing: a caller appending to $GITHUB_ENV must not get half the pins.
     print("\n".join(lines))
 
 

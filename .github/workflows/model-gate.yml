@@ -86,10 +86,11 @@ jobs:
       # parser, semantics, metadata and lexicon modules are unchanged from v0.16.0, so the serving readers need no roll
       # and v0.16.1 rebuilt this branch's archive byte for byte.
       #
-      # The pin lives in toolchain.lock ([ttr-core].ref) since 2026-10-21 (SO-demo P0, ⚑SO-P-4), beside the ttr-metadata
-      # version veles serves with ([veles].ttr-metadata) — one file read by this gate, regenerate.yml and olymp's release
-      # checklist, so the three cannot drift apart. The history above is the lock's; the rule is unchanged: bump it in
-      # the change that rolls the readers, and rebuild generated/ with it in the same commit.
+      # The pin lives in toolchain.lock ([ttr-core].ref) since 2026-10-21 (SO-demo P0, ⚑SO-P-4), beside the veles image
+      # hartland deploys and the ttr-metadata version it was built with ([veles].image, [veles].ttr-metadata) — one file
+      # read by this gate, regenerate.yml and olymp's release checklist. The history above is the lock's; the rule is
+      # unchanged: bump it in the change that rolls the readers, and rebuild generated/ with it in the same commit. The
+      # [veles] pins are not checked here (olymp is private): `just check-veles-pin` is the bump-time check.
       - uses: ./hartland/.github/actions/toolchain
 
       # The routing corpus: uv runs the runner (inline script metadata: httpx + pyyaml). Python is

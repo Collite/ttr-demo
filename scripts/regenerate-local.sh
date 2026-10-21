@@ -19,8 +19,8 @@ set -euo pipefail
 checkout="$(cd "${1:-$(dirname "$0")/..}" && pwd)"
 cd "$checkout"
 
-pins="$(python3 scripts/toolchain-lock.py)"   # its own line: `eval "$(…)"` would swallow a failed read
-eval "$pins"
+pins="$(python3 scripts/toolchain-lock.py)"   # its own line, so a failed read stops the script
+while IFS='=' read -r key value; do export "$key=$value"; done <<<"$pins"
 echo "toolchain.lock: ttr-core $TTR_CORE_REF · veles ttr-metadata $VELES_TTR_METADATA"
 
 if [ -n "${RESOLVE_CLI:-}" ] && [ -n "${LEXICON_CLI:-}" ]; then
