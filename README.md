@@ -26,3 +26,15 @@ ecosystem e2e fixture. Task lists: `design/tasks/`.
 
 The olymp GitOps overlay `clusters/hartland` (in the **olymp** repo) deploys the showcase cluster
 and reads this repo for the model (Ariadne source) + run-set.
+
+## How a change reaches master
+
+`master` is what hartland serves, so it takes a change only one way (ttr-demo#85): a branch, a pull
+request, the **`model-gate`** check green on it, one approving review, the merge. The gate
+(`.github/workflows/model-gate.yml`) checks out the ttr-core toolchain beside this repo at the ref
+**`toolchain.lock`** pins — `[ttr-core].ref`, the toolchain the serving images were built against —
+and runs every suite, the two drift checks (`generated/` matches the model) and, once that toolchain
+ships the CLI, the Kotlin loader's strict load at the version veles serves with
+(`[veles].ttr-metadata`). Moving a pin is a change like any other: made in the PR that rolls the
+readers, with `generated/` rebuilt by the new toolchain in the same commit. Planned and tracked in
+`project/platform/features/studio/` (SO-demo).

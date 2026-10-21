@@ -1,0 +1,8 @@
+# The toolchain the serving images were built against. Bump in the same change that rolls the readers;
+# rebuild generated/ with the same pins in the same commit. Read by model-gate.yml, regenerate.yml, and
+# olymp's release checklist (apps/veles). Why the pin is load-bearing: the comment block above the ttr-core
+# checkout in .github/workflows/model-gate.yml.
+[ttr-core]
+ref = "grammar/v0.16.1"          # the gate's checkout (was inline in model-gate.yml)
+[veles]
+ttr-metadata = "0.16.0"          # the Kotlin loader version hartland's veles serves with — must equal olymp apps/veles's image line

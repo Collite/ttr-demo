@@ -61,6 +61,18 @@ build-lexicon cli="../tatrman/packages/kotlin/ttr-lexicon-cli/build/install/ttr-
 check-lexicon cli="../tatrman/packages/kotlin/ttr-lexicon-cli/build/install/ttr-lexicon/bin/ttr-lexicon":
     {{cli}} build "$(pwd)" --check --out generated/lexicon.tar.zst
 
+# ── the Kotlin loader (SO-demo P0, ttr-core contracts §2.3) ──────────────────────────────────────
+# Load the model as veles does — the Kotlin loader, strict — and print its diagnostics JSON on stdout.
+# Non-zero when veles would drop a file it cannot parse or the loader finds a reconcile error (both
+# only WARN at serve time, SO-1 memo [verify-4]), and when the CLI is not the ttr-metadata version
+# toolchain.lock says veles serves with. Needs ttr-metadata-cli in ../tatrman (ttr-core SO-core P0·S0.3).
+load-model cli="../tatrman/packages/kotlin/ttr-metadata-cli/build/install/ttr-metadata/bin/ttr-metadata":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    pins="$(python3 scripts/toolchain-lock.py)"   # its own line: `eval "$(…)"` would swallow a failed read
+    eval "$pins"
+    {{cli}} load "$(pwd)" --strict --expect-version "$VELES_TTR_METADATA" --json
+
 # The kube context the cluster recipes below default to.
 CTX := "hartland"
 
