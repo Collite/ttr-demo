@@ -137,7 +137,6 @@ test('G1 — triggered by the BFF\'s dispatch and by a pull request touching wha
   assert.ok('workflow_dispatch' in regen.on);
   for (const p of ['model/**', 'modeler.toml', 'lexicon/**']) assert.ok(regen.on.pull_request.paths.includes(p), p);
   assert.deepEqual(regen.permissions, { contents: 'read' }, 'GITHUB_TOKEN stays read-only: the push is the App\'s');
-  assert.equal(regen.concurrency['cancel-in-progress'], false, 'the BFF waits for its dispatched run\'s conclusion');
 });
 
 test('G2 — the job runs on Studio branches and same-repo pull requests only', () => {
@@ -146,16 +145,20 @@ test('G2 — the job runs on Studio branches and same-repo pull requests only', 
   assert.match(regenJob.if, /github\.event\.pull_request\.head\.repo\.full_name == github\.repository/);
 });
 
-test('G3 — the App token: minted only when the secret is set, read through the job env (a step `if:` cannot read secrets)', () => {
-  assert.equal(regenJob.env.STUDIO_APP_ID, '${{ secrets.STUDIO_APP_ID }}');
-  const mint = regenSteps.find((s) => s.uses?.startsWith('actions/create-github-app-token@'));
-  assert.equal(mint.if, "env.STUDIO_APP_ID != ''");
+test('G3 — the App token: minted after the build, only when stale and the secret is set; no credentials persisted', () => {
+  assert.equal(regenJob.env.STUDIO_APP_ID, '${{ secrets.STUDIO_APP_ID }}', 'a step `if:` cannot read secrets — the job env can');
   const checkout = regenSteps.find((s) => s.uses?.startsWith('actions/checkout@'));
-  assert.match(checkout.with.token, /steps\.app-token\.outputs\.token/, 'checked out with the App token, the push is the App\'s');
+  assert.equal(checkout.with['persist-credentials'], false, 'no token in .git/config while the toolchain builds');
+  assert.ok(!('token' in checkout.with), 'checked out with the default token');
   assert.equal(checkout.with.ref, '${{ env.BRANCH }}', 'the branch head, not a PR merge commit');
+  const mint = regenSteps.findIndex((s) => s.uses?.startsWith('actions/create-github-app-token@'));
+  const regenAt = regenSteps.findIndex((s) => s.id === 'regen');
+  const toolchainAt = regenSteps.findIndex((s) => s.uses === './hartland/.github/actions/toolchain');
+  assert.ok(toolchainAt < regenAt && regenAt < mint, 'the token is minted after the build');
+  assert.equal(regenSteps[mint].if, "steps.regen.outputs.stale == 'true' && env.STUDIO_APP_ID != ''");
 });
 
-test('G4 — the job runs the local dry-run script itself, its exit code read with -e off', () => {
+test('G4 — the job runs the local dry-run script itself, its exit code read with -e off; a depth-1 checkout', () => {
   assert.ok(regenSteps.some((s) => s.uses === './hartland/.github/actions/toolchain'));
   const step = regenSteps.find((s) => /regenerate-local\.sh/.test(s.run ?? ''));
   assert.ok(step);
@@ -164,15 +167,34 @@ test('G4 — the job runs the local dry-run script itself, its exit code read wi
   assert.ok(lines.slice(0, call).includes('set +e'), '`run:` is bash -e: exit 10 would end the step');
   assert.match(step.run, /10\)\s*echo "stale=true"/);
   assert.match(step.run, /0\)\s*echo "stale=false"/);
+  const checkout = regenSteps.find((s) => s.uses?.startsWith('actions/checkout@'));
+  assert.ok(!('fetch-depth' in checkout.with), 'the job needs the head only');
 });
 
-test('G5 — the push: only when stale and the App token exists; commits generated/ alone', () => {
-  const push = regenSteps.find((s) => /git push/.test(s.run ?? ''));
+test('G5 — the push: scripts/regenerate-push.sh, only when stale with a token; stale without one fails a dispatch', async () => {
+  const push = regenSteps.find((s) => /regenerate-push\.sh/.test(s.run ?? ''));
   assert.match(push.if, /steps\.regen\.outputs\.stale == 'true'/);
   assert.match(push.if, /steps\.app-token\.outputs\.token != ''/);
-  const adds = [...push.run.matchAll(/git add ([^\n]+)/g)].map((m) => m[1].trim());
-  assert.deepEqual(adds, ['-- generated']);
-  assert.match(push.run, /commit -m "regenerate: generated\/ for \$\(git rev-parse --short HEAD\)"/);
-  assert.match(push.run, /\[bot\]@users\.noreply\.github\.com/);
+  assert.match(push.run, /bash scripts\/regenerate-push\.sh "\$BRANCH"/);
+  assert.match(push.run, /BOT_EMAIL="\$\{bot_id\}\+\$\{APP_SLUG\}\[bot\]@users\.noreply\.github\.com"/);
   assert.ok(!/\$\{\{/.test(push.run), 'no ${{ }} inside run: — a branch name reaches the shell only through env');
+  assert.ok(!regenSteps.some((s) => /git (push|commit|add)/.test(s.run ?? '')), 'the workflow commits through the script only');
+  // The script commits generated/ alone, with the agreed message.
+  const script = await readText('scripts/regenerate-push.sh');
+  assert.deepEqual([...script.matchAll(/git add ([^\n]+)/g)].map((m) => m[1].trim()), ['-- generated']);
+  assert.match(script, /commit -q -m "regenerate: generated\/ for \$\(git rev-parse --short HEAD\)"/);
+  // Stale and no token: a dispatch exits non-zero, a pull request warns.
+  const skips = regenSteps.filter((s) => /steps\.app-token\.outputs\.token == ''/.test(s.if ?? ''));
+  const onDispatch = skips.find((s) => /github\.event_name == 'workflow_dispatch'/.test(s.if));
+  const onPr = skips.find((s) => /github\.event_name != 'workflow_dispatch'/.test(s.if));
+  assert.ok(onDispatch && onPr);
+  assert.match(onDispatch.run, /::error /);
+  assert.match(onDispatch.run, /exit 1/);
+  assert.match(onPr.run, /::warning /);
+  assert.doesNotMatch(onPr.run, /exit [1-9]/);
+});
+
+test('G6 — concurrency per event and branch: a pull request run never cancels a dispatched one', () => {
+  assert.equal(regen.concurrency.group, 'regenerate-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}');
+  assert.equal(regen.concurrency['cancel-in-progress'], "${{ github.event_name == 'pull_request' }}");
 });
