@@ -7,7 +7,7 @@ ref = "grammar/v0.16.1"          # the gate's toolchain checkout (was inline in 
 [ttrp]
 # Recipe builds/checks move independently of the model reader and serving image.
 # A commit pin requires a prerelease version; delete version when moving ref to a release tag.
-ref = "f4001922bef0ab78f01db8343113bddbcdeac6c0"
+ref = "f9f7b5b4292e4ce0588b83618a5408817a4a202c"
 version = "0.17.3-au.1"
 
 [veles]
