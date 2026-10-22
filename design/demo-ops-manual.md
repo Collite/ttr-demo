@@ -33,8 +33,10 @@
 
 ### External URLs (the complete set)
 
-Only five hostnames have routes through the gateway. **Everything else is ClusterIP —
-in-cluster only** (reach it via `kubectl port-forward`, §6).
+Only these hostnames have routes through the gateway. **Everything else is ClusterIP —
+in-cluster only** (reach it via `kubectl port-forward`, §6). ⚑ The live list is
+`kubectl --context hartland get httproute,grpcroute -A`: every route answers on **`*.hartland.collite.cz`** (Let's
+Encrypt wildcard), and Iris, Landing and the two BI hosts only there — the nip.io names in this table predate that.
 
 | Surface | URL | Login |
 |---|---|---|
@@ -43,6 +45,8 @@ in-cluster only** (reach it via `kubectl port-forward`, §6).
 | Keycloak (IdP + admin console) | `https://keycloak.20-218-224-115.nip.io` | `admin` + secret (§3.3) |
 | ArgoCD (GitOps UI) | `https://argocd.20-218-224-115.nip.io` | Keycloak SSO **or** local `admin` (§3.4) |
 | Grafana (monitoring) | `https://grafana.20-218-224-115.nip.io` | Keycloak SSO |
+| **Superset** (BI, operated — BI-3) | `https://superset.hartland.collite.cz` | Keycloak SSO (client `superset`); a persona lands in `BI Viewer`, the realm group `admins` is Admin |
+| **Flight SQL edge** (JDBC/ADBC: DBeaver, DataGrip) | `flight.hartland.collite.cz:443` (gRPC over TLS) | the persona's own user + password (realm client `jdbc`), or a bearer; `world=hartland_us\|hartland_cz` names the world |
 
 ---
 
@@ -247,9 +251,26 @@ Run before every rehearsal (this is the H4 `demo-check` scope until the recipe l
 | iris-bff | `kantheon` / `:7410` | normally only via the SPA's `/bff` proxy |
 | Keycloak (in-cluster) | `auth` / `auth-keycloak-keycloakx-http:80` | token endpoint for scripted turns |
 | Postgres | `data` / `postgres-rw:5432` | §4.2 |
+| query (the door) | `ttr-server` / `:7306` gRPC (reflection off), `:7305` HTTP | `/status` has a `flight` block; the BI receipts below |
+| query (Flight SQL edge) | `ttr-server` / `:7308` | routed as `flight.hartland.collite.cz:443` (GRPCRoute `flight`, TLS at the gateway, 360 s route timeout); single replica |
+| Superset | `superset` / `superset:8088` | routed as `superset.hartland.collite.cz`; metadata in CNPG `superset-pg` (ns `data`) |
 
 `kubectl --context hartland -n <ns> port-forward svc/<svc> <local>:<port>` — one shell call
 per scripted flow (quirks §5.2).
+
+**BI receipts** (one row per Flight statement: who, which world, the SQL the door ran, the row rules applied, the
+notices — ttr-server `docs/operations.md` § Receipts). `GET /receipts?user_id=<user>&since=<ISO time>` (or
+`?correlation_id=…`) on query's `:7305`, for a bearer carrying the realm role `query-platform-admin`, in one shell call:
+
+```sh
+kubectl --context hartland -n ttr-server port-forward svc/query 7305:7305 >/dev/null & pf=$!; sleep 2
+curl -s -H "Authorization: Bearer $TOKEN" 'http://localhost:7305/receipts?user_id=petr&since=2026-10-22T00:00:00Z'
+kill $pf
+```
+
+⚑ hartland's realm does not define `query-platform-admin` yet (BI-4 follow-up: the role, granted to the group
+`admins`); until it does the read answers 403, and the receipts are read in the database itself: `query.bi_receipts` in
+database `query` of the central `postgres` (ns `data`).
 
 Logs worth knowing: **`ttr-server/query-*`** (the real error behind any "0 rows" —
 quirks §0, grep the `correlation_id`) · golem pod logs in `kantheon` (turn orchestration) ·

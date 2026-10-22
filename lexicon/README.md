@@ -78,6 +78,34 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-22**, BI-4 (branch `feat/bi-p4-content`, contracts C-22 in
+`project/platform/features/bi`): the logical query `er.query.stockouts_monthly_dc` and the entity
+`dc_stockout_month` stacked on it (`model/er/stockouts.ttrm`) — stock-out weeks per DC per month, the dataset of
+Superset's "DC meltdown — stock-outs" dashboard — and five phrases on its measure. Built with the pinned toolchain
+**`grammar/v0.16.1`**, which first rebuilt master's archive byte for byte (`sha256:1682fa3a…`, below) and master's
+`resolved-packages.json`:
+
+| | |
+|---|---|
+| archive id | `sha256:5befdd5b6fc625219323d34944f8b17c083e278f848b880787e72ab85ad33c09` |
+| model id | `sha256:4c1a8ab30d49ccf6d04f8bd39211bd9134fdc337cfc607bbb59650ab1e0c2030` (was `03eb1213…`: `model/er/stockouts.ttrm`) |
+| schema | `ttr-lexicon-compiled/v5` (unchanged) |
+| toolchain | `Collite/ttr-core` **`grammar/v0.16.1`** |
+| entries | **810** (was 803) — **+7 `MODEL_OBJECT`** (341, was 334); none removed, every other class unchanged |
+| targets | **62** (was 60) — `er.entity.dc_stockout_month` and its measure `stockout_weeks` |
+| build warnings | **24**, the same 24 as before |
+| size | 15,060 bytes |
+
+The 7 rows, read from the archive: five DECLARED phrases in `aliases/hartland.lex.yaml` on the measure
+`er.entity.dc_stockout_month.stockout_weeks` — `stockout weeks` (en) and `týdny` / `týdnů s výpadkem zásob`, `týdny` /
+`týdnů s výpadky zásob` (cs) — all WHOLE phrases under the file's default profile (`TYPOS(1)` with the `folded` rule),
+none `TOKENS`; and two METADATA rows harvested from the entity's labels (`monthly stock-out overview` en, `měsíční
+přehled výpadků zásob` cs). The phrases name the measure and hold neither the bare stock-out words nor the month:
+«výpadky zásob» stays act 3.5's (the saved query `warehouse_stockout_week_count`, through the stock anchor), and «po
+měsících» / "monthly" stay the calendar's. `lexicon/tests/stockouts.test.mjs` holds both.
+
+### 2026-10-19 (AU P2, the documents' lifecycles)
+
 From `just build-lexicon`, **2026-10-19**, AU-hartland P2 (branch `feat/au-p2-package`): the lifecycles of the
 automation documents — `states:` / `transitions:` on `order.state`, `invoice.status`, `return_request_line.state` and
 `reorder_proposal.state` (D-67) — and the world `hartland.worlds.demo` leaving `model/` for `automation/worlds/` (its

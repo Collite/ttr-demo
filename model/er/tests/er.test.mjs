@@ -9,9 +9,10 @@ import { loadHartlandProject, ACCEPTED_RESIDUAL_CODES } from '../../tests/projec
 // D-5 roster (05-d-ttrm-spec.md) — the 19 D-5 entities, no D-5-Out entity (time_dim, web_site,
 // web_page, catalog_page, ship_mode, dbgen_version) — plus `channel_sales` (2026-09-24), the
 // all-channel view-backed fact that lets "revenue by channel" be asked on the fast path — plus
-// `customer_revenue` (LQ, 2026-10-18), stacked on the logical query `er.query.revenue_per_customer`.
+// `customer_revenue` (LQ, 2026-10-18), stacked on the logical query `er.query.revenue_per_customer`, and
+// `dc_stockout_month` (BI-4, 2026-10-22), stacked on `er.query.stockouts_monthly_dc`.
 const EXPECTED_ENTITIES = [
-  'store_sales', 'web_sales', 'catalog_sales', 'channel_sales', 'customer_revenue',
+  'store_sales', 'web_sales', 'catalog_sales', 'channel_sales', 'customer_revenue', 'dc_stockout_month',
   'store_returns', 'web_returns', 'catalog_returns',
   'inventory', 'date_dim', 'item', 'customer', 'customer_address',
   'customer_demographics', 'household_demographics', 'income_band',
@@ -193,8 +194,8 @@ test('#62 — store says it is SCD-2: the validity pair on its history columns, 
 
 test('T-LQ — customer_revenue is stacked on a logical query: declared in a model er file, no parameters, relations by join pairs', () => {
   const stacked = allDefsOfKind('entity').filter(({ def }) => stackedOnQuery(def));
-  assert.deepEqual(stacked.map(({ def }) => def.name), ['customer_revenue']);
-  const { def: entity, uri } = stacked[0];
+  assert.deepEqual(stacked.map(({ def }) => def.name).sort(), ['customer_revenue', 'dc_stockout_month']);
+  const { def: entity, uri } = stacked.find(({ def }) => def.name === 'customer_revenue');
 
   const target = entity.binding.target.entries.find((e) => e.key === 'query').value;
   assert.equal(target.path, 'er.query.revenue_per_customer', 'the binding names the logical query by its er.query qname');
@@ -240,4 +241,76 @@ test('T-LQ — customer_revenue is stacked on a logical query: declared in a mod
   // code-shaped literal between the two.
   assert.equal(entity.semantics?.entries?.code ?? undefined, undefined, 'customer_revenue declares a code facet');
   assert.deepEqual(entity.semantics?.entries?.measures, ['revenue'], 'revenue stays the measure');
+});
+
+/** The select list of a body's OUTERMOST SELECT: past any WITH, at parenthesis depth 0, split on top-level commas. */
+function outerSelectList(body) {
+  const tokens = [];
+  let depth = 0;
+  let start = 0;
+  let inSelect = false;
+  for (let i = 0; i < body.length; i++) {
+    const c = body[i];
+    if (c === '(') depth++;
+    else if (c === ')') depth--;
+    if (depth !== 0) continue;
+    const word = /^\w+/.exec(body.slice(i))?.[0]?.toLowerCase();
+    const atWord = word && (i === 0 || !/\w/.test(body[i - 1]));
+    if (atWord && word === 'select') { inSelect = true; start = i + 6; tokens.length = 0; }
+    else if (atWord && word === 'from' && inSelect) { tokens.push(body.slice(start, i)); return tokens; }
+    else if (c === ',' && inSelect) { tokens.push(body.slice(start, i)); start = i + 1; }
+  }
+  return tokens;
+}
+
+// BI-4 (contracts C-22, 2026-10-22). The dataset of Superset's "DC meltdown — stock-outs" dashboard and the object the
+// Golem binds monthly stock-out questions to: one row per distribution center per month.
+test('T-LQ-BI — dc_stockout_month is stacked on the logical query stockouts_monthly_dc: entities only, parameterless, the seed\'s stock-out week', () => {
+  const found = allDefsOfKind('entity').find(({ def }) => def.name === 'dc_stockout_month');
+  assert.ok(found, 'dc_stockout_month is declared');
+  const { def: entity, uri } = found;
+  assert.equal(objectEntry(entity.binding.target, 'query')?.path, 'er.query.stockouts_monthly_dc');
+
+  const ast = project.asts.get(uri);
+  assert.equal(ast.modelDirective?.modelCode, 'er', 'the query lives in a `model er` file — that is what makes it logical');
+  const query = (ast.definitions ?? []).find((d) => d.kind === 'query' && d.name === 'stockouts_monthly_dc');
+  assert.ok(query, 'the logical query is declared beside the entity');
+  assert.equal(query.parameters ?? undefined, undefined, 'parameterless (D-23): a dashboard and the Golem read it as it is');
+  const entityNames = new Set(allDefsOfKind('entity').map(({ def }) => def.name));
+  assert.ok(!entityNames.has(query.name), `the logical query shares its local name with an entity: ${query.name}`);
+
+  // Over entities, never the physical layer: no db name, no TPC-DS column.
+  const body = query.sourceText?.value ?? '';
+  assert.doesNotMatch(body, /\bdb\.|\bdbo\b|\b(inv|w|d)_\w+/i, 'the body names a table or a physical column');
+
+  // A stock-out week is the seed's (and warehouse_stockout_week_count's): at least half of the DC's rows for the
+  // week at zero. Counted per weekly snapshot first, then per month — hence a WITH, and the OUTER select list must
+  // produce exactly the attributes (each unbound, so each names the output column of its own name).
+  assert.match(body, /=\s*0\s+then\s+1\s+else\s+0/i, 'a zero row is quantity_on_hand = 0');
+  assert.match(body, /2\s*\*\s*[\w.]*zero_rows\s*>=\s*[\w.]*total_rows/i, 'a stock-out week is at least half of the rows at zero');
+  assert.match(body, /group by[^)]*as_of_date/i, 'the weekly step groups by the snapshot');
+  const outputs = outerSelectList(body).map((c) => c.trim().split(/\s+as\s+|\./i).pop().trim());
+  assert.deepEqual([...outputs].sort(), (entity.attributes ?? []).map((a) => a.name).sort());
+
+  // No foreign key: relations state join pairs — to its DC, and to the calendar day the month starts on, so a
+  // question's year or quarter narrows the months.
+  const relations = allDefsOfKind('relation').map(({ def }) => def).filter((r) => r.from?.path === 'er.entity.dc_stockout_month');
+  const pairs = Object.fromEntries(relations.map((r) => {
+    assert.equal(r.binding ?? undefined, undefined, `${r.name}: a stacked entity has no foreign key, so the relation has no binding`);
+    return [r.to.path, (r.join?.items ?? []).map((o) => [objectEntry(o, 'from')?.path, objectEntry(o, 'to')?.path])];
+  }));
+  assert.deepEqual(pairs, {
+    'er.entity.warehouse': [['er.entity.dc_stockout_month.warehouse', 'er.entity.warehouse.sk']],
+    'er.entity.date_dim': [['er.entity.dc_stockout_month.month_start', 'er.entity.date_dim.cal_date']],
+  });
+
+  // The label names the object. A label is a METADATA term and outranks a declared phrase (ttr-demo#62), so it
+  // must not be the stock-out words a question asks with: «Kolik týdnů v roce 2025 mělo Brno DC výpadky zásob?»
+  // (act 3.5) stays the saved query's.
+  const fold = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  for (const label of [...Object.values(entity.displayLabel?.entries ?? {}), entity.labelPlural ?? '']) {
+    assert.doesNotMatch(fold(label), /^(vypadky zasob|stock ?outs?|stock ?out weeks)$/, `the label «${label}» is a stock-out phrase`);
+  }
+  assert.deepEqual(entity.semantics?.entries?.measures, ['stockout_weeks'], 'stock-out weeks are the measure');
+  assert.ok((entity.description?.value ?? '').includes('at least half'), 'the description says what a stock-out week is');
 });

@@ -191,6 +191,11 @@
       "schema": "er"
     },
     {
+      "qname": "hartland.er.entity.dc_stockout_month",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
       "qname": "hartland.er.entity.document_flow",
       "package": "hartland",
       "schema": "er"

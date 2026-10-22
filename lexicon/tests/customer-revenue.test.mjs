@@ -11,15 +11,13 @@
 // So the rows are whole phrases under the file's default profile, every Czech case form a question takes
 // is spelled out, and this suite holds both.
 //
-// The phrase check below is a deliberately small model of the matcher — whole phrase, contiguous tokens,
-// compared under each rule's normalisation (canonical = lower case, folded = lower case without
-// diacritics), typos left out. It tells "the phrase can match this question at all", not which span wins.
+// The phrase check is `wholePhraseHits` (archive.mjs), a deliberately small model of the matcher.
 //
 // Run: node --test lexicon/tests/customer-revenue.test.mjs   (or `just verify-model`)
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isCs, isEn, lexicon } from './archive.mjs';
+import { isCs, isEn, lexicon, wholePhraseHits } from './archive.mjs';
 
 const MEASURE = 'er.entity.customer_revenue.revenue';
 const ENTITY = 'er.entity.customer_revenue';
@@ -28,22 +26,6 @@ const PHRASES = {
   en: ['customer revenue', 'customer revenues', 'revenue per customer'],
   cs: ['tržby zákazníka', 'tržba zákazníka', 'tržeb zákazníka', 'tržby zákazníků', 'tržeb zákazníků', 'tržby na zákazníka'],
 };
-
-const fold = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-const words = (s) => s.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
-const NORMS = { canonical: (s) => words(s).join(' '), folded: (s) => words(fold(s)).join(' ') };
-
-/** The rows a question can reach as a WHOLE phrase, under each row's own rules (typos left out). */
-function wholePhraseHits(question, lang) {
-  return lexicon.entries.filter((e) => {
-    if (!lang(e) || e.termNormalized.split(' ').length < 2) return false;
-    return (e.matchProfile?.rules ?? []).some((r) => {
-      const norm = NORMS[r.norm];
-      if (!norm || r.tokens || r.exact == null) return false;
-      return ` ${norm(question)} `.includes(` ${norm(e.termNormalized)} `);
-    });
-  });
-}
 
 test('control — the bare revenue words still reach channel_sales, and only it', () => {
   // A probe that cannot find its control is broken, not informative (lexicon-archive-staleness).

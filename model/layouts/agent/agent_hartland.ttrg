@@ -14,6 +14,7 @@ graph agent_hartland {
     hartland.er.entity.customer_price,
     hartland.er.entity.customer_revenue,
     hartland.er.entity.date_dim,
+    hartland.er.entity.dc_stockout_month,
     hartland.er.entity.document_flow,
     hartland.er.entity.household_demographics,
     hartland.er.entity.income_band,
