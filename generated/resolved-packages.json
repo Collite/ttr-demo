@@ -151,6 +151,11 @@
       "schema": "er"
     },
     {
+      "qname": "hartland.er.entity.category_return_month",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
       "qname": "hartland.er.entity.channel_sales",
       "package": "hartland",
       "schema": "er"

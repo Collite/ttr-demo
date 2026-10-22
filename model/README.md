@@ -15,7 +15,10 @@ One model set (BM-2/BM-5), served over `pg-hartland-us` (USD) and `pg-hartland-c
   And a second (BI-4, 2026-10-22): `er/stockouts.ttrm` declares `er.query.stockouts_monthly_dc` — stock-out weeks per
   distribution center per month, over `inventory JOIN warehouse JOIN date_dim` — and the entity `dc_stockout_month`
   stacked on it, related to its DC and to the calendar day its month starts on. Superset's "DC meltdown — stock-outs"
-  dashboard reads it as `obj.query.stockouts_monthly_dc`; ListQueries now returns 19.
+  dashboard reads it as `obj.query.stockouts_monthly_dc`. And `er/returns-by-category.ttrm`:
+  `er.query.returns_monthly_by_category` (returns per item category per month, over the return family) with the entity
+  `category_return_month` — the "Returns by category" dataset, BI's own (SO keeps `returns_review` on its demo branch).
+  ListQueries now returns 20.
 - `md/` — `model md` + `md2db`/`md2er` binding: the ROLAP star (cubelets, measures, conformed
   dimensions incl. the Product hierarchy Category→Class→Brand→Manufacturer→Item).
 - `lexicon/` — `model lexicon locale en` + `locale cs`: the bilingual naming layer + valueLabels.
