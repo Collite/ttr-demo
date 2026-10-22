@@ -53,7 +53,8 @@ required = true     # a Studio-authored entity/attribute must be bound at creati
 
 [ttrp]
 # The TTR-P toolchain (`ttrp check` / `ttrp explain`, ttr-core grammar/v0.16.1+) loads its models from `models/` beside
-# this manifest. Hartland keeps them in `model/`, and the automation package, world and ops stub in `automation/`
-# (automation/worlds/demo.ttrm says why they stay out of `model/`), so both are named here. veles and the lexicon build
+# this manifest. Hartland keeps the model in `model/`, the package and world in `automation/`, and the ops
+# authoring stubs in `authoring-stubs/` (the Server reads only the first two roots).
+# (automation/worlds/demo.ttrm says why they stay out of `model/`), so those roots are named here. veles and the lexicon build
 # do not read this section.
-extra-model-roots = ["model", "automation"]
+extra-model-roots = ["model", "automation", "authoring-stubs"]

@@ -1,6 +1,6 @@
 // no_run_since.ttrp — derived from no-run-since.md (an ops recipe: D-72, alert rules are recipes)
 // AU-hartland P2 (pre-literate — the `.md` comes at P3, S3.3 T3): a scheduled deployment with no run for two of its
-// periods. Over the `automation.ops` package — a stub until the service serves it (automation/ops/stub/).
+// periods. Over the `automation.ops` package — a stub until the service serves it (authoring-stubs/automation/ops/).
 // The program (`no_run_since_hourly`) writes the protocol only when a route fires (D-80).
 uses world "hartland.worlds.demo"
 import hartland.automation.*

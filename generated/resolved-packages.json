@@ -7,7 +7,7 @@
       "canonicalName": "automation.ops",
       "declaredName": "automation.ops",
       "nested": true,
-      "directory": "automation/ops/stub"
+      "directory": "authoring-stubs/automation/ops"
     },
     {
       "canonicalName": "hartland",

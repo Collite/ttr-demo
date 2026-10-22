@@ -8,8 +8,8 @@
 // period: the Server knows them from the served bundle (the world's `def deployment … trigger: schedule`). ttr-server P4
 // serves that entity; the hourly deployments stay omitted until then — recorded in the hartland STATUS.
 //
-// Lives under automation/, never model/: veles and the lexicon build read model/, and an entity there is served to
-// the Golem and harvested into the lexicon.
+// Authoring-only root: neither veles (model/) nor the automation Server (model/ + automation/) loads this folder.
+// The recipe checker opts into it via modeler.toml; no stub entity is served.
 package automation.ops
 model er
 

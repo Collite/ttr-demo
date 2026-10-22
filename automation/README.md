@@ -53,3 +53,6 @@ The two ops recipes remain authored under `ops/` and their golden seeds remain t
 **deployments are omitted** until Server P4 serves the real `automation.ops` package. `no_run_since` also has a
 named `TTRP-TYP-001` refusal for row-dependent `minutes(2 * period_minutes)` arithmetic. The stub is an authoring
 fixture only and is not included in any bundle; remove all three stub files when the real package lands.
+
+The ops stub lives at `../authoring-stubs/automation/ops/`, outside both roots read by the Server
+(`model/` + `automation/`). Only the recipe toolchain loads this extra root through `modeler.toml`.

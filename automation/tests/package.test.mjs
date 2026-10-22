@@ -11,6 +11,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { readFile } from 'node:fs/promises';
 import { loadHartlandProject, ACCEPTED_RESIDUAL_CODES, hartlandRoot } from '../../model/tests/project-harness.mjs';
 
 const tatrmanPackages = process.env.TATRMAN_PACKAGES ?? path.resolve(hartlandRoot, '../tatrman/packages');
@@ -356,4 +357,14 @@ test('S2.1 T5 — every value a lifecycle declares has a value label, and every 
     const labelled = (a.valueLabels?.entries ?? []).map((e) => e.key).sort();
     assert.deepEqual(labelled, [...states].sort(), ref);
   }
+});
+
+
+test('S2.3 — the Server roots exclude the ops authoring stubs', async () => {
+  assert.ok(docsOf(project).every((d) => d.packageDecl?.name !== 'automation.ops'));
+  assert.ok(!ofKind('entity').has('deployment'));
+  const manifest = await readFile(path.join(hartlandRoot, 'modeler.toml'), 'utf8');
+  assert.match(manifest, /extra-model-roots = \["model", "automation", "authoring-stubs"\]/);
+  const stub = await readFile(path.join(hartlandRoot, 'authoring-stubs/automation/ops/automation-ops.ttrm'), 'utf8');
+  assert.match(stub, /package automation\.ops/);
 });
