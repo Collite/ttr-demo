@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "ttrpVersion": 2,
-  "toolchain": "org.tatrman:ttrp:0.17.3-au.1",
+  "toolchain": "org.tatrman:ttrp:0.17.3-au.2",
   "program": "reorder_proposals.ttrp",
   "world": {
     "qname": "hartland.worlds.demo",

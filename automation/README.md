@@ -40,8 +40,8 @@ on any tracked or untracked change under `automation/`. Run `just build-recipes`
 recipe or golden seed changes. The bundles include the golden YAML seeds and their hashes in `recipe.tests`.
 The literate documents and their drift check remain P3.
 
-The recipe pin is temporarily ttr-core commit `f9f7b5b4292e4ce0588b83618a5408817a4a202c`
-(`0.17.3-au.1`), based on `grammar/v0.17.3`. The released tag emits retired CNC roles in verdict catalogs,
+The recipe pin is temporarily ttr-core commit `b29d759294b4dfee31052264645a4fb2ade1a18f`
+(`0.17.3-au.2`), based on `grammar/v0.17.3`. The released tag emits retired CNC roles in verdict catalogs,
 omits the golden-fixture list, and reports CEIL as unsupported. This commit fixes those handoff issues; replace
 it with the next reviewed grammar release (ttr-core PR #249); delete `version` when moving `ref` to a tag. A new commit pin takes the next `-au.<n>` suffix. Generated bundles remain the unmodified output of that toolchain.
 
