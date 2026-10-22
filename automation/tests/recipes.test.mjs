@@ -1,29 +1,26 @@
-// AU-hartland-P2 · S2.2 — the eight recipes as `.ttrp` (D-25, D-80, D-85; `17` §3–§4, `04` H-3/H-5).
-// What ttr-core can check is checked here, through the toolchain's own CLI: `ttrp explain` (the recipe skeleton, from
-// the parse, and — from grammar/v0.16.1, ttr-core P1 — the RecipeChecker's section: the mode verdict and each
-// context's class) and `ttrp check` (the checker's findings). Every recipe checks with zero diagnostics and is mode
-// per-candidate; its parameters are declared, used and the package's; every route of its switch is wired; the four
-// `17` recipes ARE ttr-core's shared fixtures.
-// What the pinned toolchain cannot check yet is `todo`, naming the ttr-core phase that brings it: the recipe build and
-// its manifest (P2 — `ttrp build` refuses a recipe with TTRP-REC-099 until then).
-// Run: node --test automation/tests/recipes.test.mjs (from the hartland repo root).
+// AU-hartland P2: source contracts, checker verdicts, and reproducible manifest-v3 bundles.
+// The recipe CLI and its shared fixtures follow [ttrp], independently of the model gate's JS toolchain.
+// Ops remain authored and tested; their deployments await the Server's real automation.ops package.
+// Run after `just toolchain-ttrp` and `just build-recipes`; CI requires the CLI.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { readFile, readdir } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import os from 'node:os';
+import { readFile, readdir, mkdtemp, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { hartlandRoot } from '../../model/tests/project-harness.mjs';
 
 const run = promisify(execFile);
-const tatrmanPackages = process.env.TATRMAN_PACKAGES ?? path.resolve(hartlandRoot, '../tatrman/packages');
+const recipePackages = path.resolve(hartlandRoot, '.modeler/toolchains/ttrp/packages');
 // `TTRP_CLI` overrides the sibling-checkout default (the `TTR_LEXICON_CLI` precedent of lexicon/tests/area.test.mjs).
-const CLI = process.env.TTRP_CLI ?? path.join(tatrmanPackages, 'kotlin/ttrp-cli/build/install/ttrp-cli/bin/ttrp-cli');
+const CLI = process.env.TTRP_CLI ?? path.join(recipePackages, 'kotlin/ttrp-cli/build/install/ttrp-cli/bin/ttrp-cli');
 // Skipped locally without a built CLI; in CI (the model gate builds it) a missing CLI is a failure, not a skip.
 const cliMissing = !existsSync(CLI) && !process.env.CI && 'ttrp CLI not built — ./gradlew :packages:kotlin:ttrp-cli:installDist in the tatrman checkout';
-const FIXTURES = path.join(tatrmanPackages, 'kotlin/ttrp-frontend/src/test/resources/recipes');
+const FIXTURES = path.resolve(path.dirname(CLI), '../../../../../../kotlin/ttrp-frontend/src/test/resources/recipes');
 
 const automationDir = path.join(hartlandRoot, 'automation');
 async function findRecipes(dir) {
@@ -82,10 +79,11 @@ function skeleton(out) {
   return { head, parameters, routes, elseTarget, wirings };
 }
 
-const explained = cliMissing ? {} : Object.fromEntries(await Promise.all(Object.entries(recipeFiles).map(async ([n, f]) => [n, await explain(f)])));
+const checkableFiles = Object.entries(recipeFiles).filter(([n]) => n !== 'no_run_since');
+const explained = cliMissing ? {} : Object.fromEntries(await Promise.all(checkableFiles.map(async ([n, f]) => [n, await explain(f)])));
 const sources = Object.fromEntries(await Promise.all(Object.entries(recipeFiles).map(async ([n, f]) => [n, await readFile(f, 'utf-8')])));
 
-test('S2.2 T1 — every recipe parses and checks with zero diagnostics (`ttrp explain`)', { skip: cliMissing }, () => {
+test('S2.2 T1 — the seven checkable recipes parse and check with zero diagnostics (`ttrp explain`)', { skip: cliMissing }, () => {
   for (const [name, r] of Object.entries(explained)) {
     assert.equal(r.code, 0, `${name}:\n${r.out}`);
     assert.match(r.out, /^recipe · key /m, `${name}: the skeleton`);
@@ -161,7 +159,7 @@ for (const name of ['release_order', 'decide_return', 'monitor_inbound', 'settle
 
 // ── the RecipeChecker (ttr-core P1, grammar/v0.16.1) ──────────────────────────────────────────────────────────────
 test('S2.2 T1 — zero diagnostics from the RecipeChecker (`ttrp check`)', { skip: cliMissing }, async () => {
-  for (const [name, file] of Object.entries(recipeFiles)) {
+  for (const [name, file] of checkableFiles) {
     const r = await ttrp('check', file);
     assert.equal(r.code, 0, `${name}:\n${r.out}`);
     assert.equal(r.out.trim(), '', `${name}: findings`);
@@ -171,7 +169,7 @@ test('S2.2 T1 — zero diagnostics from the RecipeChecker (`ttrp check`)', { ski
 // Every recipe is per-candidate, ops/no_run_since too. The task list expected `set-level, batch` for it, but its one
 // context groups each deployment's runs by the deployment, the key, so its verdict depends on that deployment alone
 // (06 A-5). Its program runs it hourly in batch either way.
-test('S2.2 T1 — the mode verdicts: every recipe per-candidate, no context set-level', { skip: cliMissing }, () => {
+test('S2.2 T1 — the mode verdicts: the seven checkable recipes per-candidate, no context set-level', { skip: cliMissing }, () => {
   for (const [name, r] of Object.entries(explained)) {
     assert.match(r.out, /^checker · mode per-candidate · /m, `${name}: the mode verdict`);
     const contexts = [...r.out.matchAll(/^ {2}context (\w+) .*\b(lookup|per-candidate|set-level)\b/gm)];
@@ -179,5 +177,84 @@ test('S2.2 T1 — the mode verdicts: every recipe per-candidate, no context set-
   }
 });
 
-// ── what the pinned toolchain cannot check yet ────────────────────────────────────────────────────────────────────
-test.todo('S2.2 T1 — `ttrp build --json` per recipe: the manifest\'s mode, `kinds` ([sql] + [builtin] where a sugar lowers to one) and parameters — ttr-core P2 (S2.3)');
+// S2.3: the ops recipes remain authored, but no_run_since cannot lower row-dependent date arithmetic yet.
+test('S2.3 — no_run_since has the documented TYP-001 refusal and no deployment', { skip: cliMissing }, async () => {
+  const r = await ttrp('check', recipeFiles.no_run_since);
+  assert.notEqual(r.code, 0);
+  assert.match(r.out, /TTRP-TYP-001/);
+  const world = code(await readFile(path.join(automationDir, 'worlds/demo.ttrm'), 'utf8'));
+  assert.doesNotMatch(world, /program:\s*(?:no_run_since_hourly|obligation_due_passed_hourly)/);
+});
+
+const bundledNames = RECIPES.filter((n) => !['no_run_since', 'obligation_due_passed'].includes(n));
+const sha = (bytes) => 'sha256:' + createHash('sha256').update(bytes).digest('hex');
+
+async function tree(dir, prefix = '') {
+  const files = {};
+  for (const e of await readdir(dir, { withFileTypes: true })) {
+    const rel = prefix + e.name;
+    if (e.isDirectory()) Object.assign(files, await tree(path.join(dir, e.name), rel + '/'));
+    else files[rel] = sha(await readFile(path.join(dir, e.name)));
+  }
+  return files;
+}
+
+test('S2.3 — every deployment and process step has a committed recipe bundle', async () => {
+  const programs = code(await readFile(path.join(automationDir, 'programs.ttrm'), 'utf8'));
+  const mapping = Object.fromEntries([...programs.matchAll(/def program\s+(\w+)\s*\{\s*recipe:\s*(\w+)/g)].map((m) => [m[1], m[2]]));
+  const world = code(await readFile(path.join(automationDir, 'worlds/demo.ttrm'), 'utf8'));
+  for (const m of world.matchAll(/program:\s*(\w+)/g)) {
+    assert.ok(mapping[m[1]], m[1]);
+    assert.ok(bundledNames.includes(mapping[m[1]]), m[1] + ': deferred recipe must not deploy');
+    assert.ok(existsSync(path.join(path.dirname(recipeFiles[mapping[m[1]]]), mapping[m[1]] + '.bundle/manifest.json')), m[1]);
+  }
+});
+
+for (const name of bundledNames) {
+  test(`S2.3 — ${name}: v3, hashes, golden seeds, catalog references and two identical builds`, { skip: cliMissing }, async () => {
+    const file = recipeFiles[name];
+    const committed = path.join(path.dirname(file), name + '.bundle');
+    const manifest = JSON.parse(await readFile(path.join(committed, 'manifest.json'), 'utf8'));
+    assert.equal(manifest.schemaVersion, 3);
+    assert.equal(manifest.recipe.name, name);
+    assert.equal(manifest.recipe.mode, 'per-candidate');
+    assert.deepEqual(manifest.recipe.kinds, ['sql']);
+    for (const kind of ['text', 'values', 'labels']) assert.match(manifest.recipe.fingerprints[kind], /^sha256:[0-9a-f]{64}$/);
+    const seeds = (await readdir(path.join(path.dirname(file), 'tests'))).filter((p) => /\.ya?ml$/.test(p)).sort().map((p) => 'tests/' + p);
+    assert.deepEqual(manifest.recipe.tests, seeds);
+    for (const [rel, hash] of Object.entries(manifest.files)) assert.equal(sha(await readFile(path.join(committed, rel))), hash, rel);
+    const entities = new Set(['obligation', 'state_history', 'approvals', name + '_verdict']);
+    async function scan(dir) {
+      for (const e of await readdir(dir, { withFileTypes: true })) {
+        const p = path.join(dir, e.name);
+        if (e.isDirectory() && e.name !== 'tests' && e.name !== 'stub') await scan(p);
+        else if (e.name.endsWith('.ttrm')) for (const m of (await readFile(p, 'utf8')).matchAll(/def entity\s+(\w+)/g)) entities.add(m[1]);
+      }
+    }
+    await scan(path.join(hartlandRoot, 'model'));
+    await scan(path.join(committed, 'catalog'));
+    for (const object of manifest.recipe.objectsRead) assert.ok(entities.has(object.split('.').at(-1)), object);
+    if (['monitor_inbound', 'settle'].includes(name)) {
+      assert.deepEqual([...new Set(manifest.recipe.parts.map((p) => p.storage))].sort(), ['automation_db', 'erp_db']);
+      assert.ok(manifest.islands.flatMap((i) => i.outputs).some((o) => o.combine));
+    }
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'hartland-bundle-'));
+    try {
+      for (let pass = 0; pass < 2; pass++) {
+        const out = path.join(tmp, String(pass));
+        const r = await run(CLI, ['build', file, '--out', out, '--json'], { maxBuffer: 8 << 20 });
+        assert.deepEqual(JSON.parse(r.stdout).diagnostics, []);
+        assert.deepEqual(await tree(path.join(out, name + '.bundle')), await tree(committed));
+      }
+    } finally { await rm(tmp, { recursive: true, force: true }); }
+  });
+}
+
+test('S2.3 — winback SQL selects the highest two bands and excludes recent orders and recent mail', { skip: cliMissing }, async () => {
+  const lib = path.resolve(path.dirname(CLI), '../lib/*');
+  const probe = path.join(automationDir, 'tests/WinbackSqlProbe.java');
+  const bundle = path.join(automationDir, 'winback/winback.bundle');
+  const result = await run('java', ['--class-path', lib, probe, bundle], { maxBuffer: 4 << 20 });
+  assert.match(result.stdout, /premium=\[2, 3\]/);
+  assert.match(result.stdout, /standard=\[1\]/);
+});

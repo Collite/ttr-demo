@@ -63,7 +63,7 @@ def recipe_parameters(ttrp: Path) -> set[str]:
 
 class GoldenCases(unittest.TestCase):
     recipes = seed_goldens.recipe_files()
-    cases = sorted(AUTOMATION.rglob("tests/*.yaml"))
+    cases = sorted(p for p in AUTOMATION.rglob("tests/*.yaml") if not any(part.endswith(".bundle") for part in p.parts))
 
     def test_there_are_cases(self) -> None:
         self.assertGreater(len(self.cases), 0)

@@ -22,6 +22,12 @@
       "directory": "automation"
     },
     {
+      "canonicalName": "hartland.automation.generated",
+      "declaredName": "hartland.automation.generated",
+      "nested": true,
+      "directory": "automation/decide_return/decide_return.bundle/catalog"
+    },
+    {
       "canonicalName": "hartland.worlds",
       "declaredName": "hartland.worlds",
       "nested": true,
@@ -37,6 +43,96 @@
     {
       "qname": "automation.ops.er.entity.run",
       "package": "automation.ops",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.automation.generated.er.entity.decide_return_verdict",
+      "package": "hartland.automation.generated",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.automation.generated.er.entity.decide_return_verdict_current",
+      "package": "hartland.automation.generated",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.automation.generated.er.entity.decide_return_verdict_detail",
+      "package": "hartland.automation.generated",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.automation.generated.er.entity.monitor_inbound_verdict",
+      "package": "hartland.automation.generated",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.automation.generated.er.entity.monitor_inbound_verdict_current",
+      "package": "hartland.automation.generated",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.automation.generated.er.entity.monitor_inbound_verdict_detail",
+      "package": "hartland.automation.generated",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.automation.generated.er.entity.release_order_verdict",
+      "package": "hartland.automation.generated",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.automation.generated.er.entity.release_order_verdict_current",
+      "package": "hartland.automation.generated",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.automation.generated.er.entity.release_order_verdict_detail",
+      "package": "hartland.automation.generated",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.automation.generated.er.entity.reorder_proposals_verdict",
+      "package": "hartland.automation.generated",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.automation.generated.er.entity.reorder_proposals_verdict_current",
+      "package": "hartland.automation.generated",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.automation.generated.er.entity.reorder_proposals_verdict_detail",
+      "package": "hartland.automation.generated",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.automation.generated.er.entity.settle_verdict",
+      "package": "hartland.automation.generated",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.automation.generated.er.entity.settle_verdict_current",
+      "package": "hartland.automation.generated",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.automation.generated.er.entity.settle_verdict_detail",
+      "package": "hartland.automation.generated",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.automation.generated.er.entity.winback_verdict",
+      "package": "hartland.automation.generated",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.automation.generated.er.entity.winback_verdict_current",
+      "package": "hartland.automation.generated",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.automation.generated.er.entity.winback_verdict_detail",
+      "package": "hartland.automation.generated",
       "schema": "er"
     },
     {
@@ -226,6 +322,7 @@
       "resolvedPackages": [
         "hartland",
         "hartland.automation",
+        "hartland.automation.generated",
         "hartland.worlds"
       ],
       "resolvedEntities": [

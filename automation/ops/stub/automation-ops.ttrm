@@ -4,9 +4,9 @@
 // (automation-ops-db.ttrm, automation-ops-binding.ttrm) only because ttr-core P1's checker resolves an entity load
 // through er2db: the recipes only need to check (the dry run against the served package is P3 · S3.3 T3).
 //
-// ⚑ `deployment` is NOT in contracts §9's list. `no_run_since` needs the deployments that have a schedule and their
+// `deployment` was ratified in contracts §9 by Bora on 2026-10-22. `no_run_since` needs the deployments that have a schedule and their
 // period: the Server knows them from the served bundle (the world's `def deployment … trigger: schedule`). ttr-server P4
-// either serves such an entity or this recipe is restated — recorded in the hartland STATUS.
+// serves that entity; the hourly deployments stay omitted until then — recorded in the hartland STATUS.
 //
 // Lives under automation/, never model/: veles and the lexicon build read model/, and an entity there is served to
 // the Golem and harvested into the lexicon.
