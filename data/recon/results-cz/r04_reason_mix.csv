@@ -1,106 +1,106 @@
 channel,r_reason_desc,lines,amt
-catalog,Nedorazilo včas                                                                                     ,4511,130770340
-catalog,Duplicitní nákup                                                                                    ,4061,124787088
-catalog,Kvalita neodpovídá                                                                                  ,3905,123160722
-catalog,Nechtěný dárek                                                                                      ,4065,122333618
-catalog,Je to holka                                                                                         ,4012,121208502
-catalog,Duplicitní objednávka                                                                               ,4110,121203859
-catalog,Chybějící příslušenství                                                                             ,3952,121112802
-catalog,Objednáno omylem                                                                                    ,3979,120035138
-catalog,Nekompatibilní se zařízením                                                                         ,3945,119683226
-catalog,Neautorizovaný nákup                                                                                ,3983,119677144
-catalog,Nelíbila se mi záruka                                                                               ,4019,119533962
-catalog,Nelíbila se mi značka                                                                               ,3959,119491133
-catalog,Přestalo fungovat                                                                                   ,3978,118920276
-catalog,Přišel/přišla jsem o práci                                                                          ,3986,118870645
-catalog,Nebyl to objednaný produkt                                                                          ,3995,118714612
-catalog,Přestalo fungovat úplně                                                                             ,4006,118630785
-catalog,Chybí díly                                                                                          ,3936,118384061
-catalog,Reklamace u výrobce                                                                                 ,4026,117991918
-catalog,Nesedělo to                                                                                         ,3956,117897944
-catalog,Neodpovídá popisu                                                                                   ,3960,117866520
-catalog,Výměna dárku                                                                                        ,3952,117675641
-catalog,Změnil/a jsem názor                                                                                 ,4037,117322873
-catalog,Nelíbila se mi barva                                                                                ,4008,116623209
-catalog,Poškozený obal                                                                                      ,3947,116482238
-catalog,Již nepotřebuji                                                                                     ,3971,116171480
-catalog,Našel/našla jsem lepší cenu                                                                         ,3956,116021690
-catalog,V mém okolí není servis                                                                             ,3960,115851061
-catalog,Špatná velikost                                                                                     ,3878,115563117
-catalog,Balík byl poškozen                                                                                  ,3977,115392726
-catalog,Našel/našla jsem lepší cenu v obchodě                                                               ,3963,114821895
-catalog,Lepší prodloužená záruka v obchodě                                                                  ,3910,114208449
-catalog,Je to kluk                                                                                          ,3926,113838127
-catalog,"Nefunguje s produktem, který mám                                                                    ",3909,113421476
-catalog,Jiný důvod                                                                                          ,3855,113245936
-catalog,Nelíbil se mi model                                                                                 ,3963,110998307
-store,Nelíbila se mi značka                                                                               ,7896,179776332
-store,Našel/našla jsem lepší cenu                                                                         ,7977,179424841
-store,Chybějící příslušenství                                                                             ,8069,179404732
-store,Nesedělo to                                                                                         ,8034,179363078
-store,Duplicitní nákup                                                                                    ,7924,179255522
-store,Nekompatibilní se zařízením                                                                         ,8032,179150394
-store,Špatná velikost                                                                                     ,7963,178844519
-store,Balík byl poškozen                                                                                  ,7949,178454706
-store,Výměna dárku                                                                                        ,7917,178232725
-store,Je to holka                                                                                         ,8049,178119067
-store,Je to kluk                                                                                          ,8104,177161598
-store,Přestalo fungovat úplně                                                                             ,7878,177099135
-store,Lepší prodloužená záruka v obchodě                                                                  ,8083,176606546
-store,Kvalita neodpovídá                                                                                  ,7936,176237783
-store,Nedorazilo včas                                                                                     ,7837,176018042
-store,Našel/našla jsem lepší cenu v obchodě                                                               ,8000,175789615
-store,Reklamace u výrobce                                                                                 ,7887,175780593
-store,Již nepotřebuji                                                                                     ,7983,175704162
-store,Nebyl to objednaný produkt                                                                          ,7938,175576261
-store,Změnil/a jsem názor                                                                                 ,7990,175256286
-store,Nelíbila se mi záruka                                                                               ,7857,175022816
-store,Přišel/přišla jsem o práci                                                                          ,7894,174741421
-store,Nelíbila se mi barva                                                                                ,7988,174436574
-store,Přestalo fungovat                                                                                   ,7912,174045929
-store,Duplicitní objednávka                                                                               ,7854,173473186
-store,Nelíbil se mi model                                                                                 ,7862,173448848
-store,Nechtěný dárek                                                                                      ,7812,172626910
-store,Neodpovídá popisu                                                                                   ,7779,171479835
-store,Neautorizovaný nákup                                                                                ,7941,171162422
-store,Poškozený obal                                                                                      ,7938,170927382
-store,Objednáno omylem                                                                                    ,7833,170752983
-store,Jiný důvod                                                                                          ,7880,170039544
-store,V mém okolí není servis                                                                             ,7859,169043760
-store,Chybí díly                                                                                          ,7934,168260538
-store,"Nefunguje s produktem, který mám                                                                    ",7741,168097610
-web,Nelíbila se mi záruka                                                                               ,1990,61993783
-web,Chybí díly                                                                                          ,2034,60995900
-web,Nelíbila se mi značka                                                                               ,1910,60656755
-web,Nechtěný dárek                                                                                      ,2029,60627459
-web,Výměna dárku                                                                                        ,1998,60179719
-web,Chybějící příslušenství                                                                             ,2022,59970792
-web,Našel/našla jsem lepší cenu                                                                         ,1961,59827686
-web,Změnil/a jsem názor                                                                                 ,1981,59691936
-web,Nekompatibilní se zařízením                                                                         ,2033,59302195
-web,Poškozený obal                                                                                      ,1962,59281852
-web,Nesedělo to                                                                                         ,1988,59228264
-web,Neautorizovaný nákup                                                                                ,1951,59170731
-web,Balík byl poškozen                                                                                  ,1987,59170397
-web,V mém okolí není servis                                                                             ,2018,59159604
-web,Je to kluk                                                                                          ,1953,59155860
-web,Duplicitní objednávka                                                                               ,1963,58757890
-web,Je to holka                                                                                         ,1982,58750573
-web,Lepší prodloužená záruka v obchodě                                                                  ,1939,58113785
-web,Nebyl to objednaný produkt                                                                          ,1975,58087050
-web,Již nepotřebuji                                                                                     ,1950,57930086
-web,Neodpovídá popisu                                                                                   ,1914,57741097
-web,"Nefunguje s produktem, který mám                                                                    ",1945,57489931
-web,Kvalita neodpovídá                                                                                  ,1936,57298651
-web,Přestalo fungovat                                                                                   ,1916,56416041
-web,Přestalo fungovat úplně                                                                             ,2025,56392746
-web,Nelíbila se mi barva                                                                                ,1925,56211778
-web,Našel/našla jsem lepší cenu v obchodě                                                               ,1934,55754628
-web,Jiný důvod                                                                                          ,1922,55189242
-web,Nelíbil se mi model                                                                                 ,1924,54299041
-web,Duplicitní nákup                                                                                    ,1957,53527483
-web,Reklamace u výrobce                                                                                 ,1877,53447802
-web,Přišel/přišla jsem o práci                                                                          ,1979,53319807
-web,Špatná velikost                                                                                     ,1875,51636136
-web,Objednáno omylem                                                                                    ,1919,51272017
-web,Nedorazilo včas                                                                                     ,1877,51082178
+catalog,Nedorazilo včas,4511,130770340
+catalog,Duplicitní nákup,4061,124787088
+catalog,Kvalita neodpovídá,3905,123160722
+catalog,Nechtěný dárek,4065,122333618
+catalog,Je to holka,4012,121208502
+catalog,Duplicitní objednávka,4110,121203859
+catalog,Chybějící příslušenství,3952,121112802
+catalog,Objednáno omylem,3979,120035138
+catalog,Nekompatibilní se zařízením,3945,119683226
+catalog,Neautorizovaný nákup,3983,119677144
+catalog,Nelíbila se mi záruka,4019,119533962
+catalog,Nelíbila se mi značka,3959,119491133
+catalog,Přestalo fungovat,3978,118920276
+catalog,Přišel/přišla jsem o práci,3986,118870645
+catalog,Nebyl to objednaný produkt,3995,118714612
+catalog,Přestalo fungovat úplně,4006,118630785
+catalog,Chybí díly,3936,118384061
+catalog,Reklamace u výrobce,4026,117991918
+catalog,Nesedělo to,3956,117897944
+catalog,Neodpovídá popisu,3960,117866520
+catalog,Výměna dárku,3952,117675641
+catalog,Změnil/a jsem názor,4037,117322873
+catalog,Nelíbila se mi barva,4008,116623209
+catalog,Poškozený obal,3947,116482238
+catalog,Již nepotřebuji,3971,116171480
+catalog,Našel/našla jsem lepší cenu,3956,116021690
+catalog,V mém okolí není servis,3960,115851061
+catalog,Špatná velikost,3878,115563117
+catalog,Balík byl poškozen,3977,115392726
+catalog,Našel/našla jsem lepší cenu v obchodě,3963,114821895
+catalog,Lepší prodloužená záruka v obchodě,3910,114208449
+catalog,Je to kluk,3926,113838127
+catalog,"Nefunguje s produktem, který mám",3909,113421476
+catalog,Jiný důvod,3855,113245936
+catalog,Nelíbil se mi model,3963,110998307
+store,Nelíbila se mi značka,7896,179776332
+store,Našel/našla jsem lepší cenu,7977,179424841
+store,Chybějící příslušenství,8069,179404732
+store,Nesedělo to,8034,179363078
+store,Duplicitní nákup,7924,179255522
+store,Nekompatibilní se zařízením,8032,179150394
+store,Špatná velikost,7963,178844519
+store,Balík byl poškozen,7949,178454706
+store,Výměna dárku,7917,178232725
+store,Je to holka,8049,178119067
+store,Je to kluk,8104,177161598
+store,Přestalo fungovat úplně,7878,177099135
+store,Lepší prodloužená záruka v obchodě,8083,176606546
+store,Kvalita neodpovídá,7936,176237783
+store,Nedorazilo včas,7837,176018042
+store,Našel/našla jsem lepší cenu v obchodě,8000,175789615
+store,Reklamace u výrobce,7887,175780593
+store,Již nepotřebuji,7983,175704162
+store,Nebyl to objednaný produkt,7938,175576261
+store,Změnil/a jsem názor,7990,175256286
+store,Nelíbila se mi záruka,7857,175022816
+store,Přišel/přišla jsem o práci,7894,174741421
+store,Nelíbila se mi barva,7988,174436574
+store,Přestalo fungovat,7912,174045929
+store,Duplicitní objednávka,7854,173473186
+store,Nelíbil se mi model,7862,173448848
+store,Nechtěný dárek,7812,172626910
+store,Neodpovídá popisu,7779,171479835
+store,Neautorizovaný nákup,7941,171162422
+store,Poškozený obal,7938,170927382
+store,Objednáno omylem,7833,170752983
+store,Jiný důvod,7880,170039544
+store,V mém okolí není servis,7859,169043760
+store,Chybí díly,7934,168260538
+store,"Nefunguje s produktem, který mám",7741,168097610
+web,Nelíbila se mi záruka,1990,61993783
+web,Chybí díly,2034,60995900
+web,Nelíbila se mi značka,1910,60656755
+web,Nechtěný dárek,2029,60627459
+web,Výměna dárku,1998,60179719
+web,Chybějící příslušenství,2022,59970792
+web,Našel/našla jsem lepší cenu,1961,59827686
+web,Změnil/a jsem názor,1981,59691936
+web,Nekompatibilní se zařízením,2033,59302195
+web,Poškozený obal,1962,59281852
+web,Nesedělo to,1988,59228264
+web,Neautorizovaný nákup,1951,59170731
+web,Balík byl poškozen,1987,59170397
+web,V mém okolí není servis,2018,59159604
+web,Je to kluk,1953,59155860
+web,Duplicitní objednávka,1963,58757890
+web,Je to holka,1982,58750573
+web,Lepší prodloužená záruka v obchodě,1939,58113785
+web,Nebyl to objednaný produkt,1975,58087050
+web,Již nepotřebuji,1950,57930086
+web,Neodpovídá popisu,1914,57741097
+web,"Nefunguje s produktem, který mám",1945,57489931
+web,Kvalita neodpovídá,1936,57298651
+web,Přestalo fungovat,1916,56416041
+web,Přestalo fungovat úplně,2025,56392746
+web,Nelíbila se mi barva,1925,56211778
+web,Našel/našla jsem lepší cenu v obchodě,1934,55754628
+web,Jiný důvod,1922,55189242
+web,Nelíbil se mi model,1924,54299041
+web,Duplicitní nákup,1957,53527483
+web,Reklamace u výrobce,1877,53447802
+web,Přišel/přišla jsem o práci,1979,53319807
+web,Špatná velikost,1875,51636136
+web,Objednáno omylem,1919,51272017
+web,Nedorazilo včas,1877,51082178

@@ -78,6 +78,23 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-22**, BI-4 · C-24 (branch `feat/bi-p4-char-labels`, rebased on ttr-demo#93's
+merge `bbadee2`): the eleven label columns of the db model CHAR → VARCHAR (`model/db/dims.ttrm`, retyped in the worlds by
+`data/labels/`). They move the model id and nothing else in the vocabulary: the entries and targets are #93's, byte for
+byte. Built with the pinned toolchain **`grammar/v0.16.1`**:
+
+| | |
+|---|---|
+| archive id | `sha256:9ffad462b8eca7375eb2fc3ac2795730b10923bdfaf3c86b414b398344c2e077` |
+| model id | `sha256:8a5d11de28b8062c0064ffdab39afe8049663267e019a6ffe6af7d377dd958e2` (was `991a1b57…`) |
+| schema | `ttr-lexicon-compiled/v5` (unchanged) |
+| toolchain | `Collite/ttr-core` **`grammar/v0.16.1`** |
+| entries | **812** — every class unchanged |
+| build warnings | **24**, the same 24 as before |
+| size | 15,092 bytes |
+
+### 2026-10-22 (BI-4, the two logical queries)
+
 From `just build-lexicon`, **2026-10-22**, BI-4 (branch `feat/bi-p4-content`, contracts C-22 in
 `project/platform/features/bi`): the logical query `er.query.stockouts_monthly_dc` and the entity
 `dc_stockout_month` stacked on it (`model/er/stockouts.ttrm`) — stock-out weeks per DC per month, the dataset of

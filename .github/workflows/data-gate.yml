@@ -12,9 +12,9 @@ name: data-gate
 on:
   push:
     branches: [master]
-    paths: ['data/automation/**', 'data/calendar/**', 'data/extend/lib.sh', 'data/views/**', 'data/localize-cz/fx.conf', 'scripts/automation-events.py', 'scripts/test_automation_events.py', '.github/workflows/data-gate.yml']
+    paths: ['data/automation/**', 'data/calendar/**', 'data/labels/**', 'data/extend/lib.sh', 'data/views/**', 'data/localize-cz/fx.conf', 'scripts/automation-events.py', 'scripts/test_automation_events.py', '.github/workflows/data-gate.yml']
   pull_request:
-    paths: ['data/automation/**', 'data/calendar/**', 'data/extend/lib.sh', 'data/views/**', 'data/localize-cz/fx.conf', 'scripts/automation-events.py', 'scripts/test_automation_events.py', '.github/workflows/data-gate.yml']
+    paths: ['data/automation/**', 'data/calendar/**', 'data/labels/**', 'data/extend/lib.sh', 'data/views/**', 'data/localize-cz/fx.conf', 'scripts/automation-events.py', 'scripts/test_automation_events.py', '.github/workflows/data-gate.yml']
   workflow_dispatch:
 
 permissions:
@@ -33,6 +33,9 @@ jobs:
 
       - name: The calendar's suite (a throwaway Postgres, dsdgen's calendar defects)
         run: just calendar-test
+
+      - name: The label retype's suite (a throwaway Postgres, dsdgen's CHAR labels)
+        run: just labels-test
 
       - name: The event driver's specs
         run: just automation-events-test

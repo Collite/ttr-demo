@@ -11,6 +11,11 @@ Phase 1):
    Friday + Saturday and dates two of its three holidays a day late. Quarters, weekday and a Saturday + Sunday
    weekend from the date; the holidays become the world's own (cz: the 13 Czech days off, Easter computed; us:
    the 11 federal holidays and their observed weekdays). Found by the D-134 routing case d1, 2026-10-20.
+   2c. `labels/` — the label columns CHAR(n) → VARCHAR(n), trimmed (`just labels-data <us|cz> [ctx]`): Postgres
+   returns a CHAR value blank-padded to n, so every label read from one (item's category, class, brand, product
+   name, manufacturer, size, container; the return reason; the promotion name; the buying potential; the day name)
+   reached Superset, JDBC clients and Iris as `'Books' + 45 blanks` (BI-4, contracts C-24). Codes and one-letter
+   flags stay CHAR. Idempotent, one transaction; model/db/dims.ttrm declares the same columns VARCHAR.
 3. `catalog/` — the bilingual per-item catalog: taxonomy + generator → `catalog/{us,cz}` UPDATEs.
 4. `seed/` — `02-seed-incident` — Memphis DC (us) / Brno DC (cz) meltdown S1–S4.
 5. `recon/` — the recon battery + committed baselines; R0 freeze; `pg_dump` → staging.
@@ -38,6 +43,8 @@ snapshot-guarded:
    3b. `calendar/run-calendar.sh <ctx> <db> <us|cz>` (idempotent; after step 3, whose `czk_fx` row tells it the
    world). On a world whose automation extension is built: `just automation-reset` first, `just automation-data`
    after — the working days and the due dates follow the calendar.
+   3c. `labels/run-labels.sh <ctx> <db>` (`just labels-data <us|cz> [ctx]`; idempotent) — a restore from `tpc-ds-1g`
+   brings dsdgen's CHAR label columns back.
 4. `catalog/us.sql` / `catalog/cz.sql` (idempotent, PK-keyed).
 5. `seed/naming-us.sql` (US only) + `seed/reason-placeholders-fix.sql` (both, `:locale` param) +
    `seed/02-seed-incident/{s1,s2,s3}-*.sql` (guarded via `_seed_meta` — S2 is genuinely
