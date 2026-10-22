@@ -1,106 +1,106 @@
 channel,r_reason_desc,lines,amt
-catalog,Did not get it on time                                                                              ,4511,5685662
-catalog,duplicate purchase                                                                                  ,4061,5425521
-catalog,Quality not as expected                                                                             ,3905,5354795
-catalog,Unwanted gift                                                                                       ,4065,5318847
-catalog,it is a girl                                                                                        ,4012,5269926
-catalog,Duplicate order                                                                                     ,4110,5269712
-catalog,Missing accessory                                                                                   ,3952,5265789
-catalog,Ordered by mistake                                                                                  ,3979,5218919
-catalog,Incompatible with my device                                                                         ,3945,5203620
-catalog,unauthoized purchase                                                                                ,3983,5203349
-catalog,Did not like the warranty                                                                           ,4019,5197106
-catalog,Did not like the make                                                                               ,3959,5195274
-catalog,Stopped working                                                                                     ,3978,5170440
-catalog,Lost my job                                                                                         ,3986,5168289
-catalog,Not the product that was ordred                                                                     ,3995,5161508
-catalog,Not working any more                                                                                ,4006,5157861
-catalog,Parts missing                                                                                       ,3936,5147142
-catalog,Manufacturer claim                                                                                  ,4026,5130079
-catalog,Did not fit                                                                                         ,3956,5126006
-catalog,Not as pictured                                                                                     ,3960,5124629
-catalog,Gift exchange                                                                                       ,3952,5116336
-catalog,Changed my mind                                                                                     ,4037,5100993
-catalog,Did not like the color                                                                              ,4008,5070573
-catalog,Damaged packaging                                                                                   ,3947,5064445
-catalog,No longer needed                                                                                    ,3971,5050922
-catalog,Found a better price                                                                                ,3956,5044418
-catalog,No service location in my area                                                                      ,3960,5037000
-catalog,Wrong size                                                                                          ,3878,5024473
-catalog,Package was damaged                                                                                 ,3977,5017065
-catalog,Found a better price in a store                                                                     ,3963,4992258
-catalog,Found a better extended warranty in a store                                                         ,3910,4965582
-catalog,its is a boy                                                                                        ,3926,4949489
-catalog,Does not work with a product that I have                                                            ,3909,4931367
-catalog,Other reason                                                                                        ,3855,4923729
-catalog,Did not like the model                                                                              ,3963,4826016
-store,Did not like the make                                                                               ,7896,7816363
-store,Found a better price                                                                                ,7977,7801073
-store,Missing accessory                                                                                   ,8069,7800194
-store,Did not fit                                                                                         ,8034,7798399
-store,duplicate purchase                                                                                  ,7924,7793710
-store,Incompatible with my device                                                                         ,8032,7789128
-store,Wrong size                                                                                          ,7963,7775838
-store,Package was damaged                                                                                 ,7949,7758885
-store,Gift exchange                                                                                       ,7917,7749238
-store,it is a girl                                                                                        ,8049,7744314
-store,its is a boy                                                                                        ,8104,7702683
-store,Not working any more                                                                                ,7878,7699937
-store,Found a better extended warranty in a store                                                         ,8083,7678509
-store,Quality not as expected                                                                             ,7936,7662506
-store,Did not get it on time                                                                              ,7837,7652957
-store,Found a better price in a store                                                                     ,8000,7643009
-store,Manufacturer claim                                                                                  ,7887,7642633
-store,No longer needed                                                                                    ,7983,7639327
-store,Not the product that was ordred                                                                     ,7938,7633749
-store,Changed my mind                                                                                     ,7990,7619856
-store,Did not like the warranty                                                                           ,7857,7609676
-store,Lost my job                                                                                         ,7894,7597465
-store,Did not like the color                                                                              ,7988,7584174
-store,Stopped working                                                                                     ,7912,7567223
-store,Duplicate order                                                                                     ,7854,7542298
-store,Did not like the model                                                                              ,7862,7541257
-store,Unwanted gift                                                                                       ,7812,7505511
-store,Not as pictured                                                                                     ,7779,7455645
-store,unauthoized purchase                                                                                ,7941,7441845
-store,Damaged packaging                                                                                   ,7938,7431606
-store,Ordered by mistake                                                                                  ,7833,7424037
-store,Other reason                                                                                        ,7880,7393008
-store,No service location in my area                                                                      ,7859,7349713
-store,Parts missing                                                                                       ,7934,7315668
-store,Does not work with a product that I have                                                            ,7741,7308591
-web,Did not like the warranty                                                                           ,1990,2695388
-web,Parts missing                                                                                       ,2034,2651998
-web,Did not like the make                                                                               ,1910,2637255
-web,Unwanted gift                                                                                       ,2029,2635971
-web,Gift exchange                                                                                       ,1998,2616511
-web,Missing accessory                                                                                   ,2022,2607418
-web,Found a better price                                                                                ,1961,2601197
-web,Changed my mind                                                                                     ,1981,2595290
-web,Incompatible with my device                                                                         ,2033,2578356
-web,Damaged packaging                                                                                   ,1962,2577467
-web,Did not fit                                                                                         ,1988,2575146
-web,unauthoized purchase                                                                                ,1951,2572640
-web,Package was damaged                                                                                 ,1987,2572627
-web,No service location in my area                                                                      ,2018,2572162
-web,its is a boy                                                                                        ,1953,2571999
-web,Duplicate order                                                                                     ,1963,2554673
-web,it is a girl                                                                                        ,1982,2554371
-web,Found a better extended warranty in a store                                                         ,1939,2526681
-web,Not the product that was ordred                                                                     ,1975,2525515
-web,No longer needed                                                                                    ,1950,2518704
-web,Not as pictured                                                                                     ,1914,2510482
-web,Does not work with a product that I have                                                            ,1945,2499556
-web,Quality not as expected                                                                             ,1936,2491243
-web,Stopped working                                                                                     ,1916,2452870
-web,Not working any more                                                                                ,2025,2451844
-web,Did not like the color                                                                              ,1925,2443993
-web,Found a better price in a store                                                                     ,1934,2424107
-web,Other reason                                                                                        ,1922,2399536
-web,Did not like the model                                                                              ,1924,2360822
-web,duplicate purchase                                                                                  ,1957,2327276
-web,Manufacturer claim                                                                                  ,1877,2323808
-web,Lost my job                                                                                         ,1979,2318254
-web,Wrong size                                                                                          ,1875,2245045
-web,Ordered by mistake                                                                                  ,1919,2229223
-web,Did not get it on time                                                                              ,1877,2220973
+catalog,Did not get it on time,4511,5685662
+catalog,duplicate purchase,4061,5425521
+catalog,Quality not as expected,3905,5354795
+catalog,Unwanted gift,4065,5318847
+catalog,it is a girl,4012,5269926
+catalog,Duplicate order,4110,5269712
+catalog,Missing accessory,3952,5265789
+catalog,Ordered by mistake,3979,5218919
+catalog,Incompatible with my device,3945,5203620
+catalog,unauthoized purchase,3983,5203349
+catalog,Did not like the warranty,4019,5197106
+catalog,Did not like the make,3959,5195274
+catalog,Stopped working,3978,5170440
+catalog,Lost my job,3986,5168289
+catalog,Not the product that was ordred,3995,5161508
+catalog,Not working any more,4006,5157861
+catalog,Parts missing,3936,5147142
+catalog,Manufacturer claim,4026,5130079
+catalog,Did not fit,3956,5126006
+catalog,Not as pictured,3960,5124629
+catalog,Gift exchange,3952,5116336
+catalog,Changed my mind,4037,5100993
+catalog,Did not like the color,4008,5070573
+catalog,Damaged packaging,3947,5064445
+catalog,No longer needed,3971,5050922
+catalog,Found a better price,3956,5044418
+catalog,No service location in my area,3960,5037000
+catalog,Wrong size,3878,5024473
+catalog,Package was damaged,3977,5017065
+catalog,Found a better price in a store,3963,4992258
+catalog,Found a better extended warranty in a store,3910,4965582
+catalog,its is a boy,3926,4949489
+catalog,Does not work with a product that I have,3909,4931367
+catalog,Other reason,3855,4923729
+catalog,Did not like the model,3963,4826016
+store,Did not like the make,7896,7816363
+store,Found a better price,7977,7801073
+store,Missing accessory,8069,7800194
+store,Did not fit,8034,7798399
+store,duplicate purchase,7924,7793710
+store,Incompatible with my device,8032,7789128
+store,Wrong size,7963,7775838
+store,Package was damaged,7949,7758885
+store,Gift exchange,7917,7749238
+store,it is a girl,8049,7744314
+store,its is a boy,8104,7702683
+store,Not working any more,7878,7699937
+store,Found a better extended warranty in a store,8083,7678509
+store,Quality not as expected,7936,7662506
+store,Did not get it on time,7837,7652957
+store,Found a better price in a store,8000,7643009
+store,Manufacturer claim,7887,7642633
+store,No longer needed,7983,7639327
+store,Not the product that was ordred,7938,7633749
+store,Changed my mind,7990,7619856
+store,Did not like the warranty,7857,7609676
+store,Lost my job,7894,7597465
+store,Did not like the color,7988,7584174
+store,Stopped working,7912,7567223
+store,Duplicate order,7854,7542298
+store,Did not like the model,7862,7541257
+store,Unwanted gift,7812,7505511
+store,Not as pictured,7779,7455645
+store,unauthoized purchase,7941,7441845
+store,Damaged packaging,7938,7431606
+store,Ordered by mistake,7833,7424037
+store,Other reason,7880,7393008
+store,No service location in my area,7859,7349713
+store,Parts missing,7934,7315668
+store,Does not work with a product that I have,7741,7308591
+web,Did not like the warranty,1990,2695388
+web,Parts missing,2034,2651998
+web,Did not like the make,1910,2637255
+web,Unwanted gift,2029,2635971
+web,Gift exchange,1998,2616511
+web,Missing accessory,2022,2607418
+web,Found a better price,1961,2601197
+web,Changed my mind,1981,2595290
+web,Incompatible with my device,2033,2578356
+web,Damaged packaging,1962,2577467
+web,Did not fit,1988,2575146
+web,unauthoized purchase,1951,2572640
+web,Package was damaged,1987,2572627
+web,No service location in my area,2018,2572162
+web,its is a boy,1953,2571999
+web,Duplicate order,1963,2554673
+web,it is a girl,1982,2554371
+web,Found a better extended warranty in a store,1939,2526681
+web,Not the product that was ordred,1975,2525515
+web,No longer needed,1950,2518704
+web,Not as pictured,1914,2510482
+web,Does not work with a product that I have,1945,2499556
+web,Quality not as expected,1936,2491243
+web,Stopped working,1916,2452870
+web,Not working any more,2025,2451844
+web,Did not like the color,1925,2443993
+web,Found a better price in a store,1934,2424107
+web,Other reason,1922,2399536
+web,Did not like the model,1924,2360822
+web,duplicate purchase,1957,2327276
+web,Manufacturer claim,1877,2323808
+web,Lost my job,1979,2318254
+web,Wrong size,1875,2245045
+web,Ordered by mistake,1919,2229223
+web,Did not get it on time,1877,2220973

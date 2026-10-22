@@ -207,3 +207,41 @@ test('channel_sales — the model view declares the script\'s columns in the scr
   assert.equal(scriptColumns.at(-1), 'warehouse_sk', 'warehouse_sk (⚑LR-9) is appended LAST');
   assert.match(firstBranch, /NULL::int\s+AS\s+warehouse_sk/, 'a store line carries no distribution centre');
 });
+
+// BI-4 · C-24 (⚑BI-4-B, Bora 2026-10-22). Postgres returns a CHAR(n) value blank-padded to n, so every CHAR column a
+// label is read from reached Superset, JDBC and Iris as `'Books' + 45 blanks`. The translator cannot trim it in the er
+// mapping (an expression-bound attribute is not mapped yet), so the label columns are VARCHAR in both worlds' databases
+// (data/labels/labels.sql retypes them, trimming) and here. The codes and flags stay CHAR: a code fills its width, a
+// flag is one letter, so neither is padded.
+const LABEL_COLUMNS = {
+  'item.i_product_name': 50, 'item.i_brand': 50, 'item.i_class': 50, 'item.i_category': 50,
+  'item.i_manufact': 50, 'item.i_size': 20, 'item.i_container': 10,
+  'reason.r_reason_desc': 100, 'promotion.p_promo_name': 50,
+  'household_demographics.hd_buy_potential': 15, 'date_dim.d_day_name': 9,
+};
+const CHAR_KEPT = [
+  'item.i_item_id', 'customer.c_customer_id', 'customer_address.ca_address_id', 'customer_address.ca_state',
+  'customer_demographics.cd_gender', 'customer_demographics.cd_marital_status', 'store.s_store_id', 'store.s_state',
+  'warehouse.w_warehouse_id', 'warehouse.w_state', 'promotion.p_promo_id', 'reason.r_reason_id',
+  'call_center.cc_call_center_id', 'date_dim.d_holiday', 'date_dim.d_weekend',
+];
+
+test('C-24 — the label columns are VARCHAR of their CHAR width, the codes and flags stay CHAR, and labels.sql retypes exactly the labels', async () => {
+  const parsed = await parseAll([path.join(dbDir, 'dims.ttrm')]);
+  const columns = new Map();
+  for (const def of parsed[0].result.ast.definitions ?? []) {
+    if (def.kind !== 'table') continue;
+    for (const c of def.columns ?? []) columns.set(`${def.name}.${c.name}`, c.type);
+  }
+  const shape = (t) => (t?.kind === 'structured' ? `${t.typeName}(${t.length})` : t?.name);
+  assert.deepEqual(
+    Object.keys(LABEL_COLUMNS).map((k) => [k, shape(columns.get(k))]),
+    Object.entries(LABEL_COLUMNS).map(([k, n]) => [k, `varchar(${n})`]),
+  );
+  const chars = [...columns].filter(([, t]) => shape(t)?.startsWith('char(')).map(([k]) => k);
+  assert.deepEqual(chars.sort(), [...CHAR_KEPT].sort(), 'a CHAR column that is neither a code nor a flag would be padded');
+
+  const sql = await readFile(path.resolve(hartlandRoot, 'data/labels/labels.sql'), 'utf-8');
+  const listed = Object.fromEntries([...sql.matchAll(/\('(\w+)',\s*'(\w+)',\s*(\d+)\)/g)].map(([, t, c, n]) => [`${t}.${c}`, Number(n)]));
+  assert.deepEqual(listed, LABEL_COLUMNS, 'labels.sql retypes another set of columns than the model declares VARCHAR');
+});

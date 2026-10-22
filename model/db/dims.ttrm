@@ -17,7 +17,7 @@ def table date_dim {
         def column d_moy       { type: int },   // month of year, 1-12
         def column d_qoy       { type: int },   // quarter of year, 1-4
         def column d_week_seq  { type: int },   // absolute week number — the seed's own unit
-        def column d_day_name  { type: { type: char, length: 9 } },
+        def column d_day_name  { type: { type: varchar, length: 9 } },
         def column d_holiday   { type: { type: char, length: 1 } },
         def column d_weekend   { type: { type: char, length: 1 } },
         // AU D-82 — `d_holiday = 'N' AND d_weekend = 'N'`, filled by data/automation/25-calendar.sql.
@@ -32,13 +32,13 @@ def table item {
     columns: [
         def column i_item_sk      { type: int, isKey: true },
         def column i_item_id      { type: { type: char, length: 16 } },
-        def column i_product_name { type: { type: char, length: 50 } },
-        def column i_brand        { type: { type: char, length: 50 } },
-        def column i_class        { type: { type: char, length: 50 } },
-        def column i_category     { type: { type: char, length: 50 } },
-        def column i_manufact     { type: { type: char, length: 50 } },
-        def column i_size         { type: { type: char, length: 20 } },
-        def column i_container    { type: { type: char, length: 10 } }
+        def column i_product_name { type: { type: varchar, length: 50 } },
+        def column i_brand        { type: { type: varchar, length: 50 } },
+        def column i_class        { type: { type: varchar, length: 50 } },
+        def column i_category     { type: { type: varchar, length: 50 } },
+        def column i_manufact     { type: { type: varchar, length: 50 } },
+        def column i_size         { type: { type: varchar, length: 20 } },
+        def column i_container    { type: { type: varchar, length: 10 } }
     ]
 }
 
@@ -86,7 +86,7 @@ def table household_demographics {
     columns: [
         def column hd_demo_sk        { type: int, isKey: true },
         def column hd_income_band_sk { type: int },
-        def column hd_buy_potential  { type: { type: char, length: 15 } }
+        def column hd_buy_potential  { type: { type: varchar, length: 15 } }
     ]
 }
 
@@ -135,7 +135,7 @@ def table promotion {
     columns: [
         def column p_promo_sk   { type: int, isKey: true },
         def column p_promo_id   { type: { type: char, length: 16 } },
-        def column p_promo_name { type: { type: char, length: 50 } }
+        def column p_promo_name { type: { type: varchar, length: 50 } }
     ]
 }
 
@@ -146,7 +146,7 @@ def table reason {
     columns: [
         def column r_reason_sk   { type: int, isKey: true },
         def column r_reason_id   { type: { type: char, length: 16 } },
-        def column r_reason_desc { type: { type: char, length: 100 } }
+        def column r_reason_desc { type: { type: varchar, length: 100 } }
     ]
 }
 

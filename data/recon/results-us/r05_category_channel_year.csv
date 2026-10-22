@@ -5,195 +5,195 @@ catalog,(null),2023,2381879
 catalog,(null),2024,1568696
 catalog,(null),2025,1346483
 catalog,(null),2026,18328
-catalog,Books                                             ,2021,70865439
-catalog,Books                                             ,2022,70466138
-catalog,Books                                             ,2023,73752776
-catalog,Books                                             ,2024,70758895
-catalog,Books                                             ,2025,65561971
-catalog,Books                                             ,2026,963011
-catalog,Children                                          ,2021,71707105
-catalog,Children                                          ,2022,71488010
-catalog,Children                                          ,2023,71681217
-catalog,Children                                          ,2024,71620825
-catalog,Children                                          ,2025,69220602
-catalog,Children                                          ,2026,878910
-catalog,Electronics                                       ,2021,71797474
-catalog,Electronics                                       ,2022,72393674
-catalog,Electronics                                       ,2023,72500155
-catalog,Electronics                                       ,2024,74048808
-catalog,Electronics                                       ,2025,70441804
-catalog,Electronics                                       ,2026,849654
-catalog,Home                                              ,2021,71404538
-catalog,Home                                              ,2022,72009114
-catalog,Home                                              ,2023,70995202
-catalog,Home                                              ,2024,73750161
-catalog,Home                                              ,2025,69240355
-catalog,Home                                              ,2026,1043450
-catalog,Jewelry                                           ,2021,72302958
-catalog,Jewelry                                           ,2022,70878586
-catalog,Jewelry                                           ,2023,71838862
-catalog,Jewelry                                           ,2024,69629112
-catalog,Jewelry                                           ,2025,64397379
-catalog,Jewelry                                           ,2026,905886
-catalog,Men                                               ,2021,71991719
-catalog,Men                                               ,2022,72362770
-catalog,Men                                               ,2023,72339245
-catalog,Men                                               ,2024,72003168
-catalog,Men                                               ,2025,68868580
-catalog,Men                                               ,2026,980363
-catalog,Music                                             ,2021,75798762
-catalog,Music                                             ,2022,76286075
-catalog,Music                                             ,2023,74985237
-catalog,Music                                             ,2024,75961858
-catalog,Music                                             ,2025,70424676
-catalog,Music                                             ,2026,762678
-catalog,Shoes                                             ,2021,75128107
-catalog,Shoes                                             ,2022,74486443
-catalog,Shoes                                             ,2023,74186268
-catalog,Shoes                                             ,2024,75021784
-catalog,Shoes                                             ,2025,68620174
-catalog,Shoes                                             ,2026,795581
-catalog,Sports                                            ,2021,73675387
-catalog,Sports                                            ,2022,74062459
-catalog,Sports                                            ,2023,70572676
-catalog,Sports                                            ,2024,71148926
-catalog,Sports                                            ,2025,66477823
-catalog,Sports                                            ,2026,838953
-catalog,Women                                             ,2021,69960044
-catalog,Women                                             ,2022,71428710
-catalog,Women                                             ,2023,75113416
-catalog,Women                                             ,2024,72825843
-catalog,Women                                             ,2025,68772460
-catalog,Women                                             ,2026,828133
+catalog,Books,2021,70865439
+catalog,Books,2022,70466138
+catalog,Books,2023,73752776
+catalog,Books,2024,70758895
+catalog,Books,2025,65561971
+catalog,Books,2026,963011
+catalog,Children,2021,71707105
+catalog,Children,2022,71488010
+catalog,Children,2023,71681217
+catalog,Children,2024,71620825
+catalog,Children,2025,69220602
+catalog,Children,2026,878910
+catalog,Electronics,2021,71797474
+catalog,Electronics,2022,72393674
+catalog,Electronics,2023,72500155
+catalog,Electronics,2024,74048808
+catalog,Electronics,2025,70441804
+catalog,Electronics,2026,849654
+catalog,Home,2021,71404538
+catalog,Home,2022,72009114
+catalog,Home,2023,70995202
+catalog,Home,2024,73750161
+catalog,Home,2025,69240355
+catalog,Home,2026,1043450
+catalog,Jewelry,2021,72302958
+catalog,Jewelry,2022,70878586
+catalog,Jewelry,2023,71838862
+catalog,Jewelry,2024,69629112
+catalog,Jewelry,2025,64397379
+catalog,Jewelry,2026,905886
+catalog,Men,2021,71991719
+catalog,Men,2022,72362770
+catalog,Men,2023,72339245
+catalog,Men,2024,72003168
+catalog,Men,2025,68868580
+catalog,Men,2026,980363
+catalog,Music,2021,75798762
+catalog,Music,2022,76286075
+catalog,Music,2023,74985237
+catalog,Music,2024,75961858
+catalog,Music,2025,70424676
+catalog,Music,2026,762678
+catalog,Shoes,2021,75128107
+catalog,Shoes,2022,74486443
+catalog,Shoes,2023,74186268
+catalog,Shoes,2024,75021784
+catalog,Shoes,2025,68620174
+catalog,Shoes,2026,795581
+catalog,Sports,2021,73675387
+catalog,Sports,2022,74062459
+catalog,Sports,2023,70572676
+catalog,Sports,2024,71148926
+catalog,Sports,2025,66477823
+catalog,Sports,2026,838953
+catalog,Women,2021,69960044
+catalog,Women,2022,71428710
+catalog,Women,2023,75113416
+catalog,Women,2024,72825843
+catalog,Women,2025,68772460
+catalog,Women,2026,828133
 store,(null),2021,3118073
 store,(null),2022,2918533
 store,(null),2023,3168619
 store,(null),2024,2197849
 store,(null),2025,2181708
 store,(null),2026,15580
-store,Books                                             ,2021,101250144
-store,Books                                             ,2022,99157233
-store,Books                                             ,2023,103975292
-store,Books                                             ,2024,100488405
-store,Books                                             ,2025,99472501
-store,Books                                             ,2026,1074153
-store,Children                                          ,2021,101215641
-store,Children                                          ,2022,99532323
-store,Children                                          ,2023,102272277
-store,Children                                          ,2024,99319529
-store,Children                                          ,2025,102535817
-store,Children                                          ,2026,1151092
-store,Electronics                                       ,2021,102162925
-store,Electronics                                       ,2022,100410197
-store,Electronics                                       ,2023,102303321
-store,Electronics                                       ,2024,103184658
-store,Electronics                                       ,2025,104737140
-store,Electronics                                       ,2026,1296645
-store,Home                                              ,2021,100844819
-store,Home                                              ,2022,100619669
-store,Home                                              ,2023,100722766
-store,Home                                              ,2024,102083599
-store,Home                                              ,2025,104823721
-store,Home                                              ,2026,1252360
-store,Jewelry                                           ,2021,101672513
-store,Jewelry                                           ,2022,101597723
-store,Jewelry                                           ,2023,101841472
-store,Jewelry                                           ,2024,97841595
-store,Jewelry                                           ,2025,96932520
-store,Jewelry                                           ,2026,1045386
-store,Men                                               ,2021,101291086
-store,Men                                               ,2022,100594056
-store,Men                                               ,2023,101905543
-store,Men                                               ,2024,101109347
-store,Men                                               ,2025,101719645
-store,Men                                               ,2026,1031222
-store,Music                                             ,2021,108009803
-store,Music                                             ,2022,106082735
-store,Music                                             ,2023,107468311
-store,Music                                             ,2024,106743279
-store,Music                                             ,2025,105153839
-store,Music                                             ,2026,1079890
-store,Shoes                                             ,2021,104883898
-store,Shoes                                             ,2022,105123323
-store,Shoes                                             ,2023,108013848
-store,Shoes                                             ,2024,104487050
-store,Shoes                                             ,2025,102818170
-store,Shoes                                             ,2026,1111199
-store,Sports                                            ,2021,104333565
-store,Sports                                            ,2022,103315091
-store,Sports                                            ,2023,100467438
-store,Sports                                            ,2024,99895011
-store,Sports                                            ,2025,102049045
-store,Sports                                            ,2026,1098799
-store,Women                                             ,2021,100266907
-store,Women                                             ,2022,98847321
-store,Women                                             ,2023,105758473
-store,Women                                             ,2024,102603704
-store,Women                                             ,2025,102381400
-store,Women                                             ,2026,995199
+store,Books,2021,101250144
+store,Books,2022,99157233
+store,Books,2023,103975292
+store,Books,2024,100488405
+store,Books,2025,99472501
+store,Books,2026,1074153
+store,Children,2021,101215641
+store,Children,2022,99532323
+store,Children,2023,102272277
+store,Children,2024,99319529
+store,Children,2025,102535817
+store,Children,2026,1151092
+store,Electronics,2021,102162925
+store,Electronics,2022,100410197
+store,Electronics,2023,102303321
+store,Electronics,2024,103184658
+store,Electronics,2025,104737140
+store,Electronics,2026,1296645
+store,Home,2021,100844819
+store,Home,2022,100619669
+store,Home,2023,100722766
+store,Home,2024,102083599
+store,Home,2025,104823721
+store,Home,2026,1252360
+store,Jewelry,2021,101672513
+store,Jewelry,2022,101597723
+store,Jewelry,2023,101841472
+store,Jewelry,2024,97841595
+store,Jewelry,2025,96932520
+store,Jewelry,2026,1045386
+store,Men,2021,101291086
+store,Men,2022,100594056
+store,Men,2023,101905543
+store,Men,2024,101109347
+store,Men,2025,101719645
+store,Men,2026,1031222
+store,Music,2021,108009803
+store,Music,2022,106082735
+store,Music,2023,107468311
+store,Music,2024,106743279
+store,Music,2025,105153839
+store,Music,2026,1079890
+store,Shoes,2021,104883898
+store,Shoes,2022,105123323
+store,Shoes,2023,108013848
+store,Shoes,2024,104487050
+store,Shoes,2025,102818170
+store,Shoes,2026,1111199
+store,Sports,2021,104333565
+store,Sports,2022,103315091
+store,Sports,2023,100467438
+store,Sports,2024,99895011
+store,Sports,2025,102049045
+store,Sports,2026,1098799
+store,Women,2021,100266907
+store,Women,2022,98847321
+store,Women,2023,105758473
+store,Women,2024,102603704
+store,Women,2025,102381400
+store,Women,2026,995199
 web,(null),2021,1286407
 web,(null),2022,1099916
 web,(null),2023,1035795
 web,(null),2024,755214
 web,(null),2025,788870
 web,(null),2026,6413
-web,Books                                             ,2021,36443797
-web,Books                                             ,2022,35642224
-web,Books                                             ,2023,36595978
-web,Books                                             ,2024,36600851
-web,Books                                             ,2025,35438612
-web,Books                                             ,2026,331297
-web,Children                                          ,2021,36446396
-web,Children                                          ,2022,36895649
-web,Children                                          ,2023,35477183
-web,Children                                          ,2024,36217032
-web,Children                                          ,2025,36357901
-web,Children                                          ,2026,356639
-web,Electronics                                       ,2021,36075557
-web,Electronics                                       ,2022,36395155
-web,Electronics                                       ,2023,35542345
-web,Electronics                                       ,2024,37649257
-web,Electronics                                       ,2025,36749005
-web,Electronics                                       ,2026,417233
-web,Home                                              ,2021,34768714
-web,Home                                              ,2022,36238486
-web,Home                                              ,2023,34840446
-web,Home                                              ,2024,37615247
-web,Home                                              ,2025,37135466
-web,Home                                              ,2026,366464
-web,Jewelry                                           ,2021,35630447
-web,Jewelry                                           ,2022,36335650
-web,Jewelry                                           ,2023,35667089
-web,Jewelry                                           ,2024,35530206
-web,Jewelry                                           ,2025,33652173
-web,Jewelry                                           ,2026,441785
-web,Men                                               ,2021,36151430
-web,Men                                               ,2022,34726861
-web,Men                                               ,2023,36042875
-web,Men                                               ,2024,38047681
-web,Men                                               ,2025,36686755
-web,Men                                               ,2026,428110
-web,Music                                             ,2021,38428381
-web,Music                                             ,2022,38132400
-web,Music                                             ,2023,37156265
-web,Music                                             ,2024,39636201
-web,Music                                             ,2025,36355392
-web,Music                                             ,2026,338724
-web,Shoes                                             ,2021,37643102
-web,Shoes                                             ,2022,36915603
-web,Shoes                                             ,2023,37420526
-web,Shoes                                             ,2024,37842267
-web,Shoes                                             ,2025,37655265
-web,Shoes                                             ,2026,459647
-web,Sports                                            ,2021,37312614
-web,Sports                                            ,2022,36844314
-web,Sports                                            ,2023,35491441
-web,Sports                                            ,2024,36088185
-web,Sports                                            ,2025,37392565
-web,Sports                                            ,2026,357899
-web,Women                                             ,2021,36169419
-web,Women                                             ,2022,35038540
-web,Women                                             ,2023,36631704
-web,Women                                             ,2024,37108382
-web,Women                                             ,2025,36798646
-web,Women                                             ,2026,378076
+web,Books,2021,36443797
+web,Books,2022,35642224
+web,Books,2023,36595978
+web,Books,2024,36600851
+web,Books,2025,35438612
+web,Books,2026,331297
+web,Children,2021,36446396
+web,Children,2022,36895649
+web,Children,2023,35477183
+web,Children,2024,36217032
+web,Children,2025,36357901
+web,Children,2026,356639
+web,Electronics,2021,36075557
+web,Electronics,2022,36395155
+web,Electronics,2023,35542345
+web,Electronics,2024,37649257
+web,Electronics,2025,36749005
+web,Electronics,2026,417233
+web,Home,2021,34768714
+web,Home,2022,36238486
+web,Home,2023,34840446
+web,Home,2024,37615247
+web,Home,2025,37135466
+web,Home,2026,366464
+web,Jewelry,2021,35630447
+web,Jewelry,2022,36335650
+web,Jewelry,2023,35667089
+web,Jewelry,2024,35530206
+web,Jewelry,2025,33652173
+web,Jewelry,2026,441785
+web,Men,2021,36151430
+web,Men,2022,34726861
+web,Men,2023,36042875
+web,Men,2024,38047681
+web,Men,2025,36686755
+web,Men,2026,428110
+web,Music,2021,38428381
+web,Music,2022,38132400
+web,Music,2023,37156265
+web,Music,2024,39636201
+web,Music,2025,36355392
+web,Music,2026,338724
+web,Shoes,2021,37643102
+web,Shoes,2022,36915603
+web,Shoes,2023,37420526
+web,Shoes,2024,37842267
+web,Shoes,2025,37655265
+web,Shoes,2026,459647
+web,Sports,2021,37312614
+web,Sports,2022,36844314
+web,Sports,2023,35491441
+web,Sports,2024,36088185
+web,Sports,2025,37392565
+web,Sports,2026,357899
+web,Women,2021,36169419
+web,Women,2022,35038540
+web,Women,2023,36631704
+web,Women,2024,37108382
+web,Women,2025,36798646
+web,Women,2026,378076
