@@ -10,7 +10,8 @@
 #
 # What it runs:
 #   just verify-model             every model/agents/lexicon/automation suite
-#   just build-recipes            every recipe under automation/ parses (ttrp explain) — ADDED 2026-10-19, AU P2
+#   just build-recipes            build six recipe bundles at the independent [ttrp] pin
+#   just check-recipe-drift       committed bundles reproduce without drift
 #   just goldens-test             the recipes' golden cases and seeds — ADDED 2026-10-19, AU P2
 #   just check-model              generated/resolved-packages.json is not stale
 #   just check-lexicon            generated/lexicon.tar.zst is not stale — ADDED 2026-09-16, after a
@@ -95,6 +96,7 @@ jobs:
       - uses: ./hartland/.github/actions/toolchain
         with:
           with-loader: 'true'
+          with-recipes: 'true'
 
       # The routing corpus: uv runs the runner (inline script metadata: httpx + pyyaml). Python is
       # PINNED: with no interpreter that satisfies requires-python, uv fetches the newest one and may
@@ -115,9 +117,17 @@ jobs:
         working-directory: hartland
         run: just verify-model
 
-      - name: The recipes check clean (ttrp check)
+      - name: Recipe build script regressions
+        working-directory: hartland
+        run: python3 -m unittest scripts/test_build_recipes.py scripts/test_toolchain_ttrp.py
+
+      - name: Build the recipe bundles
         working-directory: hartland
         run: just build-recipes
+
+      - name: Recipe bundles are not stale
+        working-directory: hartland
+        run: just check-recipe-drift
 
       - name: The golden cases (contracts §7) and their seeds
         working-directory: hartland

@@ -34,7 +34,7 @@ test('W1 — the job is still `model-gate`: the required status check on master 
   assert.deepEqual(Object.keys(gate.jobs), ['model-gate']);
 });
 
-test('W2 — exactly two ttr-core checkouts, both in the action: the toolchain at the ref, the loader at veles\'s tag', () => {
+test('W2 — exactly three ttr-core checkouts, all in the action: model, serving loader and recipe compiler pins', () => {
   const uses = gateSteps.filter((s) => s.uses === './hartland/.github/actions/toolchain');
   assert.equal(uses.length, 1);
   for (const [name, steps] of [['model-gate.yml', gateSteps], ['regenerate.yml', regenSteps]]) {
@@ -46,6 +46,7 @@ test('W2 — exactly two ttr-core checkouts, both in the action: the toolchain a
   assert.deepEqual(checkouts, [
     ['tatrman', '${{ env.TTR_CORE_REF }}'],
     ['ttr-loader', 'grammar/v${{ env.VELES_TTR_METADATA }}'],
+    ['ttrp', '${{ env.TTRP_REF }}'],
   ]);
 });
 
@@ -64,14 +65,14 @@ test('W3 — the ttr-core ref comes from toolchain.lock and is written nowhere e
 test('W4 — the caches: keyed by the commit (a re-cut tag misses), one path list, builds only on a miss', () => {
   const restores = actionSteps.filter((s) => s.uses?.startsWith('actions/cache/restore@'));
   const saves = actionSteps.filter((s) => s.uses?.startsWith('actions/cache/save@'));
-  assert.equal(restores.length, 2);
-  assert.equal(saves.length, 2);
+  assert.equal(restores.length, 3);
+  assert.equal(saves.length, 3);
   const [restore, loaderRestore] = [restores.find((s) => s.id === 'restore'), restores.find((s) => s.id === 'loader-restore')];
   assert.ok(restore && loaderRestore);
   assert.match(restore.with.key, /\$\{\{ env\.TTR_CORE_SHA \}\}/);
   assert.match(loaderRestore.with.key, /\$\{\{ env\.TTR_LOADER_SHA \}\}/);
-  for (const [sha, dir] of [['TTR_CORE_SHA', 'tatrman'], ['TTR_LOADER_SHA', 'ttr-loader']]) {
-    const writes = actionSteps.findIndex((s) => new RegExp(`${sha}=\\$\\(git -C ${dir} rev-parse HEAD\\)`).test(s.run ?? ''));
+  for (const [sha, dir] of [['TTR_CORE_SHA', 'tatrman'], ['TTR_LOADER_SHA', 'ttr-loader'], ['TTRP_SHA', 'ttrp']]) {
+    const writes = actionSteps.findIndex((s) => new RegExp(`${sha}="?\\$\\(git -C ${dir} rev-parse HEAD\\)`).test(s.run ?? ''));
     const checkout = actionSteps.findIndex((s) => s.with?.repository === 'Collite/ttr-core' && s.with.path === dir);
     assert.ok(checkout >= 0 && writes > checkout, `${sha} is written after the ${dir} checkout`);
   }
@@ -204,7 +205,7 @@ test('G7 — the pull_request paths cover every source generated/ is built from 
   for (const r of roots) assert.ok(paths.includes(`${r}/**`), `[ttrp].extra-model-roots names ${r}, the paths do not`);
   const prefixes = paths.filter((p) => p.endsWith('/**')).map((p) => p.slice(0, -2));
   const sources = (await readdir(root, { recursive: true }))
-    .filter((f) => /\.ttr[a-z]*$/.test(f) && !f.split(path.sep).some((d) => d === '.git' || d === 'node_modules'));
+    .filter((f) => /\.ttr[a-z]*$/.test(f) && !f.split(path.sep).some((d) => d === '.git' || d === 'node_modules' || d === '.modeler'));
   assert.ok(sources.length > 0);
   const uncovered = sources.filter((f) => !prefixes.some((p) => f.split(path.sep).join('/').startsWith(p)));
   assert.deepEqual(uncovered, [], 'TTR sources outside every pull_request path');
@@ -213,4 +214,27 @@ test('G7 — the pull_request paths cover every source generated/ is built from 
 test('G6 — concurrency per event and branch: a pull request run never cancels a dispatched one', () => {
   assert.equal(regen.concurrency.group, 'regenerate-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}');
   assert.equal(regen.concurrency['cancel-in-progress'], "${{ github.event_name == 'pull_request' }}");
+});
+
+test('recipe toolchain is opt-in, pinned, stamped and cached per commit', () => {
+  assert.equal(gateSteps.find(s => s.uses === './hartland/.github/actions/toolchain').with['with-recipes'], 'true');
+  assert.notEqual(regenSteps.find(s => s.uses === './hartland/.github/actions/toolchain').with?.['with-recipes'], 'true');
+  const restore = actionSteps.find(s => s.id === 'ttrp-restore');
+  assert.match(restore.with.key, /env\.TTRP_SHA/);
+  assert.match(restore.with.key, /env\.TTRP_VERSION/);
+  const builds = actionSteps.filter(s => /ttrp-cli:installDist/.test(s.run ?? ''));
+  assert.equal(builds.length, 1);
+  assert.equal(builds[0]['working-directory'], 'ttrp');
+  assert.match(builds[0].run, /-Pversion="\$TTRP_VERSION"/);
+  assert.match(actionText, /TTRP_SRC=\$GITHUB_WORKSPACE\/ttrp/);
+});
+
+test('env/output writes propagate command failures before echo', async () => {
+  const files = [...(await readdir(path.join(root, '.github/workflows'))).filter(n => n.endsWith('.yml')).map(n => `.github/workflows/${n}`), '.github/actions/toolchain/action.yml'];
+  for (const file of files) {
+    const text = await readText(file);
+    for (const line of text.split('\n').filter(l => !/^\s*#/.test(l))) {
+      if (/GITHUB_(OUTPUT|ENV)/.test(line)) assert.doesNotMatch(line, /echo\s+"[^"]*\$\(/, file);
+    }
+  }
 });

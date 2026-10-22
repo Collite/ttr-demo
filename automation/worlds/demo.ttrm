@@ -83,7 +83,6 @@ def world demo {
     }
     def deployment returns_n8n { process: return_line_flow, target: n8n, run_as: identity.automation_decider }
 
-    // The ops recipes (S2.2 T5, D-72): hourly, native.
-    def deployment ops_no_run_since_native          { program: no_run_since_hourly,          target: native, run_as: identity.automation_decider, trigger: schedule "*/60" }
-    def deployment ops_obligation_due_passed_native { program: obligation_due_passed_hourly, target: native, run_as: identity.automation_decider, trigger: schedule "*/60" }
+    // Ops deployments resume in Server P4 when automation.ops is served. The authoring stubs
+    // stay out of the served model; no_run_since also needs row-dependent time arithmetic.
 }

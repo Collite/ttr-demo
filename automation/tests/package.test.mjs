@@ -11,6 +11,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { readFile } from 'node:fs/promises';
 import { loadHartlandProject, ACCEPTED_RESIDUAL_CODES, hartlandRoot } from '../../model/tests/project-harness.mjs';
 
 const tatrmanPackages = process.env.TATRMAN_PACKAGES ?? path.resolve(hartlandRoot, '../tatrman/packages');
@@ -306,11 +307,9 @@ const DEPLOYMENTS = {
   settle_native_event: ['settle_on_document', 'native', 'identity.automation_decider', undefined],
   settle_native_batch: ['settle_daily', 'native', 'identity.automation_decider', 'schedule "07:30 Europe/Prague"'],
   returns_n8n: ['process return_line_flow', 'n8n', 'identity.automation_decider', undefined],
-  ops_no_run_since_native: ['no_run_since_hourly', 'native', 'identity.automation_decider', 'schedule "*/60"'],
-  ops_obligation_due_passed_native: ['obligation_due_passed_hourly', 'native', 'identity.automation_decider', 'schedule "*/60"'],
 };
 
-test('S2.1 T4 — the deployments: the five H-1, the six native H-2, the n8n process, the two ops (17 §2, S2.2 T5)', () => {
+test('S2.1 T4 — the deployments: the five H-1, the six native H-2, the n8n process; ops await Server P4 (17 §2, S2.2 T5)', () => {
   const got = Object.fromEntries(worlds[0].w.deployments.map((d) => [d.name, [
     entry(d, 'process') ? `process ${render(entry(d, 'process'))}` : render(entry(d, 'program')),
     d.target?.path, render(entry(d, 'run_as')), render(entry(d, 'trigger')),
@@ -358,4 +357,14 @@ test('S2.1 T5 — every value a lifecycle declares has a value label, and every 
     const labelled = (a.valueLabels?.entries ?? []).map((e) => e.key).sort();
     assert.deepEqual(labelled, [...states].sort(), ref);
   }
+});
+
+
+test('S2.3 — the Server roots exclude the ops authoring stubs', async () => {
+  assert.ok(docsOf(project).every((d) => d.packageDecl?.name !== 'automation.ops'));
+  assert.ok(!ofKind('entity').has('deployment'));
+  const manifest = await readFile(path.join(hartlandRoot, 'modeler.toml'), 'utf8');
+  assert.match(manifest, /extra-model-roots = \["model", "automation", "authoring-stubs"\]/);
+  const stub = await readFile(path.join(hartlandRoot, 'authoring-stubs/automation/ops/automation-ops.ttrm'), 'utf8');
+  assert.match(stub, /package automation\.ops/);
 });

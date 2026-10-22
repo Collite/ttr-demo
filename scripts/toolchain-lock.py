@@ -7,7 +7,8 @@ action, the justfile's lock-reading recipes and scripts/regenerate-local.sh shar
 All or nothing, and every value shape-checked (review-121 R4): the lines are appended to $GITHUB_ENV and `export`ed
 by shell callers, so a value that is not a plain tag or version — a `$(…)`, a space, an escaped newline — is refused
 with the key named, never printed. An empty TTR_CORE_REF in particular would check out ttr-core's default branch:
-the unpinned toolchain the lock exists to prevent. An `-rc` version is refused too; widening that is its own change.
+the unpinned toolchain the lock exists to prevent. Exports TTRP_REF and TTRP_VERSION too. The deliberate widening
+for recipe commit pins accepts -<word>.<n> only for [ttrp].version; release tag versions must match their tag.
 """
 import re
 import sys
@@ -25,6 +26,7 @@ PINS = {
     "TTR_CORE_REF": ("ttr-core", "ref", rf"grammar/v{VERSION}", "grammar/vX.Y.Z"),
     "VELES_IMAGE": ("veles", "image", VERSION, "X.Y.Z"),
     "VELES_TTR_METADATA": ("veles", "ttr-metadata", VERSION, "X.Y.Z"),
+    "TTRP_REF": ("ttrp", "ref", rf"grammar/v{VERSION}|[0-9a-f]{{40}}", "grammar/vX.Y.Z or a 40-hex commit"),
     "STRICT_LOAD": ("veles", "strict-load", bool, "true or false (a TOML boolean, unquoted)"),
 }
 
@@ -48,6 +50,16 @@ def main(argv: list[str]) -> None:
         elif not isinstance(value, str) or not re.fullmatch(shape, value):
             sys.exit(f"{path}: [{table}].{key} must be {said}, not {value!r}")
         lines.append(f"{env}={value}")
+    ref = lock["ttrp"]["ref"]
+    version = lock["ttrp"].get("version")
+    if ref.startswith("grammar/v"):
+        derived = ref.removeprefix("grammar/v")
+        if version is not None and version != derived:
+            sys.exit(f"{path}: [ttrp].version {version!r} contradicts [ttrp].ref {ref!r}")
+        version = derived
+    elif not isinstance(version, str) or not re.fullmatch(rf"{VERSION}-[a-z]+\.[0-9]+", version):
+        sys.exit(f"{path}: [ttrp].version must be X.Y.Z-<word>.<n> for a commit pin, not {version!r}")
+    lines.append(f"TTRP_VERSION={version}")
     print("\n".join(lines))
 
 

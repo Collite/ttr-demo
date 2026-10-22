@@ -49,7 +49,7 @@ async function readerOn(text) {
 }
 
 test('T1.1 — the lock: [ttr-core] ref; [veles] image, ttr-metadata and strict-load', () => {
-  assert.deepEqual(Object.keys(lock).sort(), ['ttr-core', 'veles']);
+  assert.deepEqual(Object.keys(lock).sort(), ['ttr-core', 'ttrp', 'veles']);
   assert.deepEqual(Object.keys(lock['ttr-core']), ['ref']);
   assert.deepEqual(Object.keys(lock.veles), ['image', 'ttr-metadata', 'strict-load']);
 });
@@ -67,7 +67,9 @@ test('T1.3 — scripts/toolchain-lock.py (the reader the workflows use) prints t
     `TTR_CORE_REF=${lock['ttr-core'].ref}`,
     `VELES_IMAGE=${lock.veles.image}`,
     `VELES_TTR_METADATA=${lock.veles['ttr-metadata']}`,
+    `TTRP_REF=${lock.ttrp.ref}`,
     `STRICT_LOAD=${lock.veles['strict-load']}`,
+    `TTRP_VERSION=${lock.ttrp.version ?? lock.ttrp.ref.replace("grammar/v", "")}`,
   ]);
 });
 
@@ -77,7 +79,7 @@ test('T1.4 — a pin missing or empty is refused, naming it (an empty ref = an u
     ['empty-ref', '[ttr-core]\nref = ""\n[veles]\nimage = "0.11.14"\nttr-metadata = "0.16.0"\nstrict-load = false\n', '[ttr-core].ref'],
     ['no-strict-load', '[ttr-core]\nref = "grammar/v0.16.1"\n[veles]\nimage = "0.11.14"\nttr-metadata = "0.16.0"\n', '[veles].strict-load'],
   ]) {
-    const run = await readerOn(text);
+    const run = await readerOn(text + '[ttrp]\nref = "grammar/v9.9.9"\n');
     assert.notEqual(run.status, 0, `${name}: the reader accepted it`);
     assert.equal(run.stdout, '', `${name}: nothing may reach $GITHUB_ENV`);
     assert.ok(run.stderr.includes(key), `${name}: stderr must name ${key}: ${run.stderr}`);
@@ -106,3 +108,24 @@ test('T1.5 — a value of the wrong shape is refused, naming the key (they reach
     assert.ok(run.stderr.includes(key), `${to}: stderr must name ${key}: ${run.stderr}`);
   }
 });
+
+for (const [ref, version, accepted] of [
+  ['grammar/v9.9.9', '9.9.9', true], ['grammar/v9.9.9', null, true],
+  ['grammar/v9.9.9', '9.9.8', false], ['a'.repeat(40), null, false],
+  ['a'.repeat(40), '9.9.9', false], ['a'.repeat(40), '9.9.9-au.1', true],
+  ['main', null, false], ['a'.repeat(40), '9.9.9-au.1\\nEVIL=1', false],
+]) {
+  test(`TTR-P pin ${ref} version ${version}: ${accepted ? 'accepted' : 'refused'}`, async () => {
+    const text = lockText.replace(/\[ttrp\][\s\S]*?(?=\n\[|$)/,
+      `[ttrp]\nref = "${ref}"\n${version == null ? '' : `version = "${version}"\n`}`);
+    const run = await readerOn(text);
+    if (accepted) {
+      assert.equal(run.status, 0, run.stderr);
+      assert.ok(run.stdout.includes(`TTRP_VERSION=${version ?? ref.replace('grammar/v', '')}`));
+    } else {
+      assert.notEqual(run.status, 0);
+      assert.equal(run.stdout, '');
+      assert.match(run.stderr, /\[ttrp\]\.(ref|version)/);
+    }
+  });
+}

@@ -3,7 +3,7 @@
 # Expects the hartland checkout at `hartland/` and checks Collite/ttr-core out beside it at `tatrman/`: the side-by-side
 # layout the justfile's `../tatrman` defaults assume. The ref comes from hartland/toolchain.lock and from nowhere else —
 # model-gate.yml's comment block says why the pin is load-bearing. Exports the lock's pins to the job (TTR_CORE_REF,
-# VELES_IMAGE, VELES_TTR_METADATA, STRICT_LOAD) and the commits checked out (TTR_CORE_SHA, TTR_LOADER_SHA).
+# VELES_IMAGE, VELES_TTR_METADATA, STRICT_LOAD, TTRP_REF, TTRP_VERSION) and TTR_CORE_SHA, TTR_LOADER_SHA, TTRP_SHA, TTRP_CLI, TTRP_SRC.
 #
 # The build is cached per COMMIT, not per tag name (review-121 R3): a re-cut tag then misses the cache and rebuilds
 # instead of restoring the old build over the new source (W-4 measured 2 m 47 s of toolchain build per cold run). The
@@ -17,6 +17,9 @@ name: ttr-core toolchain
 description: Check out ttr-core at toolchain.lock's ref beside hartland and build (or restore) the CLIs the justfile borrows.
 
 inputs:
+  with-recipes:
+    description: "'true' to build the independent recipe CLI at [ttrp].ref into ttrp/"
+    default: 'false'
   with-loader:
     description: "'true' to also build ttr-metadata-cli at veles's ttr-metadata version into ttr-loader/ (only when toolchain.lock's [veles].strict-load is true)"
     default: 'false'
@@ -52,7 +55,9 @@ runs:
 
     - name: The toolchain's commit (the cache key)
       shell: bash
-      run: echo "TTR_CORE_SHA=$(git -C tatrman rev-parse HEAD)" >> "$GITHUB_ENV"
+      run: |
+        TTR_CORE_SHA="$(git -C tatrman rev-parse HEAD)"
+        echo "TTR_CORE_SHA=$TTR_CORE_SHA" >> "$GITHUB_ENV"
 
     - id: restore
       uses: actions/cache/restore@v4
@@ -105,7 +110,9 @@ runs:
     - name: The loader's commit (the cache key)
       if: inputs.with-loader == 'true' && env.STRICT_LOAD == 'true'
       shell: bash
-      run: echo "TTR_LOADER_SHA=$(git -C ttr-loader rev-parse HEAD)" >> "$GITHUB_ENV"
+      run: |
+        TTR_LOADER_SHA="$(git -C ttr-loader rev-parse HEAD)"
+        echo "TTR_LOADER_SHA=$TTR_LOADER_SHA" >> "$GITHUB_ENV"
 
     - id: loader-restore
       if: inputs.with-loader == 'true' && env.STRICT_LOAD == 'true'
@@ -114,17 +121,37 @@ runs:
         path: ttr-loader/packages/kotlin/ttr-metadata-cli/build/install
         key: ttr-loader-${{ runner.os }}-${{ env.VELES_TTR_METADATA }}-${{ env.TTR_LOADER_SHA }}-${{ hashFiles('hartland/.github/actions/toolchain/action.yml') }}
 
+    - uses: actions/checkout@v4
+      if: inputs.with-recipes == 'true'
+      with:
+        repository: Collite/ttr-core
+        ref: ${{ env.TTRP_REF }}
+        path: ttrp
+
+    - name: The recipe toolchain's commit
+      if: inputs.with-recipes == 'true'
+      shell: bash
+      run: |
+        TTRP_SHA="$(git -C ttrp rev-parse HEAD)"
+        echo "TTRP_SHA=$TTRP_SHA" >> "$GITHUB_ENV"
+
+    - id: ttrp-restore
+      if: inputs.with-recipes == 'true'
+      uses: actions/cache/restore@v4
+      with:
+        path: ttrp/packages/kotlin/ttrp-cli/build/install
+        key: ttrp-cli-${{ runner.os }}-${{ env.TTRP_VERSION }}-${{ env.TTRP_SHA }}-${{ hashFiles('hartland/.github/actions/toolchain/action.yml') }}
+
     # ── Gradle builds (a toolchain miss, a loader miss) ─────────────────────────────────────────────────────────────
     - uses: gradle/actions/setup-gradle@v4
-      if: steps.restore.outputs.cache-hit != 'true' || (inputs.with-loader == 'true' && env.STRICT_LOAD == 'true' && steps.loader-restore.outputs.cache-hit != 'true')
+      if: steps.restore.outputs.cache-hit != 'true' || (inputs.with-loader == 'true' && env.STRICT_LOAD == 'true' && steps.loader-restore.outputs.cache-hit != 'true') || (inputs.with-recipes == 'true' && steps.ttrp-restore.outputs.cache-hit != 'true')
 
-    # The lexicon compiler is KOTLIN (RV-P1.2's (a3) ruling), so the pnpm build does not cover it; AU-hartland P2 added
-    # the `ttrp` CLI the recipes under automation/ are checked through.
-    - name: Build the lexicon and ttrp CLIs
+    # The model pin supplies the lexicon; recipe checks use only the independent CLI below.
+    - name: Build the lexicon CLI
       if: steps.restore.outputs.cache-hit != 'true'
       shell: bash
       working-directory: tatrman
-      run: ./gradlew :packages:kotlin:ttr-lexicon-cli:installDist :packages:kotlin:ttrp-cli:installDist
+      run: ./gradlew :packages:kotlin:ttr-lexicon-cli:installDist
 
     - uses: actions/cache/save@v4
       if: steps.restore.outputs.cache-hit != 'true'
@@ -143,3 +170,22 @@ runs:
       with:
         path: ttr-loader/packages/kotlin/ttr-metadata-cli/build/install
         key: ${{ steps.loader-restore.outputs.cache-primary-key }}
+
+    - name: Build the independent recipe CLI
+      if: inputs.with-recipes == 'true' && steps.ttrp-restore.outputs.cache-hit != 'true'
+      shell: bash
+      working-directory: ttrp
+      run: ./gradlew --no-configuration-cache -Pversion="$TTRP_VERSION" :packages:kotlin:ttrp-cli:installDist
+
+    - uses: actions/cache/save@v4
+      if: inputs.with-recipes == 'true' && steps.ttrp-restore.outputs.cache-hit != 'true'
+      with:
+        path: ttrp/packages/kotlin/ttrp-cli/build/install
+        key: ${{ steps.ttrp-restore.outputs.cache-primary-key }}
+
+    - name: Export the recipe toolchain paths
+      if: inputs.with-recipes == 'true'
+      shell: bash
+      run: |
+        echo "TTRP_CLI=$GITHUB_WORKSPACE/ttrp/packages/kotlin/ttrp-cli/build/install/ttrp-cli/bin/ttrp-cli" >> "$GITHUB_ENV"
+        echo "TTRP_SRC=$GITHUB_WORKSPACE/ttrp" >> "$GITHUB_ENV"

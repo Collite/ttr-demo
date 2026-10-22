@@ -273,22 +273,27 @@ automation-events-test:
 seed-goldens world="us" *FLAGS:
     uv run scripts/seed-goldens.py --world {{world}} {{FLAGS}}
 
-# The recipes through the toolchain (contracts §10). Today — ttr-core grammar/v0.16.1 — `ttrp check` per recipe: the
-# parse and the RecipeChecker (ttr-core P1), failing on any finding, a warning too (`ttrp build` refuses a recipe with
-# TTRP-REC-099 until ttr-core P2; the literate `.md` sources and `--check` come at P3).
-# automation/tests/recipes.test.mjs asserts what `ttrp explain` says: the skeleton and the mode verdicts.
-build-recipes cli="../tatrman/packages/kotlin/ttrp-cli/build/install/ttrp-cli/bin/ttrp-cli":
+# Recipe checks and bundles use [ttrp].ref, independently of the model gate's reader pin.
+# Bootstrap once from a clean checkout (JDK 21); TTR_CORE_REPO can point at a local ttr-core clone.
+toolchain-ttrp:
+    bash scripts/toolchain-ttrp.sh
+
+build-recipes cli="":
+    python3 scripts/build-recipes.py {{ if cli == "" { "" } else { "--cli '" + cli + "'" } }}
+
+# Cheap checker-only pass; it writes no bundles.
+check-recipes cli="":
+    python3 scripts/build-recipes.py --check {{ if cli == "" { "" } else { "--cli '" + cli + "'" } }}
+
+# CI runs this after build-recipes. Include untracked files: a new bundle must be committed too.
+check-recipe-drift:
     #!/usr/bin/env bash
     set -euo pipefail
-    n=0
-    while IFS= read -r f; do
-      rc=0
-      raw="$("{{cli}}" check "$f" 2>&1)" || rc=$?
-      out="$(printf '%s\n' "$raw" | grep -v -e '^ANTLR ' -e '^SLF4J(' -e '^$' || true)"
-      [ "$rc" -eq 0 ] && [ -z "$out" ] || { echo "$out" >&2; echo "build-recipes: $f does not check clean" >&2; exit 1; }
-      n=$((n + 1))
-    done < <(find automation -name '*.ttrp' -not -path '*/stub/*' | sort)
-    echo "build-recipes: $n recipes check clean (ttrp check)"
+    if [ -n "$(git status --porcelain --untracked-files=all -- automation)" ]; then
+      git status --short -- automation
+      echo "Recipe bundles drifted: run just build-recipes and commit the result" >&2
+      exit 1
+    fi
 
 # The golden cases' own specs: every case is a contracts §7 case naming only its recipe's routes; the seeds are fresh.
 goldens-test:
