@@ -75,6 +75,7 @@ def main():
         parser.error('--command requires --recipe')
     with recipe_root(ROOT, announce=not args.command) as stage, tempfile.TemporaryDirectory(prefix='recipe-output-') as tmp:
         pending = []
+        checked = 0
         for i, file in enumerate(files):
             if not args.recipe and file.parent.parent.name == 'ops':
                 print(f'{file.relative_to(ROOT)}: deferred (automation.ops requires Server P4)')
@@ -99,6 +100,7 @@ def main():
             if result.returncode or diagnostics or stderr:
                 print(f'{file.relative_to(ROOT)}: recipe refused\n{diagnostics}\n{stderr}', file=sys.stderr)
                 return 1
+            checked += 1
             if not args.check:
                 bundle = file.parent / (file.stem + '.bundle')
                 src = Path(payload.get('bundle') or '')
@@ -119,7 +121,7 @@ def main():
                 if bundle.is_dir() and bundle not in expected:
                     shutil.rmtree(bundle)
                     print(f'removed stale bundle {bundle.relative_to(ROOT)}')
-        print(f'{len(pending) if not args.check else len(files)} recipes {"checked" if args.check else "built without diagnostics"}')
+        print(f'{checked} recipes {"checked" if args.check else "built without diagnostics"}')
     return 0
 
 
