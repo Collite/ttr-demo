@@ -52,11 +52,8 @@ required = true     # a Studio-authored entity/attribute must be bound at creati
                     # (SO-demo P0, C-6 — read by ttr-core's TS manifest reader from SO-core P0; veles does not read it)
 
 [ttrp]
-# The TTR-P toolchain (`ttrp check` / `ttrp explain`, ttr-core grammar/v0.16.1+) loads its models from `models/` beside
-# this manifest. Both TTR-P and resolve-packages read these roots. Hartland keeps the model in `model/`, the package and world in `automation/`, and the ops
-# authoring stubs in `authoring-stubs/` (the Server reads only the first two roots).
-# (automation/worlds/demo.ttrm says why they stay out of `model/`), so those roots are named here. veles and the lexicon build
-# do not load the authoring stubs.
+# The TTR-P toolchain (`ttrp check` / `ttrp build`) loads its models from `models/` beside this manifest. Hartland keeps
+# the model in `model/`, the automation package and world in `automation/` (automation/worlds/demo.ttrm says why they
+# stay out of `model/`), and the ops authoring stubs in `authoring-stubs/`. TTR-P and resolve-packages read all three;
+# veles reads only `model/`, the automation Server `model/` + `automation/`, and the lexicon build none of this table.
 extra-model-roots = ["model", "automation", "authoring-stubs"]
-
-# Authoring stubs feed TTR-P and resolve-packages; veles and the automation Server do not load them.

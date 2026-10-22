@@ -43,7 +43,7 @@ The literate documents and their drift check remain P3.
 The recipe pin is temporarily ttr-core commit `f9f7b5b4292e4ce0588b83618a5408817a4a202c`
 (`0.17.3-au.1`), based on `grammar/v0.17.3`. The released tag emits retired CNC roles in verdict catalogs,
 omits the golden-fixture list, and reports CEIL as unsupported. This commit fixes those handoff issues; replace
-it with the next reviewed grammar release (ttr-core PR #249); delete `version` when moving `ref` to a tag. Generated bundles remain the unmodified output of that toolchain.
+it with the next reviewed grammar release (ttr-core PR #249); delete `version` when moving `ref` to a tag. A new commit pin takes the next `-au.<n>` suffix. Generated bundles remain the unmodified output of that toolchain.
 
 Six bundles are served: `release_order`, `decide_return`, `monitor_inbound`, `settle`, `reorder_proposals`, and
 `winback`. **Bundles load; they do not run until AU-server P1·S1.1.** The cross-storage pair contains door

@@ -34,7 +34,7 @@ test('W1 — the job is still `model-gate`: the required status check on master 
   assert.deepEqual(Object.keys(gate.jobs), ['model-gate']);
 });
 
-test('W2 — exactly three ttr-core checkouts, both in the action: the toolchain at the ref, the loader at veles\'s tag', () => {
+test('W2 — exactly three ttr-core checkouts, all in the action: model, serving loader and recipe compiler pins', () => {
   const uses = gateSteps.filter((s) => s.uses === './hartland/.github/actions/toolchain');
   assert.equal(uses.length, 1);
   for (const [name, steps] of [['model-gate.yml', gateSteps], ['regenerate.yml', regenSteps]]) {

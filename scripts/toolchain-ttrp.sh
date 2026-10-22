@@ -27,12 +27,17 @@ else
   target="$(git -C "$dest" rev-parse "refs/tags/$ref^{commit}")"
 fi
 installed="$dest/packages/kotlin/ttrp-cli/build/install/ttrp-cli/bin/ttrp-cli"
-# Version participates too: the same commit may intentionally receive a different prerelease stamp.
-if [ "$(git -C "$dest" rev-parse HEAD 2>/dev/null || true)" = "$target" ] && [ -f "$installed" ] && [ "$(cat "$dest/.git/ttrp-version" 2>/dev/null || true)" = "$version" ]; then
+# Only a successful build certifies the installed CLI's commit and version.
+if [ -f "$installed" ] && [ "$(cat "$dest/.git/ttrp-build" 2>/dev/null || true)" = "$target $version" ]; then
   exit 0
 fi
+rm -f "$dest/.git/ttrp-build" "$dest/.git/ttrp-version"
 git -C "$dest" checkout --detach "$target"
 if [ "${TOOLCHAIN_TTRP_SKIP_BUILD:-0}" != 1 ]; then
-  (cd "$dest" && ./gradlew --no-configuration-cache :packages:kotlin:ttrp-cli:installDist -Pversion="$version" --no-daemon -Dorg.gradle.jvmargs=-Xmx4g -Pkotlin.compiler.execution.strategy=in-process --max-workers=2)
-  echo "$version" > "$dest/.git/ttrp-version"
+  if [ -n "${TOOLCHAIN_TTRP_BUILD_CMD:-}" ]; then
+    (cd "$dest" && bash -euo pipefail -c "$TOOLCHAIN_TTRP_BUILD_CMD")
+  else
+    (cd "$dest" && ./gradlew --no-configuration-cache :packages:kotlin:ttrp-cli:installDist -Pversion="$version" --no-daemon -Dorg.gradle.jvmargs=-Xmx4g -Pkotlin.compiler.execution.strategy=in-process --max-workers=2)
+  fi
+  printf '%s %s\n' "$target" "$version" > "$dest/.git/ttrp-build"
 fi
