@@ -4,6 +4,12 @@
 # the ⛔ PINNED comment block in .github/workflows/model-gate.yml. After moving a [veles] pin: `just check-veles-pin`.
 [ttr-core]
 ref = "grammar/v0.16.1"          # the gate's toolchain checkout (was inline in model-gate.yml)
+[ttrp]
+# Recipe builds/checks move independently of the model reader and serving image.
+# A commit pin requires a prerelease version; delete version when moving ref to a release tag.
+ref = "f4001922bef0ab78f01db8343113bddbcdeac6c0"
+version = "0.17.3-au.1"
+
 [veles]
 image = "0.11.14"                # the veles image olymp `clusters/hartland/apps/veles/values.yaml` deploys
 ttr-metadata = "0.16.0"          # `tatrman-ttr-metadata` in ttr-server's `gradle/libs.versions.toml` at `veles/v<image>`;

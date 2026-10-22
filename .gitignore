@@ -18,3 +18,6 @@ data/recon/results/*.tmp
 # model build scratch — hermetic physical-schema reference pulled from the live DB
 # (Stage 2.1 pre-flight); regenerate with `psql -c "\d+ <table>"`, don't commit.
 model/db/.schema-ref/
+
+*.bundle.new/
+*.bundle.old/

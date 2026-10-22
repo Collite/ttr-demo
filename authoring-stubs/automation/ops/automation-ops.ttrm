@@ -9,7 +9,7 @@
 // serves that entity; the hourly deployments stay omitted until then — recorded in the hartland STATUS.
 //
 // Authoring-only root: neither veles (model/) nor the automation Server (model/ + automation/) loads this folder.
-// The recipe checker opts into it via modeler.toml; no stub entity is served.
+// TTR-P and resolve-packages opt into it via modeler.toml; no stub entity is served.
 package automation.ops
 model er
 
@@ -37,3 +37,5 @@ def entity deployment {
         def attribute period_minutes { type: int, description: "Minutes between two scheduled runs; empty for an unscheduled deployment." }
     ]
 }
+
+// Authoring stubs feed TTR-P and resolve-packages; veles and the automation Server do not load them.

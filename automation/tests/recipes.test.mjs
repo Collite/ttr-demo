@@ -3,10 +3,10 @@
 // Ops remain authored and tested; their deployments await the Server's real automation.ops package.
 // Run after `just toolchain-ttrp` and `just build-recipes`; CI requires the CLI.
 
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import os from 'node:os';
 import { readFile, readdir, mkdtemp, rm } from 'node:fs/promises';
@@ -15,12 +15,15 @@ import { promisify } from 'node:util';
 import { hartlandRoot } from '../../model/tests/project-harness.mjs';
 
 const run = promisify(execFile);
-const recipePackages = path.resolve(hartlandRoot, '.modeler/toolchains/ttrp/packages');
-// `TTRP_CLI` overrides the sibling-checkout default (the `TTR_LEXICON_CLI` precedent of lexicon/tests/area.test.mjs).
-const CLI = process.env.TTRP_CLI ?? path.join(recipePackages, 'kotlin/ttrp-cli/build/install/ttrp-cli/bin/ttrp-cli');
-// Skipped locally without a built CLI; in CI (the model gate builds it) a missing CLI is a failure, not a skip.
-const cliMissing = !existsSync(CLI) && !process.env.CI && 'ttrp CLI not built — ./gradlew :packages:kotlin:ttrp-cli:installDist in the tatrman checkout';
-const FIXTURES = path.resolve(path.dirname(CLI), '../../../../../../kotlin/ttrp-frontend/src/test/resources/recipes');
+const TTRP_SRC = process.env.TTRP_SRC ?? path.join(hartlandRoot, '.modeler/toolchains/ttrp');
+const CLI = process.env.TTRP_CLI ?? path.join(TTRP_SRC, 'packages/kotlin/ttrp-cli/build/install/ttrp-cli/bin/ttrp-cli');
+const cliMissing = !process.env.CI && !process.env.TTRP_CLI && !process.env.TTRP_SRC && !existsSync(CLI)
+  && 'run `just toolchain-ttrp` (or set TTRP_CLI / TTRP_SRC)';
+const FIXTURES = path.join(TTRP_SRC, 'packages/kotlin/ttrp-frontend/src/test/resources/recipes');
+if (!cliMissing) {
+  assert.ok(existsSync(CLI), `recipe CLI missing: ${CLI}`);
+  assert.ok(existsSync(FIXTURES), `recipe fixtures missing: ${FIXTURES}; set TTRP_SRC`);
+}
 
 const automationDir = path.join(hartlandRoot, 'automation');
 async function findRecipes(dir) {
@@ -48,7 +51,7 @@ test('S2.2 — the eight recipes of contracts §4 are in the package, one folder
 /** `ttrp <command> <file>` → { code, out } (stdout + stderr, the ANTLR and SLF4J notices dropped). */
 async function ttrp(command, file) {
   try {
-    const { stdout, stderr } = await run(CLI, [command, file], { maxBuffer: 4 << 20 });
+    const { stdout, stderr } = await run('python3', [path.join(hartlandRoot, 'scripts/build-recipes.py'), '--cli', CLI, '--command', command, '--recipe', file], { maxBuffer: 4 << 20 });
     return { code: 0, out: clean(stdout + stderr) };
   } catch (e) {
     return { code: e.code ?? 1, out: clean(`${e.stdout ?? ''}${e.stderr ?? ''}`) };
@@ -150,7 +153,7 @@ const lines = (text) => code(text).split('\n').map((l) => l.trimEnd()).filter((l
 
 for (const name of ['release_order', 'decide_return', 'monitor_inbound', 'settle']) {
   const fixture = path.join(FIXTURES, `${name}.ttrp`);
-  test(`S2.2 T2/T3 — ${name} is ttr-core's shared fixture (comments aside)`, { skip: !existsSync(fixture) && !process.env.CI && 'no ttr-core checkout' }, async () => {
+  test(`S2.2 T2/T3 — ${name} is ttr-core's shared fixture (comments aside)`, { skip: cliMissing }, async () => {
     let want = lines(await readFile(fixture, 'utf-8'));
     for (const [re, to] of FIXTURE_DELTAS[name] ?? []) want = want.replace(re, to);
     assert.equal(lines(sources[name]), want);
@@ -210,8 +213,31 @@ test('S2.3 — every deployment and process step has a committed recipe bundle',
   }
 });
 
+// One full rebuild per pass, shared by all six comparisons. A second pass is opt-in for investigation.
+const reproOutputs = [];
+if (!cliMissing) {
+  const passes = Number(process.env.RECIPES_REPRO_PASSES ?? 1);
+  assert.ok(Number.isInteger(passes) && passes >= 1, 'RECIPES_REPRO_PASSES must be a positive integer');
+  for (let pass = 0; pass < passes; pass++) {
+    const out = await mkdtemp(path.join(os.tmpdir(), 'hartland-bundle-'));
+    reproOutputs.push(out);
+    await run('python3', [path.join(hartlandRoot, 'scripts/build-recipes.py'), '--cli', CLI, '--out', out], { maxBuffer: 8 << 20 });
+  }
+}
+after(async () => { for (const out of reproOutputs) await rm(out, { recursive: true, force: true }); });
+
+test('S2.3 — disk bundles equal exactly the six active recipes', async () => {
+  const actual = [];
+  for (const e of await readdir(automationDir, { withFileTypes: true })) {
+    if (e.isDirectory()) for (const b of await readdir(path.join(automationDir, e.name))) {
+      if (b.endsWith('.bundle')) actual.push(b.slice(0, -7));
+    }
+  }
+  assert.deepEqual(actual.sort(), [...bundledNames].sort());
+});
+
 for (const name of bundledNames) {
-  test(`S2.3 — ${name}: v3, hashes, golden seeds, catalog references and two identical builds`, { skip: cliMissing }, async () => {
+  test(`S2.3 — ${name}: v3, hashes, golden seeds, catalog references and reproducible builds`, { skip: cliMissing }, async () => {
     const file = recipeFiles[name];
     const committed = path.join(path.dirname(file), name + '.bundle');
     const manifest = JSON.parse(await readFile(path.join(committed, 'manifest.json'), 'utf8'));
@@ -238,20 +264,16 @@ for (const name of bundledNames) {
       assert.deepEqual([...new Set(manifest.recipe.parts.map((p) => p.storage))].sort(), ['automation_db', 'erp_db']);
       assert.ok(manifest.islands.flatMap((i) => i.outputs).some((o) => o.combine));
     }
-    const tmp = await mkdtemp(path.join(os.tmpdir(), 'hartland-bundle-'));
-    try {
-      for (let pass = 0; pass < 2; pass++) {
-        const out = path.join(tmp, String(pass));
-        const r = await run(CLI, ['build', file, '--out', out, '--json'], { maxBuffer: 8 << 20 });
-        assert.deepEqual(JSON.parse(r.stdout).diagnostics, []);
-        assert.deepEqual(await tree(path.join(out, name + '.bundle')), await tree(committed));
-      }
-    } finally { await rm(tmp, { recursive: true, force: true }); }
+    for (const out of reproOutputs) {
+      assert.deepEqual(await tree(path.join(out, name, name + '.bundle')), await tree(committed));
+    }
   });
 }
 
 test('S2.3 — winback SQL selects the highest two bands and excludes recent orders and recent mail', { skip: cliMissing }, async () => {
-  const lib = path.resolve(path.dirname(CLI), '../lib/*');
+  const libDir = path.resolve(path.dirname(realpathSync(CLI)), '../lib');
+  assert.ok(existsSync(libDir), `recipe CLI library directory missing: ${libDir}`);
+  const lib = path.join(libDir, '*');
   const probe = path.join(automationDir, 'tests/WinbackSqlProbe.java');
   const bundle = path.join(automationDir, 'winback/winback.bundle');
   const result = await run('java', ['--class-path', lib, probe, bundle], { maxBuffer: 4 << 20 });

@@ -43,7 +43,7 @@ The literate documents and their drift check remain P3.
 The recipe pin is temporarily ttr-core commit `f4001922bef0ab78f01db8343113bddbcdeac6c0`
 (`0.17.3-au.1`), based on `grammar/v0.17.3`. The released tag emits retired CNC roles in verdict catalogs,
 omits the golden-fixture list, and reports CEIL as unsupported. This commit fixes those handoff issues; replace
-it with the next reviewed grammar release (ttr-core PR #249). Generated bundles remain the unmodified output of that toolchain.
+it with the next reviewed grammar release (ttr-core PR #249); delete `version` when moving `ref` to a tag. Generated bundles remain the unmodified output of that toolchain.
 
 Six bundles are served: `release_order`, `decide_return`, `monitor_inbound`, `settle`, `reorder_proposals`, and
 `winback`. **Bundles load; they do not run until AU-server P1·S1.1.** The cross-storage pair contains door
@@ -55,4 +55,10 @@ named `TTRP-TYP-001` refusal for row-dependent `minutes(2 * period_minutes)` ari
 fixture only and is not included in any bundle; remove all three stub files when the real package lands.
 
 The ops stub lives at `../authoring-stubs/automation/ops/`, outside both roots read by the Server
-(`model/` + `automation/`). Only the recipe toolchain loads this extra root through `modeler.toml`.
+(`model/` + `automation/`). Neither veles (`model/`) nor the automation Server (`model/` + `automation/`) loads it. The TTR-P toolchain and `resolve-packages` (`generated/resolved-packages.json`) load this extra root through `modeler.toml`.
+
+Worktrees with another basename build/check in a temporary `hartland/` copy until
+[ttr-core#251](https://github.com/Collite/ttr-core/issues/251) fixes declared-package resolution.
+Winback keeps documented workarounds for [#252](https://github.com/Collite/ttr-core/issues/252),
+[#253](https://github.com/Collite/ttr-core/issues/253), and [#254](https://github.com/Collite/ttr-core/issues/254).
+`RECIPES_REPRO_PASSES=2` enables a second local reproducibility pass; CI uses one test rebuild per recipe.
