@@ -34,3 +34,22 @@ export const lexicon = JSON.parse(untar(zstdDecompressSync(readFileSync(archiveP
 
 export const isCs = (e) => e.lang.split('|').includes('cs');
 export const isEn = (e) => e.lang.split('|').includes('en');
+
+// A deliberately small model of the matcher — whole phrase, contiguous tokens, compared under each rule's
+// normalisation (canonical = lower case, folded = lower case without diacritics), typos left out. It tells "the
+// phrase can match this question at all", not which span wins.
+const fold = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const words = (s) => s.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+const NORMS = { canonical: (s) => words(s).join(' '), folded: (s) => words(fold(s)).join(' ') };
+
+/** The rows of two or more words a question can reach as a WHOLE phrase, under each row's own rules (typos left out). */
+export function wholePhraseHits(question, lang) {
+  return lexicon.entries.filter((e) => {
+    if (!lang(e) || e.termNormalized.split(' ').length < 2) return false;
+    return (e.matchProfile?.rules ?? []).some((r) => {
+      const norm = NORMS[r.norm];
+      if (!norm || r.tokens || r.exact == null) return false;
+      return ` ${norm(question)} `.includes(` ${norm(e.termNormalized)} `);
+    });
+  });
+}

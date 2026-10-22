@@ -428,3 +428,25 @@ entries:
       - { text: "tržeb zákazníků" }
       - { text: "tržby na zákazníka" }
     target: er.entity.customer_revenue.revenue
+
+  # ══ STOCK-OUT WEEKS → er.entity.dc_stockout_month.stockout_weeks ══════════════════
+  # BI-4 (contracts C-22), 2026-10-22. The measure of the entity stacked on the logical query
+  # `er.query.stockouts_monthly_dc` (model/er/stockouts.ttrm): per DC per month, the weekly snapshots with at
+  # least half of the DC's rows at zero — the same weeks `q.hartland.warehouse_stockout_week_count` counts.
+  # The phrases name the MEASURE, stock-out weeks, and never:
+  #   - the bare stock-out words. «Kolik týdnů v roce 2025 mělo Brno DC výpadky zásob?» (act 3.5) is the saved
+  #     query's, reached through the stock anchor above and its patterns; a «výpadky zásob» row would be the
+  #     longer span and take the question from it;
+  #   - the month. «po měsících» / "monthly" / "by month" are the calendar's (er.entity.date_dim.month, above); a
+  #     phrase holding them would swallow the grouping and answer one total.
+  # Whole phrases under the file's default profile, NOT TOKENS (the customer-revenue reasons: the folded rule, and
+  # fragments — «týdnů», «zásob» — that would reach the measure on their own). The Czech forms a question takes are
+  # spelled out: nominative and genitive plural of the weeks, with «výpadkem» or «výpadky».
+  # Guarded by lexicon/tests/stockouts.test.mjs.
+  - terms:
+      - { text: "stockout weeks", lang: en }
+      - { text: "týdny s výpadkem zásob" }
+      - { text: "týdnů s výpadkem zásob" }
+      - { text: "týdny s výpadky zásob" }
+      - { text: "týdnů s výpadky zásob" }
+    target: er.entity.dc_stockout_month.stockout_weeks
