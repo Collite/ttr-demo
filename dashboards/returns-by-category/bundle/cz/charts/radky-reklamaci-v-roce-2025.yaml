@@ -1,0 +1,43 @@
+slice_name: "\u0158\xE1dky reklamac\xED v roce 2025"
+description: ''
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  datasource: 2__table
+  viz_type: big_number_total
+  metric: lines_sum
+  adhoc_filters:
+  - clause: WHERE
+    comparator: '2025-01-01 : 2026-01-01'
+    expressionType: SIMPLE
+    operator: TEMPORAL_RANGE
+    subject: month_start
+    isExtra: false
+    isNew: false
+    sqlExpression: null
+  header_font_size: 0.4
+  subheader_font_size: 0.15
+  subheader: "vr\xE1cen\xE9 polo\u017Eky z reklamac\xED podan\xFDch v roce 2025"
+  y_axis_format: SMART_NUMBER
+  time_format: smart_date
+  extra_form_data: {}
+  dashboards: []
+query_context: '{"datasource": {"id": 2, "type": "table"}, "force": false, "queries":
+  [{"filters": [{"col": "month_start", "op": "TEMPORAL_RANGE", "val": "2025-01-01
+  : 2026-01-01"}], "extras": {"having": "", "where": ""}, "applied_time_extras": {},
+  "columns": [], "metrics": ["lines_sum"], "orderby": [], "annotation_layers": [],
+  "row_limit": null, "series_limit": 0, "order_desc": null, "url_params": {}, "custom_params":
+  {}, "custom_form_data": {}, "post_processing": [], "time_offsets": []}], "form_data":
+  {"datasource": "2__table", "viz_type": "big_number_total", "metric": "lines_sum",
+  "adhoc_filters": [{"clause": "WHERE", "comparator": "2025-01-01 : 2026-01-01", "expressionType":
+  "SIMPLE", "operator": "TEMPORAL_RANGE", "subject": "month_start", "isExtra": false,
+  "isNew": false, "sqlExpression": null}], "header_font_size": 0.4, "subheader_font_size":
+  0.15, "subheader": "vr\u00e1cen\u00e9 polo\u017eky z reklamac\u00ed podan\u00fdch
+  v roce 2025", "y_axis_format": "SMART_NUMBER", "time_format": "smart_date", "extra_form_data":
+  {}, "dashboards": [], "force": false, "result_format": "json", "result_type": "full"},
+  "result_format": "json", "result_type": "full"}'
+cache_timeout: null
+uuid: 117a873a-35eb-4cf3-b289-01f2a2cb3ad4
+version: 1.0.0
+dataset_uuid: 1bb3cbf3-5f7d-4ddb-8985-a3e6245e480d

@@ -1,0 +1,113 @@
+dashboard_title: Returns by category
+description: null
+css: null
+slug: returns-by-category-us
+certified_by: null
+certification_details: null
+published: true
+uuid: 3168070b-9496-4ac9-a420-9c310a6912dd
+position:
+  DASHBOARD_VERSION_KEY: v2
+  ROOT_ID:
+    children:
+    - GRID_ID
+    id: ROOT_ID
+    type: ROOT
+  GRID_ID:
+    children:
+    - ROW-returns-by-category-us-4
+    - ROW-returns-by-category-us-7
+    id: GRID_ID
+    parents:
+    - ROOT_ID
+    type: GRID
+  HEADER_ID:
+    id: HEADER_ID
+    meta:
+      text: Returns by category
+    type: HEADER
+  ROW-returns-by-category-us-4:
+    children:
+    - CHART-returns-by-category-us-10
+    - CHART-returns-by-category-us-11
+    id: ROW-returns-by-category-us-4
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+  CHART-returns-by-category-us-10:
+    children: []
+    id: CHART-returns-by-category-us-10
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-returns-by-category-us-4
+    type: CHART
+    meta:
+      chartId: 10
+      sliceName: Return lines in 2025
+      uuid: 3926955d-a1d7-4ad6-9605-ba81845f76ed
+      width: 4
+      height: 50
+  CHART-returns-by-category-us-11:
+    children: []
+    id: CHART-returns-by-category-us-11
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-returns-by-category-us-4
+    type: CHART
+    meta:
+      chartId: 11
+      sliceName: Return requests by item category, 2025
+      uuid: 39f8c5c8-a57f-40ad-b002-f1f6120a5013
+      width: 8
+      height: 50
+  ROW-returns-by-category-us-7:
+    children:
+    - CHART-returns-by-category-us-12
+    id: ROW-returns-by-category-us-7
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+  CHART-returns-by-category-us-12:
+    children: []
+    id: CHART-returns-by-category-us-12
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-returns-by-category-us-7
+    type: CHART
+    meta:
+      chartId: 12
+      sliceName: Returns by category, 2025
+      uuid: 409762a8-1783-48a7-bdd2-381670ce7491
+      width: 12
+      height: 50
+metadata:
+  color_scheme: supersetColors
+  refresh_frequency: 0
+  cross_filters_enabled: false
+  native_filter_configuration: []
+  chart_configuration: {}
+  expanded_slices: {}
+  label_colors: {}
+  shared_label_colors: []
+  timed_refresh_immune_slices: []
+  default_filters: '{}'
+  global_chart_configuration:
+    scope:
+      rootPath:
+      - ROOT_ID
+      excluded: []
+    chartsInScope:
+    - 10
+    - 11
+    - 12
+theme_uuid: null
+version: 1.0.0

@@ -35,22 +35,32 @@ legs:
     question: {cs: …, en: …}             # the world's language asks (cz → cs, us → en)
     pattern: warehouse_stockout_week_count   # iris only, optional: the protocol's sql.patternId must be this
     value: stockout_weeks
-  - id: superset-tile
+  - id: superset-analyst
     via: superset
-    pending: "S4.2 T5 — …"               # declared, not run yet
+    persona: analyst
+    chart: {cz: 65572edb-…, us: dcdb1d8e-…}   # superset only: the tile per world, a big-number chart of dashboards/
+    value: stockout_weeks_sum            # the chart's metric
+  - id: some-later-leg
+    via: iris
+    pending: "what it waits for"         # any leg: declared, not run, does not redden
 ```
 
 - **edge**: the statement through the Flight edge (`flight.hartland.collite.cz`), as the persona, on
   `hartland_<world>`. The SQL groups by the DC; the number is the `dc` row's `value`.
 - **iris**: the question through the public iris-bff as the persona (the routing runner's client). The number is
   `value`'s column, summed over the answer's rows. `pattern` asserts which saved query answered.
-- **superset**: S4.2 T5 adds the tile's read through the Superset API (the chart's data endpoint).
+- **superset**: the tile as the persona sees it. The runner signs in at `superset.hartland.collite.cz` through
+  Keycloak (the `superset` client's form) and finds the chart by its uuid. It reads the chart's saved query through
+  `GET /api/v1/chart/<id>/data/`. The first read of a database answers `OAUTH2_REDIRECT`; the runner follows that SSO
+  hop and reads again with the viewer's own per-database token. The schema check holds the uuid to a big-number
+  chart of the world's bundle under `dashboards/`, so a re-authored tile cannot leave the case pointing at nothing.
 
-The Iris legs need the world the cluster serves (olymp `just world <us|cz>`); the edge legs read either world. Persona
+The Iris legs need the world the cluster serves (olymp `just world <us|cz>`); the edge and Superset legs read
+either world (one Superset database each). Persona
 passwords come from the realm, as for the routing corpus: `HARTLAND_DEMO_PASSWORD` or `--realm-file`.
 
 ## Not in a nightly yet
 
 hartland runs no nightly. The routing nightly is collite-o1's, and it is suspended until that cluster runs the
 hartland stack (olymp `clusters/collite-o1/platform/routing-nightly`). When it resumes, this run is one more line in
-its script: two Iris turns and two edge reads, about a minute.
+its script: two Iris turns, two edge reads and two Superset reads, about a minute.

@@ -1,0 +1,113 @@
+dashboard_title: Reklamace podle kategorie
+description: null
+css: null
+slug: returns-by-category-cz
+certified_by: null
+certification_details: null
+published: true
+uuid: bb9a7bc5-0274-4c89-8d42-8b06aba8ef93
+position:
+  DASHBOARD_VERSION_KEY: v2
+  ROOT_ID:
+    children:
+    - GRID_ID
+    id: ROOT_ID
+    type: ROOT
+  GRID_ID:
+    children:
+    - ROW-returns-by-category-cz-4
+    - ROW-returns-by-category-cz-7
+    id: GRID_ID
+    parents:
+    - ROOT_ID
+    type: GRID
+  HEADER_ID:
+    id: HEADER_ID
+    meta:
+      text: Reklamace podle kategorie
+    type: HEADER
+  ROW-returns-by-category-cz-4:
+    children:
+    - CHART-returns-by-category-cz-4
+    - CHART-returns-by-category-cz-5
+    id: ROW-returns-by-category-cz-4
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+  CHART-returns-by-category-cz-4:
+    children: []
+    id: CHART-returns-by-category-cz-4
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-returns-by-category-cz-4
+    type: CHART
+    meta:
+      chartId: 4
+      sliceName: "\u0158\xE1dky reklamac\xED v roce 2025"
+      uuid: 117a873a-35eb-4cf3-b289-01f2a2cb3ad4
+      width: 4
+      height: 50
+  CHART-returns-by-category-cz-5:
+    children: []
+    id: CHART-returns-by-category-cz-5
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-returns-by-category-cz-4
+    type: CHART
+    meta:
+      chartId: 5
+      sliceName: "Reklamace podle kategorie zbo\u017E\xED, 2025"
+      uuid: 5c01d5a7-e007-4bd7-b413-a49aa3efecbc
+      width: 8
+      height: 50
+  ROW-returns-by-category-cz-7:
+    children:
+    - CHART-returns-by-category-cz-6
+    id: ROW-returns-by-category-cz-7
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+  CHART-returns-by-category-cz-6:
+    children: []
+    id: CHART-returns-by-category-cz-6
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-returns-by-category-cz-7
+    type: CHART
+    meta:
+      chartId: 6
+      sliceName: "Reklamace po kategori\xEDch, 2025"
+      uuid: bd530d4e-cbed-4bce-b5af-a0ac83f5afa2
+      width: 12
+      height: 50
+metadata:
+  color_scheme: supersetColors
+  refresh_frequency: 0
+  cross_filters_enabled: false
+  native_filter_configuration: []
+  chart_configuration: {}
+  expanded_slices: {}
+  label_colors: {}
+  shared_label_colors: []
+  timed_refresh_immune_slices: []
+  default_filters: '{}'
+  global_chart_configuration:
+    scope:
+      rootPath:
+      - ROOT_ID
+      excluded: []
+    chartsInScope:
+    - 4
+    - 5
+    - 6
+theme_uuid: null
+version: 1.0.0

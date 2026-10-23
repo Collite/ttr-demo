@@ -347,3 +347,23 @@ bi-one-number world *FLAGS:
 # The one-number runner's specs and the cases' schema — no cluster.
 bi-one-number-test:
     uv run --quiet --with pyyaml --with httpx python3 -B -m unittest scripts/test_bi_one_number.py
+
+# ── the Superset dashboards (BI-4, contracts C-23) ───────────────────────────────────────────────
+# dashboards/README.md. Bundles per dashboard and world; olymp's superset-dashboards Application
+# imports them on merge (the ConfigMap kustomization.yaml renders).
+#
+#     just dashboards-unpack export.zip dc-meltdown-stockouts cz   # an Admin's export → its bundle
+#     just dashboards-kustomize                                      # then the ConfigMap's file list
+#     just dashboards-check                                          # every rule, and no stale list
+dashboards-check:
+    uv run scripts/dashboards.py check
+
+dashboards-kustomize:
+    uv run scripts/dashboards.py kustomize
+
+dashboards-unpack export id world:
+    uv run scripts/dashboards.py unpack {{export}} {{id}} {{world}}
+
+# The bundle rules' specs, and the shipped bundles against them — no cluster.
+dashboards-test:
+    uv run --quiet --with pyyaml python3 -B -m unittest scripts/test_dashboards.py

@@ -1,0 +1,65 @@
+slice_name: "Reklamace podle kategorie zbo\u017E\xED, 2025"
+description: ''
+certified_by: null
+certification_details: null
+viz_type: echarts_timeseries_bar
+params:
+  datasource: 2__table
+  viz_type: echarts_timeseries_bar
+  x_axis: category
+  xAxisForceCategorical: true
+  x_axis_sort: requests_sum
+  x_axis_sort_asc: false
+  metrics:
+  - requests_sum
+  groupby: []
+  adhoc_filters:
+  - clause: WHERE
+    comparator: '2025-01-01 : 2026-01-01'
+    expressionType: SIMPLE
+    operator: TEMPORAL_RANGE
+    subject: month_start
+    isExtra: false
+    isNew: false
+    sqlExpression: null
+  order_desc: true
+  row_limit: 10000
+  truncate_metric: true
+  show_empty_columns: true
+  comparison_type: values
+  annotation_layers: []
+  orientation: horizontal
+  color_scheme: supersetColors
+  show_value: true
+  only_total: true
+  show_legend: false
+  y_axis_format: SMART_NUMBER
+  rich_tooltip: true
+  extra_form_data: {}
+  dashboards: []
+query_context: '{"datasource": {"id": 2, "type": "table"}, "force": false, "queries":
+  [{"filters": [{"col": "month_start", "op": "TEMPORAL_RANGE", "val": "2025-01-01
+  : 2026-01-01"}], "extras": {"having": "", "where": ""}, "applied_time_extras": {},
+  "columns": [{"columnType": "BASE_AXIS", "sqlExpression": "category", "label": "category",
+  "expressionType": "SQL", "isColumnReference": true}], "metrics": ["requests_sum"],
+  "orderby": [["requests_sum", false]], "annotation_layers": [], "row_limit": 10000,
+  "series_limit": 0, "order_desc": true, "url_params": {}, "custom_params": {}, "custom_form_data":
+  {}, "post_processing": [{"operation": "pivot", "options": {"index": ["category"],
+  "columns": [], "aggregates": {"requests_sum": {"operator": "mean"}}, "drop_missing_columns":
+  false}}, {"operation": "sort", "options": {"by": "requests_sum", "ascending": false}},
+  {"operation": "flatten"}], "time_offsets": []}], "form_data": {"datasource": "2__table",
+  "viz_type": "echarts_timeseries_bar", "x_axis": "category", "xAxisForceCategorical":
+  true, "x_axis_sort": "requests_sum", "x_axis_sort_asc": false, "metrics": ["requests_sum"],
+  "groupby": [], "adhoc_filters": [{"clause": "WHERE", "comparator": "2025-01-01 :
+  2026-01-01", "expressionType": "SIMPLE", "operator": "TEMPORAL_RANGE", "subject":
+  "month_start", "isExtra": false, "isNew": false, "sqlExpression": null}], "order_desc":
+  true, "row_limit": 10000, "truncate_metric": true, "show_empty_columns": true, "comparison_type":
+  "values", "annotation_layers": [], "orientation": "horizontal", "color_scheme":
+  "supersetColors", "show_value": true, "only_total": true, "show_legend": false,
+  "y_axis_format": "SMART_NUMBER", "rich_tooltip": true, "extra_form_data": {}, "dashboards":
+  [], "force": false, "result_format": "json", "result_type": "full"}, "result_format":
+  "json", "result_type": "full"}'
+cache_timeout: null
+uuid: 5c01d5a7-e007-4bd7-b413-a49aa3efecbc
+version: 1.0.0
+dataset_uuid: 1bb3cbf3-5f7d-4ddb-8985-a3e6245e480d
