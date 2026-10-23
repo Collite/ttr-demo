@@ -22,6 +22,8 @@
 | one number, every path | `just bi-one-number cz` (and `us` after a world flip) | every leg ✓ 17: oracle, edge ×2, Iris ×2, Superset ×2 |
 | the world Iris serves | olymp `just world cz` before a Czech show (ops manual §7.6) | Iris answers in Czech over `hartland_cz` |
 | a clean browser | a private window per persona, or sign out between personas (§2.3) | — |
+| Tatrman styling | the sign-in page | the Tatrman lockup in the navbar, the title "Tatrman BI" (olymp `tatrman_brand`) |
+| each world authorized | as each persona you will show, open one dashboard per world within the half hour before; click through any "Authorization needed" (§2.1 step 3) | charts with data, no yellow box |
 
 Superset needs no world flip: each world is its own Superset database, so both are always there (C-20). Only Iris
 serves one world at a time.
@@ -41,8 +43,8 @@ never a persona.
 ## 1 · The story in one paragraph
 
 The Brno DC (Memphis DC in the us world) melted down in H2 2025. From August to November, 17 of its weekly inventory
-snapshots were stock-out weeks. The other four DCs had none. The analyst sees the whole network and the one red
-DC. The DC's own manager sees only his DC, on the same dashboard, because the door narrows every statement to what
+snapshots were stock-out weeks. The other four DCs had none. The analyst sees the whole network and the one DC
+in Tatrman Yellow. The DC's own manager sees only his DC, on the same dashboard, because the door narrows every statement to what
 his role allows. Superset knows nothing about that rule. And the 17 is the same 17 wherever it is asked: on the
 tile, in Iris, in the saved query.
 
@@ -51,21 +53,28 @@ tile, in Iris, in the saved query.
 ### 2.1 Landing → Superset, as the analyst
 
 1. `https://hartland.collite.cz` → the tile **BI · Superset**.
-2. Sign in with Keycloak as **marketa**. Superset opens on its home page. **Dashboards** lists four, two per
-   world:
+2. Sign in with Keycloak as **marketa**. Superset ("Tatrman BI", the Tatrman lockup top left) opens on its home
+   page. **Dashboards** lists four, two per world:
    - «Výpadky zásob v distribučních centrech» and «Reklamace podle kategorie» (cz);
    - "DC meltdown — stock-outs" and "Returns by category" (us).
 3. Open **«Výpadky zásob v distribučních centrech»**.
-   - ⚑ The first time a persona reads a world, Superset sends them through Keycloak once to get their own token for
-     that database (per-database OAuth2). It is an SSO hop, so no second password is asked. Every chart after that
-     runs with that token. (What the screen shows on that first read: §3, recorded at T4.)
+   - ⚑ **Authorization needed.** Superset reads each world with the viewer's OWN token for that database
+     (per-database OAuth2). When the persona has none, or the one Superset holds has lapsed, every chart shows a
+     yellow box: "Authorization needed. You need to **provide authorization** in order to run this operation." Its
+     lapse is the Keycloak session's idle timeout, so after a pause in the show it comes back.
+     1. Click **provide authorization** (the amber link). A tab opens, passes through Keycloak with no password (the
+        persona is signed in), and says "You can close this window and re-run the query."
+     2. Close that tab, then reload the dashboard. The charts do not re-run by themselves.
+
+     It happens once per persona and world. *Say:* Superset holds no data credential of its own. The viewer lends
+     it theirs, and only for their own charts.
 4. What the dashboard shows:
    - **«Týdny s výpadkem zásob v roce 2025»: 17.** Subtitle «týdny, kdy byla alespoň polovina skladových položek DC
      na nule».
    - **«Týdny s výpadkem podle DC, 2025»**: five rows. Brno DC 17 of 52 weeks; Hradec Králové, Ostrava, Plzeň and
      Praha DC 0 of 52.
-   - **«Týdny s výpadkem po měsících a DC, 2025»**: one red DC. Brno DC has Aug 5 · Sep 4 · Oct 5 · Nov 3, and five
-     DCs are in the legend.
+   - **«Týdny s výpadkem po měsících a DC, 2025»**: one DC in Tatrman Yellow, the one that melted down. Brno DC has
+     Aug 5 · Sep 4 · Oct 5 · Nov 3, and five DCs are in the legend.
 
    *Say:* this dataset is not a table. It is `obj.query.stockouts_monthly_dc`, a logical query of the model. The
    chart asked the model, and the door wrote the SQL.
@@ -160,9 +169,13 @@ The four personas on hartland, after the import from git (project `platform/feat
 | maya | 17 | 5 rows (Memphis DC 17/52) | 5 DCs | 41 962 |
 | sam | 17 | 1 row: Memphis DC 17/52 | Memphis DC | 41 962 |
 
-- **The first read of each world** took one SSO hop per persona: the scripted walk's first chart of each database
-  answered `OAUTH2_REDIRECT`, followed it, and read. In the browser, that is a Keycloak redirect with no password.
-  A persona with a live token for that database sees nothing at all.
+- **The first read of each world:**
+  - The scripted walk's first chart of each database answered `OAUTH2_REDIRECT`; the walk followed it and read.
+  - In the browser (recorded later, after the personas' sessions had idled), every chart showed "Authorization
+    needed". Clicking "provide authorization" opened a tab: Keycloak (no password), then Superset's "You can close
+    this window and re-run the query".
+  - The dashboard showed data only after a reload (§2.1 step 3).
+  - A persona with a live token for that database sees no prompt at all.
 - **The receipts** (`query.bi_receipts`, the same rows `GET /receipts` reads): one per chart. Each has
   `client = superset` and the viewer's own `user_id`. For the per-DC table, marketa's receipt has no row rule
   (`security_applied` empty, 5 rows). petr's runs the same statement with `dc-scope` on `db.dbo.inventory` and
@@ -188,3 +201,7 @@ The four personas on hartland, after the import from git (project `platform/feat
   account temporarily. Superset is not affected: it uses each viewer's OAuth token, never their password.
 - **An edit in Superset's UI does not survive** the next import from git. To keep it, export it into the bundle
   (`dashboards/README.md`).
+- **"Authorization needed" comes back after an idle pause** (§2.1 step 3): one click and a reload per persona and
+  world. Rehearse it, or show it on purpose as part of the governance story.
+- **Superset's own messages still name "Apache Superset"** (the authorization box, for example). The styling
+  changes the brand, not Superset's text; the logo's tooltip credits Superset.
