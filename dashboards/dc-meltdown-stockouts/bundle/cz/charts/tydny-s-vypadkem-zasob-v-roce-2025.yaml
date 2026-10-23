@@ -1,0 +1,46 @@
+slice_name: "T\xFDdny s v\xFDpadkem z\xE1sob v roce 2025"
+description: "S4.2 / C-25: the one number (17 at DC 5 in 2025) \u2014 the same as\
+  \ Iris and the saved query."
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  datasource: 1__table
+  viz_type: big_number_total
+  metric: stockout_weeks_sum
+  adhoc_filters:
+  - clause: WHERE
+    comparator: '2025-01-01 : 2026-01-01'
+    expressionType: SIMPLE
+    operator: TEMPORAL_RANGE
+    subject: month_start
+    isExtra: false
+    isNew: false
+    sqlExpression: null
+  header_font_size: 0.4
+  subheader_font_size: 0.15
+  subheader: "t\xFDdny, kdy byla alespo\u0148 polovina skladov\xFDch polo\u017Eek\
+    \ DC na nule"
+  y_axis_format: SMART_NUMBER
+  time_format: smart_date
+  extra_form_data: {}
+  dashboards: []
+query_context: '{"datasource": {"id": 1, "type": "table"}, "force": false, "queries":
+  [{"filters": [{"col": "month_start", "op": "TEMPORAL_RANGE", "val": "2025-01-01
+  : 2026-01-01"}], "extras": {"having": "", "where": ""}, "applied_time_extras": {},
+  "columns": [], "metrics": ["stockout_weeks_sum"], "orderby": [], "annotation_layers":
+  [], "row_limit": null, "series_limit": 0, "order_desc": null, "url_params": {},
+  "custom_params": {}, "custom_form_data": {}, "post_processing": [], "time_offsets":
+  []}], "form_data": {"datasource": "1__table", "viz_type": "big_number_total", "metric":
+  "stockout_weeks_sum", "adhoc_filters": [{"clause": "WHERE", "comparator": "2025-01-01
+  : 2026-01-01", "expressionType": "SIMPLE", "operator": "TEMPORAL_RANGE", "subject":
+  "month_start", "isExtra": false, "isNew": false, "sqlExpression": null}], "header_font_size":
+  0.4, "subheader_font_size": 0.15, "subheader": "t\u00fddny, kdy byla alespo\u0148
+  polovina skladov\u00fdch polo\u017eek DC na nule", "y_axis_format": "SMART_NUMBER",
+  "time_format": "smart_date", "extra_form_data": {}, "dashboards": [], "force": false,
+  "result_format": "json", "result_type": "full"}, "result_format": "json", "result_type":
+  "full"}'
+cache_timeout: null
+uuid: 65572edb-2694-4098-b3ef-761b8ee7e738
+version: 1.0.0
+dataset_uuid: 286957bc-6914-411a-aaa5-2a450e1b27c6

@@ -1,0 +1,21 @@
+# The Superset bundles per world (BI-4·S4.2, contract C-23). `just dashboards-kustomize` writes kustomization.yaml
+# from this list and the bundle files; `just dashboards-check` holds every bundle to README.md's rules.
+#
+# A world is one Superset database (C-20, D-2: switch, never mix). Its uuid is olymp's: the database files
+# superset-init-db imports (platform/bi/superset/overlays/<cluster>/values.yaml, the same uuids on hartland and
+# bp-dsk). A dataset names its database by that uuid, so a bundle for a world must too.
+worlds:
+  cz:
+    database: hartland_cz
+    database_uuid: 2203df78-f233-401a-a338-eb2160b5124b
+  us:
+    database: hartland_us
+    database_uuid: 40b6f2ef-bce7-4e58-aedd-4057a8076b88
+
+# One bundle per dashboard and world, at <id>/bundle/<world>/ — per world because the labels differ (Czech in cz,
+# English in us).
+dashboards:
+  - id: dc-meltdown-stockouts
+    worlds: [cz, us]
+  - id: returns-by-category
+    worlds: [cz, us]

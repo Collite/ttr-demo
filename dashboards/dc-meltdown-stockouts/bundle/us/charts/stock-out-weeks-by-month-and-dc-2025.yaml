@@ -1,0 +1,79 @@
+slice_name: Stock-out weeks by month and DC, 2025
+description: ''
+certified_by: null
+certification_details: null
+viz_type: echarts_timeseries_bar
+params:
+  datasource: 3__table
+  viz_type: echarts_timeseries_bar
+  x_axis: month_start
+  time_grain_sqla: P1M
+  xAxisForceCategorical: false
+  x_axis_sort_asc: true
+  metrics:
+  - stockout_weeks_sum
+  groupby:
+  - warehouse_name
+  adhoc_filters:
+  - clause: WHERE
+    comparator: '2025-01-01 : 2026-01-01'
+    expressionType: SIMPLE
+    operator: TEMPORAL_RANGE
+    subject: month_start
+    isExtra: false
+    isNew: false
+    sqlExpression: null
+  order_desc: true
+  row_limit: 10000
+  truncate_metric: true
+  show_empty_columns: true
+  comparison_type: values
+  annotation_layers: []
+  orientation: vertical
+  x_axis_title_margin: 15
+  y_axis_title_margin: 30
+  y_axis_title_position: Left
+  sort_series_type: sum
+  color_scheme: supersetColors
+  stack: Stack
+  only_total: true
+  show_legend: true
+  legendType: scroll
+  legendOrientation: top
+  x_axis_time_format: '%b %Y'
+  y_axis_format: SMART_NUMBER
+  rich_tooltip: true
+  tooltipTimeFormat: '%B %Y'
+  extra_form_data: {}
+  dashboards: []
+query_context: '{"datasource": {"id": 3, "type": "table"}, "force": false, "queries":
+  [{"filters": [{"col": "month_start", "op": "TEMPORAL_RANGE", "val": "2025-01-01
+  : 2026-01-01"}], "extras": {"time_grain_sqla": "P1M", "having": "", "where": ""},
+  "applied_time_extras": {}, "columns": [{"timeGrain": "P1M", "columnType": "BASE_AXIS",
+  "sqlExpression": "month_start", "label": "month_start", "expressionType": "SQL",
+  "isColumnReference": true}, "warehouse_name"], "metrics": ["stockout_weeks_sum"],
+  "orderby": [["stockout_weeks_sum", false]], "annotation_layers": [], "row_limit":
+  10000, "series_limit": 0, "order_desc": true, "url_params": {}, "custom_params":
+  {}, "custom_form_data": {}, "post_processing": [{"operation": "pivot", "options":
+  {"index": ["month_start"], "columns": ["warehouse_name"], "aggregates": {"stockout_weeks_sum":
+  {"operator": "mean"}}, "drop_missing_columns": false}}, {"operation": "rename",
+  "options": {"columns": {"stockout_weeks_sum": null}, "level": 0, "inplace": true}},
+  {"operation": "flatten"}], "time_offsets": [], "series_columns": ["warehouse_name"]}],
+  "form_data": {"datasource": "3__table", "viz_type": "echarts_timeseries_bar", "x_axis":
+  "month_start", "time_grain_sqla": "P1M", "xAxisForceCategorical": false, "x_axis_sort_asc":
+  true, "metrics": ["stockout_weeks_sum"], "groupby": ["warehouse_name"], "adhoc_filters":
+  [{"clause": "WHERE", "comparator": "2025-01-01 : 2026-01-01", "expressionType":
+  "SIMPLE", "operator": "TEMPORAL_RANGE", "subject": "month_start", "isExtra": false,
+  "isNew": false, "sqlExpression": null}], "order_desc": true, "row_limit": 10000,
+  "truncate_metric": true, "show_empty_columns": true, "comparison_type": "values",
+  "annotation_layers": [], "orientation": "vertical", "x_axis_title_margin": 15, "y_axis_title_margin":
+  30, "y_axis_title_position": "Left", "sort_series_type": "sum", "color_scheme":
+  "supersetColors", "stack": "Stack", "only_total": true, "show_legend": true, "legendType":
+  "scroll", "legendOrientation": "top", "x_axis_time_format": "%b %Y", "y_axis_format":
+  "SMART_NUMBER", "rich_tooltip": true, "tooltipTimeFormat": "%B %Y", "extra_form_data":
+  {}, "dashboards": [], "force": false, "result_format": "json", "result_type": "full"},
+  "result_format": "json", "result_type": "full"}'
+cache_timeout: null
+uuid: 1461eadd-9e87-4509-9500-337bd0024f92
+version: 1.0.0
+dataset_uuid: 01df4232-92fa-41fa-bbaf-3da1edfe8399

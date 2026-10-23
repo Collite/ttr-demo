@@ -1,0 +1,113 @@
+dashboard_title: "DC meltdown \u2014 stock-outs"
+description: null
+css: null
+slug: dc-meltdown-stockouts-us
+certified_by: null
+certification_details: null
+published: true
+uuid: d4289cde-87c7-4e08-bbfb-ba75cd52aeb9
+position:
+  DASHBOARD_VERSION_KEY: v2
+  ROOT_ID:
+    children:
+    - GRID_ID
+    id: ROOT_ID
+    type: ROOT
+  GRID_ID:
+    children:
+    - ROW-dc-meltdown-stockouts-us-4
+    - ROW-dc-meltdown-stockouts-us-7
+    id: GRID_ID
+    parents:
+    - ROOT_ID
+    type: GRID
+  HEADER_ID:
+    id: HEADER_ID
+    meta:
+      text: "DC meltdown \u2014 stock-outs"
+    type: HEADER
+  ROW-dc-meltdown-stockouts-us-4:
+    children:
+    - CHART-dc-meltdown-stockouts-us-7
+    - CHART-dc-meltdown-stockouts-us-9
+    id: ROW-dc-meltdown-stockouts-us-4
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+  CHART-dc-meltdown-stockouts-us-7:
+    children: []
+    id: CHART-dc-meltdown-stockouts-us-7
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-dc-meltdown-stockouts-us-4
+    type: CHART
+    meta:
+      chartId: 7
+      sliceName: Stock-out weeks in 2025
+      uuid: dcdb1d8e-96c4-468b-b138-17bf58e2a629
+      width: 4
+      height: 50
+  CHART-dc-meltdown-stockouts-us-9:
+    children: []
+    id: CHART-dc-meltdown-stockouts-us-9
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-dc-meltdown-stockouts-us-4
+    type: CHART
+    meta:
+      chartId: 9
+      sliceName: Stock-out weeks per DC, 2025
+      uuid: 95f3854e-2d6c-40a8-87fd-c2f47f441e98
+      width: 8
+      height: 50
+  ROW-dc-meltdown-stockouts-us-7:
+    children:
+    - CHART-dc-meltdown-stockouts-us-8
+    id: ROW-dc-meltdown-stockouts-us-7
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+  CHART-dc-meltdown-stockouts-us-8:
+    children: []
+    id: CHART-dc-meltdown-stockouts-us-8
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-dc-meltdown-stockouts-us-7
+    type: CHART
+    meta:
+      chartId: 8
+      sliceName: Stock-out weeks by month and DC, 2025
+      uuid: 1461eadd-9e87-4509-9500-337bd0024f92
+      width: 12
+      height: 60
+metadata:
+  color_scheme: supersetColors
+  refresh_frequency: 0
+  cross_filters_enabled: false
+  native_filter_configuration: []
+  chart_configuration: {}
+  expanded_slices: {}
+  label_colors: {}
+  shared_label_colors: []
+  timed_refresh_immune_slices: []
+  default_filters: '{}'
+  global_chart_configuration:
+    scope:
+      rootPath:
+      - ROOT_ID
+      excluded: []
+    chartsInScope:
+    - 7
+    - 9
+    - 8
+theme_uuid: null
+version: 1.0.0
