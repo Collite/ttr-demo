@@ -309,7 +309,7 @@ def run(args) -> int:
                 o_got, o_err = None, f"core SQL failed: {e}"[:400]
             o_ok, o_detail = judge(o_got, o_err, expect)
             oracle = {"status": "PASS" if o_ok else "FAIL", "number": o_got, "detail": o_detail}
-            print(f"{'✓' if o_ok else '✗'} {'oracle':<16} {'db':<8} {f'hartland_{world}_readonly':<26} {fmt(o_got):>6}"
+            print(f"{'✓' if o_ok else '✗'} {'oracle':<19} {'db':<8} {f'hartland_{world}_readonly':<26} {fmt(o_got):>6}"
                   + (f"  {o_detail}" if o_detail else ""))
             legs = []
             for leg in c["legs"]:
@@ -317,11 +317,11 @@ def run(args) -> int:
                 legs.append(r)
                 mark = {"PASS": "✓", "FAIL": "✗", "PENDING": "○"}[r["status"]]
                 if r["status"] == "PENDING":
-                    print(f"{mark} {r['id']:<16} {r['via']:<8} pending: {r['detail']}")
+                    print(f"{mark} {r['id']:<19} {r['via']:<8} pending: {r['detail']}")
                     continue
                 extra = (f"DCs {r['dcs']}" if r["via"] == "edge" else f"chart {r['chart']}" if r["via"] == "superset"
                          else f"{r.get('route')} {r.get('pattern') or ''}".strip())
-                print(f"{mark} {r['id']:<16} {r['via']:<8} {r['persona']:<26} {fmt(r['number']):>6}  {extra}  {r['secs']}s"
+                print(f"{mark} {r['id']:<19} {r['via']:<8} {r['persona']:<26} {fmt(r['number']):>6}  {extra}  {r['secs']}s"
                       + (f"  {r['detail']}" if r["detail"] else ""), flush=True)
             failed = [r["id"] for r in legs if r["status"] == "FAIL"] + ([] if o_ok else ["oracle"])
             red = red or bool(failed)
