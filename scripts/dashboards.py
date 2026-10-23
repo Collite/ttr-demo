@@ -12,8 +12,9 @@
 A bundle is Superset's own export of one dashboard in one world (`dashboards/<id>/bundle/<world>/`), less the two
 things olymp owns: the database files and `metadata.yaml` (platform/bi/superset, imported by superset-init-db). The
 import Job (olymp platform/bi/superset-dashboards) mounts every bundle file from one ConfigMap and puts them back
-together. `kustomize` writes that ConfigMap's file list, and `check` refuses what the import would get wrong without
-a word (import-directory exits 0 on a failed import and skips a dashboard whose charts it cannot resolve).
+together. `kustomize` writes that ConfigMap's file list, and `check` refuses, before the merge, what the import would
+refuse or get wrong after it: it skips a dashboard whose charts it cannot resolve, renames a legacy chart type, and
+fails on a second dataset over one model object.
 
 Exit code: 0 = clean; 1 = problems (listed); 2 = usage.
 """
@@ -38,6 +39,13 @@ KINDS = ("datasets", "charts", "dashboards")
 # What a dataset may read: the model's logical layer, by its catalog names (C-23). `db.dbo` is the physical layer.
 SCHEMAS = {"obj.query": "query", "er.entity": "entity"}
 KEY = re.compile(r"^[a-z0-9-]+\.[a-z]+\.(datasets|charts|dashboards)\.[A-Za-z0-9_-]+\.yaml$")
+# The chart types Superset 6.1's import renames (commands/chart/importers/v1/utils.py `migrate_chart`, the
+# `source_viz_type`s of migrations/shared/migrate_viz/processors.py). The row then has another type than its file,
+# and olymp's check.py fails every sync over it.
+LEGACY_VIZ = {"bar": "echarts_timeseries_bar", "dist_bar": "echarts_timeseries_bar", "line": "echarts_timeseries_line",
+              "area": "echarts_area", "pivot_table": "pivot_table_v2", "treemap": "treemap_v2",
+              "sunburst": "sunburst_v2", "bubble": "bubble_v2", "heatmap": "heatmap_v2", "histogram": "histogram_v2",
+              "sankey": "sankey_v2", "dual_line": "mixed_timeseries"}
 
 
 def load_yaml(path: pathlib.Path) -> dict:
@@ -78,7 +86,9 @@ def problems(root: pathlib.Path = ROOT, model: pathlib.Path = REPO / "model") ->
         if d not in listed:
             out.append(f"{d}/: not listed in import.yaml — the import would never see it")
     model_text = "\n".join(p.read_text(encoding="utf-8") for p in sorted(model.rglob("*.ttrm")))
-    seen: dict[str, tuple[str, dict]] = {}  # uuid → (where, the object), across every bundle
+    # Across every bundle: uuid → (where, the object); (world, schema, table) → (dataset uuid, where);
+    # dashboard slug → (dashboard uuid, where).
+    seen: dict[str, dict] = {"uuid": {}, "table": {}, "slug": {}}
     for d in m.get("dashboards") or []:
         did = d.get("id", "")
         if not re.fullmatch(r"[a-z0-9-]+", did):
@@ -90,12 +100,17 @@ def problems(root: pathlib.Path = ROOT, model: pathlib.Path = REPO / "model") ->
             if world not in worlds:
                 out.append(f"import.yaml: {did} names world {world!r}, which `worlds` does not define")
                 continue
-            out += bundle_problems(root / did / "bundle" / world, f"{did}/bundle/{world}", worlds[world],
+            out += bundle_problems(root / did / "bundle" / world, f"{did}/bundle/{world}", world, worlds[world],
                                    model_text, seen)
     return out
 
 
-def bundle_problems(base: pathlib.Path, where: str, world: dict, model_text: str, seen: dict) -> list[str]:
+def chart_nodes(position: dict) -> list[dict]:
+    return [n for n in (position or {}).values() if isinstance(n, dict) and n.get("type") == "CHART"]
+
+
+def bundle_problems(base: pathlib.Path, where: str, world_name: str, world: dict, model_text: str,
+                    seen: dict) -> list[str]:
     out: list[str] = []
     if not base.is_dir():
         return [f"{where}/: no such bundle"]
@@ -114,10 +129,10 @@ def bundle_problems(base: pathlib.Path, where: str, world: dict, model_text: str
             if not u:
                 out.append(f"{where}/{kind}/{name}: no uuid")
                 continue
-            if u in seen and seen[u][1] != obj:
-                out.append(f"{where}/{kind}/{name}: uuid {u} is also {seen[u][0]}, with other content — "
+            if u in seen["uuid"] and seen["uuid"][u][1] != obj:
+                out.append(f"{where}/{kind}/{name}: uuid {u} is also {seen['uuid'][u][0]}, with other content — "
                            "one would overwrite the other")
-            seen.setdefault(u, (f"{where}/{kind}/{name}", obj))
+            seen["uuid"].setdefault(u, (f"{where}/{kind}/{name}", obj))
     datasets = {o.get("uuid"): (n, o) for n, o in objs["datasets"].items()}
     charts = {o.get("uuid"): (n, o) for n, o in objs["charts"].items()}
     for name, ds in objs["datasets"].items():
@@ -133,6 +148,13 @@ def bundle_problems(base: pathlib.Path, where: str, world: dict, model_text: str
             out.append(f"{at}: schema {ds.get('schema')!r} — a dataset reads {' or '.join(SCHEMAS)}")
         elif not re.search(rf"^\s*def {kind} {re.escape(str(ds.get('table_name')))}\b", model_text, re.M):
             out.append(f"{at}: {ds.get('schema')}.{ds.get('table_name')} is not a `def {kind}` of the model")
+        # Superset keeps one dataset per (database, schema, table_name) (a UNIQUE constraint on Postgres): a second
+        # uuid over the same object in the same world fails the import, after the merge.
+        table = (world_name, ds.get("schema"), ds.get("table_name"))
+        other = seen["table"].setdefault(table, (ds.get("uuid"), at))
+        if other[0] != ds.get("uuid"):
+            out.append(f"{at}: {table[1]}.{table[2]} in {world_name} is already dataset {other[0]} ({other[1]}) — "
+                       "Superset holds one dataset per object and database: reuse that uuid")
     on_a_dashboard: set[str] = set()
     for name, ch in objs["charts"].items():
         at = f"{where}/charts/{name}"
@@ -146,15 +168,26 @@ def bundle_problems(base: pathlib.Path, where: str, world: dict, model_text: str
             out.append(f"{at}: no query_context — GET /api/v1/chart/<id>/data (the one-number check) needs it")
         elif (context.get("form_data") or {}).get("viz_type") != ch.get("viz_type"):
             out.append(f"{at}: its query_context was saved for another viz type than {ch.get('viz_type')!r}")
+        if ch.get("viz_type") in LEGACY_VIZ:
+            out.append(f"{at}: viz type {ch.get('viz_type')!r} is legacy — the import turns it into "
+                       f"{LEGACY_VIZ[ch['viz_type']]!r}; re-save the chart in Superset 6.1 and export again")
     for name, db in objs["dashboards"].items():
         at = f"{where}/dashboards/{name}"
-        placed = {n["meta"]["uuid"] for n in (db.get("position") or {}).values()
-                  if isinstance(n, dict) and n.get("type") == "CHART"}
+        nodes = chart_nodes(db.get("position"))
+        for n in nodes:
+            if "uuid" not in (n.get("meta") or {}):
+                out.append(f"{at}: a CHART node without meta.uuid ({n.get('id', '?')}) — the import skips it")
+        placed = {n["meta"]["uuid"] for n in nodes if "uuid" in (n.get("meta") or {})}
         for u in sorted(placed - set(charts)):
             out.append(f"{at}: places chart {u}, which is not in the bundle — the import would skip the dashboard")
         on_a_dashboard |= placed
         if db.get("published") is not True:
             out.append(f"{at}: published must be true — a BI Viewer sees published dashboards only")
+        # And one dashboard per slug: a second uuid with the same slug fails the import, after the merge.
+        if s := db.get("slug"):
+            other = seen["slug"].setdefault(s, (db.get("uuid"), at))
+            if other[0] != db.get("uuid"):
+                out.append(f"{at}: slug {s!r} is already dashboard {other[0]} ({other[1]}) — slugs are unique")
     for u, (name, _) in charts.items():
         if u not in on_a_dashboard:
             out.append(f"{where}/charts/{name}: on no dashboard of the bundle")
@@ -191,6 +224,11 @@ def kustomization(root: pathlib.Path = ROOT) -> str:
     return HEADER + ("\n".join(lines) + "\n" if lines else "      []\n") + FOOTER
 
 
+def kustomization_current(root: pathlib.Path = ROOT) -> bool:
+    path = root / "kustomization.yaml"
+    return path.is_file() and path.read_text(encoding="utf-8") == kustomization(root)
+
+
 # ── unpack ────────────────────────────────────────────────────────────────────────────────────────
 
 
@@ -207,6 +245,9 @@ def unpack(export: bytes, target: pathlib.Path) -> list[str]:
             parts = pathlib.PurePosixPath(info.filename).parts
             if len(parts) >= 3 and parts[1] in KINDS and info.filename.endswith(".yaml"):
                 entries.setdefault(parts[1], []).append(z.read(info).decode("utf-8"))
+    # Same-titled objects get `-2`, `-3`: in uuid order, so a re-export names each object as the last one did.
+    for kind in entries:
+        entries[kind].sort(key=lambda text: str(yaml.safe_load(text).get("uuid", "")))
     names = {"datasets": "table_name", "charts": "slice_name", "dashboards": "dashboard_title"}
     for kind in KINDS:
         (target / kind).mkdir(parents=True, exist_ok=True)
@@ -243,19 +284,19 @@ def main(argv: list[str] | None = None) -> int:
         found = problems()
         for p in found:
             print(f"✗ {p}")
-        stale = (ROOT / "kustomization.yaml").read_text(encoding="utf-8") != kustomization()
+        stale = not kustomization_current()
         if stale:
-            print("✗ dashboards/kustomization.yaml is stale — run `just dashboards-kustomize`")
+            print("✗ dashboards/kustomization.yaml is stale or missing — run `just dashboards-kustomize`")
         if not found and not stale:
             print(f"✓ {len(bundle_files())} bundle files, every rule holds")
         return 1 if found or stale else 0
     if args.cmd == "kustomize":
-        text, path = kustomization(), ROOT / "kustomization.yaml"
         if args.check:
-            ok = path.is_file() and path.read_text(encoding="utf-8") == text
+            ok = kustomization_current()
             print("✓ dashboards/kustomization.yaml is current" if ok else "✗ stale — run `just dashboards-kustomize`")
             return 0 if ok else 1
-        path.write_text(text, encoding="utf-8")
+        path = ROOT / "kustomization.yaml"
+        path.write_text(kustomization(), encoding="utf-8")
         print(f"wrote {path.relative_to(REPO)} ({len(bundle_files())} files)")
         return 0
     target = ROOT / args.id / "bundle" / args.world
