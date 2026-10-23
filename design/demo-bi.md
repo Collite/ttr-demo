@@ -95,8 +95,8 @@ Columbus, Dallas and Reno DC with 0. One world per database (D-2: a world is a t
    - **«Týdny s výpadkem podle DC, 2025»: one row, Brno DC 17 of 52**;
    - the bars: the same four, and only **Brno DC** in the legend.
 
-   *Say:* nobody built Petr a dashboard. The door added `WHERE warehouse = 5` to every chart's statement, because
-   Petr's token carries `kantheon-scope-dc-5`. The receipts (§2.6) show the rule inside the SQL.
+   *Say:* nobody built Petr a dashboard. The door added a WHERE on DC 5 (`inv_warehouse_sk = 5`) to every chart's
+   statement, because Petr's token carries `kantheon-scope-dc-5`. The receipts (§2.6) show the rule inside the SQL.
 3. Open **«Reklamace podle kategorie»** as petr. **«Řádky reklamací v roce 2025»: 41 962**, the same as Markéta's.
    - *Say:* returns are not DC-scoped. A row rule narrows the tables it governs (inventory, warehouse) and nothing
      else.
@@ -155,7 +155,9 @@ For petr's dashboard: one receipt per chart, each with
 - `executed_sql`: the rule inside it, `WHERE "inv_warehouse_sk" = 5`;
 - `roles`: what his token carried.
 
-His DataGrip statement is there too, with `client` = `jdbc`.
+His DataGrip statement is there too, with `client` = `jdbc`, the same rule and the same `WHERE`. (Recorded
+2026-10-22 through the JDBC driver DataGrip loads, from a script that makes DataGrip's calls; not yet from DataGrip
+itself, §3.)
 
 *Say:* the BI tool never saw the rule, and it could not have skipped it.
 
@@ -181,7 +183,10 @@ The four personas on hartland, after the import from git (project `platform/feat
 - **The receipts** (`query.bi_receipts`, the same rows `GET /receipts` reads): one per chart. Each has
   `client = superset` and the viewer's own `user_id`. For the per-DC table, marketa's receipt has no row rule
   (`security_applied` empty, 5 rows). petr's runs the same statement with `dc-scope` on `db.dbo.inventory` and
-  `db.dbo.warehouse`, `"inv_warehouse_sk" = 5` inside `executed_sql`, and 1 row.
+  `db.dbo.warehouse`, `"inv_warehouse_sk" = 5` inside `executed_sql`, and 1 row. petr's JDBC receipt (2026-10-22
+  11:22Z, the Arrow Flight SQL JDBC driver 18.3.0 that DataGrip loads, driven by a script making DataGrip's calls):
+  `client = jdbc`, `dc-scope` on `db.dbo.inventory`, `WHERE "inv_warehouse_sk" = 5`. A receipt from DataGrip
+  itself is for the next rehearsal.
 - **One number:** `just bi-one-number cz` → the oracle and all six legs 17 (edge, Iris and the Superset tile, each
   as marketa and as petr). On `us` the edge and Superset legs are 17 as maya and sam, and the Iris legs need
   `just world us` first.

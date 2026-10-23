@@ -41,5 +41,7 @@ snapshot in which at least half of the DC's inventory rows were at zero. Saved m
 ⚠ The tile does not tell the personas apart: only DC 5 stocked out, so the whole estate's 2025 total is DC 5's
 17 too. The table and the legend tell them apart (5 DCs vs 1).
 
-The tile's uuids are what the one-number case's `superset` legs name: cz `65572edb-2694-4098-b3ef-761b8ee7e738`, us
-`dcdb1d8e-96c4-468b-b138-17bf58e2a629`.
+The one-number case's `superset` legs name two charts per world by uuid. The tile gives the number: cz
+`65572edb-2694-4098-b3ef-761b8ee7e738`, us `dcdb1d8e-96c4-468b-b138-17bf58e2a629`. The per-DC table's row count says
+whom Superset read as (5 for the analyst, 1 for the DC manager): cz `4fe88cbc-d951-4118-b6d8-f444f54690fc`, us
+`95f3854e-2d6c-40a8-87fd-c2f47f441e98`.

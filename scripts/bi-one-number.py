@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import decimal
+import functools
 import html
 import importlib.util
 import json
@@ -36,16 +37,28 @@ from typing import Any
 HERE = pathlib.Path(__file__).resolve().parent
 DEFAULT_CASES = HERE.parent / "run-set" / "bi-one-number"
 ROUTING = HERE.parent / "run-set" / "routing"
-DASHBOARDS = HERE.parent / "dashboards"
 CASE_KEYS = {"id", "title", "expect", "dc", "oracle", "legs"}
-LEG_KEYS = {"id", "via", "persona", "sql", "question", "pattern", "value", "dcs", "chart", "pending"}
-VIAS = {"edge", "iris", "superset"}
+COMMON_KEYS = {"id", "via", "persona", "value", "pending"}
+LEG_KEYS = {
+    "edge": COMMON_KEYS | {"sql", "dcs"},
+    "iris": COMMON_KEYS | {"question", "pattern"},
+    "superset": COMMON_KEYS | {"chart", "dc_chart", "dcs"},
+}
+VIAS = set(LEG_KEYS)
 
-# The routing runner's client and helpers (iris-bff turns, protocols, the world DB) — one copy of that code.
-_spec = importlib.util.spec_from_file_location("routing_run", HERE / "routing-run.py")
-rr = importlib.util.module_from_spec(_spec)
-sys.modules["routing_run"] = rr  # dataclasses resolve annotations through sys.modules
-_spec.loader.exec_module(rr)
+
+def _load(name: str, file: str):
+    spec = importlib.util.spec_from_file_location(name, HERE / file)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module  # dataclasses resolve annotations through sys.modules
+    spec.loader.exec_module(module)
+    return module
+
+
+# The routing runner's client and helpers (iris-bff turns, protocols, the world DB), and the dashboards' own reading
+# of the bundles (the ones import.yaml lists) — one copy of each.
+rr = _load("routing_run", "routing-run.py")
+dash = _load("dashboards", "dashboards.py")
 
 
 # ── the cases ─────────────────────────────────────────────────────────────────────────────────────
@@ -86,7 +99,8 @@ def load_cases(root: pathlib.Path) -> tuple[list[dict], list[str]]:
 
 def leg_problems(leg: dict, personas: dict) -> list[str]:
     lid = leg.get("id") or "?"
-    out = [f"leg {lid}: unknown key {k!r}" for k in sorted(set(leg) - LEG_KEYS)]
+    out = [f"leg {lid}: unknown key {k!r} for a {leg.get('via')} leg"
+           for k in sorted(set(leg) - LEG_KEYS.get(leg.get("via"), COMMON_KEYS))]
     if not leg.get("id"):
         out.append("a leg has no id")
     if leg.get("via") not in VIAS:
@@ -110,25 +124,46 @@ def leg_problems(leg: dict, personas: dict) -> list[str]:
         if not isinstance(q, dict) or set(q) != set(rr.WORLD_LOCALE.values()) or not all(q.values()):
             out.append(f"leg {lid}: question needs both languages ({', '.join(sorted(rr.WORLD_LOCALE.values()))})")
     if leg.get("via") == "superset":
-        charts = leg.get("chart")
-        if not isinstance(charts, dict) or set(charts) != set(rr.WORLD_LOCALE):
-            out.append(f"leg {lid}: chart needs one uuid per world ({', '.join(sorted(rr.WORLD_LOCALE))})")
-        else:
+        # The tile is the number; the per-DC table is whom Superset read as. Only DC 5 stocked out, so the tile is
+        # 17 for one DC or five, and the leg would pass with a broken row rule (review-131 R4).
+        dcs = leg.get("dcs")
+        if not isinstance(dcs, int) or isinstance(dcs, bool):
+            out.append(f"leg {lid}: dcs must be the number of DCs the persona sees (the per-DC table's rows)")
+        for key, viz_want, what in (("chart", "big_number_total", "a big-number tile"), ("dc_chart", "table", "a table")):
+            charts = leg.get(key)
+            if not isinstance(charts, dict) or set(charts) != set(rr.WORLD_LOCALE):
+                out.append(f"leg {lid}: {key} needs one uuid per world ({', '.join(sorted(rr.WORLD_LOCALE))})")
+                continue
             for world, uuid in sorted(charts.items()):
-                viz = bundle_charts(world).get(str(uuid))
-                if viz is None:
-                    out.append(f"leg {lid}: chart {uuid} is in no {world} bundle under dashboards/")
-                elif viz != "big_number_total":
-                    out.append(f"leg {lid}: chart {uuid} is a {viz}, not a big-number tile")
+                c = bundle_charts(world).get(str(uuid))
+                if c is None:
+                    out.append(f"leg {lid}: {key} {uuid} is in no {world} bundle import.yaml lists")
+                elif c["viz"] != viz_want:
+                    out.append(f"leg {lid}: {key} {uuid} is a {c['viz']}, not {what}")
+        tiles, tables = leg.get("chart"), leg.get("dc_chart")
+        if isinstance(tiles, dict) and isinstance(tables, dict):
+            for world in sorted(set(tiles) & set(tables) & set(rr.WORLD_LOCALE)):
+                a, b = bundle_charts(world).get(str(tiles[world])), bundle_charts(world).get(str(tables[world]))
+                if a and b and not a["dashboards"] & b["dashboards"]:
+                    out.append(f"leg {lid}: in {world} the tile and the per-DC table are on no dashboard together")
     return out
 
 
-def bundle_charts(world: str) -> dict[str, str]:
-    """uuid → viz type, for every chart of the world's Superset bundles (dashboards/<id>/bundle/<world>/charts/)."""
-    out = {}
-    for path in sorted(DASHBOARDS.glob(f"*/bundle/{world}/charts/*.yaml")):
-        c = rr.load_yaml(path) or {}
-        out[str(c.get("uuid"))] = c.get("viz_type")
+@functools.cache
+def bundle_charts(world: str) -> dict[str, dict]:
+    """uuid → {viz, dashboards}, for every chart of the world's bundles that dashboards/import.yaml lists."""
+    files = {key: path for key, path in dash.bundle_files().items() if key.split(".")[1] == world}
+    out: dict[str, dict] = {}
+    for key, path in files.items():
+        if key.split(".")[2] == "charts":
+            c = rr.load_yaml(path) or {}
+            out[str(c.get("uuid"))] = {"viz": c.get("viz_type"), "dashboards": set()}
+    for key, path in files.items():
+        if key.split(".")[2] == "dashboards":
+            d = rr.load_yaml(path) or {}
+            for node in dash.chart_nodes(d.get("position")):
+                if (u := str((node.get("meta") or {}).get("uuid"))) in out:
+                    out[u]["dashboards"].add(str(d.get("uuid")))
     return out
 
 
@@ -217,36 +252,67 @@ def edge_rows(args, world: str, user: str, password: str, sql: str) -> list[dict
         conn.close()
 
 
-def superset_number(args, user: str, password: str, chart: str, part: str) -> tuple[float | None, str | None]:
-    """The tile's number as the persona sees it: Keycloak's form (the `superset` client), the chart by uuid, then its
-    saved query. The first read of a database answers OAUTH2_REDIRECT (no per-database token yet); following that
-    URL is an SSO hop through Keycloak, and the read is repeated with the viewer's own token."""
+def is_json(r) -> bool:
+    return "json" in r.headers.get("content-type", "")
+
+
+def superset_read(c, base: str, chart: str) -> tuple[list[dict] | None, str | None]:
+    """One chart's saved query as the signed-in viewer: its rows, or why not. The chart is found by uuid. The first
+    read of a database answers OAUTH2_REDIRECT (no per-database token yet); following that URL is an SSO hop through
+    Keycloak, and the read is repeated with the viewer's own token. A second redirect means the hop took nothing."""
+    meta = c.get(f"{base}/api/v1/chart/{chart}")
+    if meta.status_code != 200 or not is_json(meta):
+        return None, f"chart {chart}: {meta.status_code} at {meta.url} (not imported, or not this viewer's)"
+    cid = meta.json()["result"]["id"]
+    url = f"{base}/api/v1/chart/{cid}/data/"
+    hopped = False
+    while True:
+        d = c.get(url)
+        if not is_json(d):
+            return None, (f"{d.status_code} {d.headers.get('content-type', 'no content type')} at {d.url}: not "
+                          "Superset's JSON (a proxy error page, or a sign-in page)")
+        body = d.json()
+        hop = next((e.get("extra", {}).get("url") for e in body.get("errors") or []
+                    if e.get("error_type") == "OAUTH2_REDIRECT"), None)
+        if not hop:
+            break
+        if hopped:
+            return None, f"{url}: OAUTH2_REDIRECT again after the Keycloak hop — the token exchange did not take"
+        c.get(hop)
+        hopped = True
+    if d.status_code != 200:
+        return None, f"chart data {d.status_code}: {str(body.get('message') or body.get('errors'))[:300]}"
+    result = body.get("result") or [{}]
+    return result[0].get("data") or [], None
+
+
+def superset_leg(args, user: str, password: str, tile: str, table: str, part: str, dcs: int,
+                 transport=None) -> tuple[float | None, int | None, str | None]:
+    """The tile's number as the persona sees it, and how many DCs the per-DC table shows them, in one session signed
+    in through Keycloak's form (the `superset` client)."""
     import httpx
 
     base = args.superset.rstrip("/")
-    with httpx.Client(follow_redirects=True, timeout=args.timeout) as c:
+    with httpx.Client(follow_redirects=True, timeout=args.timeout, transport=transport) as c:
         page = c.get(f"{base}/login/keycloak")
         form = re.search(r'<form[^>]+action="([^"]+)"', page.text)
         if not form:
-            return None, f"no Keycloak sign-in form at {base}/login/keycloak ({page.status_code})"
+            return None, None, f"no Keycloak sign-in form at {base}/login/keycloak ({page.status_code})"
         r = c.post(html.unescape(form.group(1)), data={"username": user, "password": password, "credentialId": ""})
         if not str(r.url).startswith(base):
-            return None, f"sign-in did not come back to Superset ({r.status_code})"
-        meta = c.get(f"{base}/api/v1/chart/{chart}")
-        if meta.status_code != 200:
-            return None, f"chart {chart}: {meta.status_code} (not imported, or not this viewer's)"
-        cid = meta.json()["result"]["id"]
-        for _ in range(2):
-            d = c.get(f"{base}/api/v1/chart/{cid}/data/")
-            body = d.json()
-            hop = next((e.get("extra", {}).get("url") for e in body.get("errors") or []
-                        if e.get("error_type") == "OAUTH2_REDIRECT"), None)
-            if not hop:
-                break
-            c.get(hop)
-        if d.status_code != 200:
-            return None, f"chart data {d.status_code}: {str(body.get('message') or body.get('errors'))[:300]}"
-        return summed(body["result"][0].get("data") or [], part)
+            return None, None, f"sign-in did not come back to Superset ({r.status_code})"
+        rows, err = superset_read(c, base, tile)
+        if err:
+            return None, None, err
+        got, err = summed(rows, part)
+        if err:
+            return None, None, err
+        rows, err = superset_read(c, base, table)
+        if err:
+            return None, None, f"the per-DC table: {err}"
+        if len(rows) != dcs:
+            return None, len(rows), f"sees {len(rows)} DCs, should see {dcs}"
+        return got, len(rows), None
 
 
 def run_leg(leg: dict, case: dict, world: str, personas: dict, cluster, args) -> dict:
@@ -265,7 +331,8 @@ def run_leg(leg: dict, case: dict, world: str, personas: dict, cluster, args) ->
             res["dcs"] = seen
         elif leg["via"] == "superset":
             res["chart"] = leg["chart"][world]
-            got, err = superset_number(args, user, cluster.password, leg["chart"][world], leg["value"])
+            got, res["dcs"], err = superset_leg(args, user, cluster.password, leg["chart"][world],
+                                                leg["dc_chart"][world], leg["value"], leg["dcs"])
         else:  # iris
             sid = cluster.session(user)
             turn = cluster.ask_bff(user, sid, leg["question"][locale], locale, None, None)
@@ -319,7 +386,8 @@ def run(args) -> int:
                 if r["status"] == "PENDING":
                     print(f"{mark} {r['id']:<19} {r['via']:<8} pending: {r['detail']}")
                     continue
-                extra = (f"DCs {r['dcs']}" if r["via"] == "edge" else f"chart {r['chart']}" if r["via"] == "superset"
+                extra = (f"DCs {r['dcs']}" if r["via"] == "edge"
+                         else f"chart {r['chart']} · {r.get('dcs')} DCs" if r["via"] == "superset"
                          else f"{r.get('route')} {r.get('pattern') or ''}".strip())
                 print(f"{mark} {r['id']:<19} {r['via']:<8} {r['persona']:<26} {fmt(r['number']):>6}  {extra}  {r['secs']}s"
                       + (f"  {r['detail']}" if r["detail"] else ""), flush=True)

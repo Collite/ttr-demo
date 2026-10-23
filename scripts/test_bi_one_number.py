@@ -8,12 +8,15 @@ from __future__ import annotations
 import copy
 import decimal
 import importlib.util
+import json
 import pathlib
 import shutil
 import sys
 import tempfile
+import types
 import unittest
 
+import httpx
 import yaml
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -45,6 +48,9 @@ class ShippedCaseSpec(unittest.TestCase):
         self.assertEqual({legs[i]["persona"] for i in ("superset-analyst", "superset-dc-manager")}, {"analyst", "dc_manager"})
         self.assertEqual(legs["superset-analyst"]["value"], "stockout_weeks_sum")
         self.assertIn("obj.query.stockouts_monthly_dc", legs["edge-analyst"]["sql"])
+        # review-131 R4: the tile is 17 for one DC or five; the per-DC table says whom Superset read as.
+        self.assertEqual((legs["superset-analyst"]["dcs"], legs["superset-dc-manager"]["dcs"]), (5, 1))
+        self.assertEqual(legs["superset-analyst"]["dc_chart"], legs["superset-dc-manager"]["dc_chart"])
 
 
 class SchemaSpec(unittest.TestCase):
@@ -101,6 +107,36 @@ class SchemaSpec(unittest.TestCase):
         self.leg(c, "superset-analyst")["chart"]["cz"] = "dd74b7a4-1e5a-49c2-ae3c-4a7864bb2c6e"  # the cz bars
         self.assertTrue(any("not a big-number tile" in p for p in self.problems(c)))
 
+    def test_a_superset_leg_counts_the_dcs_on_the_tiles_per_dc_table(self):
+        c = copy.deepcopy(self.case)
+        del self.leg(c, "superset-dc-manager")["dcs"]
+        self.assertTrue(any("dcs must be the number of DCs" in p for p in self.problems(c)))
+        c = copy.deepcopy(self.case)
+        self.leg(c, "superset-dc-manager")["dcs"] = [5]  # a list of keys is the edge's; the table shows labels
+        self.assertTrue(any("dcs must be the number of DCs" in p for p in self.problems(c)))
+        c = copy.deepcopy(self.case)
+        del self.leg(c, "superset-analyst")["dc_chart"]
+        self.assertTrue(any("dc_chart needs one uuid per world" in p for p in self.problems(c)))
+        c = copy.deepcopy(self.case)
+        self.leg(c, "superset-analyst")["dc_chart"]["cz"] = "65572edb-2694-4098-b3ef-761b8ee7e738"  # the tile itself
+        self.assertTrue(any("is a big_number_total, not a table" in p for p in self.problems(c)))
+
+    def test_the_table_must_be_on_the_tiles_dashboard(self):
+        other = next(u for u, ch in bon.bundle_charts("cz").items()
+                     if ch["viz"] == "table" and u != "4fe88cbc-d951-4118-b6d8-f444f54690fc")  # returns-by-category's
+        c = copy.deepcopy(self.case)
+        self.leg(c, "superset-analyst")["dc_chart"]["cz"] = other
+        self.assertTrue(any("on no dashboard together" in p for p in self.problems(c)))
+
+    def test_a_key_of_another_via_is_unknown(self):
+        # review-131 R10: one key set for every via let a `chart` on an edge leg pass.
+        c = copy.deepcopy(self.case)
+        self.leg(c, "edge-analyst")["chart"] = self.leg(c, "superset-analyst")["chart"]
+        self.leg(c, "saved-query")["dcs"] = 5
+        ps = self.problems(c)
+        self.assertTrue(any("unknown key 'chart' for a edge leg" in p for p in ps), ps)
+        self.assertTrue(any("unknown key 'dcs' for a iris leg" in p for p in ps), ps)
+
     def test_pending_says_why(self):
         c = copy.deepcopy(self.case)
         self.leg(c, "superset-analyst")["pending"] = " "
@@ -110,6 +146,99 @@ class SchemaSpec(unittest.TestCase):
         c = copy.deepcopy(self.case)
         c["legs"].append(copy.deepcopy(c["legs"][0]))
         self.assertTrue(any("twice" in p for p in self.problems(c)))
+
+
+class BundleChartsSpec(unittest.TestCase):
+    def setUp(self):
+        bon.bundle_charts.cache_clear()
+        self.addCleanup(bon.bundle_charts.cache_clear)
+
+    def test_only_the_bundles_import_yaml_lists_are_read(self):
+        # review-131 R10: a glob over */bundle/<world>/charts/ also read bundles the import never sees.
+        tmp = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp)
+        (tmp / "import.yaml").write_text(yaml.safe_dump({"worlds": {"cz": {}}, "dashboards": [{"id": "dc", "worlds": ["cz"]}]}))
+        for did, u in (("dc", "11111111-1111-1111-1111-111111111111"), ("stray", "22222222-2222-2222-2222-222222222222")):
+            (tmp / did / "bundle" / "cz" / "charts").mkdir(parents=True)
+            (tmp / did / "bundle" / "cz" / "charts" / "c.yaml").write_text(yaml.safe_dump({"uuid": u, "viz_type": "table"}))
+        real = bon.dash.bundle_files
+        bon.dash.bundle_files = lambda root=tmp: real(root)
+        self.addCleanup(setattr, bon.dash, "bundle_files", real)
+        self.assertEqual(set(bon.bundle_charts("cz")), {"11111111-1111-1111-1111-111111111111"})
+
+    def test_the_shipped_tile_and_table_share_the_dc_meltdown_dashboard(self):
+        charts = bon.bundle_charts("cz")
+        tile, table = charts["65572edb-2694-4098-b3ef-761b8ee7e738"], charts["4fe88cbc-d951-4118-b6d8-f444f54690fc"]
+        self.assertEqual((tile["viz"], table["viz"]), ("big_number_total", "table"))
+        self.assertTrue(tile["dashboards"] & table["dashboards"])
+
+
+class FakeSuperset:
+    """Superset and Keycloak as the runner meets them: the sign-in form, the chart by uuid, its saved query."""
+
+    BASE = "https://superset.test"
+
+    def __init__(self, tile_rows: list[dict], table_rows: list[dict], data_pages: dict | None = None):
+        self.rows = {"10": tile_rows, "11": table_rows}
+        self.pages = data_pages or {}  # chart id → a list of responses served before its rows
+
+    def __call__(self, request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path == "/login/keycloak":
+            return httpx.Response(200, html='<form id="kc" action="https://keycloak.test/auth?x=1&amp;y=2" method="post">')
+        if request.url.host == "keycloak.test":
+            return httpx.Response(302, headers={"location": f"{self.BASE}/superset/welcome/"})
+        if path == "/superset/welcome/":
+            return httpx.Response(200, html="<html>welcome</html>")
+        if path.startswith("/api/v1/chart/") and not path.endswith("/data/"):
+            uuid = path.rsplit("/", 1)[-1]
+            return httpx.Response(200, json={"result": {"id": {"tile": 10, "table": 11}[uuid]}})
+        if path.endswith("/data/"):
+            cid = path.split("/")[4]
+            if self.pages.get(cid):
+                return self.pages[cid].pop(0)
+            return httpx.Response(200, json={"result": [{"data": self.rows[cid]}]})
+        if request.url.host == "oauth.test":
+            return httpx.Response(200, html="<html>You can close this window</html>")
+        return httpx.Response(404, text="not found")
+
+
+REDIRECT = httpx.Response(422, json={"errors": [{"error_type": "OAUTH2_REDIRECT", "extra": {"url": "https://oauth.test/hop"}}]})
+
+
+class SupersetLegSpec(unittest.TestCase):
+    ARGS = types.SimpleNamespace(superset=FakeSuperset.BASE, timeout=5.0)
+    TILE = [{"stockout_weeks_sum": 17}]
+
+    def leg(self, fake: FakeSuperset, dcs: int):
+        return bon.superset_leg(self.ARGS, "petr", "pw", "tile", "table", "stockout_weeks_sum", dcs,
+                                transport=httpx.MockTransport(fake))
+
+    def test_the_dc_manager_seeing_five_dcs_fails_although_the_tile_says_17(self):
+        five = [{"warehouse_name": f"DC {i}", "stockout_weeks_sum": 17 if i == 5 else 0} for i in range(1, 6)]
+        self.assertEqual(self.leg(FakeSuperset(self.TILE, five), 1), (None, 5, "sees 5 DCs, should see 1"))
+
+    def test_the_dc_manager_seeing_one_dc_passes(self):
+        self.assertEqual(self.leg(FakeSuperset(self.TILE, [{"warehouse_name": "Brno DC"}]), 1), (17.0, 1, None))
+
+    def test_the_first_read_follows_the_oauth2_hop_and_reads_again(self):
+        fake = FakeSuperset(self.TILE, [{"warehouse_name": "Brno DC"}], {"10": [REDIRECT]})
+        self.assertEqual(self.leg(fake, 1), (17.0, 1, None))
+
+    def test_a_second_oauth2_redirect_says_the_exchange_did_not_take(self):
+        fake = FakeSuperset(self.TILE, [], {"10": [REDIRECT, REDIRECT]})
+        got, n, err = self.leg(fake, 1)
+        self.assertIsNone(got)
+        self.assertIn("the token exchange did not take", err)
+
+    def test_an_html_error_page_is_reported_with_its_status_and_url_not_as_a_json_error(self):
+        # review-131 R10: d.json() came before the status, so a 502 from the proxy read as JSONDecodeError.
+        fake = FakeSuperset(self.TILE, [], {"10": [httpx.Response(502, html="<html>Bad gateway</html>")]})
+        got, n, err = self.leg(fake, 1)
+        self.assertIsNone(got)
+        self.assertIn("502", err)
+        self.assertIn("/api/v1/chart/10/data/", err)
+        self.assertNotIn("JSONDecodeError", err)
 
 
 class ReadingSpec(unittest.TestCase):

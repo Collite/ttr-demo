@@ -73,12 +73,8 @@ class Tree:
 
 
 class ShippedBundlesSpec(unittest.TestCase):
-    def test_the_shipped_bundles_hold_every_rule(self):
-        self.assertEqual(dash.problems(), [])
-
-    def test_the_shipped_kustomization_is_current(self):
-        self.assertEqual((dash.ROOT / "kustomization.yaml").read_text(encoding="utf-8"), dash.kustomization())
-
+    # The rules and the kustomization's currency over the shipped bundles are `just dashboards-check`, the same
+    # model-gate step: not re-run here.
     def test_two_dashboards_in_both_worlds_on_olymps_database_uuids(self):
         m = dash.manifest()
         self.assertEqual({w: v["database_uuid"] for w, v in m["worlds"].items()},
@@ -157,6 +153,62 @@ class RuleSpec(unittest.TestCase):
         (t.root / "stray").mkdir()
         self.assertProblem(t, "stray/: not listed in import.yaml")
 
+    def test_a_legacy_chart_type_the_import_would_rename_is_refused(self):
+        # review-131 R7: migrate_chart turns `bar` into `echarts_timeseries_bar`; the row's type is then not the
+        # file's, and olymp's check fails every sync.
+        t = Tree(self)
+        context = json.dumps({"datasource": {"id": 9, "type": "table"}, "form_data": {"viz_type": "bar"}})
+        t.put("charts", "tydny-s-vypadkem", chart(viz_type="bar", query_context=context))
+        self.assertProblem(t, "viz type 'bar' is legacy")
+        self.assertProblem(t, "'echarts_timeseries_bar'")
+
+    def add_bundle(self, t: Tree, did: str, *objs: tuple[str, str, dict]) -> None:
+        manifest = yaml.safe_load((t.root / "import.yaml").read_text())
+        manifest["dashboards"].append({"id": did, "worlds": ["cz"]})
+        t.write("import.yaml", manifest)
+        (t.root / did).mkdir()
+        (t.root / did / "README.md").write_text(f"# {did}\n")
+        for kind, name, obj in objs:
+            t.write(f"{did}/bundle/cz/{kind}/{name}.yaml", obj)
+
+    def test_a_second_dataset_over_one_object_in_one_world_is_refused(self):
+        # review-131 R8: UNIQUE (database_id, schema, table_name) — the import fails after the merge.
+        t = Tree(self)
+        other_ds, other_ch = "88888888-8888-8888-8888-888888888888", "99999999-9999-9999-9999-999999999999"
+        self.add_bundle(t, "other",
+                        ("datasets", "stockouts-monthly-dc", dataset(uuid=other_ds)),
+                        ("charts", "jiny", chart(uuid=other_ch, dataset_uuid=other_ds)),
+                        ("dashboards", "jine", board(charts=(other_ch,), uuid="66666666-6666-6666-6666-666666666666")))
+        self.assertProblem(t, "obj.query.stockouts_monthly_dc in cz is already dataset " + DS)
+
+    def test_the_same_dataset_shared_by_two_bundles_is_fine(self):
+        t = Tree(self)
+        other_ch = "99999999-9999-9999-9999-999999999999"
+        self.add_bundle(t, "other",
+                        ("datasets", "stockouts-monthly-dc", dataset()),
+                        ("charts", "jiny", chart(uuid=other_ch)),
+                        ("dashboards", "jine", board(charts=(other_ch,), uuid="66666666-6666-6666-6666-666666666666")))
+        self.assertEqual(t.problems(), [])
+
+    def test_a_slug_two_dashboards_share_is_refused(self):
+        t = Tree(self)
+        t.put("dashboards", "vypadky", board(slug="dc-meltdown"))
+        other_ch = "99999999-9999-9999-9999-999999999999"
+        self.add_bundle(t, "other",
+                        ("datasets", "stockouts-monthly-dc", dataset()),
+                        ("charts", "jiny", chart(uuid=other_ch)),
+                        ("dashboards", "jine", board(charts=(other_ch,), slug="dc-meltdown",
+                                                     uuid="66666666-6666-6666-6666-666666666666")))
+        self.assertProblem(t, "slug 'dc-meltdown' is already dashboard " + DB)
+
+    def test_a_chart_node_without_a_uuid_is_reported_not_a_crash(self):
+        # review-131 R11: Superset's importer skips such a node; the check used to raise KeyError on it.
+        t = Tree(self)
+        b = board()
+        b["position"]["CHART-x"] = {"type": "CHART", "id": "CHART-x", "meta": {"chartId": 7}}
+        t.put("dashboards", "vypadky", b)
+        self.assertProblem(t, "a CHART node without meta.uuid (CHART-x)")
+
 
 class KustomizationSpec(unittest.TestCase):
     def test_one_key_per_file_named_by_dashboard_world_kind_and_file(self):
@@ -170,6 +222,12 @@ class KustomizationSpec(unittest.TestCase):
         for key in keys:
             self.assertRegex(key, dash.KEY)
 
+    def test_a_missing_kustomization_is_stale_not_a_traceback(self):
+        t = Tree(self)
+        self.assertFalse(dash.kustomization_current(t.root))
+        (t.root / "kustomization.yaml").write_text(dash.kustomization(t.root))
+        self.assertTrue(dash.kustomization_current(t.root))
+
     def test_the_import_jobs_re_nesting_reads_the_kind_back(self):
         # olymp platform/bi/superset-dashboards/base/import.sh: kind = the third dot-separated field.
         for key in dash.bundle_files(Tree(self).root):
@@ -177,18 +235,29 @@ class KustomizationSpec(unittest.TestCase):
 
 
 class UnpackSpec(unittest.TestCase):
-    def export(self) -> bytes:
+    def export(self, reverse: bool = False) -> bytes:
         buf = io.BytesIO()
+        twins = [("Tydny_s_vypadkem_12", chart()), ("Tydny_s_vypadkem_13", chart(uuid="77777777-7777-7777-7777-777777777777"))]
         with zipfile.ZipFile(buf, "w") as z:
             root = "dashboard_export_20261023T080000"
             z.writestr(f"{root}/metadata.yaml", "version: 1.0.0\ntype: Dashboard\n")
             z.writestr(f"{root}/databases/hartland_cz.yaml", "database_name: hartland_cz\n")
             z.writestr(f"{root}/datasets/hartland_cz/stockouts_monthly_dc.yaml", yaml.safe_dump(dataset()))
-            z.writestr(f"{root}/charts/Tydny_s_vypadkem_12.yaml", yaml.safe_dump(chart(), allow_unicode=True))
-            z.writestr(f"{root}/charts/Tydny_s_vypadkem_13.yaml",
-                       yaml.safe_dump(chart(uuid="77777777-7777-7777-7777-777777777777"), allow_unicode=True))
+            for name, obj in reversed(twins) if reverse else twins:
+                z.writestr(f"{root}/charts/{name}.yaml", yaml.safe_dump(obj, allow_unicode=True))
             z.writestr(f"{root}/dashboards/Vypadky_3.yaml", yaml.safe_dump(board(), allow_unicode=True))
         return buf.getvalue()
+
+    def test_same_titled_objects_are_named_by_uuid_whatever_the_zip_order(self):
+        # review-131 R11: in zip-entry order, a re-export could swap the two files' contents.
+        names = []
+        for reverse in (False, True):
+            target = pathlib.Path(tempfile.mkdtemp())
+            self.addCleanup(shutil.rmtree, target)
+            dash.unpack(self.export(reverse), target)
+            names.append({p.name: yaml.safe_load(p.read_text())["uuid"] for p in (target / "charts").glob("*.yaml")})
+        self.assertEqual(names[0], names[1])
+        self.assertEqual(names[0]["tydny-s-vypadkem.yaml"], CH)
 
     def test_files_are_named_after_their_object_and_olymps_are_dropped(self):
         target = pathlib.Path(tempfile.mkdtemp())

@@ -28,7 +28,7 @@ legs:
     persona: analyst                     # analyst | dc_manager → ../routing/personas.yaml
     sql: SELECT warehouse, SUM(stockout_weeks) AS stockout_weeks FROM obj.query.stockouts_monthly_dc … GROUP BY warehouse
     value: stockout_weeks                # the number's column (a part of its name: unique, case-insensitive)
-    dcs: 5                               # edge only: how many DCs the persona sees, or the list of their keys
+    dcs: 5                               # edge: how many DCs the persona sees, or the list of their keys
   - id: saved-query
     via: iris
     persona: analyst
@@ -39,7 +39,9 @@ legs:
     via: superset
     persona: analyst
     chart: {cz: 65572edb-…, us: dcdb1d8e-…}   # superset only: the tile per world, a big-number chart of dashboards/
-    value: stockout_weeks_sum            # the chart's metric
+    dc_chart: {cz: 4fe88cbc-…, us: 95f3854e-…}  # superset only: the per-DC table on the tile's dashboard
+    value: stockout_weeks_sum            # the tile's metric
+    dcs: 5                               # superset: how many rows (DCs) the per-DC table shows the persona
   - id: some-later-leg
     via: iris
     pending: "what it waits for"         # any leg: declared, not run, does not redden
@@ -52,8 +54,12 @@ legs:
 - **superset**: the tile as the persona sees it. The runner signs in at `superset.hartland.collite.cz` through
   Keycloak (the `superset` client's form) and finds the chart by its uuid. It reads the chart's saved query through
   `GET /api/v1/chart/<id>/data/`. The first read of a database answers `OAUTH2_REDIRECT`; the runner follows that SSO
-  hop and reads again with the viewer's own per-database token. The schema check holds the uuid to a big-number
-  chart of the world's bundle under `dashboards/`, so a re-authored tile cannot leave the case pointing at nothing.
+  hop and reads again with the viewer's own per-database token; a second redirect is reported as a token exchange
+  that did not take. Then, in the same session, it reads the dashboard's per-DC table: its row count must be `dcs`.
+  The tile alone cannot tell the personas apart (only DC 5 stocked out, so it is 17 for one DC or five), and the
+  table is what shows Superset read as the persona, row rule included. The schema check holds `chart` to a
+  big-number chart and `dc_chart` to a table on the same dashboard, both of a bundle `dashboards/import.yaml` lists,
+  so a re-authored dashboard cannot leave the case pointing at nothing.
 
 The Iris legs need the world the cluster serves (olymp `just world <us|cz>`); the edge and Superset legs read
 either world (one Superset database each). Persona

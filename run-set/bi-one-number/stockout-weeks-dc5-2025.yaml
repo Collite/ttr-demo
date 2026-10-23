@@ -50,16 +50,24 @@ legs:
 
   # Superset, the tile of the DC meltdown dashboard (dashboards/dc-meltdown-stockouts/): the chart's saved query
   # through GET /api/v1/chart/<id>/data/, as the persona signed in through Keycloak, with their own per-database
-  # token. The chart per world by its uuid; `value` is the saved metric.
+  # token. The chart per world by its uuid; `value` is the saved metric. The tile is 17 for one DC or five (only DC 5
+  # stocked out), so `dcs` is read off the dashboard's per-DC table (`dc_chart`, one row per DC the persona sees):
+  # that is what shows Superset read as the persona, row rule included (review-131 R4).
   - id: superset-analyst
     via: superset
     persona: analyst
     chart: &tile
       cz: 65572edb-2694-4098-b3ef-761b8ee7e738
       us: dcdb1d8e-96c4-468b-b138-17bf58e2a629
+    dc_chart: &per_dc_table
+      cz: 4fe88cbc-d951-4118-b6d8-f444f54690fc
+      us: 95f3854e-2d6c-40a8-87fd-c2f47f441e98
     value: stockout_weeks_sum
+    dcs: 5                       # every DC of the world
   - id: superset-dc-manager
     via: superset
     persona: dc_manager
     chart: *tile
+    dc_chart: *per_dc_table
     value: stockout_weeks_sum
+    dcs: 1                       # the dc-scope row rule: DC 5 only
