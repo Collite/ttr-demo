@@ -28,6 +28,14 @@ changes:
 - **Files named after their object** (`charts/tydny-s-vypadkem-zasob-v-roce-2025.yaml`). Superset names them
   `<title>_<id>.yaml`, and that id changes with every Superset instance.
 
+## Colours
+
+Every chart and dashboard uses the categorical scheme `tatrmanColors`: Stage Navy first, then Tatrman Yellow, steel
+and grays. Superset's Tatrman styling registers it (olymp `platform/bi/superset/base/values.yaml`, `tatrman_brand`).
+Yellow marks what is living. So the DC meltdown dashboards pin the DC that melted down to it in their
+`json_metadata.label_colors`: `Brno DC` in cz, `Memphis DC` in us, `#F2A200`. Everything else stays structure-coloured.
+If the scheme is missing, Superset falls back to its default palette; nothing breaks.
+
 ## How a merge reaches Superset
 
 olymp's `superset-dashboards` Application (`clusters/<cluster>/app-superset-dashboards.yaml`) has two sources:
