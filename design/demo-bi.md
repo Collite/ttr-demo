@@ -23,7 +23,7 @@
 | the world Iris serves | olymp `just world cz` before a Czech show (ops manual §7.6) | Iris answers in Czech over `hartland_cz` |
 | a clean browser | a private window per persona, or sign out between personas (§2.3) | — |
 | Tatrman styling | the sign-in page | the Tatrman lockup in the navbar, the title "Tatrman BI" (olymp `tatrman_brand`) |
-| each world authorized | as each persona you will show, open one dashboard per world within the half hour before; click through any "Authorization needed" (§2.1 step 3) | charts with data, no yellow box |
+| each world authorized | as each persona you will show, open one dashboard per world; click through any "Authorization needed" (§2.1 step 3). Superset then holds an offline token for 30 days of non-use | charts with data, no yellow box |
 
 Superset needs no world flip: each world is its own Superset database, so both are always there (C-20). Only Iris
 serves one world at a time.
@@ -60,8 +60,10 @@ asked: on the tile, in Iris, in the saved query.
 3. Open **«Výpadky zásob v distribučních centrech»**.
    - ⚑ **Authorization needed.** Superset reads each world with the viewer's OWN token for that database
      (per-database OAuth2). When the persona has none, or the one Superset holds has lapsed, every chart shows a
-     yellow box: "Authorization needed. You need to **provide authorization** in order to run this operation." Its
-     lapse is the Keycloak session's idle timeout, so after a pause in the show it comes back.
+     yellow box: "Authorization needed. You need to **provide authorization** in order to run this operation." The
+     token Superset keeps is an offline one (olymp#126): it survives pauses and sign-outs, and lapses only after 30 days without
+     use or when revoked. So the box appears once per persona and world. Authorize before the show (§0), or leave
+     one world unauthorized and show the box on purpose.
      1. Click **provide authorization** (the amber link). A tab opens, passes through Keycloak with no password (the
         persona is signed in), and says "You can close this window and re-run the query."
      2. Close that tab, then reload the dashboard. The charts do not re-run by themselves.
@@ -201,7 +203,8 @@ The four personas on hartland, after the import from git (project `platform/feat
   account temporarily. Superset is not affected: it uses each viewer's OAuth token, never their password.
 - **An edit in Superset's UI does not survive** the next import from git. To keep it, export it into the bundle
   (`dashboards/README.md`).
-- **"Authorization needed" comes back after an idle pause** (§2.1 step 3): one click and a reload per persona and
-  world. Rehearse it, or show it on purpose as part of the governance story.
+- **"Authorization needed" appears once per persona and world** (§2.1 step 3): one click and a reload. After
+  that, Superset's offline token lasts until it goes 30 days unused or is revoked (Keycloak account console →
+  Applications, or an admin). Authorize in the pre-show, or show it on purpose as part of the governance story.
 - **Superset's own messages still name "Apache Superset"** (the authorization box, for example). The styling
   changes the brand, not Superset's text; the logo's tooltip credits Superset.
