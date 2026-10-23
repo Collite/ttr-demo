@@ -44,9 +44,9 @@ never a persona.
 
 The Brno DC (Memphis DC in the us world) melted down in H2 2025. From August to November, 17 of its weekly inventory
 snapshots were stock-out weeks. The other four DCs had none. The analyst sees the whole network and the one DC
-in Tatrman Yellow. The DC's own manager sees only his DC, on the same dashboard, because the door narrows every statement to what
-his role allows. Superset knows nothing about that rule. And the 17 is the same 17 wherever it is asked: on the
-tile, in Iris, in the saved query.
+in Tatrman Yellow. The DC's own manager sees only his DC, on the same dashboard, because the door narrows every
+statement to what his role allows. Superset knows nothing about that rule. And the 17 is the same 17 wherever it is
+asked: on the tile, in Iris, in the saved query.
 
 ## 2 · The walk
 
