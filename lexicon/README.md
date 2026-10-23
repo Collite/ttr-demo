@@ -78,6 +78,26 @@ step rather than a local recipe.
 
 ## What is in the artifact today
 
+From `just build-lexicon`, **2026-10-23**, CN-P4 S4.5 (branch `cn/p4-archive-v6`): the toolchain pin moves to
+**`grammar/v0.18.1`**, and the archive is rebuilt as **`ttr-lexicon-compiled/v6`** — the schema whose readers (lex-matcher
+0.11.5, resolver 0.11.23) olymp#123 rolled out first. Hartland has no `model cn`, so the new v6 content is absent: zero
+concept entries, zero `liftsTo`, no row with a default sense. The entries and every target's v5 facts are the previous
+build's, byte for byte, so the RV-39 lexicon hash (over the entries) is unchanged; only the schema line, and with it the
+archive id, moves.
+
+| | |
+|---|---|
+| archive id | `sha256:85f142905c04298feb7056f14036ce8f6787ef34f654b1c80ea72698070304ca` (was `9ffad462…`) |
+| model id | `sha256:8a5d11de28b8062c0064ffdab39afe8049663267e019a6ffe6af7d377dd958e2` (unchanged) |
+| schema | **`ttr-lexicon-compiled/v6`** (was v5) |
+| toolchain | `Collite/ttr-core` **`grammar/v0.18.1`** |
+| entries | **812** — every class unchanged |
+| targets | **63** — unchanged; no concept, no lifting element |
+| build warnings | **24**, the same 24 as before |
+| size | 15,170 bytes |
+
+### 2026-10-22 (BI-4 · C-24, the label columns)
+
 From `just build-lexicon`, **2026-10-22**, BI-4 · C-24 (branch `feat/bi-p4-char-labels`, rebased on ttr-demo#93's
 merge `bbadee2`): the eleven label columns of the db model CHAR → VARCHAR (`model/db/dims.ttrm`, retyped in the worlds by
 `data/labels/`). They move the model id and nothing else in the vocabulary: the entries and targets are #93's, byte for
