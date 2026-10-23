@@ -87,10 +87,13 @@ test('T1.4 — a pin missing or empty is refused, naming it (an empty ref = an u
 });
 
 test('T1.5 — a value of the wrong shape is refused, naming the key (they reach $GITHUB_ENV and `export`)', async () => {
+  // Each case rewrites the lock's line that STARTS WITH `from`. The [ttr-core] ref is matched by its prefix, not its
+  // version, so a toolchain bump does not break this test (it did at grammar/v0.18.1, CN-P4 S4.5); the [ttrp] ref is
+  // a commit sha and never starts with `grammar/v`.
   const cases = [
-    ['ref = "grammar/v0.16.1"', 'ref = "grammar/v0.17.0$(true)"', '[ttr-core].ref'],
-    ['ref = "grammar/v0.16.1"', 'ref = "main"', '[ttr-core].ref'],
-    ['ref = "grammar/v0.16.1"', 'ref = "grammar/v0.17.0 x"', '[ttr-core].ref'],
+    ['ref = "grammar/v', 'ref = "grammar/v0.17.0$(true)"', '[ttr-core].ref'],
+    ['ref = "grammar/v', 'ref = "main"', '[ttr-core].ref'],
+    ['ref = "grammar/v', 'ref = "grammar/v0.17.0 x"', '[ttr-core].ref'],
     ['ttr-metadata = "0.16.0"', 'ttr-metadata = "0.16"', '[veles].ttr-metadata'],
     // A TOML escape: the decoded value carries a newline, i.e. a second env line.
     ['ttr-metadata = "0.16.0"', 'ttr-metadata = "0.16.0\\nX=1"', '[veles].ttr-metadata'],

@@ -93,6 +93,13 @@ jobs:
       # parser, semantics, metadata and lexicon modules are unchanged from v0.16.0, so the serving readers need no roll
       # and v0.16.1 rebuilt this branch's archive byte for byte.
       #
+      # grammar/v0.18.1 (2026-10-23, CN-P4 S4.5): lexicon archive `ttr-lexicon-compiled/v6` — concept entries, the
+      # reverse index (`liftsTo`) on er/md elements, a row's default sense. It rolls with lex-matcher 0.11.5 and resolver
+      # 0.11.23 (olymp#123), the v6 readers, deployed first. Inert here: hartland has no `model cn`, so v0.18.1 rebuilt
+      # the archive with the same 812 entries (the RV-39 lexicon hash unchanged), zero concepts and zero lifts — only
+      # the schema line and so the archive id move. The model side: resolved-packages.json unchanged; the loader now
+      # warns `cn/cnc-deprecated` on the twelve `roles:` files (accepted in model/tests/project-harness.mjs).
+      #
       # The pin lives in toolchain.lock ([ttr-core].ref) since 2026-10-21 (SO-demo P0, ⚑SO-P-4), beside the veles image
       # hartland deploys and the ttr-metadata version it was built with ([veles].image, [veles].ttr-metadata) — one file
       # read by this gate, regenerate.yml and olymp's release checklist. The history above is the lock's; the rule is

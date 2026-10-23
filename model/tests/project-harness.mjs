@@ -63,6 +63,11 @@ export const ACCEPTED_RESIDUAL_CODES = new Set([
   // in it. Remove this entry when the patterns move.
   'ttr/lexicon-legacy-patterns',
   'ttr/lexicon-legacy-examples',
+  // CN-P4 S4.5 (the toolchain at grammar/v0.18.1; cn contracts §1.6): `cn/cnc-deprecated` — `model cnc` and an
+  // entity's `roles:` parse through the deprecation window with a WARNING, and twelve er files here declare `roles:`.
+  // ACCEPTED, not fixed: there is nothing to migrate to yet — warehouse roles derive from md bindings once the md/hop
+  // sub-arc lands (CN-D18) — and the removal is a later major. Remove this entry when hartland's `roles:` go.
+  'cn/cnc-deprecated',
 ]);
 // The sibling checkout by default. `TATRMAN_PACKAGES` overrides it so this suite can be
 // run against a tatrman WORKTREE — needed whenever the model uses grammar the sibling's
