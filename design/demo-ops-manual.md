@@ -45,7 +45,7 @@ Encrypt wildcard), and Iris, Landing and the two BI hosts only there — the nip
 | Keycloak (IdP + admin console) | `https://keycloak.20-218-224-115.nip.io` | `admin` + secret (§3.3) |
 | ArgoCD (GitOps UI) | `https://argocd.20-218-224-115.nip.io` | Keycloak SSO **or** local `admin` (§3.4) |
 | Grafana (monitoring) | `https://grafana.20-218-224-115.nip.io` | Keycloak SSO |
-| **Superset** (BI, operated — BI-3) | `https://superset.hartland.collite.cz` | Keycloak SSO (client `superset`); a persona lands in `BI Viewer`, the realm group `admins` is Admin |
+| **Superset** (BI, operated — BI-3) | `https://superset.hartland.collite.cz` | Keycloak SSO (client `superset`); a persona lands in `BI Viewer`, the realm group `admins` is Admin. The dashboards are `dashboards/` of this repo, imported on merge (ArgoCD app `superset-dashboards`, its hook Job `superset-dashboards-import`); the walk is `demo-bi.md` |
 | **Flight SQL edge** (JDBC/ADBC: DBeaver, DataGrip) | `flight.hartland.collite.cz:443` (gRPC over TLS) | the persona's own user + password (realm client `jdbc`), or a bearer; `world=hartland_us\|hartland_cz` names the world |
 
 ---
