@@ -260,17 +260,31 @@ per scripted flow (quirks §5.2).
 
 **BI receipts** (one row per Flight statement: who, which world, the SQL the door ran, the row rules applied, the
 notices — ttr-server `docs/operations.md` § Receipts). `GET /receipts?user_id=<user>&since=<ISO time>` (or
-`?correlation_id=…`) on query's `:7305`, for a bearer carrying the realm role `query-platform-admin`, in one shell call:
+`?correlation_id=…`) on query's `:7305`, for a bearer carrying the realm role `query-platform-admin`. The role comes
+with the realm group **`admins`** (olymp#119; the membership is set in the Keycloak console, and no persona has it).
+The route checks a token the way the Flight edge does, so it must be the edge's: a fresh token from the **`jdbc`**
+client (audience `tatrman-flight`). An `iris` token is 401, and a token from before you joined `admins` is 403. In one
+shell call:
 
 ```sh
+read -s PW   # your Keycloak password; stays out of shell history
+TOKEN=$(curl -s https://keycloak.hartland.collite.cz/realms/kantheon/protocol/openid-connect/token \
+  -d grant_type=password -d client_id=jdbc -d username=<your-user> --data-urlencode password="$PW" | jq -r .access_token)
 kubectl --context hartland -n ttr-server port-forward svc/query 7305:7305 >/dev/null & pf=$!; sleep 2
-curl -s -H "Authorization: Bearer $TOKEN" 'http://localhost:7305/receipts?user_id=petr&since=2026-10-22T00:00:00Z'
+curl -s -H "Authorization: Bearer $TOKEN" 'http://localhost:7305/receipts?user_id=petr&since=2026-10-23T00:00:00Z' | jq
 kill $pf
 ```
 
-⚑ hartland's realm does not define `query-platform-admin` yet (BI-4 follow-up: the role, granted to the group
-`admins`); until it does the read answers 403, and the receipts are read in the database itself: `query.bi_receipts` in
-database `query` of the central `postgres` (ns `data`).
+What a receipt shows (first read 2026-10-23, petr's edge statements):
+- `roles`: what the bearer carried.
+- `executed_sql`: the door's SQL, with the row rule already inside it (`WHERE "inv_warehouse_sk" = 5`).
+- `security_applied`: the rules by name (`dc-scope` on inventory and warehouse).
+- `client`: `superset` for Superset, `jdbc` / `adbc` for those drivers, `other` for a script on the DB-API.
+
+Every receipt also carries one `schema_mismatch` WARNING per table it read. The cause is the db model's catalog
+label `dbo` against the Postgres worker's `public`. It is noise: the SQL is unqualified and runs.
+
+The same rows are in the database itself: `query.bi_receipts` in database `query` of the central `postgres` (ns `data`).
 
 Logs worth knowing: **`ttr-server/query-*`** (the real error behind any "0 rows" —
 quirks §0, grep the `correlation_id`) · golem pod logs in `kantheon` (turn orchestration) ·
