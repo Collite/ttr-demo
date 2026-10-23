@@ -24,7 +24,9 @@
 #                                 2026-10-15. Both need no cluster and no secrets; before, they ran
 #                                 only locally, so a runner change could break the corpus with the
 #                                 gate green.
-#   just load-model               the model as veles loads it: the Kotlin loader, strict, built from
+#   just bi-one-number-test       the one-number cases' schema + runner specs (run-set/bi-one-number/,
+#                                 scripts/test_bi_one_number.py) — ADDED 2026-10-23, BI-4 S4.1 T5
+#   just load-model              the model as veles loads it: the Kotlin loader, strict, built from
 #                                 ttr-core at veles's ttr-metadata version (grammar/v<[veles].ttr-metadata>,
 #                                 stamped with it) — ADDED 2026-10-21, SO-demo P0. Veles drops a file
 #                                 it cannot parse and only WARNs about a reconcile error (SO-1 memo
@@ -112,6 +114,10 @@ jobs:
       - name: Routing runner specs
         working-directory: hartland
         run: just routing-test
+
+      - name: One-number cases and runner specs
+        working-directory: hartland
+        run: just bi-one-number-test
 
       - name: Model suites
         working-directory: hartland

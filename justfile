@@ -334,3 +334,16 @@ routing-test:
 
 routing-run world *FLAGS:
     uv run scripts/routing-run.py run --world {{world}} {{FLAGS}}
+
+# ── the one number (BI-4, contracts C-25) ────────────────────────────────────────────────────────
+# run-set/bi-one-number/README.md. DC 5's stock-out weeks in 2025 through the Flight edge, the saved
+# query and Iris, against the world DB; the Superset tile joins with S4.2. Personas as for routing-run.
+#
+#     just bi-one-number cz                        # the world the cluster serves (the Iris legs need it)
+#     just bi-one-number cz --out /tmp/one         # + one-number-cz.json
+bi-one-number world *FLAGS:
+    uv run scripts/bi-one-number.py run --world {{world}} {{FLAGS}}
+
+# The one-number runner's specs and the cases' schema — no cluster.
+bi-one-number-test:
+    uv run --quiet --with pyyaml --with httpx python3 -B -m unittest scripts/test_bi_one_number.py
