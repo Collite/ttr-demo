@@ -348,6 +348,17 @@ bi-one-number world *FLAGS:
 bi-one-number-test:
     uv run --quiet --with pyyaml --with httpx python3 -B -m unittest scripts/test_bi_one_number.py
 
+# ── Hebe on hartland: the HB-P1 rig (HE-P1 · S1.2, design/hebe-demo/rig-hb/) ────────────────────
+# Reads only. With HEBE_VERIFY_PASSWORD set it also signs in through the console's edge as marketa and maya.
+#
+#     just hebe-verify                                   # every check; exit 0 only when all PASS
+hebe-verify:
+    design/hebe-demo/rig-hb/verify.sh
+
+# The rig's own specs (the Keycloak form parsing) — no cluster.
+hebe-verify-test:
+    python3 -B -m unittest design/hebe-demo/rig-hb/test_edge_login.py
+
 # ── the Superset dashboards (BI-4, contracts C-23) ───────────────────────────────────────────────
 # dashboards/README.md. Bundles per dashboard and world; olymp's superset-dashboards Application
 # imports them on merge (the ConfigMap kustomization.yaml renders).
