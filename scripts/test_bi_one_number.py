@@ -36,12 +36,14 @@ class ShippedCaseSpec(unittest.TestCase):
         self.assertEqual((c["expect"], c["dc"]), (17, 5))
         self.assertEqual(c["oracle"], "../routing/validation/dc5-stockout-weeks-2025.yaml")
 
-    def test_every_path_is_a_leg_and_the_tile_waits_for_s4_2(self):
+    def test_every_path_is_a_leg_and_the_tile_is_read_by_both_personas(self):
         legs = {leg["id"]: leg for leg in yaml.safe_load(CASE.read_text())["legs"]}
         self.assertEqual({leg["via"] for leg in legs.values()}, {"edge", "iris", "superset"})
         self.assertEqual(legs["edge-dc-manager"]["dcs"], [5])  # the row rule: the DC manager sees DC 5 only
         self.assertEqual(legs["saved-query"]["pattern"], "warehouse_stockout_week_count")
-        self.assertIn("pending", legs["superset-tile"])
+        self.assertEqual(legs["superset-analyst"]["chart"], legs["superset-dc-manager"]["chart"])
+        self.assertEqual({legs[i]["persona"] for i in ("superset-analyst", "superset-dc-manager")}, {"analyst", "dc_manager"})
+        self.assertEqual(legs["superset-analyst"]["value"], "stockout_weeks_sum")
         self.assertIn("obj.query.stockouts_monthly_dc", legs["edge-analyst"]["sql"])
 
 
@@ -88,11 +90,20 @@ class SchemaSpec(unittest.TestCase):
         for want in ("via 'jdbc'", "persona 'cfo'", "dcs must be", "both languages"):
             self.assertTrue(any(want in p for p in ps), (want, ps))
 
-    def test_a_superset_leg_is_pending_until_s4_2_and_pending_says_why(self):
+    def test_a_superset_leg_names_a_big_number_tile_of_each_worlds_bundle(self):
         c = copy.deepcopy(self.case)
-        del self.leg(c, "superset-tile")["pending"]
-        self.assertTrue(any("S4.2 T5" in p for p in self.problems(c)))
-        self.leg(c, "superset-tile")["pending"] = " "
+        del self.leg(c, "superset-analyst")["chart"]["us"]
+        self.assertTrue(any("one uuid per world" in p for p in self.problems(c)))
+        c = copy.deepcopy(self.case)
+        self.leg(c, "superset-analyst")["chart"]["cz"] = "00000000-0000-0000-0000-000000000000"
+        self.assertTrue(any("in no cz bundle" in p for p in self.problems(c)))
+        c = copy.deepcopy(self.case)
+        self.leg(c, "superset-analyst")["chart"]["cz"] = "dd74b7a4-1e5a-49c2-ae3c-4a7864bb2c6e"  # the cz bars
+        self.assertTrue(any("not a big-number tile" in p for p in self.problems(c)))
+
+    def test_pending_says_why(self):
+        c = copy.deepcopy(self.case)
+        self.leg(c, "superset-analyst")["pending"] = " "
         self.assertTrue(any("pending must say" in p for p in self.problems(c)))
 
     def test_two_legs_with_one_id_are_caught(self):

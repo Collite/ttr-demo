@@ -10,7 +10,9 @@
 
 `run` reads each case's number on every leg: through the Flight edge as the persona (the read a Superset dataset
 makes), through the public iris-bff as the persona (the routing runner's client: sessions, the turn's protocol),
-and later on the Superset tile. The oracle is a routing validation's `core` on the world DB, as the read-only role.
+and on the Superset tile as the persona (signed in through Keycloak, the chart's saved query through
+`/api/v1/chart/<id>/data/`, the viewer's own per-database token). The oracle is a routing validation's `core` on the
+world DB, as the read-only role.
 Every leg and the oracle must give the case's `expect`.
 
 Exit code: 0 = every leg that ran gave `expect` (a `pending` leg does not redden); 1 otherwise; 2 = schema problems.
@@ -21,10 +23,12 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import decimal
+import html
 import importlib.util
 import json
 import os
 import pathlib
+import re
 import sys
 import time
 from typing import Any
@@ -32,8 +36,9 @@ from typing import Any
 HERE = pathlib.Path(__file__).resolve().parent
 DEFAULT_CASES = HERE.parent / "run-set" / "bi-one-number"
 ROUTING = HERE.parent / "run-set" / "routing"
+DASHBOARDS = HERE.parent / "dashboards"
 CASE_KEYS = {"id", "title", "expect", "dc", "oracle", "legs"}
-LEG_KEYS = {"id", "via", "persona", "sql", "question", "pattern", "value", "dcs", "pending"}
+LEG_KEYS = {"id", "via", "persona", "sql", "question", "pattern", "value", "dcs", "chart", "pending"}
 VIAS = {"edge", "iris", "superset"}
 
 # The routing runner's client and helpers (iris-bff turns, protocols, the world DB) — one copy of that code.
@@ -90,8 +95,6 @@ def leg_problems(leg: dict, personas: dict) -> list[str]:
         if not isinstance(leg["pending"], str) or not leg["pending"].strip():
             out.append(f"leg {lid}: pending must say what it waits for")
         return out
-    if leg.get("via") == "superset":
-        out.append(f"leg {lid}: a superset leg is S4.2 T5's — declare it pending until then")
     if leg.get("persona") not in personas:
         out.append(f"leg {lid}: persona {leg.get('persona')!r} is not in routing/personas.yaml")
     if not isinstance(leg.get("value"), str) or not leg["value"]:
@@ -106,6 +109,26 @@ def leg_problems(leg: dict, personas: dict) -> list[str]:
         q = leg.get("question")
         if not isinstance(q, dict) or set(q) != set(rr.WORLD_LOCALE.values()) or not all(q.values()):
             out.append(f"leg {lid}: question needs both languages ({', '.join(sorted(rr.WORLD_LOCALE.values()))})")
+    if leg.get("via") == "superset":
+        charts = leg.get("chart")
+        if not isinstance(charts, dict) or set(charts) != set(rr.WORLD_LOCALE):
+            out.append(f"leg {lid}: chart needs one uuid per world ({', '.join(sorted(rr.WORLD_LOCALE))})")
+        else:
+            for world, uuid in sorted(charts.items()):
+                viz = bundle_charts(world).get(str(uuid))
+                if viz is None:
+                    out.append(f"leg {lid}: chart {uuid} is in no {world} bundle under dashboards/")
+                elif viz != "big_number_total":
+                    out.append(f"leg {lid}: chart {uuid} is a {viz}, not a big-number tile")
+    return out
+
+
+def bundle_charts(world: str) -> dict[str, str]:
+    """uuid → viz type, for every chart of the world's Superset bundles (dashboards/<id>/bundle/<world>/charts/)."""
+    out = {}
+    for path in sorted(DASHBOARDS.glob(f"*/bundle/{world}/charts/*.yaml")):
+        c = rr.load_yaml(path) or {}
+        out[str(c.get("uuid"))] = c.get("viz_type")
     return out
 
 
@@ -194,6 +217,38 @@ def edge_rows(args, world: str, user: str, password: str, sql: str) -> list[dict
         conn.close()
 
 
+def superset_number(args, user: str, password: str, chart: str, part: str) -> tuple[float | None, str | None]:
+    """The tile's number as the persona sees it: Keycloak's form (the `superset` client), the chart by uuid, then its
+    saved query. The first read of a database answers OAUTH2_REDIRECT (no per-database token yet); following that
+    URL is an SSO hop through Keycloak, and the read is repeated with the viewer's own token."""
+    import httpx
+
+    base = args.superset.rstrip("/")
+    with httpx.Client(follow_redirects=True, timeout=args.timeout) as c:
+        page = c.get(f"{base}/login/keycloak")
+        form = re.search(r'<form[^>]+action="([^"]+)"', page.text)
+        if not form:
+            return None, f"no Keycloak sign-in form at {base}/login/keycloak ({page.status_code})"
+        r = c.post(html.unescape(form.group(1)), data={"username": user, "password": password, "credentialId": ""})
+        if not str(r.url).startswith(base):
+            return None, f"sign-in did not come back to Superset ({r.status_code})"
+        meta = c.get(f"{base}/api/v1/chart/{chart}")
+        if meta.status_code != 200:
+            return None, f"chart {chart}: {meta.status_code} (not imported, or not this viewer's)"
+        cid = meta.json()["result"]["id"]
+        for _ in range(2):
+            d = c.get(f"{base}/api/v1/chart/{cid}/data/")
+            body = d.json()
+            hop = next((e.get("extra", {}).get("url") for e in body.get("errors") or []
+                        if e.get("error_type") == "OAUTH2_REDIRECT"), None)
+            if not hop:
+                break
+            c.get(hop)
+        if d.status_code != 200:
+            return None, f"chart data {d.status_code}: {str(body.get('message') or body.get('errors'))[:300]}"
+        return summed(body["result"][0].get("data") or [], part)
+
+
 def run_leg(leg: dict, case: dict, world: str, personas: dict, cluster, args) -> dict:
     res: dict[str, Any] = {"id": leg["id"], "via": leg["via"]}
     if "pending" in leg:
@@ -208,6 +263,9 @@ def run_leg(leg: dict, case: dict, world: str, personas: dict, cluster, args) ->
             rows = edge_rows(args, world, user, cluster.password, leg["sql"])
             got, seen, err = per_dc(rows, leg["value"], case["dc"], leg["dcs"])
             res["dcs"] = seen
+        elif leg["via"] == "superset":
+            res["chart"] = leg["chart"][world]
+            got, err = superset_number(args, user, cluster.password, leg["chart"][world], leg["value"])
         else:  # iris
             sid = cluster.session(user)
             turn = cluster.ask_bff(user, sid, leg["question"][locale], locale, None, None)
@@ -261,7 +319,8 @@ def run(args) -> int:
                 if r["status"] == "PENDING":
                     print(f"{mark} {r['id']:<16} {r['via']:<8} pending: {r['detail']}")
                     continue
-                extra = (f"DCs {r['dcs']}" if r["via"] == "edge" else f"{r.get('route')} {r.get('pattern') or ''}".strip())
+                extra = (f"DCs {r['dcs']}" if r["via"] == "edge" else f"chart {r['chart']}" if r["via"] == "superset"
+                         else f"{r.get('route')} {r.get('pattern') or ''}".strip())
                 print(f"{mark} {r['id']:<16} {r['via']:<8} {r['persona']:<26} {fmt(r['number']):>6}  {extra}  {r['secs']}s"
                       + (f"  {r['detail']}" if r["detail"] else ""), flush=True)
             failed = [r["id"] for r in legs if r["status"] == "FAIL"] + ([] if o_ok else ["oracle"])
@@ -277,7 +336,7 @@ def run(args) -> int:
         out = pathlib.Path(args.out)
         out.mkdir(parents=True, exist_ok=True)
         doc = {"$schema": "ttr-demo/bi-one-number/v1", "world": world, "started": started.isoformat(timespec="seconds"),
-               "edge": args.edge, "bff": args.bff, "cases": docs}
+               "edge": args.edge, "bff": args.bff, "superset": args.superset, "cases": docs}
         (out / f"one-number-{world}.json").write_text(json.dumps(doc, ensure_ascii=False, indent=1) + "\n")
         print(f"→ {out}/one-number-{world}.json")
     return 1 if red else 0
@@ -304,6 +363,7 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--out", default="")
     r.add_argument("--ctx", default="hartland")
     r.add_argument("--edge", default=os.environ.get("BI_EDGE", "flight.hartland.collite.cz:443"), help="the Flight edge, host:port")
+    r.add_argument("--superset", default=os.environ.get("BI_SUPERSET", "https://superset.hartland.collite.cz"))
     r.add_argument("--bff", default=os.environ.get("ROUTING_BFF", "https://iris.hartland.collite.cz/bff"))
     r.add_argument("--issuer", default=os.environ.get("ROUTING_ISSUER", "https://keycloak.hartland.collite.cz/realms/kantheon"))
     r.add_argument("--pg", default=os.environ.get("ROUTING_PG", "kubectl"), choices=["kubectl", "env"])
