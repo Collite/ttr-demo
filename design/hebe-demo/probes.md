@@ -117,3 +117,27 @@ memory, delegation, governance strikes) all still need the real thing.
    realm? If not, the alternative is changing Hebe's grant to something V2 supports, which is a
    kantheon design decision, not a deployment one.
 4. Complete the remaining §4 rows in a proper P0 pass — especially ⚑3, which gates P1 anyway.
+
+## 6. HE-P1 · S1.1 identity probes (2026-10-23, no mutation)
+
+Re-probed for HE-P1 · S1.1 T1 (`project/kantheon/features/hebe/tasks/tasks-p1-s1.1-identity-substrate.md`).
+The §2 blocker is settled by HE-D-1: Hebe mints with the `refresh_token` grant from an offline token on its own
+confidential client `hebe`, with no token exchange. These probes answer what that path needs from the live realm. They
+used one ordinary persona password grant on the public `iris` client (the persona-turn recipe) and two refreshes of
+its refresh token, plus the public discovery document.
+
+| Question | Probed value |
+|---|---|
+| Q-1 — `offline_access` on `marketa` | **held**, through the realm's default composite: a fresh access token's `realm_access.roles` = `offline_access`, `uma_authorization`, `default-roles-kantheon`, `kantheon-area-hartland`, `kantheon-bi-reader`. The realm file assigns it to nobody directly; every user gets it from `default-roles-kantheon`. |
+| Q-2 — the `aud` iris-bff requires | **none.** An `iris` token for marketa carries `aud=account` (the account-console roles, nothing else) and `azp=iris`. iris-bff's hartland values set `auth.keycloakIssuer` + `jwksUri` and no audience ("`iss` + signature bind them to this realm"). automation's `auth` sets `jwksUrl` + `issuer`, no audience. A `hebe`-client token is accepted on the same terms. |
+| *Revoke Refresh Token* | **off** — the same `iris` refresh token was used twice and both refreshes succeeded (with it on, the second answers `invalid_grant`). Not set in the realm file, so the Keycloak default holds. |
+| *Offline Session Idle* | **2592000 s (30 days)** — `offlineSessionIdleTimeout` in the realm file. |
+| *Offline Session Max Limited* | **off** — `offlineSessionMaxLifespanEnabled: false` in the realm file. The one client cap in the realm is `superset-db`'s own `client.offline.session.max.lifespan`, which does not touch `hebe`. |
+| Access / refresh lifetimes | access 300 s, SSO refresh 1800 s (the realm's SSO idle). |
+| Discovery | `offline_access` in `scopes_supported`; `refresh_token` and `password` in `grant_types_supported`. |
+
+**VERDICT (Q-1):** marketa already holds `offline_access`. The realm PR maps no role to her.
+**VERDICT (Q-2):** no audience is required, so the `hebe` client carries no audience mapper. If iris-bff ever pins an
+`aud`, the mapper goes on `hebe` and `iris` together.
+**VERDICT (realm settings):** they fit HE-D-1 as they stand. The offline token outlives restarts, a refresh does not
+rotate it out, and it dies only after 30 days without a mint (the VM-off rule, runbook-identity).

@@ -367,3 +367,21 @@ dashboards-unpack export id world:
 # The bundle rules' specs, and the shipped bundles against them — no cluster.
 dashboards-test:
     uv run --quiet --with pyyaml python3 -B -m unittest scripts/test_dashboards.py
+
+# ── Hebe's identity seeds (HE-P1 · S1.1, design/hebe-demo/runbook-identity.md) ───────────────────
+# Bora runs these, logged into az; each never prints or argv's a secret.
+#
+#     just hebe-seed-client-secrets                  # B-2.1: hebe + hebe-console client secrets (idempotent)
+#     just hebe-seed-offline-token marketa marketa   # B-3.1: prompts for the password; --rotate / --verify
+
+# B-2.1: the hebe + hebe-console client secrets into the vault (idempotent).
+hebe-seed-client-secrets:
+    scripts/seed-hebe-client-secret.sh
+
+# B-3.1: an instance's offline token (prompts for the user's password); --rotate replaces, --verify mints.
+hebe-seed-offline-token instance user *FLAGS:
+    scripts/seed-hebe-offline-token.sh {{instance}} {{user}} {{FLAGS}}
+
+# The two seed scripts against a fake az + curl — no cluster, no Azure.
+hebe-seed-test:
+    python3 -B -m unittest scripts/test_seed_hebe_offline_token.py
