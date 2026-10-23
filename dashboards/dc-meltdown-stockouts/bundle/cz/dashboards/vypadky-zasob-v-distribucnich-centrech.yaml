@@ -90,13 +90,14 @@ position:
       width: 12
       height: 60
 metadata:
-  color_scheme: supersetColors
+  color_scheme: tatrmanColors
   refresh_frequency: 0
   cross_filters_enabled: false
   native_filter_configuration: []
   chart_configuration: {}
   expanded_slices: {}
-  label_colors: {}
+  label_colors:
+    Brno DC: '#F2A200'
   shared_label_colors: []
   timed_refresh_immune_slices: []
   default_filters: '{}'

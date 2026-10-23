@@ -29,7 +29,7 @@ params:
   comparison_type: values
   annotation_layers: []
   orientation: horizontal
-  color_scheme: supersetColors
+  color_scheme: tatrmanColors
   show_value: true
   only_total: true
   show_legend: false
@@ -55,7 +55,7 @@ query_context: '{"datasource": {"id": 4, "type": "table"}, "force": false, "quer
   "month_start", "isExtra": false, "isNew": false, "sqlExpression": null}], "order_desc":
   true, "row_limit": 10000, "truncate_metric": true, "show_empty_columns": true, "comparison_type":
   "values", "annotation_layers": [], "orientation": "horizontal", "color_scheme":
-  "supersetColors", "show_value": true, "only_total": true, "show_legend": false,
+  "tatrmanColors", "show_value": true, "only_total": true, "show_legend": false,
   "y_axis_format": "SMART_NUMBER", "rich_tooltip": true, "extra_form_data": {}, "dashboards":
   [], "force": false, "result_format": "json", "result_type": "full"}, "result_format":
   "json", "result_type": "full"}'

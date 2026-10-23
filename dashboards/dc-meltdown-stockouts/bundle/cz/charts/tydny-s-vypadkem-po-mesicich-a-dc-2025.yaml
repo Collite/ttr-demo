@@ -34,7 +34,7 @@ params:
   y_axis_title_margin: 30
   y_axis_title_position: Left
   sort_series_type: sum
-  color_scheme: supersetColors
+  color_scheme: tatrmanColors
   stack: Stack
   only_total: true
   show_legend: true
@@ -68,7 +68,7 @@ query_context: '{"datasource": {"id": 1, "type": "table"}, "force": false, "quer
   "truncate_metric": true, "show_empty_columns": true, "comparison_type": "values",
   "annotation_layers": [], "orientation": "vertical", "x_axis_title_margin": 15, "y_axis_title_margin":
   30, "y_axis_title_position": "Left", "sort_series_type": "sum", "color_scheme":
-  "supersetColors", "stack": "Stack", "only_total": true, "show_legend": true, "legendType":
+  "tatrmanColors", "stack": "Stack", "only_total": true, "show_legend": true, "legendType":
   "scroll", "legendOrientation": "top", "x_axis_time_format": "%b %Y", "y_axis_format":
   "SMART_NUMBER", "rich_tooltip": true, "tooltipTimeFormat": "%B %Y", "extra_form_data":
   {}, "dashboards": [], "force": false, "result_format": "json", "result_type": "full"},

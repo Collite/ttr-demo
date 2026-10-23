@@ -90,7 +90,7 @@ position:
       width: 12
       height: 50
 metadata:
-  color_scheme: supersetColors
+  color_scheme: tatrmanColors
   refresh_frequency: 0
   cross_filters_enabled: false
   native_filter_configuration: []
