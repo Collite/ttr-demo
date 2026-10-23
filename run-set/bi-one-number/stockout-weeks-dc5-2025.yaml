@@ -1,0 +1,53 @@
+# The one number (BI-4 · contracts C-25, ⚑BI-4-A ruled by Bora 2026-10-22): DC 5's stock-out weeks in 2025, read
+# on every path a viewer can read it from. Every leg must give `expect`, and so must the oracle on the world DB.
+# Run by scripts/bi-one-number.py (`just bi-one-number <world>`); README beside this file.
+id: stockout-weeks-dc5-2025
+title: DC 5's stock-out weeks in 2025 — one number on the edge, in the saved query, in Iris (and the Superset tile)
+expect: 17                       # the seed incident, weeks 31–47 (data/seed/02-seed-incident/tests/verify-story.sql §3)
+dc: 5                            # warehouse 5 = Brno DC (cz) = Memphis DC (us)
+oracle: ../routing/validation/dc5-stockout-weeks-2025.yaml   # its `core`, on hartland_<world> as the read-only role
+
+legs:
+  # The Flight edge, as a Superset dataset over obj.query.stockouts_monthly_dc reads it (S4.2's dashboard): the
+  # 2025 total per DC. The number is DC 5's row; `dcs` is what the persona may see.
+  - id: edge-analyst
+    via: edge
+    persona: analyst
+    sql: &per_dc |
+      SELECT warehouse, SUM(stockout_weeks) AS stockout_weeks
+      FROM obj.query.stockouts_monthly_dc
+      WHERE month_start >= CAST('2025-01-01' AS DATE) AND month_start < CAST('2026-01-01' AS DATE)
+      GROUP BY warehouse
+    value: stockout_weeks
+    dcs: 5                       # every DC of the world
+  - id: edge-dc-manager
+    via: edge
+    persona: dc_manager
+    sql: *per_dc
+    value: stockout_weeks
+    dcs: [5]                     # the dc-scope row rule: DC 5 only
+
+  # Iris, act 3.5's question: the composer picks the saved query (the protocol's sql.patternId names it).
+  - id: saved-query
+    via: iris
+    persona: analyst
+    question:
+      cs: Kolik týdnů v roce 2025 mělo Brno DC výpadky zásob?
+      en: How many weeks in 2025 did Memphis DC have stockouts?
+    pattern: warehouse_stockout_week_count
+    value: stockout_weeks
+
+  # Iris, the monthly question: the Golem binds er.entity.dc_stockout_month.stockout_weeks and the composer writes
+  # the query. It names the column itself, so `value` is a part of the name; the rows are summed (the DC manager's
+  # rows are DC 5's months).
+  - id: iris-monthly
+    via: iris
+    persona: dc_manager
+    question:
+      cs: Kolik týdnů s výpadkem zásob měla jednotlivá distribuční centra po měsících v roce 2025?
+      en: How many stockout weeks did each distribution center have by month in 2025?
+    value: stockout
+
+  - id: superset-tile
+    via: superset
+    pending: "S4.2 T5 — the big-number tile of the DC meltdown dashboard, read through the Superset API"

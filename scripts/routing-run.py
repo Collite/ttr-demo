@@ -378,6 +378,7 @@ class Turn:
     text: str = ""
     sql: str | None = None
     source: str | None = None
+    pattern: str | None = None  # the saved query that answered (the protocol's sql.patternId), if one did
     turn_id: str | None = None
     secs: float = 0.0
     error: str | None = None
@@ -555,6 +556,7 @@ class Cluster:
         turn.sql = sqls[0] if sqls else None
         srcs = [v for _, v in find_all(secs.get("sql") or {}, lambda p, v: isinstance(v, str) and v.startswith("STATEMENT_SOURCE_"))]
         turn.source = ",".join(dict.fromkeys(srcs)) or None
+        turn.pattern = (secs.get("sql") or {}).get("patternId") or None
 
     # ·· straight at golem (the shadow) ··
 
@@ -761,6 +763,7 @@ def score(c: Case, turn: Turn, world: str, locale: str, user: str, ref: dt.date,
         "secs": turn.secs,
         "rows": len(turn.rows),
         "statement_source": turn.source,
+        "pattern": turn.pattern,
         "error_code": turn.error_code,
         "sql": (turn.sql or "")[:2000] or None,
         "turn_id": turn.turn_id,
