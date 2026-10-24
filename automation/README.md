@@ -13,7 +13,7 @@ service beside `../model/` (ttr-server contracts §1.1):
 | `handling-a-return-request.md` | H-2 source: Deciding → `decide_return`, Inbound → `monitor_inbound`, Outbound → `settle` |
 | `reorder_proposals/reorder_proposals.md`, `winback/winback.md` | H-3/H-5 literate sources |
 | `ops/no_run_since/no_run_since.md`, `ops/obligation_due_passed/obligation_due_passed.md` | deferred ops sources |
-| `<source>.cs.md` | Czech twin of every English source (six documents, eight recipes); Bora's Czech review pending |
+| `<source>.cs.md` | Czech twin of every English source (six documents, eight recipes); Czech prose approved by Bora on 2026-10-24 |
 | `<recipe>/<recipe>.ttrp` | one canonical program per recipe, derived from either language with identical bytes |
 | `<recipe>/<recipe>.ttrd`, `<recipe>/<recipe>.cs.ttrd` | native spans and document SHA for each language |
 | `<recipe>/<recipe>/README.md` | generated explanation, in the current compiler's unnamed-document output layout; also included in the bundle |
@@ -81,7 +81,10 @@ generates 27 business and four synthetic ops seeds for each world. The ops fixtu
 `authoring-stubs/automation/ops/expected/`, use explicit `stub-<world>-…` keys, and are not observations of
 served operational data. Replace those synthetic cases during Server P4 certification. Live runs, non-seed pins and
 the H-2 replay fixture from those pins remain pending the AU-server runtime on **Hartland** (D-131).
-The Czech prose requires **Bora's review before merge**; neither world is runtime-certified by these seeds.
+Bora approved the six Czech source documents on **2026-10-24**. Neither world is runtime-certified by these seeds.
+Seed generation and `--check` preserve existing pinned cases byte for byte. A malformed `pinned_from` or a pinned
+case whose case/recipe/world identity disagrees with its path refuses before any seeds are written. After recording
+real pins, rebuild the bundles so their golden files and manifest hashes include the observed evidence.
 
 Six bundles are served: `release_order`, `decide_return`, `monitor_inbound`, `settle`, `reorder_proposals`, and
 `winback`. **Bundles load; they do not run until AU-server P1·S1.1.** The cross-storage pair contains door

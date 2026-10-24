@@ -7,9 +7,14 @@ contracts §7 and names only what its recipe has; the seeds are what scripts/see
 from __future__ import annotations
 
 import importlib.util
+import contextlib
+import io
 import re
+import shutil
+import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import yaml
 
@@ -145,6 +150,71 @@ class GoldenCases(unittest.TestCase):
                 self.assertEqual({str(p.relative_to(ROOT)) for p in committed}, {str(p.relative_to(ROOT)) for p in want})
                 for p in committed:
                     self.assertEqual(p.read_text(), want[p], f"{p.relative_to(ROOT)} is stale: uv run scripts/seed-goldens.py")
+
+
+class PinnedSeedPreservation(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        for folder in ('automation', 'data/automation/expected', 'data/automation/recon', 'authoring-stubs'):
+            shutil.copytree(ROOT / folder, self.root / folder)
+        for name, value in {
+            'ROOT': self.root, 'AUTOMATION': self.root / 'automation',
+            'EXPECTED': self.root / 'data/automation/expected', 'RECON': self.root / 'data/automation/recon',
+        }.items():
+            mock = patch.object(seed_goldens, name, value)
+            mock.start()
+            self.addCleanup(mock.stop)
+
+    def run_cli(self, *args: str) -> tuple[int, str]:
+        with patch('sys.argv', ['seed-goldens.py', *args]), contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()) as err:
+            status = seed_goldens.main()
+        return status, err.getvalue()
+
+    def pin(self, world: str) -> tuple[Path, str]:
+        suffix = '' if world == 'us' else '.cz'
+        path = self.root / f'automation/monitor_inbound/tests/none{suffix}.yaml'
+        case = yaml.safe_load(path.read_text())
+        case['pinned_from'] = {'run': 'observed-run', 'at': '2026-10-24T18:00:00Z', 'by': 'bora'}
+        text = '# Observed silent keys; preserve this evidence exactly.\n' + yaml.safe_dump(case, sort_keys=False)
+        path.write_text(text)
+        return path, text
+
+    def test_generation_and_check_preserve_pinned_cases_in_both_worlds(self) -> None:
+        for world in ('us', 'cz'):
+            with self.subTest(world=world):
+                path, text = self.pin(world)
+                self.assertEqual(self.run_cli('--world', world)[0], 0)
+                self.assertEqual(path.read_text(), text)
+                self.assertEqual(self.run_cli('--world', world, '--check')[0], 0)
+                self.assertNotIn(path, seed_goldens.seeds(world))
+
+    def test_stale_unpinned_case_still_fails_read_only_check(self) -> None:
+        pinned, text = self.pin('us')
+        stale = self.root / 'automation/monitor_inbound/tests/complete.yaml'
+        stale.write_text(stale.read_text() + '# stale\n')
+        before = stale.read_bytes()
+        status, error = self.run_cli('--check')
+        self.assertEqual(status, 3)
+        self.assertIn('complete.yaml', error)
+        self.assertEqual(stale.read_bytes(), before)
+        self.assertEqual(pinned.read_text(), text)
+
+    def test_invalid_pin_or_identity_refuses_before_any_seed_is_written(self) -> None:
+        pinned, _ = self.pin('us')
+        original = yaml.safe_load(pinned.read_text())
+        for change in ({'pinned_from': None}, {'pinned_from': {'run': '', 'at': 'now', 'by': 'bora'}},
+                       {'world': 'cz'}, {'recipe': 'settle'}, {'case': 'wrong'}):
+            with self.subTest(change=change):
+                pinned.write_text(yaml.safe_dump(original | change))
+                other = self.root / 'automation/decide_return/tests/reject.yaml'
+                other.write_text('case: untouched\n')
+                before = {p: p.read_bytes() for p in self.root.rglob('*.yaml')}
+                status, error = self.run_cli()
+                self.assertEqual(status, 2)
+                self.assertIn(str(pinned.relative_to(self.root)), error)
+                self.assertEqual({p: p.read_bytes() for p in self.root.rglob('*.yaml')}, before)
 
 
 if __name__ == "__main__":

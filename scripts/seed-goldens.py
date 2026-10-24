@@ -17,6 +17,8 @@ every expected verdict of those keys — all their routes, so an overlapping rec
 an extra — and `detail_counts` where the CSV has them. A `none` route is a case too: its keys get NO verdict row.
 A seed has no `pinned_from` (`ttrp conform` reports it as `seed`, D-89); `expected.actions` comes with the pinning
 (P3). The CSV's `{fills}` stay in `verdict_reason` — the comparison fills them.
+Existing pinned cases are preserved byte for byte by generation and --check. Invalid pins or mismatched
+case/recipe/world identities refuse before writing any seed. Rebuild bundles after pinning a case.
 """
 
 from __future__ import annotations
@@ -26,6 +28,8 @@ import csv
 import re
 import sys
 from pathlib import Path
+
+import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 AUTOMATION = ROOT / "automation"
@@ -115,7 +119,32 @@ def render_case(recipe: str, world: str, as_of: str, params: dict[str, str], rou
     return "\n".join(lines) + "\n"
 
 
+def is_pinned(path: Path, recipe: str, world: str, case_name: str) -> bool:
+    """Inspect existing provenance without reserializing observed values or comments."""
+    if not path.exists():
+        return False
+    label = str(path.relative_to(ROOT))
+    try:
+        case = yaml.safe_load(path.read_text())
+    except yaml.YAMLError as exc:
+        raise ValueError(f"{label}: invalid YAML; refusing to replace existing evidence") from exc
+    if not isinstance(case, dict):
+        raise ValueError(f"{label}: expected a case mapping")
+    if 'pinned_from' not in case:
+        return False
+    pin = case['pinned_from']
+    if not isinstance(pin, dict) or set(pin) != {'run', 'at', 'by'} or not all(
+        isinstance(value, str) and value.strip() for value in pin.values()
+    ):
+        raise ValueError(f"{label}: pinned_from requires nonempty run, at and by strings; refusing to replace evidence")
+    for field, value in {'case': case_name, 'recipe': recipe, 'world': world}.items():
+        if case.get(field) != value:
+            raise ValueError(f"{label}: pinned {field} must be {value!r}; refusing to replace evidence")
+    return True
+
+
 def seeds(world: str) -> dict[Path, str]:
+    """Return generated outputs for unpinned cases only, validating all existing pins before any writes."""
     as_of = world_as_of(world)
     values = package_values()
     out: dict[Path, str] = {}
@@ -130,7 +159,9 @@ def seeds(world: str) -> dict[Path, str]:
         params = {p: values[p] for p in recipe_parameters(ttrp)}
         suffix = "" if world == "us" else f".{world}"
         for route in dict.fromkeys(r["route"] for r in rows):
-            out[ttrp.parent / "tests" / f"{case_name(route)}{suffix}.yaml"] = render_case(recipe, world, as_of, params, route, rows, source)
+            path = ttrp.parent / "tests" / f"{case_name(route)}{suffix}.yaml"
+            if not is_pinned(path, recipe, world, case_name(route)):
+                out[path] = render_case(recipe, world, as_of, params, route, rows, source)
     return out
 
 
@@ -139,18 +170,22 @@ def main() -> int:
     ap.add_argument("--world", default="us", choices=["us", "cz"])
     ap.add_argument("--check", action="store_true", help="exit 3 when a committed seed is stale or missing")
     args = ap.parse_args()
-    want = seeds(args.world)
+    try:
+        want = seeds(args.world)
+    except ValueError as exc:
+        print(f"seed-goldens: {exc}", file=sys.stderr)
+        return 2
     if args.check:
         stale = [str(p.relative_to(ROOT)) for p, text in want.items() if not p.exists() or p.read_text() != text]
         if stale:
             print("stale or missing seeds (run `uv run scripts/seed-goldens.py`):\n  " + "\n  ".join(stale), file=sys.stderr)
             return 3
-        print(f"seed-goldens --check: {len(want)} seeds up to date ({args.world})")
+        print(f"seed-goldens --check: {len(want)} unpinned seeds up to date ({args.world}); existing pins preserved")
         return 0
     for p, text in want.items():
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(text)
-    print(f"seed-goldens: wrote {len(want)} seeds ({args.world})")
+    print(f"seed-goldens: wrote {len(want)} unpinned seeds ({args.world}); existing pins preserved")
     return 0
 
 
