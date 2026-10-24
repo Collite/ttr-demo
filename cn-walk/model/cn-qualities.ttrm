@@ -36,3 +36,8 @@ def quality return_unit_price { of: ReturnLine }
 def quality return_reason     { of: ReturnLine }
 def quality line_state        { of: ReturnLine }
 def quality line_amount       { of: ReturnLine }
+
+def kind Supplier {
+    label: { cs: "Dodavatel", en: "Supplier" },
+    sources: ["doc://kallimachos/purchasing/supplier-handbook/p3#s2"]
+}
