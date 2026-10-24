@@ -13,7 +13,7 @@ CONTEXT="${CONTEXT:-hartland}"
 INSTANCE="${INSTANCE:-marketa}"
 SECRET="hebe-$INSTANCE"
 SCHEMA="hebe_$INSTANCE"
-EMBED_MODEL="${EMBED_MODEL:-ada-002}"   # [llm] embedding_model in clusters/<c>/apps/hebe/values.yaml
+EMBED_MODEL="${EMBED_MODEL:-text-embedding-3-small}"   # [llm] embedding_model in clusters/<c>/apps/hebe/values.yaml (olymp#152)
 FAILED=0
 
 ok()   { printf '  \033[32mPASS\033[0m  %s\n' "$*"; }
