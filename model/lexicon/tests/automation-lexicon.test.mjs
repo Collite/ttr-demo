@@ -76,7 +76,7 @@ const rowsOf = (term, lang) => lexicon.entries.filter((e) => e.termNormalized ==
 test('control — the archive decodes, and a row every build carries is in it', () => {
   // A probe that cannot find its control is broken, not informative (lexicon-archive-staleness).
   const tržby = rowsOf('tržby', isCs).map((e) => e.targetRef);
-  assert.deepEqual(tržby, ['er.entity.sales.ext_sales_price']);
+  assert.deepEqual(tržby, ['er.entity.channel_sales.ext_sales_price']);
 });
 
 test('S0.2 — every enumerated attribute labels every one of its values, in en AND cs, and nothing else', () => {
@@ -96,7 +96,7 @@ test('S0.2 — every enumerated attribute labels every one of its values, in en 
   assert.deepEqual(problems, [], problems.join('; '));
 });
 
-test('S0.2 — no AU `channel` attribute is labelled (the channel words are the value labels of `sales.channel`)', () => {
+test('S0.2 — no `channel` attribute is labelled (the channel words belong to the sales facts)', () => {
   const labelled = UNLABELLED_CHANNELS.filter(([e, a]) => {
     const attr = attributeOf(e, a);
     assert.ok(attr, `${e}.${a} not found`);
@@ -159,24 +159,21 @@ test('⚑AU-H-3 rule 1 — every case form of «reklamace» / «objednávka» is
   assert.deepEqual(problems, [], problems.join('; '));
 });
 
-test('⚑AU-H-3 rule 2 — the returns facts keep their channel-qualified names (longer spans than the bare word)', () => {
+test('⚑AU-H-3 rule 2 — the facts keep their channel-qualified names (longer spans than the bare word)', () => {
   const FACTS = [
     [isCs, 'reklamace z prodejen', 'er.entity.store_returns'],
     [isCs, 'reklamace z webu', 'er.entity.web_returns'],
     [isCs, 'reklamace z tržiště', 'er.entity.catalog_returns'],
+    [isCs, 'objednávky z tržiště', 'er.entity.catalog_sales'],
+    [isCs, 'webové objednávky', 'er.entity.web_sales'],
     [isEn, 'store returns', 'er.entity.store_returns'],
+    [isEn, 'web orders', 'er.entity.web_sales'],
+    [isEn, 'marketplace orders', 'er.entity.catalog_sales'],
   ];
   const problems = [];
   for (const [isLang, term, target] of FACTS) {
     const refs = [...new Set(rowsOf(term, isLang).map((e) => e.targetRef))];
     if (refs.length !== 1 || refs[0] !== target) problems.push(`«${term}» → ${refs.join(', ') || 'nothing'}`);
-  }
-  // The sales facts' names went with their labels at md/hop HP-H (⚑H-7: sources of `sales` only). «objednávky z
-  // tržiště» is now the bare «objednávky» — the AU order document, by rule 1, whose `channel` says web or
-  // marketplace — beside the marketplace channel word; none of these phrases reaches a channel fact.
-  for (const [isLang, term] of [[isCs, 'objednávky z tržiště'], [isCs, 'webové objednávky'], [isEn, 'web orders'], [isEn, 'marketplace orders']]) {
-    const refs = rowsOf(term, isLang).map((e) => e.targetRef);
-    if (refs.length) problems.push(`«${term}» still reaches ${refs.join(', ')}`);
   }
   assert.deepEqual(problems, [], problems.join('; '));
 });

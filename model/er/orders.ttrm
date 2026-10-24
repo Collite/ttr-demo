@@ -13,10 +13,10 @@ model er
 // ⚠ A value label is a MEMBER term of the estate's lexicon, matched in every Golem question — so no label
 // here repeats a word the pre-AU vocabulary already binds (model/lexicon/tests/automation-lexicon.test.mjs).
 // That is why `held_for` says "Sales department", not "Sales", and why no `channel` attribute is labelled:
-// «web», «tržiště», "web", "marketplace" are the value labels of `sales.channel` (md/hop HP-H).
+// «web», «tržiště», "web", "marketplace" are the channel words of the three sales facts.
 //
 // ⚠ `sales_line` is the RECIPES' line, not a conversational fact: it declares no `semantics { measures }`.
-// The Golem's "revenue by channel" keeps `sales`; a second entity offering the same revenue would
+// The Golem's "revenue by channel" keeps `channel_sales`; a second entity offering the same revenue would
 // split every bare "revenue"/"tržby" between two refs (contracts.md §2).
 
 def entity order {

@@ -9,8 +9,7 @@ model lexicon locale en
 // `valueLabels`.
 //
 // The ⚑AU-H-3 rule holds in English with nothing declared: "order(s)" and "return request(s)" are the AU
-// documents' labels, while the returns facts keep "Store Returns" etc. — longer spans. ("Web Orders" and
-// "Marketplace Orders" went with the sales facts' labels at md/hop HP-H: those facts are sources of `sales` only.)
+// documents' labels, while the facts keep "Store Returns", "Web Orders", "Marketplace Orders" — longer spans.
 // Nothing here may claim a word the pre-AU vocabulary binds (lexicon/tests/automation-lexicon.test.mjs).
 
 def term sales_line_en {

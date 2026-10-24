@@ -5,6 +5,9 @@ def area hartland {
     tags: ["reporting", "demo"]
     packages: [hartland]
     entities: [
-        er.entity.sales
+        er.entity.store_sales,
+        er.entity.web_sales,
+        er.entity.catalog_sales,
+        er.entity.channel_sales
     ]
 }

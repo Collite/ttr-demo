@@ -156,6 +156,11 @@
       "schema": "er"
     },
     {
+      "qname": "hartland.er.entity.channel_sales",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
       "qname": "hartland.er.entity.credit_note",
       "package": "hartland",
       "schema": "er"
@@ -276,11 +281,6 @@
       "schema": "er"
     },
     {
-      "qname": "hartland.er.entity.sales",
-      "package": "hartland",
-      "schema": "er"
-    },
-    {
       "qname": "hartland.er.entity.sales_line",
       "package": "hartland",
       "schema": "er"
@@ -336,7 +336,10 @@
         "hartland.worlds"
       ],
       "resolvedEntities": [
-        "hartland.er.entity.sales"
+        "hartland.er.entity.catalog_sales",
+        "hartland.er.entity.channel_sales",
+        "hartland.er.entity.store_sales",
+        "hartland.er.entity.web_sales"
       ]
     }
   ]

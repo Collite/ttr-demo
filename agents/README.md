@@ -19,14 +19,12 @@ As the hartland realm overlay wires them (olymp `platform/auth/keycloak/overlays
 | Tomáš Horák (Finanční ředitel) | `tomas` | CZ | `kantheon-area-hartland`, `kantheon-role-finance` | golem-hartland, golem-hartland-finance | — |
 
 **Row scope (LR C-5·4, ⚑LR-13).** `kantheon-scope-dc-5` grants no Shem. It is a row rule: for its
-holders, validate narrows `inventory`, `warehouse`, `catalog_sales` and `web_sales` to warehouse 5 —
-Memphis DC in the US world, Brno DC in the Czech one (olymp `apps/validate` `configFragment`). Store
-sales, items, customers and the calendar stay open. The all-channel `sales` reads the three facts
-through its union query (md/hop HP-H), so the rule reaches it there: a DC-scoped caller asking by
-channel sees its DC's web and marketplace lines and the whole store channel, as it does asking the
-store channel itself. (Until HP-H the all-channel object was the view-backed `channel_sales`, whose
-store lines carried no DC, so the same caller saw no store lines — Bora, 2026-10-24: the store channel
-stays open.) The Golem ends such an answer with the rights sentence (contracts C-6·1/2).
+holders, validate narrows `inventory`, `warehouse`, `catalog_sales`, `web_sales` and `channel_sales`
+to warehouse 5 — Memphis DC in the US world, Brno DC in the Czech one (olymp `apps/validate`
+`configFragment`). Store sales, items, customers and the calendar stay open. A store line in
+`channel_sales` has no distribution centre (`warehouse_sk` NULL, `data/views/channel_sales.sql`), so a
+DC-scoped caller asking by channel sees its DC's web and marketplace lines and no store lines. The
+Golem ends such an answer with the rights sentence (contracts C-6·1/2).
 
 **The governance-cameo contrast (F-1, verify in Stage 2.6 T6 / live in Phase 3 H3.2):**
 `golem-hartland`'s `visibility_roles` = `[kantheon-area-hartland]` only;
