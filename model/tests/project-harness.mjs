@@ -68,11 +68,18 @@ export const ACCEPTED_RESIDUAL_CODES = new Set([
   // ACCEPTED, not fixed: there is nothing to migrate to yet — warehouse roles derive from md bindings once the md/hop
   // sub-arc lands (CN-D18) — and the removal is a later major. Remove this entry when hartland's `roles:` go.
   'cn/cnc-deprecated',
+  // CN-P6 S6.1 (md/hop, the toolchain at grammar/v0.18.3): `md/er-lineage-opaque` (info) on `sales` and
+  // `channel_returns` — the bearers the cn package's md-grounded measures hop through (L16-6). Their one opaque column is
+  // `channel`: the editor's syntactic lineage reads a bare literal as having no origin but stops at
+  // `CAST('store' AS VARCHAR(16))`, and the CAST is load-bearing (sales.ttrm: bare, the union pads it). The measures'
+  // columns trace, so the hop lands (the editor's and `ttr cn hygiene`'s reports agree). Remove this entry when the
+  // reader reads a CAST of a literal as a literal.
+  'md/er-lineage-opaque',
 ]);
 // The sibling checkout by default. `TATRMAN_PACKAGES` overrides it so this suite can be
 // run against a tatrman WORKTREE — needed whenever the model uses grammar the sibling's
 // built dist does not have yet (NLS-P10: the localised `description:` form is 0.13).
-const tatrmanPackages = process.env.TATRMAN_PACKAGES ?? path.resolve(hartlandRoot, '../tatrman/packages');
+export const tatrmanPackages = process.env.TATRMAN_PACKAGES ?? path.resolve(hartlandRoot, '../tatrman/packages');
 
 const { parseString } = await import(path.join(tatrmanPackages, 'parser/dist/index.js'));
 const semantics = await import(path.join(tatrmanPackages, 'semantics/dist/index.js'));

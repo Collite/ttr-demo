@@ -156,6 +156,11 @@
       "schema": "er"
     },
     {
+      "qname": "hartland.er.entity.channel_returns",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
       "qname": "hartland.er.entity.credit_note",
       "package": "hartland",
       "schema": "er"
@@ -227,6 +232,11 @@
     },
     {
       "qname": "hartland.er.entity.order",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
+      "qname": "hartland.er.entity.placed_order",
       "package": "hartland",
       "schema": "er"
     },

@@ -20,6 +20,16 @@ One model set (BM-2/BM-5), served over `pg-hartland-us` (USD) and `pg-hartland-c
   `category_return_month` — the "Returns by category" dataset, BI's own (SO keeps `returns_review` on its demo branch).
   And a fourth (md/hop HP-H, 2026-10-24): `er/sales.ttrm` declares `er.query.sales_union` and the all-channel entity
   `sales` stacked on it (the `sales` design note below). ListQueries now returns 21.
+  And two more (CN-P6 S6.1, 2026-10-24) — 23: `er/channel_returns.ttrm` (`er.query.returns_union`, the three returns
+  facts as one entity — the ground of the conceptual `Return`; **not** conversational yet: no label, no measure facet,
+  no term) and `er/placed_order.ttrm` (`er.query.placed_order_q` → `placed_order`, the phase `PlacedOrder` written as
+  model text by `ttr cn materialize`).
+- `cn/` — `model cn`: the conceptual package (CN-P6 S6.1 = AU-hartland P5 S5.1; design `11` §1): kinds, the role
+  `Customer`, events, qualities, and the phases the recipes are written in (`PendingOrder`, `ShortLine`,
+  `MispricedLine`, `DebtorCustomer`, …). Analytical concepts ground to md and reach er through the DERIVED hop — no
+  md2er is authored (A-H-5) — the recipe world grounds to er; participant paths in `binding/cn.ttrm`, words in
+  `lexicon/{cs,en}/cn.ttrm`. Its report is `just cn-hygiene` (over `model/` + `../automation/automation.ttrm`, whose
+  parameters the parametric phases read), golden `cn/tests/hygiene.md`.
 - `md/` — `model md` + `md2db`/`md2er` binding: the ROLAP star (cubelets, measures, conformed
   dimensions incl. the Product hierarchy Category→Class→Brand→Manufacturer→Item).
 - `lexicon/` — `model lexicon locale en` + `locale cs`: the bilingual naming layer + valueLabels.
