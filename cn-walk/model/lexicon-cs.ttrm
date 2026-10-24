@@ -2,3 +2,6 @@ model lexicon locale cs
 
 // sources: doc://demo/order-notes/on-2301#s1
 def term dopravce { for: cn.Carrier, forms: ["dopravce", "dopravci"] }
+
+// sources: doc://demo/order-notes/on-2300#s1
+def term dodavatel { for: cn.Supplier, forms: ["dodavatel", "dodavatelé", "dodavatele"] }
