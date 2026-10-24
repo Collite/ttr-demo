@@ -1,0 +1,118 @@
+{
+    "document": "reorder_proposals.md",
+    "documentSha": "90e2d124cba62d58eee713978100253f0726ad4e872c0905f9d3552f1084901a",
+    "nodes": {
+        "cover": {
+            "block": 5,
+            "generatedSpan": [
+                1338,
+                2048
+            ],
+            "paragraph": [
+                1966,
+                2184
+            ],
+            "span": [
+                2186,
+                2908
+            ]
+        },
+        "on_hand": {
+            "block": 3,
+            "generatedSpan": [
+                509,
+                907
+            ],
+            "paragraph": [
+                907,
+                1030
+            ],
+            "span": [
+                1032,
+                1442
+            ]
+        },
+        "selling": {
+            "block": 2,
+            "generatedSpan": [
+                262,
+                507
+            ],
+            "paragraph": [
+                573,
+                646
+            ],
+            "span": [
+                648,
+                905
+            ]
+        },
+        "weekly_demand": {
+            "block": 4,
+            "generatedSpan": [
+                909,
+                1336
+            ],
+            "paragraph": [
+                1444,
+                1523
+            ],
+            "span": [
+                1525,
+                1964
+            ]
+        }
+    },
+    "sentences": [
+        {
+            "nodes": [],
+            "span": [
+                21,
+                274
+            ]
+        },
+        {
+            "nodes": [
+                "selling"
+            ],
+            "span": [
+                573,
+                646
+            ]
+        },
+        {
+            "nodes": [
+                "on_hand"
+            ],
+            "span": [
+                907,
+                1030
+            ]
+        },
+        {
+            "nodes": [
+                "weekly_demand"
+            ],
+            "span": [
+                1444,
+                1523
+            ]
+        },
+        {
+            "nodes": [
+                "cover"
+            ],
+            "span": [
+                1966,
+                2184
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                2910,
+                3184
+            ]
+        }
+    ]
+}

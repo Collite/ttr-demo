@@ -1,0 +1,3 @@
+key,route,verdict_reason_template,detail_count
+stub-cz-obligation_due_passed-late,late,,lateness:1
+stub-cz-obligation_due_passed-on-time,none,,

@@ -152,6 +152,10 @@ jobs:
         working-directory: hartland
         run: just hebe-seed-test
 
+      - name: Literate recipe derivations are current (EN + CS)
+        working-directory: hartland
+        run: just check-literate-recipes
+
       - name: n8n identity seed (fake n8n + Mailpit)
         working-directory: hartland
         run: just n8n-test
