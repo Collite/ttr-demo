@@ -1,0 +1,15 @@
+// HP-P2 / H-1: three fact cubelets. Channel remains an ER value kind; no cubelet carries its grain.
+model md
+
+def domain ChannelCode { type: string }
+def domain Money       { type: decimal }
+def domain Count       { type: int }
+
+def dimension Channel { key: code, attributes: [ def attribute code { domain: md.ChannelCode, isKey: true } ] }
+
+def measure revenue  { domain: md.Money, class: additive, aggregation: sum }
+def measure quantity { domain: md.Count, class: additive, aggregation: sum }
+
+def cubelet storeSales { measures: [revenue, quantity] }
+def cubelet webSales { measures: [revenue, quantity] }
+def cubelet catalogSales { measures: [revenue, quantity] }

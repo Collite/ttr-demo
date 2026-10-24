@@ -1,0 +1,5 @@
+// HP-P2: three fact cubelets, no authored md2er and no Channel dimension in their grain.
+model binding
+def md2db_cubelet store_sales_binding { cubelet: md.storeSales, target: db.dbo.store_sales, shape: wide, measures: { revenue: ext_sales_price, quantity: quantity } }
+def md2db_cubelet web_sales_binding { cubelet: md.webSales, target: db.dbo.web_sales, shape: wide, measures: { revenue: ext_sales_price, quantity: quantity } }
+def md2db_cubelet catalog_sales_binding { cubelet: md.catalogSales, target: db.dbo.catalog_sales, shape: wide, measures: { revenue: ext_sales_price, quantity: quantity } }
