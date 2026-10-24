@@ -1,6 +1,7 @@
 notes: |
-  Web revenue in 2025 by product category, the largest first — what `q.hartland.category_revenue` returns for
-  channel web, year 2025. The query keeps the items without a category, so the answer may carry an 11th row
+  Web revenue in 2025 by product category — what `q.hartland.category_revenue` returns (largest first) for channel
+  web, year 2025, and what the door answers (by category) since md/hop HP-H. No order is asserted: the question asks
+  for none. The query keeps the items without a category, so the answer may carry an 11th row
   (category NULL) that no key can match: the core leaves it out and the row count allows it.
 core: |
   SELECT i.i_category AS category, SUM(ws.ws_ext_sales_price) AS revenue
@@ -19,6 +20,3 @@ assert:
     - category
     value: revenue
     tolerance: 0.001
-  first_row:
-    keys:
-    - category

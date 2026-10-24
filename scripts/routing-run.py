@@ -226,10 +226,19 @@ def row_numbers(row: dict, scale: list[float]) -> list[float]:
     return out
 
 
-def find_row(rows: list[dict], keys: list[Any], value: float | None, tol: float, scale: list[float]) -> int | None:
+def find_row(
+    rows: list[dict],
+    keys: list[Any],
+    value: float | None,
+    tol: float,
+    scale: list[float],
+    labels: dict[str, list[str]] | None = None,
+) -> int | None:
+    """The first row holding every key (as stored, or as one of its `labels`) and, when given, the value."""
+    labels = labels or {}
     for i, r in enumerate(rows):
         cells = list(r.values())
-        if not all(any(cell_matches_key(c, k) for c in cells) for k in keys):
+        if not all(any(cell_matches_key(c, f) for c in cells for f in [k, *labels.get(norm(k), [])]) for k in keys):
             continue
         if value is None or any(close(n, value, tol) for n in row_numbers(r, scale)):
             return i
@@ -266,6 +275,8 @@ def evaluate(assertions: dict, rows: list[dict], text: str, core: list[dict] | N
             scale = [float(s) for s in spec.get("scale", [1])]
             kcols = spec.get("keys", [])
             vcol = spec.get("value")
+            # A stored code the answer may show by its value label (`marketplace` → „Tržiště“), in either language.
+            labels = {norm(k): list(v) for k, v in (spec.get("labels") or {}).items()}
             if name == "scalar":
                 if len(core) != 1:
                     fails.append(f"scalar: core returned {len(core)} rows, want 1")
@@ -284,7 +295,7 @@ def evaluate(assertions: dict, rows: list[dict], text: str, core: list[dict] | N
                     fails.append("first_row: core returned no rows")
                 else:
                     keys = [core[0][k] for k in kcols]
-                    if find_row(rows[:1], keys, None, tol, scale) is None:
+                    if find_row(rows[:1], keys, None, tol, scale, labels) is None:
                         fails.append(f"first_row: answer's first row {rows[0]} lacks {keys}")
             else:  # row_set
                 misses = []
@@ -292,7 +303,7 @@ def evaluate(assertions: dict, rows: list[dict], text: str, core: list[dict] | N
                 for c in core:
                     keys = [c[k] for k in kcols]
                     want = as_number(c[vcol]) if vcol else None
-                    i = find_row(pool, keys, want, tol, scale)
+                    i = find_row(pool, keys, want, tol, scale, labels)
                     if i is None:
                         misses.append({**{k: c[k] for k in kcols}, **({vcol: c[vcol]} if vcol else {})})
                     elif spec.get("pop", True):

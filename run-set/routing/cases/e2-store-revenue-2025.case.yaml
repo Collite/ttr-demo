@@ -4,10 +4,11 @@ shape: total
 question:
   cs: Tržby z prodejen za 2025
   en: Store revenue 2025
-expected_route: FAST
+expected_route: LLM
+expected_reason: {cs: NO_OBJECT_BINDING}
 validation: store-channel-2025.yaml
 xfail:
-  cs: 'ttr-demo#62 — fixed by its lexicon (the plural «tržby z prodejen» → the store-channel measure; the store_sales label no longer says it; measured on a local resolver), not deployed when written: drop once a run passes'
+  cs: "md/hop HP-H (2026-10-24) — the composer runs the saved query channel_revenue_monthly for the store channel: 12 monthly rows, no 2025 total"
   en: "ttr-server#206 — the bare year after `Store revenue` is left G3_UNATTRIBUTED: the door declines, the composer runs the 3-channel monthly query"
 tags:
 - MH-E2
@@ -15,3 +16,8 @@ notes: |
   ttr-demo#62 remedy 1 (2026-10-12). Before (2026-10-14, cz): `Tržby z prodejen` bound the ENTITY store_sales through
   its Czech label (METADATA EXACT 1.168), so LLM · NO_OBJECT_BINDING and the 3-channel monthly query (12 rows).
   With #62: the label is „Prodeje v prodejnách“ and the phrase → er.entity.store_sales.ext_sales_price, MEASURE.
+  2026-10-24 (md/hop HP-H, ttr-demo#118): re-baselined to LLM, as review-135 D5 predicted. The phrase is gone and
+  `store_sales` is source-only; `prodejen` binds the store object, and the door declines (NO_OBJECT_BINDING). The
+  composer then picks the saved query channel_revenue_monthly (store, 2025): the right store-channel months, but
+  12 rows and no total, so the scalar check fails — the new cs xfail (measured twice, the same answer). The old cs
+  xfail (ttr-demo#62's phrase) is obsolete and replaced; en not measured since HP-H.

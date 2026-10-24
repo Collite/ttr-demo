@@ -4,7 +4,7 @@ shape: pattern
 question:
   cs: Tržby podle kategorie pro web v roce 2025
   en: Revenue by category for Web in 2025
-expected_route: LLM
+expected_route: FAST
 validation: web-2025-by-category.yaml
 tags:
 - q.hartland.category_revenue
@@ -17,3 +17,7 @@ notes: |
   NO_OBJECT_BINDING, golem 0.11.37); en answered ten category rows to a question about a drop that did not happen.
   Measured cs 2026-10-14 (golem 0.11.37): LLM · UNHONOURED_OBJECT:web, one LLM call; the composer ran this saved query
   for web and 2025: 11 rows, the ten categories and the items without one. The en half is not measured yet.
+  2026-10-24 (md/hop HP-H, ttr-demo#118): re-baselined to FAST. `web` is now a member of `sales.channel`, so the door
+  answers the breakdown itself (cz measured: FAST, 11 rows, Books 815 088 430,22 = the web figure) and the saved query is
+  no longer reached. The validation drops `first_row`: the door orders by category, and the question asks for no ranking.
+  en not measured since HP-H.

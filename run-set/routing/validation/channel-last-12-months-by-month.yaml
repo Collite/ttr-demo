@@ -16,3 +16,8 @@ assert:
     - month
     value: revenue
     tolerance: 0.001
+    labels:
+      # the answer shows `sales.channel` by its value labels (model/er/sales.ttrm), in the world's language
+      marketplace: [Tržiště, Marketplace]
+      store: [Kanál prodejen, Store channel]
+      web: [Web]

@@ -4,9 +4,12 @@ shape: compare
 question:
   cs: Porovnej tržby z tržiště a z webu v roce 2025
   en: Compare marketplace and web revenue in 2025
-expected_route: LLM
-expected_reason: {cs: UNHONOURED_OP, en: NO_OBJECT_BINDING}
+expected_route: FAST
+validation: marketplace-web-2025.yaml
 tags:
 - C-1·3
 notes: |
   2026-10-12, en: the route and the answer are right; `marketplace` (bare) binds the entity and `web revenue` the web measure, and golem's no-relation check runs before the operator one — so en names NO_OBJECT_BINDING. A label, not a defect.
+  2026-10-24 (md/hop HP-H, ttr-demo#118): re-baselined to FAST. The two channel words are now members of `sales.channel`,
+  and the door answers the comparison as two rows, `channel IN (marketplace, web)`, for 2025 (cz measured: FAST, 2 rows,
+  the right figures). en not measured since HP-H (the world flip is pending); the us walk confirms or xfails it.
