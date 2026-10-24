@@ -26,6 +26,8 @@
 #                                 gate green.
 #   just bi-one-number-test       the one-number cases' schema + runner specs (run-set/bi-one-number/,
 #                                 scripts/test_bi_one_number.py) — ADDED 2026-10-23, BI-4 S4.1 T5
+#   just hebe-verify-test         the HB-P1 rig's Keycloak form parsing (design/hebe-demo/rig-hb/) — ADDED
+#                                 2026-10-23, HE-P1 S1.2 T1
 #   just dashboards-check         the Superset bundles (dashboards/) against the import's rules, and
 #   just dashboards-test          kustomization.yaml not stale; the rules' specs — ADDED 2026-10-23,
 #                                 BI-4 S4.2: the import Job exits 0 on a bundle it could not import
@@ -146,6 +148,10 @@ jobs:
       - name: Recipe build script regressions
         working-directory: hartland
         run: python3 -m unittest scripts/test_build_recipes.py scripts/test_toolchain_ttrp.py
+
+      - name: Hebe rig specs (Keycloak form parsing)
+        working-directory: hartland
+        run: just hebe-verify-test
 
       - name: Build the recipe bundles
         working-directory: hartland
