@@ -8,6 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { loadHartlandProject, ACCEPTED_RESIDUAL_CODES, hartlandRoot } from '../../tests/project-harness.mjs';
+import { isCs, isEn, lexicon } from '../../../lexicon/tests/archive.mjs';
 
 const tatrmanPackages = process.env.TATRMAN_PACKAGES ?? path.resolve(hartlandRoot, '../tatrman/packages');
 const tatrmanSemantics = path.join(tatrmanPackages, 'semantics/dist/index.js');
@@ -20,9 +21,9 @@ const project = await loadHartlandProject();
 // unusable in its current form (the merged Golem's query door cannot render an `md.` ref: a
 // measure names no object and no aggregation, and the Veles ModelBundle carries no md layer to
 // ask), and md gets its own exercise. `channels.ttrm` stays — its targets are `er.entity.*`.
+// `channels.ttrm` (both locales) left at md/hop HP-H: the channel words are values of `sales.channel` now, a member
+// the sugar's `for:` cannot name in the editor, and they live in `lexicon/aliases/channels.lex.yaml`.
 const LEXICON_FILES = [
-  'model/lexicon/en/channels.ttrm',
-  'model/lexicon/cs/channels.ttrm',
   'model/lexicon/cs/reasons.ttrm',
   'model/lexicon/cs/warehouses.ttrm',
   'model/lexicon/en/warehouses.ttrm',
@@ -70,19 +71,17 @@ test('T6.2 — no unresolved `for:` anywhere (zero unexpected diagnostics projec
   assert.ok(allEntries.length >= 6, `expected >=6 lexicon entries, got ${allEntries.length}`);
 });
 
-test('T6.3 — en/cs twin parity: every measure/channel family has BOTH an en and a cs term resolving to the SAME target', () => {
-  // md families removed with their files (see the ⚑ above); the twin-parity invariant is
-  // what the channel families still assert, and it is the half that never depended on md.
+test('T6.3 — en/cs twin parity: every channel family has BOTH an en and a cs term resolving to the SAME target', () => {
+  // md families removed with their files (see the ⚑ above). md/hop HP-H (⚑H-7): the channel families are the values
+  // of `sales.channel` (lexicon/aliases/channels.lex.yaml), so the parity is read where they compile — the archive.
   const FAMILIES = [
-    'er.entity.catalog_sales', 'er.entity.web_sales', 'er.entity.store_sales',
+    'er.entity.sales.channel.marketplace', 'er.entity.sales.channel.web', 'er.entity.sales.channel.store',
   ];
-  const terms = allEntries.filter((e) => e.entryKind === 'term');
   const problems = [];
   for (const target of FAMILIES) {
-    const en = terms.find((e) => e.locale === 'en' && e.target === target);
-    const cs = terms.find((e) => e.locale === 'cs' && e.target === target);
-    if (!en) problems.push(`${target}: no en term`);
-    if (!cs) problems.push(`${target}: no cs term`);
+    const rows = lexicon.entries.filter((e) => e.targetRef === target && e.sourceTag === 'DECLARED');
+    if (!rows.some(isEn)) problems.push(`${target}: no en term`);
+    if (!rows.some(isCs)) problems.push(`${target}: no cs term`);
   }
   assert.deepEqual(problems, [], problems.join('; '));
 });
