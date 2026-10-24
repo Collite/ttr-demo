@@ -127,9 +127,10 @@ at a time — `just world <us|cz>` in olymp flips it (§7.6). A persona from the
 but answers come from the delivered world.
 
 **The roles act ("same question, two people").** `kantheon-scope-dc-5` grants no Shem: it is a row
-rule. Validate narrows `inventory`, `warehouse`, `catalog_sales`, `web_sales` and `channel_sales` to
-warehouse 5 for its holders (olymp `apps/validate` `configFragment`), and the Golem ends such an answer
-with the rights sentence. Markéta/Maya see five DCs, Petr/Sam one. The act may be shown only with
+rule. Validate narrows `inventory`, `warehouse`, `catalog_sales` and `web_sales` to warehouse 5 for its
+holders (olymp `apps/validate` `configFragment`) — the all-channel `sales` reads those facts, so the rule
+reaches it too, and the store channel stays whole — and the Golem ends such an answer with the rights
+sentence. Markéta/Maya see five DCs, Petr/Sam one. The act may be shown only with
 token signature verification on (G2b, closed 2026-10-09 — `just drill-forged-token` in olymp re-checks
 it). The finance Shem (Dan, Tomáš) stays deployed but is not part of the LR demo.
 
