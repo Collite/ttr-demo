@@ -5,6 +5,7 @@
 #   design/hebe-demo/rig-hb/verify.sh                 # every check; PASS / FAIL / SKIP / MANUAL per line
 #   HEBE_VERIFY_PASSWORD=… verify.sh                  # + the console sign-in checks (the personas' demo password)
 #   HEBE_VERIFY_TELEGRAM=ok HEBE_VERIFY_STRANGER=dropped verify.sh   # + the two phone checks, once seen
+#   HEBE_VERIFY_STRANGER=not-performed                # the stranger step is not in the demo (B-4.4): N/A, not open
 #
 # Exit: 0 every check PASS · 1 any FAIL · 3 no FAIL, but a check is SKIP or MANUAL (T8 needs 0, twice, the second run
 # after `kubectl --context hartland -n kantheon rollout restart deploy/hebe`).
@@ -28,16 +29,23 @@ REGISTRY="${REGISTRY:-capabilities-mcp:7501}"
 STATE="${HEBE_VERIFY_STATE:-${HOME}/.config/hebe-verify/${INSTANCE}.json}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 
-PASS=0 FAIL=0 OPEN=0
+PASS=0 FAIL=0 OPEN=0 NA=0
 pass()   { PASS=$((PASS + 1)); printf 'PASS    %-24s %s\n' "$1" "$2"; }
 fail()   { FAIL=$((FAIL + 1)); printf 'FAIL    %-24s %s\n' "$1" "$2"; }
 skip()   { OPEN=$((OPEN + 1)); printf 'SKIP    %-24s %s\n' "$1" "$2"; }
 manual() { OPEN=$((OPEN + 1)); printf 'MANUAL  %-24s %s\n' "$1" "$2"; }
+na()     { NA=$((NA + 1)); printf 'N/A     %-24s %s\n' "$1" "$2"; }
 
 kc() { kubectl --context "$CONTEXT" "$@"; }
 # GET through the API server's service proxy. Prints the body even on a non-2xx answer (kubectl then exits non-zero
 # and puts the body in its error line, so take the JSON from wherever it is).
-proxy_get() { kc get --raw "/api/v1/namespaces/$NS/services/$1/proxy$2" 2>&1 | sed -n 's/^[^{]*\({.*}\)[^}]*$/\1/p' | head -1; }
+# The JSON runs from the first `{` to the last `}` of the whole output, on one line: capabilities-mcp pretty-prints over
+# many lines, Hebe's /ready answers on one, and an error line carries the body after kubectl's prefix.
+proxy_get() {
+  kc get --raw "/api/v1/namespaces/$NS/services/$1/proxy$2" 2>&1 | python3 -I -c 'import sys
+s = sys.stdin.read(); i = s.find("{"); j = s.rfind("}")
+print(s[i:j + 1].replace("\n", " ") if 0 <= i < j else "")'
+}
 # One field of a JSON document on stdin, by a Python expression over `d` ("" when it fails).
 jq_py() { python3 -I -c "import json,sys
 try:
@@ -88,19 +96,30 @@ check_receipts_key() {
   [ "$ok" = True ] && pass receipts-key "${detail:-provisioned}" || fail receipts-key "${detail:-no receipts check in /ready}"
 }
 
-# ── 3. the registry: registered, heartbeating, and NOT a routing candidate ────────────────────────────────────────
+# ── 3. the registry: registered and non_routable; and NOT in capabilities-mcp's routing view ────────────────────────
+# Two rows, because they fail for different reasons. `registry` is Hebe's own registration. `routing-view` is the
+# registry's GET /v1/capabilities/agents, which drops non_routable agents from capabilities-mcp's RegistryQueryService
+# onwards. An older capabilities-mcp lists them with the flag set: Golem still never delegates to one (its cascade
+# filters non_routable itself since golem 0.9.7), but the registry's own view is not yet the guarantee.
 check_registry() {
-  local one routing nonroutable
+  local one routing nonroutable image
   one="$(proxy_get "${REGISTRY}" "/v1/capabilities/hebe-${INSTANCE}")"
   nonroutable="$(jq_py "(d.get('capability') or {}).get('agent', {}).get('nonRoutable')" <<<"$one")"
-  [ -n "$(jq_py "d.get('capability')" <<<"$one")" ] || { fail registry "hebe-$INSTANCE is not registered in capabilities-mcp"; return; }
-  [ "$nonroutable" = True ] || { fail registry "hebe-$INSTANCE is registered but not non_routable ($nonroutable)"; return; }
-  routing="$(proxy_get "${REGISTRY}" /v1/capabilities/agents)"
-  if [ "$(jq_py "any(a.get('agentId') == 'hebe-$INSTANCE' for a in d['agents'])" <<<"$routing")" = False ]; then
-    pass registry "hebe-$INSTANCE registered, non_routable, absent from the routing view"
+  if [ -z "$(jq_py "d.get('capability')" <<<"$one")" ]; then
+    fail registry "hebe-$INSTANCE is not registered in capabilities-mcp"
+  elif [ "$nonroutable" != True ]; then
+    fail registry "hebe-$INSTANCE is registered but not non_routable ($nonroutable)"
   else
-    fail registry "hebe-$INSTANCE appears in the routing view (/v1/capabilities/agents)"
+    pass registry "hebe-$INSTANCE registered, non_routable"
   fi
+  routing="$(proxy_get "${REGISTRY}" /v1/capabilities/agents)"
+  case "$(jq_py "any(a.get('agentId') == 'hebe-$INSTANCE' for a in d['agents'])" <<<"$routing")" in
+    False) pass routing-view "hebe-$INSTANCE absent from capabilities-mcp's routing view" ;;
+    True)
+      image="$(kc -n "$NS" get deploy "${REGISTRY%%:*}" -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null)"
+      fail routing-view "hebe-$INSTANCE is in /v1/capabilities/agents: ${image:-capabilities-mcp} predates the non_routable filter (Golem's cascade still skips it)" ;;
+    *) fail routing-view "no routing view at /v1/capabilities/agents: ${routing:0:120}" ;;
+  esac
 }
 
 # ── 4. the console through the edge ───────────────────────────────────────────────────────────────────────────────
@@ -153,7 +172,8 @@ check_durability() {
   local body; body="$(jq_py "d.get('body')" <<<"$LOGIN_JSON")"
   [ "$(jq_py "d.get('ok')" <<<"$body")" = True ] || { fail receipts-chain "verify failed: ${body:0:160}"; return; }
   records="$(jq_py "d.get('records')" <<<"$body")"
-  saved="$(jq_py "d.get('records')" <"$STATE" 2>/dev/null || true)"
+  saved=""
+  [ -f "$STATE" ] && saved="$(jq_py "d.get('records')" <"$STATE")"
   if [ -n "$saved" ] && [ "${records:-0}" -lt "$saved" ]; then
     fail receipts-chain "the chain shrank: $records records now, $saved at the last run (state lost on restart?)"
     return
@@ -171,10 +191,14 @@ check_phone() {
   esac
   case "${HEBE_VERIFY_STRANGER:-}" in
     dropped|refused) pass unmapped-chat "a second account's message was $HEBE_VERIFY_STRANGER (record which in probes.md for Beat 6)" ;;
-    "") manual unmapped-chat "message the bot from a second account; nothing reaches Hebe; then HEBE_VERIFY_STRANGER=dropped|refused" ;;
+    not-performed) na unmapped-chat "the stranger step is not in the demo (B-4.4); Hebe's ChannelIdentityGuard tests cover the refusal" ;;
+    "") manual unmapped-chat "message the bot from a second account; nothing reaches Hebe; then HEBE_VERIFY_STRANGER=dropped|refused|not-performed" ;;
     *) fail unmapped-chat "the operator reported: $HEBE_VERIFY_STRANGER" ;;
   esac
 }
+
+# Sourced (test_verify_helpers.py): the helpers above, no checks.
+[ "${BASH_SOURCE[0]}" = "$0" ] || return 0
 
 command -v kubectl >/dev/null 2>&1 || { echo "kubectl not found" >&2; exit 1; }
 command -v python3 >/dev/null 2>&1 || { echo "python3 not found" >&2; exit 1; }
@@ -188,7 +212,7 @@ check_console_redirect
 check_console_logins
 check_durability
 check_phone
-echo "$PASS pass · $FAIL fail · $OPEN open"
+echo "$PASS pass · $FAIL fail · $OPEN open$([ "$NA" -gt 0 ] && echo " · $NA n/a")"
 [ "$FAIL" -gt 0 ] && exit 1
 [ "$OPEN" -gt 0 ] && exit 3
 exit 0

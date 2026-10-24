@@ -357,7 +357,7 @@ hebe-verify:
 
 # The rig's own specs (the Keycloak form parsing) — no cluster.
 hebe-verify-test:
-    python3 -B -m unittest design/hebe-demo/rig-hb/test_edge_login.py
+    python3 -B -m unittest design/hebe-demo/rig-hb/test_edge_login.py design/hebe-demo/rig-hb/test_verify_helpers.py
 
 # ── the Superset dashboards (BI-4, contracts C-23) ───────────────────────────────────────────────
 # dashboards/README.md. Bundles per dashboard and world; olymp's superset-dashboards Application
