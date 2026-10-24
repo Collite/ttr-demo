@@ -356,6 +356,10 @@ hebe-verify:
     design/hebe-demo/rig-hb/verify.sh
 
 # The rig's own specs (the Keycloak form parsing) — no cluster.
+# Which chats has a Telegram bot seen (B-4.3)? Read-only; the token stays in the vault's 0600 copy, never argv.
+hebe-telegram-chat-id secret="hebe-marketa-telegram-token":
+    scripts/telegram-chat-id.sh {{secret}}
+
 hebe-verify-test:
     python3 -B -m unittest design/hebe-demo/rig-hb/test_edge_login.py design/hebe-demo/rig-hb/test_verify_helpers.py
 
