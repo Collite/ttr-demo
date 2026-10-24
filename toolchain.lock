@@ -3,7 +3,7 @@
 # olymp's release checklist (apps/veles), all through scripts/toolchain-lock.py. Why the pin is load-bearing:
 # the ⛔ PINNED comment block in .github/workflows/model-gate.yml. After moving a [veles] pin: `just check-veles-pin`.
 [ttr-core]
-ref = "grammar/v0.18.1"          # the gate's toolchain checkout (was inline in model-gate.yml)
+ref = "grammar/v0.18.3"          # the gate's toolchain checkout (was inline in model-gate.yml)
 [ttrp]
 # Recipe builds/checks move independently of the model reader and serving image.
 # A commit pin requires a prerelease version; delete version when moving ref to a release tag.

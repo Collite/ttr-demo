@@ -61,6 +61,40 @@ build-lexicon cli="../tatrman/packages/kotlin/ttr-lexicon-cli/build/install/ttr-
 check-lexicon cli="../tatrman/packages/kotlin/ttr-lexicon-cli/build/install/ttr-lexicon/bin/ttr-lexicon":
     {{cli}} build "$(pwd)" --check --out generated/lexicon.tar.zst
 
+# ── the conceptual model (CN-P6 S6.1) ─────────────────────────────────────────
+# `ttr cn hygiene` (ttr-concept, Kotlin) over model/ PLUS the automation package: the parametric phases read its
+# `def parameter`s (`:tolerance`, …), which live in automation/automation.ttrm — outside model/, by AU's rule — so a
+# report over model/ alone calls each `cn/definition-unknown-name`. The report is the golden model/cn/tests/hygiene.md
+# (`check-cn-hygiene` fails when it is stale; model/cn/tests/cn.test.mjs reads it). The tree is copied, not linked:
+# the loader walks no symlink. The loader's `ttr/package-declaration-mismatch` on every file is hartland's layout (one
+# flat `package hartland` in a kind-directory tree, BM-9) and changes nothing in the report; any other load error fails.
+#
+#     just cn-hygiene                     # print the report
+#     just cn-hygiene > model/cn/tests/hygiene.md   # refresh the golden, then read the diff
+cn-hygiene cli="../tatrman/packages/kotlin/ttr-concept/build/install/ttr/bin/ttr":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    world="$(mktemp -d)"; trap 'rm -rf "$world"' EXIT
+    mkdir -p "$world/automation"
+    cp -r model "$world/model"
+    cp automation/automation.ttrm "$world/automation/"
+    {{cli}} cn hygiene "$world" 2>"$world/stderr"
+    if grep -v -e 'ttr/package-declaration-mismatch' -e '^SLF4J' "$world/stderr" >&2; then
+      echo "cn-hygiene: the model has a load error beyond the layout's (above)" >&2
+      exit 1
+    fi
+
+# Drift check: fail if model/cn/tests/hygiene.md is not what `cn-hygiene` prints now.
+check-cn-hygiene cli="../tatrman/packages/kotlin/ttr-concept/build/install/ttr/bin/ttr":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    now="$(mktemp)"; trap 'rm -f "$now"' EXIT
+    just cn-hygiene "{{cli}}" > "$now"
+    if ! diff -u model/cn/tests/hygiene.md "$now"; then
+      echo "check-cn-hygiene: model/cn/tests/hygiene.md is stale — just cn-hygiene > model/cn/tests/hygiene.md, and read the diff" >&2
+      exit 3
+    fi
+
 # The Golem's own layouts (SO-demo P1·S1.1, VL V-44): model/layouts/agent/ rewritten from agents/*.yaml + the
 # model — the cards each Golem's area closes over. Run it after an agent's or the model's cards change and commit
 # the result; model/layouts/tests/layouts.test.mjs L5 fails while it is stale. `--check` writes nothing.

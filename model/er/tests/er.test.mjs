@@ -24,6 +24,9 @@ const EXPECTED_ENTITIES = [
   'order', 'sales_line', 'price_list', 'customer_price', 'invoice', 'warehouse_outage',
   'return_request', 'return_request_line', 'return_receipt', 'credit_note', 'refund_payment',
   'replacement_shipment', 'document_flow', 'reorder_proposal', 'winback_mail',
+  // CN-P6 S6.1 — the ground of cn.Return (channel_returns.ttrm) and cn.PlacedOrder materialized (placed_order.ttrm),
+  // both stacked on a logical query; model/cn/tests/cn.test.mjs asserts their shape.
+  'channel_returns', 'placed_order',
 ];
 const D5_OUT = ['time_dim', 'web_site', 'web_page', 'catalog_page', 'ship_mode', 'dbgen_version'];
 
@@ -195,7 +198,7 @@ test('#62 — store says it is SCD-2: the validity pair on its history columns, 
 
 test('T-LQ — customer_revenue is stacked on a logical query: declared in a model er file, no parameters, relations by join pairs', () => {
   const stacked = allDefsOfKind('entity').filter(({ def }) => stackedOnQuery(def));
-  assert.deepEqual(stacked.map(({ def }) => def.name).sort(), ['category_return_month', 'customer_revenue', 'dc_stockout_month', 'sales']);
+  assert.deepEqual(stacked.map(({ def }) => def.name).sort(), ['category_return_month', 'channel_returns', 'customer_revenue', 'dc_stockout_month', 'placed_order', 'sales']);
   const { def: entity, uri } = stacked.find(({ def }) => def.name === 'customer_revenue');
 
   const target = entity.binding.target.entries.find((e) => e.key === 'query').value;

@@ -82,6 +82,15 @@ def relation rel_sales_promo     { from: er.entity.sales, to: er.entity.promotio
 // LR ⚑LR-9 — NULLABLE: a store line has no distribution center, so joining drops store lines.
 def relation rel_sales_warehouse { from: er.entity.sales, to: er.entity.warehouse, cardinality: { from: "0..*", to: "0..1" }, join: [{ from: er.entity.sales.warehouse, to: er.entity.warehouse.sk }] }
 
+// -- channel returns (all channels, stacked on er.query.returns_union — CN-P6 S6.1, the ground of cn.Return) --
+// The `sales` shape: `join:` pairs (no table, no fk), `warehouse` NULLABLE (only a marketplace return has one), and no
+// relation to `store`, for the bare-city reason above.
+def relation rel_channel_returns_date      { from: er.entity.channel_returns, to: er.entity.date_dim,  cardinality: { from: "0..*", to: "1" },    join: [{ from: er.entity.channel_returns.returned_date, to: er.entity.date_dim.sk }] }
+def relation rel_channel_returns_item      { from: er.entity.channel_returns, to: er.entity.item,      cardinality: { from: "0..*", to: "1" },    join: [{ from: er.entity.channel_returns.item, to: er.entity.item.sk }] }
+def relation rel_channel_returns_customer  { from: er.entity.channel_returns, to: er.entity.customer,  cardinality: { from: "0..*", to: "1" },    join: [{ from: er.entity.channel_returns.customer, to: er.entity.customer.sk }] }
+def relation rel_channel_returns_reason    { from: er.entity.channel_returns, to: er.entity.reason,    cardinality: { from: "0..*", to: "1" },    join: [{ from: er.entity.channel_returns.reason, to: er.entity.reason.sk }] }
+def relation rel_channel_returns_warehouse { from: er.entity.channel_returns, to: er.entity.warehouse, cardinality: { from: "0..*", to: "0..1" }, join: [{ from: er.entity.channel_returns.warehouse, to: er.entity.warehouse.sk }] }
+
 // ===== AU (automation agents) — the H-1/H-2 extension (orders.ttrm, returns-flow.ttrm, proposals.ttrm) =====
 // contracts.md §2's relations, plus one per remaining extension fk that names a dimension (this file's
 // rule: one relation per foreign key). `fk_rl_variant` gets NO relation: a second line → item relation
