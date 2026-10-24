@@ -1,26 +1,26 @@
-// ttr-demo#62 — the store family („prodejna“ / store), checked in the COMMITTED ARCHIVE.
+// ttr-demo#62 — the store family („prodejna“ / store), checked in the COMMITTED ARCHIVE; and since md/hop HP-H
+// (2026-10-24, ⚑H-7) the channel words as a whole.
 //
 // Bora's ruling (2026-10-12): a bare store word reads by its ROLE, so the lexicon must give it
 // BOTH readings and let the resolver's slot decide:
 //   - GROUPING („podle prodejen“, "by store") → the store dimension, no ask;
-//   - FILTER → ask, offering the dimension and the store channel;
-//   - the declared phrases („tržba / tržby z prodejen“, "store revenue") → the store-channel
-//     measure, answered directly.
+//   - FILTER → ask, offering the dimension and the store channel.
 // Plus „vratka / vratky“ → the returns measure.
 //
+// HP-H moved the store CHANNEL from the store fact (`store_sales` and its measure) to a value of the all-channel
+// `sales`: `er.entity.sales.channel.store`, declared by `sales.channel`'s value labels, which the resolver binds as
+// `er.entity.sales.channel#store` and the door restricts by. The same for the web and the marketplace. The three
+// channel facts are sources of `sales` only, and no word reaches them; the channel-qualified revenue phrases
+// («tržby z prodejen», "marketplace revenue") went with them — the revenue word and the channel word now bind
+// separately, so «Tržby z prodejen» is a revenue restricted by the bare store word, and asks.
+//
 // Why the archive and not the sources: what the matcher serves IS this file, and
-// `just check-lexicon` (CI) proves it is what the sources compile to. Each assertion below is a
-// fact the resolver reads at runtime, measured live on 2026-10-14 (resolver 0.11.21):
-//   - «Tržby podle prodejen v roce 2025»: `prodejen` bound ONLY `store_sales.ext_sales_price`,
-//     through a TOKENS hit on the declared phrase «obrat z prodejen» (DECLARED_ALIAS, 1.003).
-//     The bare word's two EXACT readings («prodejna» → store, → store_sales) were reached only
-//     through the lemma (`LemmaLookup`, score − 0.1), out of the tie band, so the slot rule that
-//     prefers the dimension in a GROUPING never saw them. Declared as written, every case form
-//     meets both readings in the EXACT class, which outranks the TOKENS hit.
-//   - «Tržby z prodejen za 2025»: the whole phrase bound the ENTITY `store_sales` (METADATA
-//     EXACT 1.168, its `displayLabel.cs` «Tržby z prodejen»), not the measure, so the door could
-//     not answer and the composer ran a 3-channel monthly query. A declared phrase (profiled,
-//     1.000 or DECLARED_ALIAS) can never beat that label, so the label had to stop saying it.
+// `just check-lexicon` (CI) proves it is what the sources compile to.
+//   - «Tržby podle prodejen v roce 2025» (measured 2026-10-14, resolver 0.11.21): `prodejen` bound only a TOKENS
+//     hit on «obrat z prodejen»; the bare word's EXACT readings were reached only through the lemma, out of the tie
+//     band. Declared as written, every case form meets both readings in the EXACT class.
+//   - «Tržby z prodejen za 2025»: the whole phrase once bound the ENTITY `store_sales` through its label (METADATA
+//     EXACT 1.168), which no declared phrase can beat — a channel fact carries no label now.
 //   - «Vratky z prodejen»: «Vratky» bound nothing (G1), and the question ended in a parameter ask.
 //
 // Run: node --test lexicon/tests/store-family.test.mjs   (or `just verify-model`)
@@ -33,25 +33,22 @@ import { isCs, isEn, lexicon, repoRoot } from './archive.mjs';
 
 const rowsOf = (term, lang) => lexicon.entries.filter((e) => e.termNormalized === term && lang(e));
 
+const STORE = 'er.entity.store';
+const CHANNEL = (value) => `er.entity.sales.channel.${value}`;
+
 test('control — the archive decodes, and a row every build carries is in it', () => {
   // A probe that cannot find its control is broken, not informative (lexicon-archive-staleness).
   assert.ok(lexicon.entries.length > 400, `only ${lexicon.entries.length} entries`);
   const tržby = rowsOf('tržby', isCs).map((e) => e.targetRef);
-  assert.deepEqual(tržby, ['er.entity.channel_sales.ext_sales_price']);
+  assert.deepEqual(tržby, ['er.entity.sales.ext_sales_price']);
 });
 
 // Every case of „prodejna“, singular and plural (the vocative left out). The corpus asks
 // «prodejen» (2.4, E1, E3, E6) and «prodejny» (E4, E5); the rest is the same word.
-//
-// The two readings the ruling names: the store DIMENSION, and the store channel as "store revenue" —
-// its MEASURE, which is what the bare word bound live in every role (through a TOKENS hit). Keeping the
-// measure as the second reading leaves every non-GROUPING, non-COUNT position as it reads live today;
-// only the slots the ruling decides move. The citation form also keeps master's channel ENTITY term
-// (`store_channel_cs`), which the resolver folds into its own measure (declared containment).
 const PRODEJNA_FORMS = ['prodejna', 'prodejny', 'prodejně', 'prodejnu', 'prodejnou', 'prodejen', 'prodejnám', 'prodejnách', 'prodejnami'];
-const STORE_READINGS = ['er.entity.store', 'er.entity.store_sales.ext_sales_price'];
+const STORE_READINGS = [STORE, CHANNEL('store')];
 
-test('#62 — every case form of «prodejna» is an EXACT declared term of BOTH the store dimension and the store-channel measure', () => {
+test('#62 — every case form of «prodejna» is an EXACT declared term of BOTH the store dimension and the store channel', () => {
   const problems = [];
   for (const form of PRODEJNA_FORMS) {
     const rows = rowsOf(form, isCs);
@@ -60,54 +57,58 @@ test('#62 — every case form of «prodejna» is an EXACT declared term of BOTH 
       if (!row) problems.push(`«${form}» does not reach ${ref} (declared)`);
       else if (row.method !== 'EXACT') problems.push(`«${form}» → ${ref} is ${row.method}, not EXACT`);
     }
-    const allowed = form === 'prodejna' ? [...STORE_READINGS, 'er.entity.store_sales'] : STORE_READINGS;
-    const stray = rows.filter((e) => !allowed.includes(e.targetRef)).map((e) => e.targetRef);
+    const stray = rows.filter((e) => !STORE_READINGS.includes(e.targetRef)).map((e) => e.targetRef);
     if (stray.length) problems.push(`«${form}» also reaches ${stray.join(', ')}`);
   }
   assert.deepEqual(problems, [], problems.join('; '));
 });
 
-test('#62 — en «stores» keeps both readings (the dimension label and the channel term)', () => {
-  // The en half already had the shape the cs half gains: live, "Revenue by stores in 2025" binds the
-  // dimension (GROUPING) and the bare "Stores" asks (G2). A guard, so neither reading goes missing.
-  const refs = new Set(rowsOf('stores', isEn).map((e) => e.targetRef));
-  for (const ref of ['er.entity.store', 'er.entity.store_sales']) assert.ok(refs.has(ref), `"stores" does not reach ${ref}`);
-});
-
-test('#62 — the plural «tržby z prodejen» is the store-channel MEASURE, and no label claims it for the entity', () => {
-  for (const term of ['tržba z prodejen', 'tržby z prodejen', 'tržeb z prodejen']) {
-    const refs = [...new Set(rowsOf(term, isCs).map((e) => e.targetRef))];
-    assert.deepEqual(refs, ['er.entity.store_sales.ext_sales_price'], `«${term}» → ${refs.join(', ') || 'nothing'}`);
+test('#62 — en «store» and «stores» keep both readings (the dimension label and the channel term)', () => {
+  // Live before HP-H, "Revenue by stores in 2025" bound the dimension (GROUPING) and the bare "Stores" asked (G2).
+  // "store revenue" was a phrase on the store fact's measure; the singular now carries the channel reading itself,
+  // as the cs word does. A guard, so neither reading goes missing.
+  for (const term of ['store', 'stores']) {
+    const refs = new Set(rowsOf(term, isEn).map((e) => e.targetRef));
+    for (const ref of STORE_READINGS) assert.ok(refs.has(ref), `"${term}" does not reach ${ref}`);
   }
-  // The measure's kind is what wakes FrameRoles R2 (MEASURE), and so the door's SUM.
-  assert.equal(lexicon.targets['er.entity.store_sales.ext_sales_price']?.objectKind, 'measure');
 });
 
-// A TOKENS term is reached by ONE of its words, not only as the whole phrase. That is how an inflected
-// channel word binds live: «webu», «tržišti», «prodejen» are not terms, and each reaches its channel's
-// revenue through the TOKENS phrases it appears in («tržby z webu», «obrat z tržiště», …). It works
-// only while every TOKENS phrase holding the word targets ONE ref; a second target makes the word
-// non-discriminative (auto_bindable=false), and it binds nothing (G1). The first build of #62 broke
-// exactly this: its TOKENS returns phrases («vratky z webu») tied «webu» and «tržišti» with the returns
-// measures, and «A na webu?», «… na tržišti …» went G1.
+// md/hop HP-H — a channel word is a term of its OWN, on its channel's value. Until HP-H an inflected channel word
+// («webu», «tržišti», «prodejen») reached its channel's revenue only as ONE word of a TOKENS phrase («tržby z webu»),
+// which worked while every TOKENS phrase holding it targeted one ref. Those phrases are gone; the forms are declared.
 const CHANNEL_WORDS = {
-  webu: 'er.entity.web_sales.ext_sales_price',
-  tržiště: 'er.entity.catalog_sales.ext_sales_price',
-  prodejen: 'er.entity.store_sales.ext_sales_price',
+  tržiště: 'marketplace', tržišti: 'marketplace', tržištěm: 'marketplace',
+  web: 'web', webu: 'web', webem: 'web', 'e-shopu': 'web',
 };
 
-test('#62 — a channel word reaches ONE target through the TOKENS phrases holding it («webu», «z webu», «tržiště», «z tržiště», …)', () => {
+test('HP-H — every channel word is an EXACT declared term of its channel, and no TOKENS phrase holds it', () => {
   const problems = [];
-  const tokensRows = lexicon.entries.filter((e) => e.method === 'TOKENS' && isCs(e));
-  for (const [word, ref] of Object.entries(CHANNEL_WORDS)) {
-    for (const probe of [word, `z ${word}`]) {
-      const holding = tokensRows.filter((e) => ` ${e.termNormalized} `.includes(` ${probe} `));
-      const refs = [...new Set(holding.map((e) => e.targetRef))];
-      if (!holding.length) problems.push(`no TOKENS phrase holds «${probe}» (the control is gone)`);
-      else if (refs.length !== 1 || refs[0] !== ref) problems.push(`«${probe}» reaches ${refs.join(', ')} through ${holding.map((e) => `«${e.termNormalized}»`).join(', ')}`);
+  for (const [word, value] of Object.entries(CHANNEL_WORDS)) {
+    const refs = [...new Set(rowsOf(word, isCs).map((e) => e.targetRef))];
+    if (refs.length !== 1 || refs[0] !== CHANNEL(value)) problems.push(`«${word}» → ${refs.join(', ') || 'nothing'}`);
+    for (const e of rowsOf(word, isCs)) if (e.method !== 'EXACT') problems.push(`«${word}» is ${e.method}, not EXACT`);
+    const holding = lexicon.entries.filter((e) => e.method === 'TOKENS' && isCs(e) && ` ${e.termNormalized} `.includes(` ${word} `));
+    if (holding.length) problems.push(`«${word}» is a word of the TOKENS phrase(s) ${holding.map((e) => `«${e.termNormalized}»`).join(', ')}`);
+  }
+  for (const [lang, isLang, word, value] of [['en', isEn, 'marketplace', 'marketplace'], ['en', isEn, 'web', 'web'], ['en', isEn, 'online', 'web']]) {
+    if (!rowsOf(word, isLang).some((e) => e.targetRef === CHANNEL(value))) problems.push(`${lang} "${word}" does not reach ${CHANNEL(value)}`);
+  }
+  // The value labels themselves are METADATA members of the same values.
+  for (const [label, value] of [['tržiště', 'marketplace'], ['kanál prodejen', 'store'], ['store channel', 'store'], ['marketplace', 'marketplace']]) {
+    if (!lexicon.entries.some((e) => e.termNormalized === label && e.targetRef === CHANNEL(value) && e.targetClass === 'MEMBER')) {
+      problems.push(`«${label}» is no MEMBER row of ${CHANNEL(value)}`);
     }
   }
   assert.deepEqual(problems, [], problems.join('; '));
+});
+
+test('⚑H-7 — no word reaches a channel fact, or the folded channel_sales; the channel-qualified revenue phrases are gone', () => {
+  const FACTS = /^er\.entity\.(store_sales|web_sales|catalog_sales|channel_sales)(\.|$)/;
+  const stale = lexicon.entries.filter((e) => FACTS.test(e.targetRef)).map((e) => `«${e.termNormalized}» → ${e.targetRef}`);
+  assert.deepEqual(stale, [], stale.join('; '));
+  const PHRASES = ['tržby z tržiště', 'tržba z tržiště', 'obrat z tržiště', 'tržby z webu', 'tržby z prodejen', 'tržba z prodejen', 'obrat z prodejen'];
+  const left = PHRASES.filter((t) => rowsOf(t, isCs).length).concat(['marketplace revenue', 'store revenue', 'web revenue'].filter((t) => rowsOf(t, isEn).length));
+  assert.deepEqual(left, [], `channel-qualified revenue phrases still declared: ${left.join(', ')}`);
 });
 
 // „vratka / vratky“ — the returns MEASURE of each channel. Only the store phrase is attested («Vratky
@@ -140,8 +141,11 @@ test('#62 — «vratka / vratky / vratek z <kanálu>» is that channel\'s return
   assert.deepEqual(problems, [], problems.join('; '));
 });
 
-// The saved queries' own Czech wording — description, patterns, examples — names the store channel by the
-// DECLARED phrase («tržby z prodejen»), never as a bare «prodejen» restricting revenue («tržby prodejen»).
+// The saved queries' own Czech wording — description, patterns, examples — names the store channel as «tržby z
+// prodejen», never as a bare «prodejen» restricting revenue («tržby prodejen»). ⚑ md/hop HP-H: «tržby z prodejen» was a
+// DECLARED phrase on the store fact's measure and answered; it is now the revenue word beside the store word, which in
+// a restriction asks (the ruling below). The example still reads best this way; whether its chip asks is measured in the
+// HP-H T6 walk, and the wording moves then if it does.
 // Under the ruling that bare word is a FILTER, and a FILTER asks between the store dimension and the store
 // channel; a query's example is what golem offers as a follow-up chip and what its corpus case asks
 // (`p-store-sales-by-month`), so an example that asks is a query nobody reaches. Line-oriented over the

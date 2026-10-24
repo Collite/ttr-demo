@@ -21,7 +21,9 @@ model lexicon locale cs
 //      Declared below as written, so every form meets it in the EXACT class (the #62 lesson: a form reached only
 //      through the lemma drops out of the tie band);
 //   2. the FACTS are named with their channel — the labels above, a longer span than the bare word, and
-//      «vratky z …» (#62); their saved queries keep the pattern path;
+//      «vratky z …» (#62); their saved queries keep the pattern path. (The two SALES facts lost their labels at
+//      md/hop HP-H — they are sources of `sales` only — so «objednávky z tržiště» is now the bare word, the AU
+//      order, beside the marketplace channel word; the returns facts keep theirs.)
 //   3. no TOKENS phrase may hold either word: a TOKENS phrase is reached by one of its words, so the bare word
 //      would gain a second target and bind nothing (#62's «webu» trap).
 // lexicon/tests/automation-lexicon.test.mjs asserts all three against the committed archive. The corpus cases

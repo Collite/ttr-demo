@@ -87,18 +87,18 @@ test('T1.4 — a pin missing or empty is refused, naming it (an empty ref = an u
 });
 
 test('T1.5 — a value of the wrong shape is refused, naming the key (they reach $GITHUB_ENV and `export`)', async () => {
-  // Each case rewrites the lock's line that STARTS WITH `from`. The [ttr-core] ref is matched by its prefix, not its
-  // version, so a toolchain bump does not break this test (it did at grammar/v0.18.1, CN-P4 S4.5); the [ttrp] ref is
-  // a commit sha and never starts with `grammar/v`.
+  // Each case rewrites the lock's line that STARTS WITH `from`. Every pin is matched by its key's prefix, not its
+  // value, so a pin bump does not break this test (the [ttr-core] ref did at grammar/v0.18.1, CN-P4 S4.5, and the
+  // [veles] pins at veles 0.11.15, md/hop HP-H); the [ttrp] ref is a commit sha and never starts with `grammar/v`.
   const cases = [
     ['ref = "grammar/v', 'ref = "grammar/v0.17.0$(true)"', '[ttr-core].ref'],
     ['ref = "grammar/v', 'ref = "main"', '[ttr-core].ref'],
     ['ref = "grammar/v', 'ref = "grammar/v0.17.0 x"', '[ttr-core].ref'],
-    ['ttr-metadata = "0.16.0"', 'ttr-metadata = "0.16"', '[veles].ttr-metadata'],
+    ['ttr-metadata = "', 'ttr-metadata = "0.16"', '[veles].ttr-metadata'],
     // A TOML escape: the decoded value carries a newline, i.e. a second env line.
-    ['ttr-metadata = "0.16.0"', 'ttr-metadata = "0.16.0\\nX=1"', '[veles].ttr-metadata'],
-    ['image = "0.11.14"', 'image = "v0.11.14"', '[veles].image'],
-    ['strict-load = false', 'strict-load = "yes"', '[veles].strict-load'],
+    ['ttr-metadata = "', 'ttr-metadata = "0.16.0\\nX=1"', '[veles].ttr-metadata'],
+    ['image = "', 'image = "v0.11.14"', '[veles].image'],
+    ['strict-load = ', 'strict-load = "yes"', '[veles].strict-load'],
   ];
   for (const [from, to, key] of cases) {
     const at = lockText.split('\n').findIndex((l) => l.startsWith(from));
