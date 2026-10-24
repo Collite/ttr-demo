@@ -141,6 +141,10 @@ jobs:
         working-directory: hartland
         run: just hebe-seed-test
 
+      - name: Literate recipe derivations are current
+        working-directory: hartland
+        run: just check-literate-recipes
+
       - name: Model suites
         working-directory: hartland
         run: just verify-model

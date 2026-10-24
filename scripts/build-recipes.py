@@ -17,7 +17,7 @@ DEFAULT_CLI = ROOT / '.modeler/toolchains/ttrp/packages/kotlin/ttrp-cli/build/in
 
 
 @contextlib.contextmanager
-def recipe_root(root, announce=True):
+def recipe_root(root, announce=True, include_bundles=False):
     if root.name == 'hartland':
         yield root
         return
@@ -31,8 +31,11 @@ def recipe_root(root, announce=True):
             roots += tomllib.loads(config.read_text()).get('ttrp', {}).get('extra-model-roots', [])
         for rel in sorted(set(roots)):
             if (root / rel).is_dir():
+                ignored = ['*.bundle.new', '*.bundle.old', 'node_modules', '.modeler']
+                if not include_bundles:
+                    ignored.append('*.bundle')
                 shutil.copytree(root / rel, stage / rel, dirs_exist_ok=True,
-                                ignore=shutil.ignore_patterns('*.bundle', '*.bundle.new', '*.bundle.old', 'node_modules', '.modeler'))
+                                ignore=shutil.ignore_patterns(*ignored))
         if announce:
             print('recipe CLI staged in a hartland directory (ttr-core path resolver workaround)', file=sys.stderr)
         yield stage
@@ -62,6 +65,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--cli', default=os.environ.get('TTRP_CLI', str(DEFAULT_CLI)))
     parser.add_argument('--check', action='store_true')
+    parser.add_argument('--literate-check', action='store_true', help='Check Markdown-derived artifacts without writing; exit 3 on drift')
     parser.add_argument('--out', type=Path, help='Build into this directory without touching committed bundles')
     parser.add_argument('--recipe', type=Path, help='Limit to one recipe (including deferred authoring probes)')
     parser.add_argument('--command', choices=['check', 'explain'], help='Pass through a staged CLI authoring command')
@@ -71,10 +75,18 @@ def main():
         parser.error('pinned ttrp CLI missing: run `just toolchain-ttrp` (or set TTRP_CLI)')
     files = [args.recipe.resolve()] if args.recipe else sorted((ROOT / 'automation').rglob('*.ttrp'))
     files = [p for p in files if not any(part.endswith('.bundle') for part in p.parts)]
+    if args.literate_check:
+        files = [p if p.suffix == '.md' else p.with_suffix('.md') for p in files]
+        files = [p for p in files if p.is_file()]
+        if not files:
+            parser.error('no literate recipe documents found')
+    elif not args.check and not args.command:
+        files = [p.with_suffix('.md') if p.with_suffix('.md').is_file() else p for p in files]
     if args.command and not args.recipe:
         parser.error('--command requires --recipe')
-    with recipe_root(ROOT, announce=not args.command) as stage, tempfile.TemporaryDirectory(prefix='recipe-output-') as tmp:
+    with recipe_root(ROOT, announce=not args.command, include_bundles=args.literate_check) as stage, tempfile.TemporaryDirectory(prefix='recipe-output-') as tmp:
         pending = []
+        artifacts = []
         checked = 0
         for i, file in enumerate(files):
             if not args.recipe and file.parent.parent.name == 'ops':
@@ -82,7 +94,9 @@ def main():
                 continue
             out = Path(tmp) / str(i)
             command = [str(cli), args.command or ('check' if args.check else 'build'), str(stage / file.relative_to(ROOT))]
-            if not args.check and not args.command:
+            if args.literate_check:
+                command += ['--check', '--json']
+            elif not args.check and not args.command:
                 command += ['--json', '--out', str(out)]
             result = subprocess.run(command, text=True, capture_output=True, cwd=stage)
             stderr = '\n'.join(line for line in result.stderr.splitlines()
@@ -99,10 +113,22 @@ def main():
                 diagnostics = result.stdout or 'CLI returned no build result'
             if result.returncode or diagnostics or stderr:
                 print(f'{file.relative_to(ROOT)}: recipe refused\n{diagnostics}\n{stderr}', file=sys.stderr)
-                return 1
+                return 3 if args.literate_check and result.returncode == 3 else 1
             checked += 1
-            if not args.check:
+            if not args.check and not args.literate_check:
                 bundle = file.parent / (file.stem + '.bundle')
+                if file.suffix == '.md':
+                    results = payload.get('recipes', [])
+                    if len(results) != 1:
+                        print(f'{file.relative_to(ROOT)}: expected one recipe in this document', file=sys.stderr)
+                        return 1
+                    payload = results[0]
+                    for rel in [file.stem + '.ttrp', file.stem + '.ttrd', file.stem + '/README.md']:
+                        derived = out / rel
+                        if not derived.is_file():
+                            print(f'CLI omitted derived artifact {rel}', file=sys.stderr)
+                            return 1
+                        artifacts.append((derived, file.parent / rel))
                 src = Path(payload.get('bundle') or '')
                 if not src.is_absolute():
                     src = stage / src
@@ -115,13 +141,17 @@ def main():
             target = args.out.resolve() / bundle.relative_to(ROOT / 'automation') if args.out else bundle
             target.parent.mkdir(parents=True, exist_ok=True)
             replace_bundle(src, target)
-        if not args.check and not args.out and not args.recipe:
+        for src, artifact in artifacts:
+            target = args.out.resolve() / artifact.relative_to(ROOT / 'automation') if args.out else artifact
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, target)
+        if not args.check and not args.literate_check and not args.out and not args.recipe:
             expected = {bundle for _, bundle in pending}
             for bundle in (ROOT / 'automation').rglob('*.bundle'):
                 if bundle.is_dir() and bundle not in expected:
                     shutil.rmtree(bundle)
                     print(f'removed stale bundle {bundle.relative_to(ROOT)}')
-        print(f'{checked} recipes {"checked" if args.check else "built without diagnostics"}')
+        print(f'{checked} recipes {"checked" if args.check or args.literate_check else "built without diagnostics"}')
     return 0
 
 

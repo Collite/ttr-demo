@@ -86,6 +86,9 @@ class GoldenCases(unittest.TestCase):
                 self.assertLessEqual(set(case["expected"]), EXPECTED_KEYS)
                 if "pinned_from" in case:
                     self.assertEqual(set(case["pinned_from"]), {"run", "at", "by"}, "a pinned case names run, at, by")
+                    for field in ("run", "at", "by"):
+                        self.assertIsInstance(case["pinned_from"][field], str)
+                        self.assertTrue(case["pinned_from"][field].strip(), f"pinned_from.{field} is required")
 
     def test_cases_name_only_what_the_recipe_has(self) -> None:
         for path in self.cases:

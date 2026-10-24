@@ -146,10 +146,10 @@ test('S2.2 T3 — monitor_inbound\'s two expects on `complete` are conditional o
 });
 
 // ── the four `17` recipes ARE ttr-core's shared fixtures ──────────────────────────────────────────────────────────
-// Compared without comments and blank lines. No difference is left: from grammar/v0.16.1 the fixtures carry
+// Compared without comments, blank lines and indentation (P3 derives H-1 from Markdown). No difference is left: from grammar/v0.16.1 the fixtures carry
 // monitor_inbound's `when:` (S2.2 T3) and decide_return's `days(365)` (ttr-core P1's F3), as these recipes do.
 const FIXTURE_DELTAS = {};
-const lines = (text) => code(text).split('\n').map((l) => l.trimEnd()).filter((l) => l.trim() !== '').join('\n');
+const lines = (text) => code(text).split('\n').map((l) => l.trim()).filter((l) => l !== '').join('\n');
 
 for (const name of ['release_order', 'decide_return', 'monitor_inbound', 'settle']) {
   const fixture = path.join(FIXTURES, `${name}.ttrp`);

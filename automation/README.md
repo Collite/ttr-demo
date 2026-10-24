@@ -9,7 +9,10 @@ service beside `../model/` (ttr-server contracts §1.1):
 | `automation.ttrm` | `model automation`, package `hartland.automation`: the parameters, actions, roles and approvals (`17` §1) |
 | `programs.ttrm` | the programs and the event schemas (`17` §1) |
 | `worlds/demo.ttrm` | the world `hartland.worlds.demo`: engines, storages with `writable:`, and its automation half — the identity, executors, grants, deployments and the `return_line_flow` process (`17` §2) |
-| `<recipe>/<recipe>.ttrp` | the recipes (P2: authored as `.ttrp`; from P3 derived from the literate `<recipe>.md` + its CZ twin) |
+| `<recipe>/<recipe>.md` | the literate source (H-1 `release_order` from P3 S3.1; remaining documents/twins follow in S3.2/S3.3) |
+| `<recipe>/<recipe>.ttrp` | H-1 derived from Markdown; remaining recipes still authored as `.ttrp` |
+| `<recipe>/<recipe>.ttrd` | generated Markdown/canonical spans and document SHA |
+| `<recipe>/<recipe>/README.md` | generated explanation, in the current compiler's unnamed-document output layout; also included in the bundle |
 | `<recipe>/tests/*.yaml` | the golden cases (contracts §7; seeds until pinned from a debug run) |
 | `tests/` | the package's suites (`just verify-model` runs them) |
 
@@ -24,12 +27,13 @@ run on is in `../model/` — the documents (`model/er/orders.ttrm`, `returns-flo
 words (`model/lexicon/{en,cs}/automation.ttrm`); see the "Automation extension" paragraph of `../model/README.md`.
 
 Recipe bundles use the independent `[ttrp]` pin in `../toolchain.lock`; the model gate remains on
-`[ttr-core]` 0.16.1. From a clean checkout with JDK 21, Git, Python 3.11+ and `just`:
+`[ttr-core]` (the reader pin). From a clean checkout with JDK 21, Git, Python 3.11+ and `just`:
 
 ```sh
 just toolchain-ttrp   # isolated .modeler/toolchains/ttrp checkout, then Gradle installDist
 just check-recipes   # cheap checker pass for the six buildable business recipes
-just build-recipes   # fresh manifest-v3 bundles beside their sources; refuses every diagnostic
+just build-recipes   # derive H-1 from Markdown; build the other five .ttrp recipes; refuse every diagnostic
+just check-literate-recipes # read-only Markdown/canonical/provenance/README check; exits 3 on drift
 just verify-model    # model/lexicon checks still need the model-gate toolchain beside the repo
 ```
 
@@ -38,12 +42,17 @@ just verify-model    # model/lexicon checks still need the model-gate toolchain 
 model and recipe pins separately, stamps the recipe CLI with the locked version, builds the bundles, and fails
 on any tracked or untracked change under `automation/`. Run `just build-recipes` and commit the result after a
 recipe or golden seed changes. The bundles include the golden YAML seeds and their hashes in `recipe.tests`.
-The literate documents and their drift check remain P3.
+CI checks literate artifacts before rebuilding. A prose-only source edit, canonical hand edit, missing sidecar or
+changed explanation fails; rebuild the document and commit all derived artifacts together.
 
-The recipe pin is temporarily ttr-core commit `b29d759294b4dfee31052264645a4fb2ade1a18f`
-(`0.17.3-au.2`), based on `grammar/v0.17.3`. The released tag emits retired CNC roles in verdict catalogs,
-omits the golden-fixture list, and reports CEIL as unsupported. This commit fixes those handoff issues; replace
-it with the next reviewed grammar release (ttr-core PR #249); delete `version` when moving `ref` to a tag. A new commit pin takes the next `-au.<n>` suffix. Generated bundles remain the unmodified output of that toolchain.
+The recipe toolchain now pins **grammar/v0.18.7**, including the released P3 document frontend and explanation
+renderer. The model/reader pins remain independent. H-1's `release_order.md` is authoritative; its canonical
+recipe preserves P2's code apart from whitespace/comments. The `.ttrd` records the actual source filename and
+spans. The existing `document: "releasing-a-placed-order.md"` identifier is retained for compatibility with the
+shared recipe fixture. The current unnamed-document compiler emits the standalone explanation under
+`release_order/README.md` inside the recipe directory; keep that generated layout for native `build --check`.
+All six bundle manifests now hash their generated READMEs. SQL, schemas, catalog files and golden seeds remain
+unchanged by this authoring migration.
 
 Six bundles are served: `release_order`, `decide_return`, `monitor_inbound`, `settle`, `reorder_proposals`, and
 `winback`. **Bundles load; they do not run until AU-server P1·S1.1.** The cross-storage pair contains door
