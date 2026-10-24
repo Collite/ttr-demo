@@ -11,6 +11,8 @@ from urllib.parse import urlsplit
 import uuid
 
 IMAGE = 'docker.n8n.io/n8nio/n8n:2.44.6'
+# Chart n8n-1.24.43's `n8n.main.name` helper; the Deployment/Service are simply `n8n`.
+CONTAINER = 'n8n-main'
 PVC = 'n8n-main-persistence'
 GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 TIMEOUT = 10
@@ -145,19 +147,19 @@ class Rig:
                 and status.get('observedGeneration', 0) >= deployment['metadata']['generation'],
                 'n8n Deployment rollout is not ready at its current generation')
         template = deployment['spec']['template']['spec']
-        require(any(c.get('name') == 'n8n' and c.get('image') == self.image for c in template['containers']),
+        require(any(c.get('name') == CONTAINER and c.get('image') == self.image for c in template['containers']),
                 'Deployment image does not match N8N_IMAGE')
         pods = self.get('middleware', 'pods', None, '-l', 'app.kubernetes.io/instance=n8n,app.kubernetes.io/component=main')
         active = [p for p in pods['items'] if not p['metadata'].get('deletionTimestamp')]
         require(bool(active), 'no active n8n main pod')
         for pod in active:
-            require(any(c.get('name') == 'n8n' and c.get('image') == self.image for c in pod['spec']['containers']),
+            require(any(c.get('name') == CONTAINER and c.get('image') == self.image for c in pod['spec']['containers']),
                     'active pod image does not match N8N_IMAGE')
             require(any(c.get('type') == 'Ready' and c.get('status') == 'True'
                         for c in pod['status'].get('conditions', [])), 'n8n main pod is not Ready')
         volumes = {v['name'] for v in template.get('volumes', [])
                    if v.get('persistentVolumeClaim', {}).get('claimName') == PVC}
-        main = next(c for c in template['containers'] if c.get('name') == 'n8n')
+        main = next(c for c in template['containers'] if c.get('name') == CONTAINER)
         require(any(m.get('name') in volumes and m.get('mountPath') == '/home/node/.n8n'
                     for m in main.get('volumeMounts', [])),
                 'Deployment does not mount n8n persistence PVC')
@@ -186,7 +188,7 @@ class Rig:
                 'HTTP 401; authentication reached (authenticated editor connection still requires browser check)')
 
     def database(self):
-        db_type = self.kubectl('middleware', 'exec', 'deployment/n8n', '-c', 'n8n', '--', 'printenv', 'DB_TYPE')
+        db_type = self.kubectl('middleware', 'exec', 'deployment/n8n', '-c', CONTAINER, '--', 'printenv', 'DB_TYPE')
         require(db_type == 'postgresdb', 'n8n runtime DB_TYPE is not postgresdb')
         version = managed_role_version(self.get('data', 'cluster', 'postgres'))
         return f'postgresdb; CNPG n8n password resourceVersion={version}'
