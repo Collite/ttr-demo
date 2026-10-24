@@ -29,6 +29,8 @@
 #   just dashboards-check         the Superset bundles (dashboards/) against the import's rules, and
 #   just dashboards-test          kustomization.yaml not stale; the rules' specs — ADDED 2026-10-23,
 #                                 BI-4 S4.2: the import Job exits 0 on a bundle it could not import
+#   just hebe-seed-test           Hebe's two identity seed scripts against a fake az + curl: no secret in
+#                                 output or argv, only an Offline token stored — ADDED 2026-10-23, HE-P1 S1.1
 #   just load-model              the model as veles loads it: the Kotlin loader, strict, built from
 #                                 ttr-core at veles's ttr-metadata version (grammar/v<[veles].ttr-metadata>,
 #                                 stamped with it) — ADDED 2026-10-21, SO-demo P0. Veles drops a file
@@ -132,6 +134,10 @@ jobs:
       - name: Superset dashboards (bundle rules, kustomization, specs)
         working-directory: hartland
         run: just dashboards-check && just dashboards-test
+
+      - name: Hebe identity seed scripts (fake az + curl)
+        working-directory: hartland
+        run: just hebe-seed-test
 
       - name: Model suites
         working-directory: hartland
