@@ -6,11 +6,8 @@ model db schema dbo
 // model declares what the database already holds. `definitionSql` mirrors the script so the model
 // says what the view IS, not only what it is called.
 
-// `channel_sales` backed the er entity of that name until md/hop HP-H (2026-10-24): the all-channel entity is now
-// `er.entity.sales`, stacked on the logical query `er.query.sales_union` (model/er/sales.ttrm), and no entity reads
-// this view. It stays declared because it stays in both databases, and the routing corpus's validation SQL reads it.
 def view channel_sales {
-    description: "All-channel sales lines — store, web and marketplace sales in one relation, labelled by channel. No entity reads it; the model's all-channel object is `sales`."
+    description: "All-channel sales lines — store, web and marketplace sales in one relation, labelled by channel. The one object on which revenue and units sold can be asked BY CHANNEL."
     columns: [
         def column channel          { type: varchar },
         def column sold_date_sk     { type: int },

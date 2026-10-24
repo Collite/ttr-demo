@@ -183,13 +183,19 @@ def er2db_attribute date_dim_weekend_map    { attribute: er.entity.date_dim.week
 // AU D-82 — not a holiday and not a weekend.
 def er2db_attribute date_dim_working_day_map { attribute: er.entity.date_dim.working_day, target: { column: db.dbo.date_dim.d_working_day } }
 
-// ===== sales (all channels) — stacked on er.query.sales_union, so it has no er2db: its attributes bind to the
-// query's output columns (model/er/sales.ttrm). The db view `db.dbo.channel_sales` the former `channel_sales` read
-// stays in `model/db/views.ttrm`, unmapped: the routing corpus's validation SQL reads it (run-set/routing/validation).
+// ===== channel_sales (all channels) → the VIEW db.dbo.channel_sales =====
+def er2db_entity channel_sales_map { entity: er.entity.channel_sales, target: { view: db.dbo.channel_sales } }
+def er2db_attribute channel_sales_channel_map         { attribute: er.entity.channel_sales.channel,         target: { column: db.dbo.channel_sales.channel } }
+def er2db_attribute channel_sales_sold_date_map       { attribute: er.entity.channel_sales.sold_date,       target: { column: db.dbo.channel_sales.sold_date_sk } }
+def er2db_attribute channel_sales_item_map            { attribute: er.entity.channel_sales.item,            target: { column: db.dbo.channel_sales.item_sk } }
+def er2db_attribute channel_sales_customer_map        { attribute: er.entity.channel_sales.customer,        target: { column: db.dbo.channel_sales.customer_sk } }
+def er2db_attribute channel_sales_quantity_map        { attribute: er.entity.channel_sales.quantity,        target: { column: db.dbo.channel_sales.quantity } }
+def er2db_attribute channel_sales_ext_sales_price_map { attribute: er.entity.channel_sales.ext_sales_price, target: { column: db.dbo.channel_sales.ext_sales_price } }
+def er2db_attribute channel_sales_warehouse_map       { attribute: er.entity.channel_sales.warehouse,       target: { column: db.dbo.channel_sales.warehouse_sk } }
 
 // ===== AU (automation agents) — the H-1/H-2 extension + the H-3/H-5 write-back entities =====
 // One er2db_entity per entity, one er2db_attribute per attribute — the completeness T6.5 and
-// model/tests/automation-extension.test.mjs (c) enforce. Views bind like tables.
+// model/tests/automation-extension.test.mjs (c) enforce. Views bind like tables (the channel_sales precedent).
 
 // ----- order → the TABLE db.dbo.sales_order (`order` is reserved in SQL, D-119) -----
 def er2db_entity order_map { entity: er.entity.order, target: { table: db.dbo.sales_order } }

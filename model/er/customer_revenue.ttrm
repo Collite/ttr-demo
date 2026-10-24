@@ -5,10 +5,9 @@ model er
 // LQ — logical queries (ttr-core#191, ttr-server#245). A saved query written over ENTITIES, and an
 // entity stacked on it. Declared in a `model er` file, the query is the logical query
 // `er.query.revenue_per_customer`: its body names entities and attributes, never tables, and its bare
-// `JOIN` is conditioned by the model — here by `rel_sales_customer`'s `join:` pair (`sales` is stacked on a
-// query, so the relation has no foreign key to read; md/hop HP-H moved the body off the view-backed
-// `channel_sales`). The entity `customer_revenue` reads the query; agents are meant to ask over the entity only
-// (LQ-6).
+// `JOIN` is conditioned by the model — here from `rel_channel_sales_customer`'s foreign key (the
+// FK-only relation needs no `join:` pairs for that). The entity `customer_revenue` reads the query;
+// agents are meant to ask over the entity only (LQ-6).
 //
 // ⚑ The query is NOT named after the entity. veles 0.11.11 still lists a logical query in ListQueries
 // and in GetModel's namedQueries (so meta-mcp `list_queries` offers it, and running it is refused with
@@ -17,14 +16,13 @@ model er
 // cannot.
 //
 // Why a query: "average customer revenue by household buying potential" is an aggregate OF an
-// aggregate — revenue summed per customer, then averaged per band. Over `sales` that is a
+// aggregate — revenue summed per customer, then averaged per band. Over `channel_sales` that is a
 // nested query no agent should have to write; over `customer_revenue` it is a plain AVG.
 //
-// Security rides along: the body reads `sales`, whose own body reads the three channel facts, and the DC-scope
-// row rule (olymp, validate `dc-scope`) narrows `web_sales` and `catalog_sales` for a `kantheon-scope-dc-5` caller
-// to DC 5's lines. Both bodies are inlined into the plan where the entity is read, so that caller's customer
-// revenue counts DC 5's web and marketplace lines and every store line — Sam's and Maya's answers to the same
-// question differ.
+// Security rides along: the body reads `channel_sales`, which the DC-scope row rule (olymp, validate
+// `dc-scope`) narrows for a `kantheon-scope-dc-5` caller to DC 5's web and marketplace lines. The body
+// is inlined into the plan where the entity is read, so that caller's customer revenue counts only
+// those lines — Sam's and Maya's answers to the same question differ.
 //
 // ALL TIME: the body sums every line on record and keeps no date, so the entity has no date attribute
 // and no relation to the calendar. "Average customer revenue in 2025" cannot be narrowed to 2025 on
@@ -35,8 +33,8 @@ def query revenue_per_customer {
     tags: ["sales", "customers"]
     sourceText: """sql
 SELECT customer.sk, customer.customer_id, customer.hdemo, customer.birth_year,
-       SUM(sales.ext_sales_price) AS revenue
-FROM sales JOIN customer
+       SUM(channel_sales.ext_sales_price) AS revenue
+FROM channel_sales JOIN customer
 GROUP BY customer.sk, customer.customer_id, customer.hdemo, customer.birth_year
 """
 }

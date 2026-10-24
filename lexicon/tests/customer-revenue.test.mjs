@@ -5,7 +5,7 @@
 // `method: TOKENS`, and the review of ttr-demo#78 found two ways that answers the wrong question:
 //   - a TOKENS row carries its own profile (canonical tokens only), so it drops the file's `folded` rule:
 //     «prumerne trzby zakaznika …», typed without diacritics, missed the phrase and bound the bare
-//     `tržby` (`sales`; `channel_sales` then) — the average SALES LINE, not the average customer;
+//     `tržby` (channel_sales) — the average SALES LINE, not the average customer;
 //   - a TOKENS row is reached by its fragments, and two of the phrases are built on `per` / `na`, which
 //     the stdlib's avg skill (ttr-core#178) keeps out of triggers: "revenue per month", „tržby na tržišti“.
 // So the rows are whole phrases under the file's default profile, every Czech case form a question takes
@@ -27,11 +27,11 @@ const PHRASES = {
   cs: ['tržby zákazníka', 'tržba zákazníka', 'tržeb zákazníka', 'tržby zákazníků', 'tržeb zákazníků', 'tržby na zákazníka'],
 };
 
-test('control — the bare revenue words still reach the all-channel fact `sales`, and only it', () => {
+test('control — the bare revenue words still reach channel_sales, and only it', () => {
   // A probe that cannot find its control is broken, not informative (lexicon-archive-staleness).
   for (const [term, lang] of [['tržby', isCs], ['revenue', isEn]]) {
     const refs = lexicon.entries.filter((e) => e.termNormalized === term && lang(e)).map((e) => e.targetRef);
-    assert.deepEqual(refs, ['er.entity.sales.ext_sales_price'], `«${term}» → ${refs.join(', ')}`);
+    assert.deepEqual(refs, ['er.entity.channel_sales.ext_sales_price'], `«${term}» → ${refs.join(', ')}`);
   }
 });
 

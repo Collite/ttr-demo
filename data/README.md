@@ -19,10 +19,9 @@ Phase 1):
 3. `catalog/` — the bilingual per-item catalog: taxonomy + generator → `catalog/{us,cz}` UPDATEs.
 4. `seed/` — `02-seed-incident` — Memphis DC (us) / Brno DC (cz) meltdown S1–S4.
 5. `recon/` — the recon battery + committed baselines; R0 freeze; `pg_dump` → staging.
-6. `views/` — derived views (`channel_sales.sql`: the three sales facts as one relation, labelled by
-   channel — no entity reads it since md/hop HP-H moved the all-channel fact onto the model's own union
-   query, `er.entity.sales`; the routing corpus's validation SQL still does). Idempotent (`CREATE OR
-   REPLACE`); run in both worlds as the tables' owner. Views read the facts live, so they need no re-run after a data rebuild — only
+6. `views/` — derived views the model binds to (`channel_sales.sql`: the three sales facts as one
+   relation, labelled by channel). Idempotent (`CREATE OR REPLACE`); run in both worlds as the
+   tables' owner. Views read the facts live, so they need no re-run after a data rebuild — only
    after a DROP.
 7. `extend/` — copy 2024 forward so the facts reach a date you name (LR-P4); re-run before a show.
 8. `automation/` — the automation extension (AU): the H-1/H-2 ERP tables derived from the facts for one
@@ -51,10 +50,10 @@ snapshot-guarded:
    `seed/02-seed-incident/{s1,s2,s3}-*.sql` (guarded via `_seed_meta` — S2 is genuinely
    non-idempotent by nature, deletion, so the guard is load-bearing there).
 6. `recon/run-recon.sh dsk <db>` → diff against `data/recon/R0.md`.
-7. `views/channel_sales.sql` (both worlds, as `hartland`) — the routing corpus's validation SQL reads
-   it (run-set/routing/validation); no entity does since md/hop HP-H. Re-run it on a world that already
-   has the view whenever the script changes (`SELECT warehouse_sk FROM channel_sales LIMIT 1` checks LR
-   ⚑LR-9's appended column).
+7. `views/channel_sales.sql` (both worlds, as `hartland`) — `er.entity.channel_sales` reads it.
+   Re-run it on a world that already has the view whenever the script changes: LR ⚑LR-9 appended
+   `warehouse_sk`, which the DC-scope row rule filters on, so the model's column must exist in the
+   database before that rule is mounted (`SELECT warehouse_sk FROM channel_sales LIMIT 1` checks it).
 8. `extend/run-extend.sh <ctx> <db> <until>` (`just extend-data <us|cz> <until> [ctx]`) — copies
    the template year 2024 forward week by week so the facts reach `<until>` (LR-P4, contracts C-8;
    `extend/README.md`). Incremental: `_extend_meta` holds the weeks already done. After a rebuild

@@ -34,7 +34,7 @@ test('DONE 3 — ResolveArea("hartland") is green', () => {
   assert.ok(resolved.resolvedEntities.length > 0);
 });
 
-test('DONE 4 — ListQueries returns 21: the 17 q.hartland.* with params + the four logical queries', () => {
+test('DONE 4 — ListQueries returns 20: the 17 q.hartland.* with params + the three logical queries', () => {
   // veles lists every `def query` it loaded (ListQueries; GetModel's namedQueries), a logical query too.
   // A `def query` in a `model er` file is a logical query (LQ): not a q.hartland.* pattern, and agents are
   // meant to ask over the entity stacked on it (LQ-6) — model/er/customer_revenue.ttrm says why its name
@@ -47,8 +47,8 @@ test('DONE 4 — ListQueries returns 21: the 17 q.hartland.* with params + the f
     }
   }
   assert.equal(db.length, 17, 'the D-2 roster + LR\'s channel_revenue_monthly_yoy (2026-10-10) + warehouse_stockout_week_count (2026-10-11)');
-  assert.deepEqual(logical.sort(), ['returns_monthly_by_category', 'revenue_per_customer', 'sales_union', 'stockouts_monthly_dc'], 'the logical queries (LQ 2026-10-18, BI-4 2026-10-22, md/hop HP-H 2026-10-24)');
-  assert.equal(db.length + logical.length, 21);
+  assert.deepEqual(logical.sort(), ['returns_monthly_by_category', 'revenue_per_customer', 'stockouts_monthly_dc'], 'the logical queries (LQ 2026-10-18, BI-4 2026-10-22)');
+  assert.equal(db.length + logical.length, 20);
 });
 
 test('DONE 5 — cs + en lexicon resolves (zero unresolved for:, project-wide)', () => {

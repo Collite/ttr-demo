@@ -88,7 +88,7 @@ test('L4 — sales: the four sales facts and the calendar (contracts §6), every
   assert.ok(sales, 'no layout named sales');
   const { model, objects, positions } = sales.read.doc;
   assert.equal(model, 'er');
-  for (const name of ['store_sales', 'web_sales', 'catalog_sales', 'sales', 'date_dim']) {
+  for (const name of ['store_sales', 'web_sales', 'catalog_sales', 'channel_sales', 'date_dim']) {
     assert.ok(objects.includes(`hartland.er.entity.${name}`), `sales lacks ${name}`);
   }
   assert.deepEqual(objects.filter((ref) => !positions[ref]), [], 'cards without a position');
