@@ -400,3 +400,12 @@ hebe-seed-offline-token instance user *FLAGS:
 # The two seed scripts against a fake az + curl — no cluster, no Azure.
 hebe-seed-test:
     python3 -B -m unittest scripts/test_seed_hebe_offline_token.py
+
+# n8n identity bootstrap (design/n8n-demo/runbook-identity.md). No cluster writes in the tests.
+# Before Mailpit is deployed: just n8n-seed-users --mailpit none (claims the owner only).
+n8n-seed-users *FLAGS:
+    scripts/seed-n8n-users.sh {{FLAGS}}
+
+# Discovers the content seed tests too, once that later stage adds them.
+n8n-test:
+    python3 -B -m unittest discover -s scripts -p 'test_seed_n8n*.py'

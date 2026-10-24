@@ -299,10 +299,65 @@ class SeedTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertNotIn('/rest/invitations', self.state.writes)
 
+    def test_direct_invite_link_when_smtp_does_not_send(self):
+        self.state.mail_enabled = False
+        self.seed()
+        self.assertEqual(len(self.state.users), 3)
+        self.assertEqual(self.state.messages, [])
+
+    def test_reinvite_ignores_old_mail_token(self):
+        self.seed()
+        self.state.users[PEOPLE[1][1]]['isPending'] = True
+        result = self.run_seed('--reinvite')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(self.state.messages), 3)
+
+    def test_private_vault_files_and_cleanup_on_success_and_failure(self):
+        bin_dir = self.path / 'bin'
+        bin_dir.mkdir()
+        az = bin_dir / 'az'
+        az.write_text('#!/usr/bin/env python3\nimport json, os, stat, sys\nfrom pathlib import Path\n'
+            f'owner, member = {OWNER_PASSWORD!r}, {MEMBER_PASSWORD!r}\n'
+            f'log = {str(self.path / "az-log")!r}\n'
+            'with open(log, "a") as out:\n'
+            ' out.write(json.dumps({"args": sys.argv[1:], "mode": stat.S_IMODE(os.fstat(1).st_mode),\n'
+            ' "paths": [str(p) for p in Path(os.environ["TMPDIR"]).glob("n8n-seed.*/*")]}) + "\\n")\n'
+            'print(owner if "n8n-owner-password" in sys.argv else member)\n')
+        az.chmod(0o755)
+        with unittest.mock.patch.dict(os.environ, {'PATH': str(bin_dir) + ':' + os.environ['PATH']}):
+            for fail in (False, True):
+                self.state.broken = '/rest/login' if fail else None
+                result = self.run_seed(shell=True, vault=True)
+                self.assertEqual(result.returncode, 1 if fail else 0, result.stderr)
+        calls = [json.loads(line) for line in (self.path / 'az-log').read_text().splitlines()]
+        self.assertEqual(len(calls), 4)
+        for call in calls:
+            self.assertEqual(call['mode'], 0o600)
+            self.assertTrue(call['paths'])
+            for path in call['paths']:
+                self.assertFalse(Path(path).exists())
+            self.assertNotIn(OWNER_PASSWORD, call['args'])
+            self.assertNotIn(MEMBER_PASSWORD, call['args'])
+
+    def test_public_or_insecure_password_file_refused_before_http(self):
+        (self.path / 'owner').chmod(0o644)
+        result = self.run_seed()
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(self.state.requests, [])
+        (self.path / 'owner').chmod(0o600)
+        (self.path / 'owner').write_text('Hartland!2026')
+        result = self.run_seed()
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(self.state.requests, [])
+
     def test_usage_and_invalid_owner_do_not_write(self):
         for flags in [('--bogus',), ('--owner', 'maya')]:
             result = self.run_seed(*flags)
             self.assertEqual(result.returncode, 2, result.stderr)
+        self.realm.write_text('{"users": [null]}')
+        result = self.run_seed()
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertNotIn('Traceback', result.stderr)
         self.assertEqual(self.state.writes, [])
 
 
