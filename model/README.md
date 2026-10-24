@@ -5,7 +5,7 @@ One model set (BM-2/BM-5), served over `pg-hartland-us` (USD) and `pg-hartland-c
 - `db/` — `model db`: the physical TPC-DS subset (facts + used dims), types, PK/FK.
 - `er/` — `model er` + `er2db` binding: the 19 curated entities + relationships (05-d/D-5).
   Plus one **logical query** (LQ, 2026-10-18): `er/customer_revenue.ttrm` declares `er.query.revenue_per_customer`
-  (written over entities — `channel_sales JOIN customer` — because it sits in a `model er` file) and the
+  (written over entities — `sales JOIN customer` — because it sits in a `model er` file) and the
   entity `customer_revenue` stacked on it (all-time totals, one row per customer), with `join:` relations to
   household demographics and customer. It is not a `q.hartland.*` pattern: agents are meant to ask over the
   entity (LQ-6). ⚑ veles 0.11.11 still LISTS it — ListQueries returns 18 (the 17 `q.hartland.*` + this one),
@@ -18,7 +18,8 @@ One model set (BM-2/BM-5), served over `pg-hartland-us` (USD) and `pg-hartland-c
   dashboard reads it as `obj.query.stockouts_monthly_dc`. And `er/returns-by-category.ttrm`:
   `er.query.returns_monthly_by_category` (returns per item category per month, over the return family) with the entity
   `category_return_month` — the "Returns by category" dataset, BI's own (SO keeps `returns_review` on its demo branch).
-  ListQueries now returns 20.
+  And a fourth (md/hop HP-H, 2026-10-24): `er/sales.ttrm` declares `er.query.sales_union` and the all-channel entity
+  `sales` stacked on it (the `sales` design note below). ListQueries now returns 21.
 - `md/` — `model md` + `md2db`/`md2er` binding: the ROLAP star (cubelets, measures, conformed
   dimensions incl. the Product hierarchy Category→Class→Brand→Manufacturer→Item).
 - `lexicon/` — `model lexicon locale en` + `locale cs`: the bilingual naming layer + valueLabels.
@@ -120,6 +121,27 @@ validated `ai-models` agent-def shape and the `golem-ucetnictvi` assembled-Shem
 precedent; checked structurally with `js-yaml` (also borrowed from the sibling tatrman
 checkout — see `agents/tests/shems.test.mjs`).
 
+**`sales` — the three channels as one entity (md/hop HP-H, 2026-10-24; ⚑H-1, ⚑H-7 — Bora 2026-10-22).** "Revenue by
+channel" needs the channel as a column and revenue as one measure. Since 2026-09-24 that was `channel_sales`, an
+entity on the db view `data/views/channel_sales.sql`; its columns were its own, so the lineage of its revenue lived in
+the database and no model reader could see that it is the three facts' `ext_sales_price` (the md/hop design §4: the
+bearer rule had nothing to restrict to). Now the union is the model's: `er/sales.ttrm` declares the logical query
+`er.query.sales_union` over `store_sales`, `web_sales` and `catalog_sales` and the entity `sales` stacked on it —
+`channel` an attribute (`store` · `web` · `marketplace`), `store` a store line's, `warehouse` a web or marketplace
+line's, relations by `join:` pairs. What a reader would not guess:
+- the channel literals are **CAST to VARCHAR** in the body: bare, the translator types them CHAR(5)/CHAR(3)/CHAR(11),
+  unifies the union at CHAR(11) and writes padded `'store      '`, which `channel = 'store'` never matches;
+- the DC-scope row rule needs no entry for `sales`: the body is inlined where `sales` is read, so the rule on
+  `web_sales` and `catalog_sales` narrows those lines, and the store channel stays whole (Bora, 2026-10-24);
+- **the three channel facts are sources only** (⚑H-7). The mechanism is the vocabulary: they carry no
+  `displayLabel`/`labelPlural` (a label is a METADATA term) and no lexicon term names them or their attributes
+  (`lexicon/tests/store-family.test.mjs` holds it). Every channel word is a value of `sales.channel` instead — its
+  `valueLabels` plus `lexicon/aliases/channels.lex.yaml` — which the resolver binds as `er.entity.sales.channel#<value>`
+  and the query door restricts by. They stay in the package (the union reads them, and so may the composer's SQL), and
+  the db-lane `q.hartland.*` queries read their tables;
+- the db view `channel_sales` stays declared (it is in both databases, and the routing corpus's validation SQL reads
+  it), but no entity reads it.
+
 **Phase 2 is done** — `model/tests/phase2-done.test.mjs` is the single-file roll-up of
 the DONE bar; 53 tests pass across all 6 stages (`just verify-model`).
 
@@ -135,8 +157,8 @@ not guess:
 - `return_request_line` carries the request's customer, **`rl_customer_sk`**, denormalized by the
   generator: a relation is one hop, and the recipes join a line to its customer (D-127);
 - `return_request` and `document_flow` read **views**: the request's state is derived from its lines and
-  nothing writes it (D-84); the request's relations bind logical keys on the view (the `channel_sales`
-  precedent);
+  nothing writes it (D-84); the request's relations bind logical keys on the view (the precedent of the former
+  view-backed `channel_sales`, folded into `sales` at md/hop HP-H);
 - every extension relation states its **`join:` pairs** beside its fk — TTR-P's `on: relation X` builds
   the join from join pairs only;
 - the states are `text` attributes with `valueLabels` and, since AU P2 (grammar 0.16), `states:` /

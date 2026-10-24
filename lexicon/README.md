@@ -45,12 +45,14 @@ lexicon/
 > pattern path in `model/queries/q_hartland.ttrm` exactly as before. Restoring them on the fast
 > path is an md exercise or a channel-labelled-view modelling exercise — not a lexicon change.
 >
-> ✅ **The modelling exercise landed 2026-09-24.** `er.entity.channel_sales` is backed by the view
+> ✅ **The modelling exercise landed 2026-09-24.** `er.entity.channel_sales` was backed by the view
 > `data/views/channel_sales.sql` (UNION ALL of the three facts, channel as a column), so the bare
-> words have ONE target: `revenue`/`tržby`/`obrat` → `channel_sales.ext_sales_price`,
-> `channel`/`kanál*` → `channel_sales.channel` (`aliases/hartland.lex.yaml`). *"Revenue by channel
-> for 2025 by month"* now binds on the fast path; the channel-qualified rows keep their
-> single-channel targets, and the curated patterns stay for what the fast path cannot do.
+> words had ONE target: `revenue`/`tržby`/`obrat` → `channel_sales.ext_sales_price`,
+> `channel`/`kanál*` → `channel_sales.channel` (`aliases/hartland.lex.yaml`). Since md/hop HP-H
+> (2026-10-24) that object is `er.entity.sales`, stacked on the model's own union query, and the
+> channel words are values of `sales.channel` (`aliases/channels.lex.yaml`). *"Revenue by channel
+> for 2025 by month"* now binds on the fast path; a channel-qualified question is the same measure
+> restricted to its channel's value, and the curated patterns stay for what the fast path cannot do.
 
 Each data file's own header carries its sourcing — which line of `design/demo-transcript.md`,
 which `search { patterns }` block in `model/queries/q_hartland.ttrm`, which
@@ -77,6 +79,28 @@ trade flips and the archive should move to a CI-built artifact — the drift gat
 step rather than a local recipe.
 
 ## What is in the artifact today
+
+From `just build-lexicon`, **2026-10-24**, md/hop HP-H (branch `feat/sales-entity`): the all-channel fact is `sales`, stacked
+on the logical query `er.query.sales_union` (model/er/sales.ttrm), and the view-backed `channel_sales` is gone. ⚑H-7 (source
+only): the three channel facts lost their labels, and every word that reached them now reaches a value of `sales.channel` —
+the channel words are `lexicon/aliases/channels.lex.yaml` (they were `model/lexicon/{cs,en}/channels.ttrm`), declared EXACT
+as the sugar compiled them, and the channel-qualified revenue phrases (`tržby z tržiště`, "marketplace revenue", …) are gone:
+the revenue word and the channel word bind separately. The store dimension's Czech cases moved to
+`aliases/hartland.lex.yaml` beside them (one word, two readings, two files — RG-LEX-006). Built with the `grammar/v0.18.3`
+CLI, which rebuilt master's archive byte for byte first (`check-lexicon` up to date at `sha256:85f14290…`).
+
+| | |
+|---|---|
+| archive id | `sha256:6c26c9758afeb69583d4b6757570d76b73d557dbaccce0e878bd88a9819d4798` (was `85f14290…`) |
+| model id | `sha256:406f1af6007f1364fe1416f34332c77d6a23e3d703702fe3d8297aeeb1791304` (was `8a5d11de…`: `sales`, the union query, the facts' labels) |
+| schema | `ttr-lexicon-compiled/v6` |
+| toolchain | `Collite/ttr-core` `grammar/v0.18.1` (the pin; the v0.18.3 CLI builds the same bytes) |
+| entries | **789** (was 812) — **`MEMBER` 219** (was 182: **+37 `DECLARED`**, the channel words on `sales.channel`'s three values; the six value labels fold into them, RG-LEXC-002) · **`MODEL_OBJECT` 283** (was 343: the channel facts' labels, terms and phrases, `channel_sales`' labels; `sales`' labels in) · every other class unchanged |
+| targets | **57** (was 63) — out: `store_sales`, `web_sales`, `catalog_sales` and their `ext_sales_price`, `channel_sales` and its three attributes; in: `sales`, `sales.channel`, `sales.ext_sales_price`, `sales.quantity` |
+| build warnings | **7** (was 24) — all RG-LEXC-002: a declared channel word that is also its value's label, and «prodejna» on the store dimension (its label) |
+| size | 14,944 bytes |
+
+### 2026-10-23 (CN-P4 S4.5, archive v6)
 
 From `just build-lexicon`, **2026-10-23**, CN-P4 S4.5 (branch `cn/p4-archive-v6`): the toolchain pin moves to
 **`grammar/v0.18.1`**, and the archive is rebuilt as **`ttr-lexicon-compiled/v6`** — the schema whose readers (lex-matcher

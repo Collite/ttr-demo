@@ -7,13 +7,14 @@ import assert from 'node:assert/strict';
 import { loadHartlandProject, ACCEPTED_RESIDUAL_CODES } from '../../tests/project-harness.mjs';
 
 // D-5 roster (05-d-ttrm-spec.md) — the 19 D-5 entities, no D-5-Out entity (time_dim, web_site,
-// web_page, catalog_page, ship_mode, dbgen_version) — plus `channel_sales` (2026-09-24), the
-// all-channel view-backed fact that lets "revenue by channel" be asked on the fast path — plus
+// web_page, catalog_page, ship_mode, dbgen_version) — plus `sales` (md/hop HP-H, 2026-10-24; it replaced the
+// view-backed `channel_sales` of 2026-09-24), the all-channel fact stacked on the logical query
+// `er.query.sales_union` that lets "revenue by channel" be asked on the fast path — plus
 // `customer_revenue` (LQ, 2026-10-18), stacked on the logical query `er.query.revenue_per_customer`, and
 // `dc_stockout_month` and `category_return_month` (BI-4, 2026-10-22), stacked on `er.query.stockouts_monthly_dc` and
 // `er.query.returns_monthly_by_category`.
 const EXPECTED_ENTITIES = [
-  'store_sales', 'web_sales', 'catalog_sales', 'channel_sales', 'customer_revenue', 'dc_stockout_month', 'category_return_month',
+  'store_sales', 'web_sales', 'catalog_sales', 'sales', 'customer_revenue', 'dc_stockout_month', 'category_return_month',
   'store_returns', 'web_returns', 'catalog_returns',
   'inventory', 'date_dim', 'item', 'customer', 'customer_address',
   'customer_demographics', 'household_demographics', 'income_band',
@@ -50,7 +51,7 @@ test('T6.1 — parse-clean: every model/er + model/binding file parses with zero
   assert.deepEqual(offenders, [], `parse errors: ${offenders.join('; ')}`);
 });
 
-test('T6.2 — exactly the D-5 entities (+ channel_sales, + the AU extension) are declared, no D-5-Out entity', () => {
+test('T6.2 — exactly the D-5 entities (+ sales, + the AU extension) are declared, no D-5-Out entity', () => {
   const entities = allDefsOfKind('entity').map((e) => e.def.name);
   const missing = EXPECTED_ENTITIES.filter((e) => !entities.includes(e));
   const stray = D5_OUT.filter((e) => entities.includes(e));
@@ -122,11 +123,13 @@ test('T6.5 — er2db completeness: every entity has an er2db_entity, every attri
   assert.deepEqual(unboundAttributes, [], `attributes without er2db_attribute: ${unboundAttributes.join(', ')}`);
 });
 
-test('T6.6 — ResolveArea("hartland") is green: non-empty, contains the 3 channel facts', () => {
+test('T6.6 — ResolveArea("hartland") is green: non-empty, contains sales and the 3 channel facts it reads', () => {
   const resolved = project.areaTable.get('hartland');
   assert.ok(resolved, 'area "hartland" not found');
   assert.ok(resolved.resolvedEntities.length > 0, 'resolvedEntities is empty');
-  for (const fact of ['catalog_sales', 'store_sales', 'web_sales']) {
+  // The area names the all-channel fact; the three channel facts stay in its package (the union reads them) and
+  // left the agents' VOCABULARY (⚑H-7, lexicon/tests/store-family.test.mjs), not the model.
+  for (const fact of ['sales']) {
     assert.ok(
       resolved.resolvedEntities.includes(`hartland.er.entity.${fact}`),
       `resolvedEntities missing ${fact}: ${resolved.resolvedEntities.join(', ')}`,
@@ -146,32 +149,29 @@ test('T6.7 — measures policy (D-6a): no profit/margin/cost token in any er att
   assert.deepEqual(offenders, [], `profit/margin attribute leaked into er: ${offenders.join(', ')}`);
 });
 
-// LR ⚑LR-9 (C-5·4) — the DC-scope persona's row rule narrows channel_sales and web_sales by their
-// distribution centre, so the model says how each reaches one. channel_sales' reach is NULLABLE: a
-// store line is not fulfilled by a DC (`warehouse_sk` is NULL there), so the join keeps only web and
-// marketplace lines — exactly what the persona's rule leaves them. web_sales follows catalog_sales.
+// LR ⚑LR-9 (C-5·4) — the DC-scope persona's row rule narrows web_sales and catalog_sales by their
+// distribution centre, so the model says how each reaches one. `sales` reads them through its union, and its reach
+// is NULLABLE: a store line is not fulfilled by a DC (its `warehouse` is NULL), so the join keeps only web and
+// marketplace lines. web_sales follows catalog_sales.
 const objectEntry = (node, key) => node?.entries?.find((e) => e.key === key)?.value;
+const byName = (kind, name) => allDefsOfKind(kind).find((d) => d.def.name === name)?.def;
+const joinPairs = (r) => (r?.join?.items ?? []).map((o) => [objectEntry(o, 'from')?.path, objectEntry(o, 'to')?.path]);
 
-test('LR ⚑LR-9 — channel_sales and web_sales reach the distribution centre; a store line reaches none', () => {
-  const byName = (kind, name) => allDefsOfKind(kind).find((d) => d.def.name === name)?.def;
-  const expected = [
-    ['channel_sales', 'rel_channel_sales_warehouse', 'db.dbo.fk_chs_warehouse', 'db.dbo.channel_sales.warehouse_sk', '0..1'],
-    ['web_sales', 'rel_web_sales_warehouse', 'db.dbo.fk_ws_warehouse', 'db.dbo.web_sales.ws_warehouse_sk', '1'],
-  ];
-  for (const [entity, relation, fk, column, to] of expected) {
-    const e = byName('entity', entity);
-    assert.ok(e?.attributes?.some((a) => a.name === 'warehouse'), `${entity} has no 'warehouse' attribute`);
+test('LR ⚑LR-9 — sales and web_sales reach the distribution centre; a store line reaches none', () => {
+  const sales = byName('relation', 'rel_sales_warehouse');
+  assert.ok(byName('entity', 'sales')?.attributes?.some((a) => a.name === 'warehouse'), "sales has no 'warehouse' attribute");
+  assert.ok(sales, 'rel_sales_warehouse is not declared');
+  assert.equal(sales.from.path, 'er.entity.sales');
+  assert.equal(sales.to.path, 'er.entity.warehouse');
+  assert.equal(sales.binding ?? undefined, undefined, 'a stacked entity has no foreign key');
+  assert.deepEqual(joinPairs(sales), [['er.entity.sales.warehouse', 'er.entity.warehouse.sk']]);
+  assert.equal(objectEntry(sales.cardinality, 'to')?.value, '0..1', 'rel_sales_warehouse cardinality.to');
 
-    const r = byName('relation', relation);
-    assert.ok(r, `${relation} is not declared`);
-    assert.equal(r.from.path, `er.entity.${entity}`);
-    assert.equal(r.to.path, 'er.entity.warehouse');
-    assert.equal(r.binding?.fk?.path, fk);
-    assert.equal(objectEntry(r.cardinality, 'to')?.value, to, `${relation} cardinality.to`);
-
-    const bound = allDefsOfKind('er2dbAttribute').find((a) => a.def.attribute.path === `er.entity.${entity}.warehouse`);
-    assert.equal(objectEntry(bound?.def.target, 'column')?.path, column, `${entity}.warehouse binds to ${column}`);
-  }
+  const web = byName('relation', 'rel_web_sales_warehouse');
+  assert.ok(byName('entity', 'web_sales')?.attributes?.some((a) => a.name === 'warehouse'), "web_sales has no 'warehouse' attribute");
+  assert.equal(web?.binding?.fk?.path, 'db.dbo.fk_ws_warehouse');
+  const bound = allDefsOfKind('er2dbAttribute').find((a) => a.def.attribute.path === 'er.entity.web_sales.warehouse');
+  assert.equal(objectEntry(bound?.def.target, 'column')?.path, 'db.dbo.web_sales.ws_warehouse_sk');
 });
 
 // ttr-demo#62 remedy 3 (Bora, 2026-10-12) — "How many stores do we have?" is 6, not 12. `store` keeps
@@ -195,7 +195,7 @@ test('#62 — store says it is SCD-2: the validity pair on its history columns, 
 
 test('T-LQ — customer_revenue is stacked on a logical query: declared in a model er file, no parameters, relations by join pairs', () => {
   const stacked = allDefsOfKind('entity').filter(({ def }) => stackedOnQuery(def));
-  assert.deepEqual(stacked.map(({ def }) => def.name).sort(), ['category_return_month', 'customer_revenue', 'dc_stockout_month']);
+  assert.deepEqual(stacked.map(({ def }) => def.name).sort(), ['category_return_month', 'customer_revenue', 'dc_stockout_month', 'sales']);
   const { def: entity, uri } = stacked.find(({ def }) => def.name === 'customer_revenue');
 
   const target = entity.binding.target.entries.find((e) => e.key === 'query').value;
@@ -355,4 +355,88 @@ test('T-LQ-BI — category_return_month is stacked on the logical query returns_
     assert.doesNotMatch(fold(label), /^(reklamace|vratky|returns?|return requests?)$/, `the label «${label}» is a returns word`);
   }
   assert.deepEqual(entity.semantics?.entries?.measures, ['requests', 'amount']);
+});
+
+// md/hop HP-H (⚑H-1, Bora 2026-10-22) — ONE all-channel entity, `sales`, stacked on a logical query over the three
+// channel facts: the union lives in the model, so every column of `sales` traces to the facts (R7), where the old
+// `channel_sales` read a db view whose lineage the model could not see. ⚑H-7: the three facts are its sources only.
+test('HP-H — sales is stacked on the logical query sales_union: three branches, one per channel fact, in the entity\'s column order', () => {
+  const found = allDefsOfKind('entity').find(({ def }) => def.name === 'sales');
+  assert.ok(found, 'sales is declared');
+  const { def: entity, uri } = found;
+  assert.equal(objectEntry(entity.binding.target, 'query')?.path, 'er.query.sales_union');
+
+  const ast = project.asts.get(uri);
+  assert.equal(ast.modelDirective?.modelCode, 'er', 'the query lives in a `model er` file — that is what makes it logical');
+  const query = (ast.definitions ?? []).find((d) => d.kind === 'query' && d.name === 'sales_union');
+  assert.ok(query, 'the logical query is declared beside the entity');
+  assert.equal(query.parameters ?? undefined, undefined, 'a logical query takes no parameters');
+  const entityNames = new Set(allDefsOfKind('entity').map(({ def }) => def.name));
+  assert.ok(!entityNames.has(query.name), `the logical query shares its local name with an entity: ${query.name}`);
+
+  const body = query.sourceText?.value ?? '';
+  assert.doesNotMatch(body, /\bdb\.|\bdbo\b|\b(ss|ws|cs)_\w+/i, 'the body names a table or a physical column');
+  const branches = body.split(/\bunion\s+all\b/i);
+  assert.equal(branches.length, 3, 'one branch per channel fact');
+  const attributes = (entity.attributes ?? []).map((a) => a.name);
+  const channels = [];
+  branches.forEach((branch, i) => {
+    const from = /\bfrom\s+(\w+)\s*$/i.exec(branch.trim())?.[1];
+    assert.equal(from, ['store_sales', 'web_sales', 'catalog_sales'][i], `branch ${i + 1} reads one channel fact`);
+    const items = outerSelectList(branch).map((c) => c.trim());
+    // The union's columns are matched by POSITION, so every branch names each output where the entity declares it.
+    assert.deepEqual(items.map((c) => c.split(/\s+as\s+/i).pop().trim()), attributes, `branch ${i + 1}'s outputs`);
+    channels.push(/'(\w+)'/.exec(items[0])?.[1]);
+    // VARCHAR, never a bare literal: the translator types bare literals CHAR(n) and pads them to one width.
+    assert.match(items[0], /^cast\('\w+' as varchar\(\d+\)\)\s+as\s+channel$/i, `branch ${i + 1}'s channel is a VARCHAR`);
+  });
+  // The channel a branch writes is a value `channel`'s labels name: the words that restrict by it.
+  const channel = entity.attributes.find((a) => a.name === 'channel');
+  assert.deepEqual(channels, ['store', 'web', 'marketplace']);
+  const labelled = (channel.valueLabels?.entries ?? []).map((e) => String(e.key).replace(/"/g, ''));
+  assert.deepEqual(labelled.sort(), [...channels].sort(), "sales.channel's value labels");
+
+  // No foreign key: relations state join pairs, each from a column of `sales` to the dimension's key.
+  const pairs = Object.fromEntries(
+    allDefsOfKind('relation').map(({ def }) => def).filter((r) => r.from?.path === 'er.entity.sales').map((r) => {
+      assert.equal(r.binding ?? undefined, undefined, `${r.name}: a stacked entity has no foreign key, so the relation has no binding`);
+      return [r.to.path, joinPairs(r)];
+    }),
+  );
+  assert.deepEqual(pairs, {
+    'er.entity.date_dim': [['er.entity.sales.sold_date', 'er.entity.date_dim.sk']],
+    'er.entity.item': [['er.entity.sales.item', 'er.entity.item.sk']],
+    'er.entity.customer': [['er.entity.sales.customer', 'er.entity.customer.sk']],
+    'er.entity.promotion': [['er.entity.sales.promo', 'er.entity.promotion.sk']],
+    'er.entity.store': [['er.entity.sales.store', 'er.entity.store.sk']],
+    'er.entity.warehouse': [['er.entity.sales.warehouse', 'er.entity.warehouse.sk']],
+  });
+  assert.deepEqual(entity.semantics?.entries?.measures, ['ext_sales_price', 'quantity'], 'revenue first: the default measure of a bare „tržby“');
+});
+
+test('HP-H — channel_sales is folded into sales; customer_revenue reads sales', () => {
+  assert.equal(byName('entity', 'channel_sales'), undefined, 'the view-backed channel_sales entity is gone');
+  const stale = [
+    ...allDefsOfKind('relation').filter(({ def }) => [def.from?.path, def.to?.path].includes('er.entity.channel_sales')).map(({ def }) => def.name),
+    ...allDefsOfKind('er2dbEntity').filter(({ def }) => def.entity.path === 'er.entity.channel_sales').map(({ def }) => def.name),
+  ];
+  assert.deepEqual(stale, [], 'something still names er.entity.channel_sales');
+  const body = allDefsOfKind('query').find(({ def }) => def.name === 'revenue_per_customer')?.def.sourceText?.value ?? '';
+  assert.match(body, /\bfrom\s+sales\s+join\s+customer\b/i, 'customer revenue sums the all-channel lines of sales');
+  assert.match(body, /sum\(sales\.ext_sales_price\)/i);
+});
+
+test('⚑H-7 — the three channel facts are sources only: no label, so no METADATA term an agent could bind', () => {
+  for (const name of ['store_sales', 'web_sales', 'catalog_sales']) {
+    const e = byName('entity', name);
+    assert.ok(e, `${name} is declared (sales reads it)`);
+    assert.equal(e.labelPlural ?? undefined, undefined, `${name} carries a labelPlural`);
+    assert.equal(e.displayLabel ?? undefined, undefined, `${name} carries a displayLabel`);
+  }
+  // `sales`' own label names the object, never a revenue or channel word (a label outranks a declared phrase).
+  const fold = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const sales = byName('entity', 'sales');
+  for (const label of [...Object.values(sales.displayLabel?.entries ?? {}), sales.labelPlural ?? '']) {
+    assert.doesNotMatch(fold(label), /^(trzby|trzba|obrat|revenues?|kanaly?|channels?|trziste|marketplace|prodejny?|stores?|web)$/, `the label «${label}» is a revenue or channel word`);
+  }
 });

@@ -58,8 +58,10 @@
 # one.
 #
 # ✅ 2026-09-24 — the modelling one landed: `er.entity.channel_sales`, a view-backed fact (see
-# the "REVENUE and CHANNEL — all channels" section below). Everything above stays true of the
-# three per-channel entities; the bare words now point at the one object that carries all three.
+# the "REVENUE and CHANNEL — all channels" section below), replaced by `er.entity.sales` over the
+# model's own union query at md/hop HP-H (2026-10-24). The bare words point at the one object that
+# carries all three channels, and since HP-H every channel word does too: the three per-channel
+# entities are its sources only (⚑H-7), and the channel-qualified phrases below are gone.
 #
 # ── Sourcing ─────────────────────────────────────────────────────────────────────────
 # Every term is attested. The `search { patterns }` blocks in
@@ -67,22 +69,22 @@
 # come from `design/demo-transcript.md` and both Shems' `example_questions`.
 #
 # ── What this file deliberately does NOT declare ─────────────────────────────────────
-# ✅ `tržby z prodejen` — DECLARED since ttr-demo#62 (2026-10-14), on the measure, beside its
-#   singular. Until then the exact string was a METADATA row (harvested from
-#   `store_sales.displayLabel.cs`, "Tržby z prodejen") pointing at the ENTITY, and a label beats
-#   any declared phrase (EXACT 1.168 on three words; a profiled EXACT scores 1.000 and a TOKENS
-#   phrase is a class below), so «Tržby z prodejen za 2025» bound the entity and the door could
-#   not answer. The clean fix this note asked for is done: the label is now "Prodeje v prodejnách",
-#   which names the fact, as the other two channels' labels do.
-# Bare channel words (`marketplace`, `web`, `prodejna`, …) — declared once already, on the
-#   `.ttrm` sugar surface (`model/lexicon/{cs,en}/channels.ttrm`). Restating one here is
-#   the same declared layer speaking twice, and `tests/area.test.mjs`'s T4 guard fails it.
+# Channel-qualified revenue phrases (`tržby z prodejen`, "marketplace revenue", …) — declared on each
+#   channel fact's measure from 2026-08-13 (`tržby z prodejen` from ttr-demo#62, 2026-10-14) until
+#   md/hop HP-H (2026-10-24) made the three facts sources of `sales` only (⚑H-7). The revenue word
+#   and the channel word now bind separately — see "REVENUE — channel-qualified" below. The facts
+#   carry no label either: a label is a METADATA term and beats any declared phrase (EXACT 1.168 on
+#   three words — «Tržby z prodejen za 2025» once bound `store_sales` itself through one).
+# Bare channel words (`marketplace`, `web`, `prodejna`, …) — declared once, in `channels.lex.yaml`
+#   beside this file (the values of `sales.channel`, md/hop HP-H; the `.ttrm` sugar surface carried
+#   them until then). A file may not give one word two targets (RG-LEX-006), and the store word has
+#   two on purpose — the channel there, the dimension below.
 # UNITS SOLD and RETURNED AMOUNT — same three-entity shape as revenue, and unlike revenue
 #   they have no attested channel-qualified surface: the corpus says "units sold" and
 #   "returns", never "marketplace units". Inventing one to dodge RG-LEX-006 would put words
 #   in users' mouths, which is the one thing this area's discipline forbids. They wait for
 #   the same md/modelling exercise as the bare words above.
-#   ✅ UNITS SOLD landed 2026-09-24 on `channel_sales.quantity` (the modelling exercise). RETURNED
+#   ✅ UNITS SOLD landed 2026-09-24 on `channel_sales.quantity` (the modelling exercise; `sales.quantity` since HP-H). RETURNED
 #   AMOUNT still waits: returns are three entities with no all-channel view yet.
 #   ✅ The channel-qualified half of RETURNED AMOUNT landed 2026-10-14 (ttr-demo#62, Bora's ruling
 #   „vratka / vratky“ → the returns measure): «vratky z prodejen» and its twins, see "RETURNS"
@@ -108,69 +110,28 @@ defaults:
     - { norm: canonical, exact: 1.00, typos: { distance: 1, penalty: 0.05 } }
     - { norm: folded,    exact: 0.90 }
 entries:
-  # ══ REVENUE — channel-qualified ═══════════════════════════════════════════════════
-  # One object, one column, SUM — the shape the fast path renders.
+  # ══ REVENUE — channel-qualified: NOT a phrase any more (md/hop HP-H, ⚑H-7) ════════════
+  # Until 2026-10-24 «tržby z tržiště», "marketplace revenue", «obrat z prodejen» and their twins were TOKENS
+  # phrases on each channel fact's measure (`catalog_sales` / `web_sales` / `store_sales`.ext_sales_price). Those
+  # three facts are now sources of `sales` only (model/er/sales.ttrm) and no word reaches them. A channel-qualified
+  # question COMPOSES instead: the revenue word binds the measure below (`sales.ext_sales_price`), the channel word
+  # binds the channel — a value label of `sales.channel` (model/lexicon/{cs,en}/channels.ttrm) the resolver binds as
+  # `er.entity.sales.channel#marketplace` — and the door restricts by it: `channel = 'marketplace'`.
+  # A phrase cannot say both: it is one span with one target, and a span on the member alone would leave the
+  # question no measure to read. The inflected channel words the phrases used to carry by TOKENS («webu»,
+  # «tržišti», «prodejen») are spelled out on the channel's terms instead.
 
-  # ── Marketplace revenue → er.entity.catalog_sales.ext_sales_price ────────────────────
-  # q_hartland `channel_revenue_yoy`: "how did (marketplace |web |store |)revenue develop
-  # in {year}", "jak se vyvijela trzba (z trziste |z webu |z prodejen |)(v roce|za rok)
-  # {year}"; `marketplace_revenue_by_warehouse`: "marketplace revenue by
-  # (warehouse|distribution center|DC)", "trzby z trziste (podle|dle) (skladu|…)".
-  # Both Shems lead with "How did Marketplace revenue develop in 2025?" / "Jak se vyvíjela
-  # tržba z tržiště v roce 2025?" — and the failing question of 2026-08-13 is this row.
-  - terms:
-      - { text: "tržby z tržiště", method: TOKENS }
-      - { text: "tržba z tržiště", method: TOKENS }
-      - { text: "tržeb z tržiště", method: TOKENS }
-      # 2026-10-09 (LR, CZ-world smoke): script 1.4's synonym „Obrat z tržiště po čtvrtletích“ bound
-      # the bare `obrat` (→ all channels, below) and dropped `tržiště`: the four quarters of every
-      # channel, told as the marketplace's. The channel-qualified phrase is the longer span and wins.
-      - { text: "obrat z tržiště", method: TOKENS }
-      - { text: "obratu z tržiště", method: TOKENS }
-      - { text: "marketplace revenue", lang: en, method: TOKENS }
-      - { text: "marketplace sales", lang: en, method: TOKENS }
-    target: er.entity.catalog_sales.ext_sales_price
 
-  # ── Web revenue → er.entity.web_sales.ext_sales_price ────────────────────────────────
-  # `channel_revenue_yoy` example: "Compare Web and Marketplace revenue, 2024 vs 2025" /
-  # "Porovnej tržby z webu a tržiště, 2024 vs 2025"; `category_revenue` example: "Revenue
-  # by category for Web". ⚑ That comparison names TWO channels and therefore two objects —
-  # it is a two-object question the door refuses by design, and it is answered by the
-  # `channel_revenue_yoy` PATTERN, not by the fast path. These rows still earn their place:
-  # they are what makes the single-channel half of the same vocabulary resolve.
-  - terms:
-      - { text: "tržby z webu", method: TOKENS }
-      - { text: "tržba z webu", method: TOKENS }
-      - { text: "tržby z e-shopu", method: TOKENS }
-      - { text: "obrat z webu", method: TOKENS }
-      - { text: "obratu z webu", method: TOKENS }
-      - { text: "web revenue", lang: en, method: TOKENS }
-      - { text: "online revenue", lang: en, method: TOKENS }
-    target: er.entity.web_sales.ext_sales_price
-
-  # ── Store revenue → er.entity.store_sales.ext_sales_price ────────────────────────────
-  # Same two patterns, the "store |"/"z prodejen " arm. The plural `tržby z prodejen` (MH E2,
-  # «Tržby z prodejen za 2025») and the genitive `tržeb z prodejen` joined on 2026-10-14 —
-  # ttr-demo#62 remedy 1, and see the header for why they could not before.
-  - terms:
-      - { text: "tržby z prodejen", method: TOKENS }
-      - { text: "tržba z prodejen", method: TOKENS }
-      - { text: "tržeb z prodejen", method: TOKENS }
-      - { text: "obrat z prodejen", method: TOKENS }
-      - { text: "obratu z prodejen", method: TOKENS }
-      - { text: "store revenue", lang: en, method: TOKENS }
-      - { text: "retail revenue", lang: en, method: TOKENS }
-    target: er.entity.store_sales.ext_sales_price
-
-  # ══ REVENUE and CHANNEL — all channels → er.entity.channel_sales ═════════════════════
-  # 2026-09-24. The bare words the header explains away now have ONE target each: the
-  # view-backed `channel_sales` (data/views/channel_sales.sql · model/er/sales.ttrm) — the
-  # "modelling exercise" the header names. On it the channel is a COLUMN and revenue is ONE
-  # measure, so RG-LEX-006 has nothing to object to and *"revenue by channel for 2025 by month"*
-  # binds deterministically: `revenue` → the measure (MS: first in `semantics { measures }`),
-  # `channel` → the grouping, `by month` / `2025` → the calendar via `rel_channel_sales_date`.
-  # The channel-QUALIFIED rows above keep their single-channel targets — *"marketplace revenue"*
-  # still means catalog_sales; the longer span wins.
+  # ══ REVENUE and CHANNEL — all channels → er.entity.sales ══════════════════════════════
+  # 2026-09-24. The bare words the header explains away now have ONE target each: the all-channel
+  # fact — `channel_sales` on the db view until md/hop HP-H (2026-10-24), `sales` over the model's own
+  # union query since (model/er/sales.ttrm) — the "modelling exercise" the header names. On it the
+  # channel is a COLUMN and revenue is ONE measure, so RG-LEX-006 has nothing to object to and
+  # *"revenue by channel for 2025 by month"* binds deterministically: `revenue` → the measure (MS:
+  # first in `semantics { measures }`), `channel` → the grouping, `by month` / `2025` → the calendar
+  # via `rel_sales_date`. *"Marketplace revenue"* is the same measure restricted by the channel (above).
+  # `sales` (en, HP-H): "marketplace sales" was a phrase on the marketplace fact; the word now carries
+  # the measure on its own, beside its channel word.
   #
   # Sourcing: `revenue`/`channel` — the `channel_revenue_monthly` / `channel_revenue_yoy` patterns
   # and examples ("Monthly revenue by channel", "revenue by channel over time"); `tržby`/`tržeb`/
@@ -183,7 +144,8 @@ entries:
       - { text: "obrat" }
       - { text: "revenue", lang: en }
       - { text: "revenues", lang: en }
-    target: er.entity.channel_sales.ext_sales_price
+      - { text: "sales", lang: en }
+    target: er.entity.sales.ext_sales_price
 
   - terms:
       - { text: "kanál" }
@@ -192,9 +154,9 @@ entries:
       - { text: "kanálů" }
       - { text: "channel", lang: en }
       - { text: "channels", lang: en }
-    target: er.entity.channel_sales.channel
+    target: er.entity.sales.channel
 
-  # ── Units sold → er.entity.channel_sales.quantity ───────────────────────────────────
+  # ── Units sold → er.entity.sales.quantity ───────────────────────────────────────────
   # 2026-09-24. The second measure of the all-channel fact, and the "UNITS SOLD" the header
   # listed as waiting for the same modelling exercise. Asked live on hartland ("Show units sold
   # by channel for 2025"): the `local` rung reached the model and still asked back — a measure
@@ -207,7 +169,7 @@ entries:
       - { text: "sold units", lang: en, method: TOKENS }
       - { text: "prodané kusy", method: TOKENS }
       - { text: "prodaných kusů", method: TOKENS }
-    target: er.entity.channel_sales.quantity
+    target: er.entity.sales.quantity
 
   # ══ RETURNS — channel-qualified → er.entity.<channel>_returns.return_amt ══════════════
   # 2026-10-14, ttr-demo#62 (Bora's ruling of 2026-10-12): „vratka / vratky“ → the returns
@@ -245,9 +207,30 @@ entries:
       - { text: "vratek z tržiště" }
     target: er.entity.catalog_returns.return_amt
 
+  # ══ STORE — the six-store DIMENSION → er.entity.store ════════════════════════════════
+  # LP-P3·T9 (2026-09-28): on hartland Czech «prodejny» bound only the store CHANNEL, never this dimension,
+  # because `displayLabel.cs: "Prodejna"` is not a mention term — so «prodejny začínající na „abl“» had no
+  # head to attribute the quoted literal to; this gives the dimension its Czech forms, and ttr-demo#62 its
+  # cases. The word is claimed by the dimension AND the store channel ON PURPOSE (✅MH-D6): the resolver's
+  # slot decides (`channels.lex.yaml` says how). Moved here from `model/lexicon/cs/channels.ttrm` at md/hop
+  # HP-H, when the channel reading became a member the `.ttrm` sugar cannot target — the two readings of one
+  # word must sit on the same surface (`tests/area.test.mjs` T4) and in two files (RG-LEX-006). EXACT, as the
+  # sugar compiled it: one edit from «prodejen» is «prodejem», a sale.
+  - terms:
+      - { text: "prodejna", method: EXACT }
+      - { text: "prodejny", method: EXACT }
+      - { text: "prodejně", method: EXACT }
+      - { text: "prodejnu", method: EXACT }
+      - { text: "prodejnou", method: EXACT }
+      - { text: "prodejen", method: EXACT }
+      - { text: "prodejnám", method: EXACT }
+      - { text: "prodejnách", method: EXACT }
+      - { text: "prodejnami", method: EXACT }
+    target: er.entity.store
+
   # ══ PRODUCT CATEGORY → er.entity.item.category ═══════════════════════════════════════
   # 2026-09-24. `item.category` had no declared word, so "revenue by category" gapped (G1) on
-  # the grouping. With channel_sales → item (`rel_channel_sales_item`) the fast path can now
+  # the grouping. With sales → item (`rel_sales_item`; `channel_sales` until HP-H) the fast path can now
   # group ANY channel's revenue by category; `category_revenue` stays the one-channel pattern.
   # Sourcing: `category_revenue` ("Revenue by product category"), the Shem example "Which
   # categories drove the H2 2025 drop?" / "Které kategorie způsobily propad…", and the demo
@@ -281,8 +264,9 @@ entries:
   # ⚑ Why the calendar is worth binding at all: `er.entity.date_dim` is a separate entity from
   # the sales facts, so a question grouped by month spans TWO objects. That used to be an
   # automatic refusal; since RV-P6.6 the door checks the model for a direct relation and
-  # hartland declares exactly one per fact (`rel_catalog_sales_date` and its siblings, each
-  # bound to a named FK), so `EXPAND_JOINS-logical` resolves the join downstream.
+  # hartland declares exactly one per fact (`rel_sales_date` for the all-channel fact, by its join
+  # pair; `rel_catalog_sales_date` and its siblings, each bound to a named FK), so
+  # `EXPAND_JOINS-logical` resolves the join downstream.
   #
   # ⚠ `week_seq` is an ABSOLUTE week counter from the start of the calendar, not a week-of-year
   # — the demo's "weeks 31–47" language reads off it directly (`data/recon/R0.md`), so the word
@@ -399,13 +383,12 @@ entries:
   # labelled "Customer Totals" / „Souhrny zákazníků“ and the phrase lives here.
   # Sourcing: authored with the entity — the LQ acceptance question ("average customer revenue by
   # household buying potential", „průměrné tržby zákazníka podle kupního potenciálu domácnosti“).
-  # The longer span wins over the bare `revenue` / `tržby` above (channel_sales), as the
-  # channel-qualified rows do.
+  # The longer span wins over the bare `revenue` / `tržby` above (sales).
   #
   # ⛔ NOT `method: TOKENS` — the RETURNS exception above, for two reasons of its own:
   #   - a TOKENS row carries its own match profile (canonical tokens only), so it drops this file's
   #     `folded` rule: «prumerne trzby zakaznika …», typed without diacritics — this estate's most
-  #     common input — would miss the phrase and bind the bare `tržby` (channel_sales): the average
+  #     common input — would miss the phrase and bind the bare `tržby` (sales): the average
   #     SALES LINE, not the average customer, a plausible number nothing flags;
   #   - a TOKENS row is reached by its fragments, and two of these are built on `per` / `na`, which the
   #     stdlib's avg skill (ttr-core#178) refuses as triggers because they usually name a grouping or a
