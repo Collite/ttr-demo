@@ -29,7 +29,6 @@ const docs = [...project.asts]
     namespace: ast.modelDirective?.schema ?? '',
   }));
 const report = semantics.cnHygieneReport(docs, project.resolver);
-const row = (ref) => report.concepts.find((c) => c.concept === ref);
 
 const defs = (pred) => [...project.asts]
   .filter(([uri]) => uri.startsWith('file://'))
@@ -73,7 +72,6 @@ test('C3 — A-H-5: every md-grounded concept reaches er through the derived hop
 });
 
 test('C4 — the landings the acceptance reads: Sale on `sales` (A-CN-100), revenue on its column through its bearer (L16-6)', () => {
-  const lands = (ref) => row(ref)?.landing ?? row(ref)?.erTarget ?? row(ref)?.landsOn;
   const expected = {
     'cn.Sale': 'er.entity.sales',
     'cn.Channel': 'er.entity.sales.channel',
@@ -91,7 +89,6 @@ test('C4 — the landings the acceptance reads: Sale on `sales` (A-CN-100), reve
     assert.ok(golden.includes(`| ${ref} |`), `${ref} is in the golden`);
     const line = golden.split('\n').find((l) => l.startsWith(`| ${ref} |`));
     assert.ok(line.split('|').some((cell) => cell.trim().split(' ')[0] === er), `${ref} lands on ${er}: ${line}`);
-    void lands;
   }
 });
 
