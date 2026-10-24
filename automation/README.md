@@ -9,10 +9,12 @@ service beside `../model/` (ttr-server contracts §1.1):
 | `automation.ttrm` | `model automation`, package `hartland.automation`: the parameters, actions, roles and approvals (`17` §1) |
 | `programs.ttrm` | the programs and the event schemas (`17` §1) |
 | `worlds/demo.ttrm` | the world `hartland.worlds.demo`: engines, storages with `writable:`, and its automation half — the identity, executors, grants, deployments and the `return_line_flow` process (`17` §2) |
-| `<recipe>/<recipe>.md` | the literate source (H-1 `release_order` from P3 S3.1; remaining documents/twins follow in S3.2/S3.3) |
-| `<recipe>/<recipe>.ttrp` | H-1 derived from Markdown; remaining recipes still authored as `.ttrp` |
+| `release_order/release_order.md` | H-1 literate source |
+| `handling-a-return-request.md` | H-2 source: Deciding → `decide_return`, Inbound → `monitor_inbound`, Outbound → `settle` |
+| `<recipe>/<recipe>.ttrp` | H-1/H-2 derived from Markdown; H-3/H-5/ops still authored as `.ttrp` |
 | `<recipe>/<recipe>.ttrd` | generated Markdown/canonical spans and document SHA |
 | `<recipe>/<recipe>/README.md` | generated explanation, in the current compiler's unnamed-document output layout; also included in the bundle |
+| `<recipe>/README.md` | H-2 explanation beside each named recipe's canonical program and bundle |
 | `<recipe>/tests/*.yaml` | the golden cases (contracts §7; seeds until pinned from a debug run) |
 | `tests/` | the package's suites (`just verify-model` runs them) |
 
@@ -32,7 +34,7 @@ Recipe bundles use the independent `[ttrp]` pin in `../toolchain.lock`; the mode
 ```sh
 just toolchain-ttrp   # isolated .modeler/toolchains/ttrp checkout, then Gradle installDist
 just check-recipes   # cheap checker pass for the six buildable business recipes
-just build-recipes   # derive H-1 from Markdown; build the other five .ttrp recipes; refuse every diagnostic
+just build-recipes   # derive H-1/H-2 once per document; build H-3/H-5 .ttrp; refuse every diagnostic
 just check-literate-recipes # read-only Markdown/canonical/provenance/README check; exits 3 on drift
 just verify-model    # model/lexicon checks still need the model-gate toolchain beside the repo
 ```
@@ -45,14 +47,25 @@ recipe or golden seed changes. The bundles include the golden YAML seeds and the
 CI checks literate artifacts before rebuilding. A prose-only source edit, canonical hand edit, missing sidecar or
 changed explanation fails; rebuild the document and commit all derived artifacts together.
 
-The recipe toolchain now pins **grammar/v0.18.7**, including the released P3 document frontend and explanation
-renderer. The model/reader pins remain independent. H-1's `release_order.md` is authoritative; its canonical
+The recipe toolchain pins the exact compiler fix commit **11d1864**, based on **grammar/v0.18.7**, stamped
+**0.18.7-auh.1**. It preserves each H-2 recipe's own golden tests and places its bundle beside the canonical
+program. This development pin awaits upstream review; it does not require a serving-reader change.
+The model/reader pins remain independent. H-1's `release_order.md` is authoritative; its canonical
 recipe preserves P2's code apart from whitespace/comments. The `.ttrd` records the actual source filename and
 spans. The existing `document: "releasing-a-placed-order.md"` identifier is retained for compatibility with the
 shared recipe fixture. The current unnamed-document compiler emits the standalone explanation under
 `release_order/README.md` inside the recipe directory; keep that generated layout for native `build --check`.
-All six bundle manifests now hash their generated READMEs. SQL, schemas, catalog files and golden seeds remain
-unchanged by this authoring migration.
+H-2's `handling-a-return-request.md` is beside the three existing recipe folders, preserving their published
+paths. All three programs equal P2 after removing whitespace/comments, including the conditional credit-note
+and replacement expectations. Its sidecars point into the same source document and its explanations use the
+document title. The visibility-policy sentence remains prose with a policy-only HTML comment.
+
+The build discovers fenced recipe documents and existing sidecar owners; it builds each source once and
+skips its derived programs. The read-only check also follows sidecars if a source's skeleton fence is removed.
+It validates every recipe's outputs and diagnostics before publishing any canonical artifact or bundle.
+All six bundle manifests hash their generated READMEs. SQL, schemas, catalog files and golden seeds remain
+unchanged by this authoring migration. Live H-1/H-2 runs, non-seed pins and the replay fixture from those pins
+remain pending the AU-server runtime; seed coverage includes silent inbound keys and overlapping settlements.
 
 Six bundles are served: `release_order`, `decide_return`, `monitor_inbound`, `settle`, `reorder_proposals`, and
 `winback`. **Bundles load; they do not run until AU-server P1·S1.1.** The cross-storage pair contains door

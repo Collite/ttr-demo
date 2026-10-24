@@ -69,6 +69,19 @@ class GoldenCases(unittest.TestCase):
         self.assertGreater(len(self.cases), 0)
         self.assertTrue(all(c.parent.parent.name in self.recipes for c in self.cases), "every case sits in a recipe's folder")
 
+    def test_inbound_none_keeps_explicit_keys_without_verdict_rows(self) -> None:
+        case = yaml.safe_load((AUTOMATION / 'monitor_inbound/tests/none.yaml').read_text())
+        self.assertGreater(len(case['keys']), 0)
+        self.assertLessEqual(len(case['keys']), 5)
+        self.assertEqual(case['expected']['verdicts'], [])
+
+    def test_settlement_case_keeps_overlapping_outcomes_for_the_same_key(self) -> None:
+        case = yaml.safe_load((AUTOMATION / 'settle/tests/credit-note-issued.yaml').read_text())
+        routes_by_key = {}
+        for verdict in case['expected']['verdicts']:
+            routes_by_key.setdefault(verdict['key'], set()).add(verdict['route'])
+        self.assertTrue(any({'credit_note_issued', 'money_overdue'} <= routes for routes in routes_by_key.values()))
+
     def test_every_case_is_a_contracts_7_case(self) -> None:
         for path in self.cases:
             with self.subTest(case=str(path.relative_to(ROOT))):

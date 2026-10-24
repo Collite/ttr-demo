@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "ttrpVersion": 2,
-  "toolchain": "org.tatrman:ttrp:0.18.7",
+  "toolchain": "org.tatrman:ttrp:0.18.7-auh.1",
   "program": "settle.ttrp",
   "world": {
     "qname": "hartland.worlds.demo",
@@ -1591,7 +1591,7 @@
     ]
   },
   "files": {
-    "README.md": "sha256:26a062d36bef11a2b8fd22dd81134aa6d6023287d7651dc583595c8610f1bbbc",
+    "README.md": "sha256:c463bb4d40dbf4488c90fec0f6f0c6fc442cc4df68489c06f43044b8dbb321c5",
     "catalog/settle.ttrm": "sha256:422049ffaf9fff149b570802883cf5e4af1df027abff1d5fe6713172c1b93756",
     "catalog/settle_verdict.ttrm": "sha256:7eecb53a20f8fe0829148f13179f38fe0b9a012cb45e5e87f8ab2cc30729eb9e",
     "islands/documents.rows.sql": "sha256:41c398ad0086c9fdd9760afc170abb8eff98e96237cfa621de7cb03433f1a20e",

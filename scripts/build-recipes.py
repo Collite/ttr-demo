@@ -6,6 +6,7 @@ import contextlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -14,6 +15,28 @@ import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CLI = ROOT / '.modeler/toolchains/ttrp/packages/kotlin/ttrp-cli/build/install/ttrp-cli/bin/ttrp-cli'
+
+
+def literate_documents(root):
+    """Find source fences, plus sidecar owners so a removed skeleton still fails the native check."""
+    automation = root / 'automation'
+    eligible = lambda p: not any(part.endswith('.bundle') for part in p.parts)
+    docs = {p for p in automation.rglob('*.md') if eligible(p)
+            and re.search(r'^```ttrp(?:\s|$)', p.read_text(), re.M)}
+    for sidecar in automation.rglob('*.ttrd'):
+        if not eligible(sidecar):
+            continue
+        try:
+            name = json.loads(sidecar.read_text())['document']
+        except (ValueError, KeyError):
+            # Let the native document check report malformed provenance as drift.
+            continue
+        candidates = [sidecar.parent / name, sidecar.parent.parent / name]
+        found = [p for p in candidates if p.is_file()]
+        if not found:
+            raise ValueError(f'{sidecar.relative_to(root)}: missing source document {name}')
+        docs.add(found[0])
+    return sorted(docs)
 
 
 @contextlib.contextmanager
@@ -76,19 +99,26 @@ def main():
     files = [args.recipe.resolve()] if args.recipe else sorted((ROOT / 'automation').rglob('*.ttrp'))
     files = [p for p in files if not any(part.endswith('.bundle') for part in p.parts)]
     if args.literate_check:
-        files = [p if p.suffix == '.md' else p.with_suffix('.md') for p in files]
-        files = [p for p in files if p.is_file()]
+        try:
+            files = [args.recipe.resolve()] if args.recipe else literate_documents(ROOT)
+        except ValueError as e:
+            print(e, file=sys.stderr)
+            return 3
         if not files:
             parser.error('no literate recipe documents found')
     elif not args.check and not args.command:
-        files = [p.with_suffix('.md') if p.with_suffix('.md').is_file() else p for p in files]
+        files = ([p.with_suffix('.md') if p.with_suffix('.md').is_file() else p for p in files]
+                 if args.recipe else literate_documents(ROOT) + files)
     if args.command and not args.recipe:
         parser.error('--command requires --recipe')
     with recipe_root(ROOT, announce=not args.command, include_bundles=args.literate_check) as stage, tempfile.TemporaryDirectory(prefix='recipe-output-') as tmp:
         pending = []
         artifacts = []
+        owned = set()
         checked = 0
         for i, file in enumerate(files):
+            if file in owned:
+                continue
             if not args.recipe and file.parent.parent.name == 'ops':
                 print(f'{file.relative_to(ROOT)}: deferred (automation.ops requires Server P4)')
                 continue
@@ -109,6 +139,8 @@ def main():
             try:
                 payload = {} if args.check else json.loads(result.stdout)
                 diagnostics = result.stdout.strip() if args.check else payload['diagnostics']
+                if not args.check:
+                    diagnostics = diagnostics + [d for r in payload.get('recipes', []) for d in r.get('diagnostics', [])]
             except (ValueError, KeyError):
                 diagnostics = result.stdout or 'CLI returned no build result'
             if result.returncode or diagnostics or stderr:
@@ -116,26 +148,40 @@ def main():
                 return 3 if args.literate_check and result.returncode == 3 else 1
             checked += 1
             if not args.check and not args.literate_check:
-                bundle = file.parent / (file.stem + '.bundle')
+                results = [payload]
                 if file.suffix == '.md':
                     results = payload.get('recipes', [])
-                    if len(results) != 1:
-                        print(f'{file.relative_to(ROOT)}: expected one recipe in this document', file=sys.stderr)
+                    if not results:
+                        print(f'{file.relative_to(ROOT)}: document returned no recipes', file=sys.stderr)
                         return 1
-                    payload = results[0]
-                    for rel in [file.stem + '.ttrp', file.stem + '.ttrd', file.stem + '/README.md']:
-                        derived = out / rel
-                        if not derived.is_file():
-                            print(f'CLI omitted derived artifact {rel}', file=sys.stderr)
+                    for result in results:
+                        name = result['manifest']['recipe']['name']
+                        # Named multi-recipe documents derive <name>/<name>.* beside the source.
+                        rels = ([f'{name}/{name}.ttrp', f'{name}/{name}.ttrd', f'{name}/README.md']
+                                if len(results) > 1 else
+                                [file.stem + '.ttrp', file.stem + '.ttrd', file.stem + '/README.md'])
+                        canonical = file.parent / rels[0]
+                        if canonical in owned:
+                            print(f'{canonical.relative_to(ROOT)}: multiple document owners', file=sys.stderr)
                             return 1
-                        artifacts.append((derived, file.parent / rel))
-                src = Path(payload.get('bundle') or '')
-                if not src.is_absolute():
-                    src = stage / src
-                if src.name != bundle.name or not src.is_dir() or not (src / 'manifest.json').is_file():
-                    print(f'CLI wrote {src}, expected {bundle.name} with manifest.json (recipe name must equal file stem)', file=sys.stderr)
-                    return 1
-                pending.append((src, bundle))
+                        owned.add(canonical)
+                        for rel in rels:
+                            derived = out / rel
+                            if not derived.is_file():
+                                print(f'CLI omitted derived artifact {rel}', file=sys.stderr)
+                                return 1
+                            artifacts.append((derived, file.parent / rel))
+                for result in results:
+                    src = Path(result.get('bundle') or '')
+                    if not src.is_absolute():
+                        src = stage / src
+                    name = result.get('manifest', {}).get('recipe', {}).get('name', file.stem)
+                    expected = (Path(name) / (name + '.bundle') if file.suffix == '.md' and len(results) > 1
+                                else Path(file.stem + '.bundle'))
+                    if src != out / expected or not src.is_dir() or not (src / 'manifest.json').is_file():
+                        print(f'CLI wrote {src}, expected {expected} with manifest.json', file=sys.stderr)
+                        return 1
+                    pending.append((src, file.parent / expected))
         # No committed bundle changes until every recipe has compiled and its output has been validated.
         for src, bundle in pending:
             target = args.out.resolve() / bundle.relative_to(ROOT / 'automation') if args.out else bundle
@@ -151,7 +197,9 @@ def main():
                 if bundle.is_dir() and bundle not in expected:
                     shutil.rmtree(bundle)
                     print(f'removed stale bundle {bundle.relative_to(ROOT)}')
-        print(f'{checked} recipes {"checked" if args.check or args.literate_check else "built without diagnostics"}')
+        count = checked if args.check or args.literate_check else len(pending)
+        noun = 'documents' if args.literate_check else 'recipes'
+        print(f'{count} {noun} {"checked" if args.check or args.literate_check else "built without diagnostics"}')
     return 0
 
 

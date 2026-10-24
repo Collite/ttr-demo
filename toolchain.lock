@@ -7,7 +7,8 @@ ref = "grammar/v0.18.1"          # the gate's toolchain checkout (was inline in 
 [ttrp]
 # Recipe builds/checks move independently of the model reader and serving image.
 # A commit pin requires a prerelease version; delete version when moving ref to a release tag.
-ref = "grammar/v0.18.7"
+ref = "11d186487fdf138861247dd302937fbc14ef8f60" # multi-recipe layout/fixture fix, based on grammar/v0.18.7
+version = "0.18.7-auh.1"
 
 [veles]
 image = "0.11.15"                # the veles image olymp `clusters/hartland/apps/veles/values.yaml` deploys

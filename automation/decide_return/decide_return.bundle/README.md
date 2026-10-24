@@ -1,4 +1,4 @@
-# decide_return
+# Handling a return request
 
 ## What this recipe decides
 
