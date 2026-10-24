@@ -19,11 +19,12 @@ GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 
 
 def fixture():
-    container = {'name': 'n8n', 'image': IMAGE}
+    container = {'name': 'n8n', 'image': IMAGE,
+                 'volumeMounts': [{'name': 'data', 'mountPath': '/home/node/.n8n'}]}
     return {
         'application': {'status': {'sync': {'status': 'Synced'}, 'health': {'status': 'Healthy'}}},
         'deployment': {'metadata': {'generation': 2}, 'spec': {'replicas': 1, 'template': {'spec': {
-            'containers': [container], 'volumes': [{'persistentVolumeClaim': {'claimName': 'n8n-main-persistence'}}]}}},
+            'containers': [container], 'volumes': [{'name': 'data', 'persistentVolumeClaim': {'claimName': 'n8n-main-persistence'}}]}}},
             'status': {'observedGeneration': 2, 'replicas': 1, 'readyReplicas': 1, 'updatedReplicas': 1}},
         'pods': {'items': [{'metadata': {'name': 'n8n-ready'}, 'spec': {'containers': [container]},
             'status': {'conditions': [{'type': 'Ready', 'status': 'True'}]}}]},
@@ -99,11 +100,12 @@ print('PRIVATE_BAD_JSON' if d.get('malformed') == kind else json.dumps(d[kind]))
 ''')
         fake.chmod(0o755)
 
-    def run_rig(self, *args):
+    def run_rig(self, *args, env_extra=None):
         self.state.write_text(json.dumps(self.data))
         env = {**os.environ, 'PATH': str(self.directory) + os.pathsep + os.environ['PATH'],
             'KUBE_CONTEXT': 'test-context', 'N8N_URL': self.url,
             'N8N_IMAGE': IMAGE, 'N8N_FAKE_STATE': str(self.state), 'N8N_FAKE_CALLS': str(self.calls)}
+        env.update(env_extra or {})
         return subprocess.run([str(ROOT / 'scripts/verify-n8n.sh'), *args], cwd=ROOT,
             env=env, text=True, capture_output=True, timeout=10)
 
@@ -185,12 +187,14 @@ print('PRIVATE_BAD_JSON' if d.get('malformed') == kind else json.dumps(d[kind]))
                 self.assertIn('✗ V2 ', result.stdout)
 
     def test_unbound_or_unmounted_pvc_fails_v2(self):
-        for problem in ['phase', 'mount']:
+        for problem in ['phase', 'volume', 'mount']:
             self.data = fixture()
             if problem == 'phase':
                 self.data['pvc']['status']['phase'] = 'Pending'
-            else:
+            elif problem == 'volume':
                 self.data['deployment']['spec']['template']['spec']['volumes'] = []
+            else:
+                self.data['deployment']['spec']['template']['spec']['containers'][0]['volumeMounts'] = []
             with self.subTest(problem=problem):
                 result = self.run_rig()
                 self.assertEqual(result.returncode, 1)
@@ -247,6 +251,13 @@ print('PRIVATE_BAD_JSON' if d.get('malformed') == kind else json.dumps(d[kind]))
         self.assertEqual(result.returncode, 0)
         result = self.run_rig('--phase', '4')
         self.assertEqual(result.returncode, 2)
+        self.assertEqual(self.server.requests, [])
+        self.assertFalse(self.calls.exists())
+
+    def test_credential_urls_rejected_before_requests_without_logging_password(self):
+        result = self.run_rig(env_extra={'N8N_URL': 'https://user:PRIVATE_PASSWORD@example.com'})
+        self.assertEqual(result.returncode, 2)
+        self.assertNotIn('PRIVATE_PASSWORD', result.stdout + result.stderr)
         self.assertEqual(self.server.requests, [])
         self.assertFalse(self.calls.exists())
 
