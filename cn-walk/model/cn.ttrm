@@ -156,3 +156,10 @@ def phase LateReturnLine {                                                      
 // ---- refusals: a definition cycle (cn/definition-cycle) ----
 def phase LoopA { of: Order, definition: """LoopB""" }
 def phase LoopB { of: Order, definition: """LoopA""" }
+
+def phase LargeOrder {
+    of: Order,
+    label: { cs: "Velká objednávka", en: "Large order" },
+    sources: ["recipe://hartland.orders/order-review#s2"],
+    definition: """order_value > 1000"""
+}
