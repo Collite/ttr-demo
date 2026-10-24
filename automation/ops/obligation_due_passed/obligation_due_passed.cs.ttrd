@@ -1,0 +1,94 @@
+{
+    "document": "obligation_due_passed.cs.md",
+    "documentSha": "1d9c20561551a964d2018578778511be15aea5a48e1331a4445e0cc9df048cec",
+    "nodes": {
+        "lateness": {
+            "block": 3,
+            "generatedSpan": [
+                449,
+                695
+            ],
+            "paragraph": [
+                878,
+                964
+            ],
+            "span": [
+                966,
+                1224
+            ]
+        },
+        "overdue": {
+            "block": 4,
+            "generatedSpan": [
+                697,
+                1125
+            ],
+            "paragraph": [
+                1226,
+                1402
+            ],
+            "span": [
+                1404,
+                1844
+            ]
+        },
+        "past_due": {
+            "block": 2,
+            "generatedSpan": [
+                182,
+                447
+            ],
+            "paragraph": [
+                522,
+                597
+            ],
+            "span": [
+                599,
+                876
+            ]
+        }
+    },
+    "sentences": [
+        {
+            "nodes": [],
+            "span": [
+                20,
+                303
+            ]
+        },
+        {
+            "nodes": [
+                "past_due"
+            ],
+            "span": [
+                522,
+                597
+            ]
+        },
+        {
+            "nodes": [
+                "lateness"
+            ],
+            "span": [
+                878,
+                964
+            ]
+        },
+        {
+            "nodes": [
+                "overdue"
+            ],
+            "span": [
+                1226,
+                1402
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                1846,
+                1984
+            ]
+        }
+    ]
+}

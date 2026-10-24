@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "ttrpVersion": 2,
-  "toolchain": "org.tatrman:ttrp:0.18.7-auh.1",
+  "toolchain": "org.tatrman:ttrp:0.18.7-auh.2",
   "program": "settle.ttrp",
   "world": {
     "qname": "hartland.worlds.demo",
@@ -1582,11 +1582,17 @@
       }
     ],
     "tests": [
+      "tests/closed.cz.yaml",
       "tests/closed.yaml",
+      "tests/credit-note-issued.cz.yaml",
       "tests/credit-note-issued.yaml",
+      "tests/goods-overdue.cz.yaml",
       "tests/goods-overdue.yaml",
+      "tests/goods-shipped.cz.yaml",
       "tests/goods-shipped.yaml",
+      "tests/money-overdue.cz.yaml",
       "tests/money-overdue.yaml",
+      "tests/money-received.cz.yaml",
       "tests/money-received.yaml"
     ]
   },
@@ -1615,11 +1621,17 @@
     "parts/p_859395aa.sql": "sha256:de59977beeed87ef454450fffe72b327fe0efc805eef6f836ea4265c5281b6ae",
     "parts/p_927a867d.sql": "sha256:6b278431878f4289b0768c6ed3aafde2548ee6c8744c92c55e0d6e84e6fd64e3",
     "parts/p_99be0ef6.sql": "sha256:a95df18e322d28c4ef048016df0ccd86dfb26599cda37b4db02098d50402ddb5",
+    "tests/closed.cz.yaml": "sha256:46bfaa103a5d67513d943979ec001e5eac31b20fb99582c2ead0901851b602ba",
     "tests/closed.yaml": "sha256:6eafc244b57c17f4eca143fbae979e99c2a990ab6938916b422942eb8ba520d7",
+    "tests/credit-note-issued.cz.yaml": "sha256:240ac549feced6fe5c8dcb2ec169969174754aeaaf997ce0e4c63ba0cf1e37e1",
     "tests/credit-note-issued.yaml": "sha256:b82ac8324004b2083a88c9051d9009674ce7dac55f8f563e46d8ddc64fa634a4",
+    "tests/goods-overdue.cz.yaml": "sha256:f3d247a571bbcf32cd848d6e0b6c03c5c07810245fb99c97c18530ea40ca7643",
     "tests/goods-overdue.yaml": "sha256:c4eb14a78ae87da5d7b708c66a98c6dcf7f64d1799b7857cf5e286085f138fe3",
+    "tests/goods-shipped.cz.yaml": "sha256:6b623d65ab54795232ad8810d9fe4e0dc38aac51a6d607e32083ed13b892e479",
     "tests/goods-shipped.yaml": "sha256:d1002c70510f5e08231b4e1bae52d149260a21f2cae4328e494451a8f966378d",
+    "tests/money-overdue.cz.yaml": "sha256:b5ab189a9fa60bca355340bc600c407f354944fadeae8ad7837a810db8dca03f",
     "tests/money-overdue.yaml": "sha256:16d927df833a0e120d16b909c2eb8edd6801fa7cc29ff67622f11fc0eb01d88c",
+    "tests/money-received.cz.yaml": "sha256:450eb6367d04c11c0fb63299f326cece207a3f3d45085181531bb2412166b163",
     "tests/money-received.yaml": "sha256:532933304a7994d763e428f02bb29d24b0f408f69dfd6fe56072ef9ed03d8d85"
   }
 }

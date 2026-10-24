@@ -1,4 +1,4 @@
-# winback
+# Win-back
 
 ## What this recipe decides
 

@@ -1,0 +1,118 @@
+{
+    "document": "reorder_proposals.cs.md",
+    "documentSha": "bdd1a59f474ed8fb6444f9e9e05b57cfd907fe33f0352f2b54d3c22996baf55b",
+    "nodes": {
+        "cover": {
+            "block": 5,
+            "generatedSpan": [
+                1338,
+                2048
+            ],
+            "paragraph": [
+                2018,
+                2240
+            ],
+            "span": [
+                2242,
+                2964
+            ]
+        },
+        "on_hand": {
+            "block": 3,
+            "generatedSpan": [
+                509,
+                907
+            ],
+            "paragraph": [
+                970,
+                1083
+            ],
+            "span": [
+                1085,
+                1495
+            ]
+        },
+        "selling": {
+            "block": 2,
+            "generatedSpan": [
+                262,
+                507
+            ],
+            "paragraph": [
+                632,
+                709
+            ],
+            "span": [
+                711,
+                968
+            ]
+        },
+        "weekly_demand": {
+            "block": 4,
+            "generatedSpan": [
+                909,
+                1336
+            ],
+            "paragraph": [
+                1497,
+                1575
+            ],
+            "span": [
+                1577,
+                2016
+            ]
+        }
+    },
+    "sentences": [
+        {
+            "nodes": [],
+            "span": [
+                23,
+                333
+            ]
+        },
+        {
+            "nodes": [
+                "selling"
+            ],
+            "span": [
+                632,
+                709
+            ]
+        },
+        {
+            "nodes": [
+                "on_hand"
+            ],
+            "span": [
+                970,
+                1083
+            ]
+        },
+        {
+            "nodes": [
+                "weekly_demand"
+            ],
+            "span": [
+                1497,
+                1575
+            ]
+        },
+        {
+            "nodes": [
+                "cover"
+            ],
+            "span": [
+                2018,
+                2240
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                2966,
+                3228
+            ]
+        }
+    ]
+}

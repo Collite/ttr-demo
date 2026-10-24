@@ -147,3 +147,25 @@ test('S3.1 — document and canonical edits fail the read-only drift check', asy
     assert.equal(await readFile(canonical, 'utf8'), edited, 'check must not repair the hand edit');
   } finally { await rm(tmp, { recursive: true, force: true }); }
 });
+
+for (const [name, nodes] of Object.entries({
+  reorder_proposals: ['selling', 'on_hand', 'weekly_demand', 'cover'],
+  winback: ['lapsed', 'band', 'mailed', 'offer'],
+  'ops/no_run_since': ['scheduled', 'last_run', 'silence'],
+  'ops/obligation_due_passed': ['past_due', 'lateness', 'overdue'],
+})) {
+  test(`S3.3 — ${name}: English provenance covers its business containers`, async () => {
+    const stem = path.basename(name);
+    const dir = path.join(hartlandRoot, 'automation', name);
+    const source = await readFile(path.join(dir, stem + '.md'), 'utf8');
+    const canonical = await readFile(path.join(dir, stem + '.ttrp'), 'utf8');
+    const sidecar = JSON.parse(await readFile(path.join(dir, stem + '.ttrd'), 'utf8'));
+    assert.equal(sidecar.documentSha, createHash('sha256').update(source).digest('hex'));
+    assert.deepEqual(Object.keys(sidecar.nodes).sort(), nodes.sort());
+    for (const [id, node] of Object.entries(sidecar.nodes)) {
+      assert.ok(source.slice(...node.span).includes(id));
+      assert.ok(canonical.slice(...node.generatedSpan).includes(id));
+      assert.ok(sidecar.sentences.some(s => s.nodes.includes(id)));
+    }
+  });
+}

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "ttrpVersion": 2,
-  "toolchain": "org.tatrman:ttrp:0.18.7-auh.1",
+  "toolchain": "org.tatrman:ttrp:0.18.7-auh.2",
   "program": "reorder_proposals.ttrp",
   "world": {
     "qname": "hartland.worlds.demo",
@@ -390,17 +390,19 @@
     },
     "protocol": "always",
     "tests": [
+      "tests/propose.cz.yaml",
       "tests/propose.yaml"
     ]
   },
   "files": {
-    "README.md": "sha256:adb500c9cb12775a46990ad818dbfb4869f53dd12edd71234a9f40fd0454866c",
+    "README.md": "sha256:be6c617da15049677e3e6cb47d12d14bcc72396ca514ee7840476ba52cd35e73",
     "catalog/reorder_proposals.ttrm": "sha256:a9a7c3d91d1e080604a126fd22c61ff607a93c9e617e0b5b85005c17eb35434f",
     "catalog/reorder_proposals_verdict.ttrm": "sha256:c67933e68fc626c91ae7c58c30923a406620c3f26dab50a8cdb7945792f55fb2",
     "islands/cover.propose.sql": "sha256:90b4e8a5c1a0114425b9895e47493df87fdcd6d64c1cc8c960bcaf0fc5147e22",
     "islands/on_hand.rows.sql": "sha256:befa54923ccb3c5f6b09c96f5910ff11979a91f6377b14c864e2ba2e8168a9a3",
     "islands/selling.pairs.sql": "sha256:3bd54cdd11aa79d1d384a66268e805727beb0977073b3d344d9bc7859be421da",
     "islands/weekly_demand.rows.sql": "sha256:4f4aaf037c128986eb0b1e51e1dafa3f9b11fe1999c0c674d9a249cd15225b6d",
+    "tests/propose.cz.yaml": "sha256:682d911716fc894c8c728a108a97c76fb7b95576eb2cf22e46b63691295d05b6",
     "tests/propose.yaml": "sha256:387b4f869bd4eca8b2cdbf6eeb7dba72bd12429b543c1718b26b46eec6a4da42"
   }
 }

@@ -69,6 +69,20 @@ class GoldenCases(unittest.TestCase):
         self.assertGreater(len(self.cases), 0)
         self.assertTrue(all(c.parent.parent.name in self.recipes for c in self.cases), "every case sits in a recipe's folder")
 
+    def test_both_worlds_have_explicit_unpinned_synthetic_ops_cases(self) -> None:
+        for world in ('us', 'cz'):
+            for recipe in ('no_run_since', 'obligation_due_passed'):
+                suffix = '' if world == 'us' else '.cz'
+                for route in ('late', 'none'):
+                    source = AUTOMATION / 'ops' / recipe / 'tests' / f'{route}{suffix}.yaml'
+                    text = source.read_text()
+                    case = yaml.safe_load(text)
+                    self.assertIn('SYNTHETIC ops authoring fixture', text)
+                    self.assertNotIn('pinned_from', case)
+                    self.assertEqual(case['world'], world)
+                    self.assertTrue(all(k.startswith(f'stub-{world}-') for k in case['keys']))
+                    self.assertEqual(bool(case['expected']['verdicts']), route == 'late')
+
     def test_inbound_none_keeps_explicit_keys_without_verdict_rows(self) -> None:
         case = yaml.safe_load((AUTOMATION / 'monitor_inbound/tests/none.yaml').read_text())
         self.assertGreater(len(case['keys']), 0)
@@ -127,8 +141,6 @@ class GoldenCases(unittest.TestCase):
             want = seed_goldens.seeds(world) if (seed_goldens.EXPECTED / world).exists() else {}
             committed = {p for p in self.cases if (p.name.endswith(f".{world}.yaml") if world != "us" else p.name.count(".") == 1)
                          and "pinned_from" not in yaml.safe_load(p.read_text())}
-            if world == "cz" and not committed:
-                continue  # the cz seeds come with the CZ twins (P3 · S3.3 T5)
             with self.subTest(world=world):
                 self.assertEqual({str(p.relative_to(ROOT)) for p in committed}, {str(p.relative_to(ROOT)) for p in want})
                 for p in committed:

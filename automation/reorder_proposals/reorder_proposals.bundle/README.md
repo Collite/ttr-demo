@@ -1,4 +1,4 @@
-# reorder_proposals
+# Reorder proposals
 
 ## What this recipe decides
 

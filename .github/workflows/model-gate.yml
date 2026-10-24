@@ -141,7 +141,7 @@ jobs:
         working-directory: hartland
         run: just hebe-seed-test
 
-      - name: Literate recipe derivations are current
+      - name: Literate recipe derivations are current (EN + CS)
         working-directory: hartland
         run: just check-literate-recipes
 

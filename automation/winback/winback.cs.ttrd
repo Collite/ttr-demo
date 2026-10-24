@@ -1,0 +1,118 @@
+{
+    "document": "winback.cs.md",
+    "documentSha": "56be0206da87b220989db4b4429ccfb9dcfefc6239c1a9f78269cc14a1d71143",
+    "nodes": {
+        "band": {
+            "block": 3,
+            "generatedSpan": [
+                1253,
+                1847
+            ],
+            "paragraph": [
+                1936,
+                2042
+            ],
+            "span": [
+                2044,
+                2650
+            ]
+        },
+        "lapsed": {
+            "block": 2,
+            "generatedSpan": [
+                225,
+                1251
+            ],
+            "paragraph": [
+                768,
+                894
+            ],
+            "span": [
+                896,
+                1934
+            ]
+        },
+        "mailed": {
+            "block": 4,
+            "generatedSpan": [
+                1849,
+                2119
+            ],
+            "paragraph": [
+                2652,
+                2759
+            ],
+            "span": [
+                2761,
+                3043
+            ]
+        },
+        "offer": {
+            "block": 5,
+            "generatedSpan": [
+                2121,
+                2615
+            ],
+            "paragraph": [
+                3045,
+                3223
+            ],
+            "span": [
+                3225,
+                3731
+            ]
+        }
+    },
+    "sentences": [
+        {
+            "nodes": [],
+            "span": [
+                34,
+                506
+            ]
+        },
+        {
+            "nodes": [
+                "lapsed"
+            ],
+            "span": [
+                768,
+                894
+            ]
+        },
+        {
+            "nodes": [
+                "band"
+            ],
+            "span": [
+                1936,
+                2042
+            ]
+        },
+        {
+            "nodes": [
+                "mailed"
+            ],
+            "span": [
+                2652,
+                2759
+            ]
+        },
+        {
+            "nodes": [
+                "offer"
+            ],
+            "span": [
+                3045,
+                3223
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                3733,
+                3907
+            ]
+        }
+    ]
+}

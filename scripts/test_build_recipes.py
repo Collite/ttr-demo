@@ -64,7 +64,7 @@ out = Path(sys.argv[sys.argv.index('--out')+1])
             argv = ['build-recipes.py', '--cli', str(cli)]
             if out:
                 argv += ['--out', str(root / 'fresh')]
-            with patch.object(module, 'ROOT', root), patch('sys.argv', argv):
+            with patch.object(module, 'ROOT', root), patch('sys.argv', argv), patch.object(module, 'twin_artifacts', return_value=[]):
                 with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
                     self.assertEqual(module.main(), expected)
             if expected or out:
@@ -92,6 +92,68 @@ out = Path(sys.argv[sys.argv.index('--out')+1])
 
     def test_out_does_not_modify_source(self):
         self.run_case(SUCCESS, 0, out=True)
+
+    def test_twin_sidecars_do_not_claim_english_document_ownership(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            folder = root / 'automation/one'
+            folder.mkdir(parents=True)
+            source = folder / 'one.md'
+            source.write_text('```ttrp\nrecipe {}\n```\n')
+            twin = folder / 'one.cs.md'
+            twin.write_text(source.read_text())
+            (folder / 'one.cs.ttrd').write_text(json.dumps({'document': twin.name}))
+            self.assertEqual(module.literate_documents(root), [source])
+
+    def twin_build(self, broken=''):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / 'hartland'
+            folder = root / 'automation/example'
+            folder.mkdir(parents=True)
+            (folder / 'example.md').write_text('```ttrp\nrecipe {}\n```\n')
+            (folder / 'example.cs.md').write_text('```ttrp\nrecipe {}\n```\n')
+            (folder / 'example.ttrp').write_text('original canonical')
+            bundle = folder / 'example.bundle'
+            bundle.mkdir()
+            (bundle / 'sentinel').write_text('approved')
+            cli = root / 'fake-cli'
+            cli.write_text("""#!/usr/bin/env python3
+from pathlib import Path
+import sys,json
+source=Path(sys.argv[2]); cs=source.name.endswith('.cs.md')
+out=Path(sys.argv[sys.argv.index('--out')+1]);out.mkdir(parents=True)
+canonical=out/(source.stem+'.ttrp');canonical.write_text('new canonical')
+(out/(source.stem+'.ttrd')).write_text('provenance')
+readme=out/'example/README.md';readme.parent.mkdir();readme.write_text('explanation')
+bundle=out/'example.bundle';bundle.mkdir()
+manifest={'recipe':{'name':'example','fingerprints':{'text':'sha256:same'}}}
+(bundle/'manifest.json').write_text(json.dumps(manifest))
+""" + ("if cs: canonical.write_text('different canonical')\n" if broken == 'code' else '')
+                + ("if cs: readme.unlink()\n" if broken == 'readme' else '')
+                + "print(json.dumps({'recipes':[{'bundle':str(bundle),'manifest':manifest,'diagnostics':[]}],'diagnostics':[]}))\n")
+            cli.chmod(0o755)
+            if broken == 'missing-twin':
+                (folder / 'example.cs.md').unlink()
+            with patch.object(module, 'ROOT', root), patch('sys.argv', ['build-recipes.py', '--cli', str(cli)]):
+                with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(module.main(), 1 if broken else 0)
+            self.assertEqual((folder / 'example.ttrp').read_text(), 'original canonical' if broken else 'new canonical')
+            self.assertEqual((bundle / 'sentinel').exists(), bool(broken))
+            self.assertEqual((folder / 'example.cs.ttrd').exists(), not broken)
+            self.assertFalse((folder / 'example.cs.ttrp').exists(), 'one executable canonical only')
+            self.assertFalse((folder / 'example.cs.bundle').exists(), 'one serving bundle only')
+
+    def test_twins_publish_separate_provenance_and_readmes_only(self):
+        self.twin_build()
+
+    def test_missing_czech_source_preserves_every_committed_artifact(self):
+        self.twin_build('missing-twin')
+
+    def test_twin_logic_mismatch_preserves_every_committed_artifact(self):
+        self.twin_build('code')
+
+    def test_missing_czech_readme_preserves_every_committed_artifact(self):
+        self.twin_build('readme')
 
     def multi_recipe_document(self, omit_last=False, warning=False):
         with tempfile.TemporaryDirectory() as tmp:
@@ -126,7 +188,7 @@ for name in ('one','two'):
             cli.chmod(0o755)
             argv = ['build-recipes.py', '--cli', str(cli)]
             expected = 1 if omit_last or warning else 0
-            with patch.object(module, 'ROOT', root), patch('sys.argv', argv):
+            with patch.object(module, 'ROOT', root), patch('sys.argv', argv), patch.object(module, 'twin_artifacts', return_value=[]):
                 with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
                     self.assertEqual(module.main(), expected)
             for name in ('one', 'two'):
