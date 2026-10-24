@@ -60,7 +60,7 @@ decision verdict(in orders, in shortfall, in price_differences, in overdue) {
                    -> calc(n_short = coalesce(n_short, 0), n_price = coalesce(n_price, 0), n_due = coalesce(n_due, 0))
         v -> switch {
             mode: overlapping
-            hold_sales:        n_short > 0 or n_price > 0
+            hold_sales:        n_short > 1 or n_price > 0
                                because: "stock shortfall or price difference"   detail: shortfall, price_differences
             hold_ar:           n_due > 0
                                because: "overdue invoices"                       detail: overdue
