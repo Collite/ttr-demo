@@ -42,7 +42,13 @@ def entity customer_address {
     attributes: [
         def attribute sk         { type: int, isKey: true, description: "Sequence key. Internal primary key only." },
         def attribute address_id { type: text, description: "Unique address identifier (code)." },
-        def attribute city       { type: text, description: "City of the address." },
+        // Member vocabulary, TYPOS(1) on lex-matcher's lemma axis (nlp lemmatises the query and the members alike): a
+        // question inflects the city («zákazníci z Prahy», «v Brně», «v Českých Budějovicích»), and the resolver binds the
+        // STORED name, so the filter reads city = 'Praha' — never the inflected word. Within one hop of `customer` and the
+        // channel facts, not of `sales` (the bare-city headline beat keeps its DC). The store's and the DC's cities stay
+        // unsearchable on purpose: each is named after its city („Brno“, „Brno DC“), and store_name / warehouse_name
+        // already match the city word the same way — a second attribute with the same word would only split it.
+        def attribute city       { type: text, description: "City of the address.", search { searchable method: TYPOS(1) } },
         def attribute county     { type: text, description: "County of the address." },
         // MH-P3 tier M — the `customers in TN` case: `customer` holds no state, this does, and
         // `customer_address` declares a relation TO `customer`, so the governor reaches it in
