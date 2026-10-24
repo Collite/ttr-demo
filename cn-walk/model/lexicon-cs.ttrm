@@ -8,3 +8,6 @@ def term dodavatel { for: cn.Supplier, forms: ["dodavatel", "dodavatelé", "doda
 
 // sources: doc://demo/order-notes/on-2302#s1
 def term velka_objednavka { for: cn.LargeOrder, forms: ["velká objednávka", "velké objednávky"] }
+
+// sources: doc://demo/order-notes/on-2303#s1
+def term webova_objednavka { for: cn.WebOrder, forms: ["webová objednávka", "webové objednávky"] }
