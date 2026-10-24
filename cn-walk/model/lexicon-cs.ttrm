@@ -5,3 +5,6 @@ def term dopravce { for: cn.Carrier, forms: ["dopravce", "dopravci"] }
 
 // sources: doc://demo/order-notes/on-2300#s1
 def term dodavatel { for: cn.Supplier, forms: ["dodavatel", "dodavatelé", "dodavatele"] }
+
+// sources: doc://demo/order-notes/on-2302#s1
+def term velka_objednavka { for: cn.LargeOrder, forms: ["velká objednávka", "velké objednávky"] }
