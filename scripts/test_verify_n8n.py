@@ -19,7 +19,8 @@ GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 
 
 def fixture():
-    container = {'name': 'n8n', 'image': IMAGE,
+    # n8n-1.24.43 templates/_helpers.tpl `n8n.main.name` and the live rendered Deployment.
+    container = {'name': 'n8n-main', 'image': IMAGE,
                  'volumeMounts': [{'name': 'data', 'mountPath': '/home/node/.n8n'}]}
     return {
         'application': {'status': {'sync': {'status': 'Synced'}, 'health': {'status': 'Healthy'}}},
@@ -90,6 +91,7 @@ with open(os.environ['N8N_FAKE_CALLS'], 'a') as f: f.write(json.dumps(args) + '\
 d = json.loads(Path(os.environ['N8N_FAKE_STATE']).read_text())
 if 'exec' in args:
     assert args[-3:] == ['--', 'printenv', 'DB_TYPE'], args
+    assert args[args.index('-c') + 1] == 'n8n-main', args
     print(d['db_type']); sys.exit(0)
 assert 'get' in args, args
 kind = args[args.index('get') + 1]
