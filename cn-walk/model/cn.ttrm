@@ -163,3 +163,10 @@ def phase LargeOrder {
     sources: ["recipe://hartland.orders/order-review#s2"],
     definition: """order_value > 1000"""
 }
+
+def phase WebOrder {
+    of: Order,
+    label: { cs: "Webová objednávka", en: "Web order" },
+    sources: ["doc://demo/order-notes/on-2210#s1"],
+    definition: """channel = 'web'"""
+}
