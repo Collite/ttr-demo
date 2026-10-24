@@ -41,3 +41,8 @@ def kind Supplier {
     label: { cs: "Dodavatel", en: "Supplier" },
     sources: ["doc://kallimachos/purchasing/supplier-handbook/p3#s2"]
 }
+
+def kind Carrier {
+    label: { cs: "Dopravce", en: "Carrier" },
+    sources: ["doc://hartland/ops-handbook#s7"]
+}
