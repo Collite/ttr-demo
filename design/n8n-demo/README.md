@@ -4,6 +4,6 @@ Designed and planned in `project/common/n8n/` (the sibling private planning chec
 The identity bootstrap is ready before the deployment so the owner can be claimed
 immediately. See [the identity runbook](runbook-identity.md).
 
-The platform deployment, health verification rig, mail sink, and demo workflows
-are delivered by subsequent stages. `just n8n-test` exercises the bootstrap locally;
-it contacts only fake n8n and Mailpit servers on loopback.
+After the P1 platform deployment and owner claim, run the [verification rig](verify.md)
+with `just n8n-verify`. Mailpit and demo workflows follow in P2/P3. `just n8n-test`
+exercises the seed and rig locally with fake commands and loopback HTTP servers.

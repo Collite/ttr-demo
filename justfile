@@ -440,6 +440,10 @@ hebe-seed-test:
 n8n-seed-users *FLAGS:
     scripts/seed-n8n-users.sh {{FLAGS}}
 
-# Discovers the content seed tests too, once that later stage adds them.
+# Read-only P1 checks. Claim the owner first; later-phase rows are explicitly pending.
+n8n-verify *FLAGS:
+    scripts/verify-n8n.sh {{FLAGS}}
+
+# Seed + verification rig against local fakes; discovers the future content seed tests too.
 n8n-test:
-    python3 -B -m unittest discover -s scripts -p 'test_seed_n8n*.py'
+    python3 -B -m unittest discover -s scripts -p 'test_*n8n*.py'
