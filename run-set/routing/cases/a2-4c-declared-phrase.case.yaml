@@ -5,5 +5,11 @@ shape: total
 question:
   cs: Tržba z prodejen v roce 2025
   en: Store revenue in 2025
-expected_route: FAST
+expected_route: LLM
+expected_reason: {cs: NO_OBJECT_BINDING}
 validation: store-channel-2025.yaml
+notes: |
+  2026-10-24 (md/hop HP-H, ttr-demo#118): re-baselined to LLM. The declared phrase «tržba z prodejen» is gone with the
+  channel-qualified revenue phrases (review-135 D4/D5); the store word reads as the store object, the door declines it
+  (NO_OBJECT_BINDING), and the composer answers the store channel's 2025 total (cz measured: the right figure). The
+  title is history. en not measured since HP-H.

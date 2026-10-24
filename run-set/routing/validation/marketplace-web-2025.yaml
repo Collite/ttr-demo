@@ -1,0 +1,22 @@
+notes: |
+  The marketplace and the web in 2025, one row each — what „Porovnej tržby z tržiště a z webu v roce 2025“ compares.
+  Since md/hop HP-H the two channel words are members of `sales.channel`, and the door answers the comparison as the
+  breakdown by channel restricted to those two.
+core: |
+  SELECT c.channel, SUM(c.ext_sales_price) AS revenue
+  FROM channel_sales c
+  JOIN date_dim d ON c.sold_date_sk = d.d_date_sk
+  WHERE d.d_year = 2025 AND c.channel IN ('marketplace', 'web')
+  GROUP BY c.channel
+assert:
+  row_count: 2
+  row_set:
+    keys:
+    - channel
+    value: revenue
+    tolerance: 0.001
+    labels:
+      # the answer shows `sales.channel` by its value labels (model/er/sales.ttrm), in the world's language
+      marketplace: [Tržiště, Marketplace]
+      store: [Kanál prodejen, Store channel]
+      web: [Web]

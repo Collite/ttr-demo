@@ -1,5 +1,6 @@
 notes: |
-  The three channels in 2025 through the channel_sales view (the object the bare word „tržby“/revenue binds).
+  The three channels in 2025, read through the channel_sales view (the db view stays; since md/hop HP-H the bare
+  word „tržby“/revenue binds `sales`, the same union).
 core: |
   SELECT c.channel, SUM(c.ext_sales_price) AS revenue
   FROM channel_sales c
@@ -13,3 +14,8 @@ assert:
     - channel
     value: revenue
     tolerance: 0.001
+    labels:
+      # the answer shows `sales.channel` by its value labels (model/er/sales.ttrm), in the world's language
+      marketplace: [Tržiště, Marketplace]
+      store: [Kanál prodejen, Store channel]
+      web: [Web]

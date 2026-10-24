@@ -65,6 +65,8 @@ assert:
   row_set: {keys: [month], value: revenue, tolerance: 0.001}   # every core row is in the answer
   scalar: {value: aov, tolerance: 0.002, scale: [1, 100]}      # one figure, in a cell or in the prose
   first_row: {keys: [dc]}            # the answer's first row is the core's first row
+  # row_set / first_row may add `labels: {store: [Kanál prodejen, Store channel]}` — a stored code the answer
+  # shows by its value label (the model's `valueLabels`, both languages)
   empty: true                        # no rows (one all-NULL aggregate row counts as none)
   text_contains: {cs: "…", en: "…"}  # the headline/text says it (rights sentences, refusals)
 ```

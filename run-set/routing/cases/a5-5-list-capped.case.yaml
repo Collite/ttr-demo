@@ -7,3 +7,10 @@ question:
   en: List all marketplace orders from December 2025
 expected_route: LLM
 validation: list-capped.yaml
+xfail:
+  cs: "kantheon#239 — `tržiště` binds sales.channel#marketplace (md/hop HP-H), so the composer joins order to sales on sales.channel instead of order.channel, and the query fails"
+notes: |
+  2026-10-24 (md/hop HP-H, ttr-demo#118): the order list fails in cs. The channel word is now a value label of
+  `sales.channel` only (orders.ttrm rules out labelling `order.channel`: no label repeats a word), and the composer
+  follows the member's attribute instead of the order's own `channel` column. Ruled 2026-10-24 (Bora): file and xfail.
+  en not measured since HP-H.
