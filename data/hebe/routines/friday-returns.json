@@ -1,0 +1,10 @@
+{
+  "name": "friday-returns",
+  "cron": "0 15 * * 5",
+  "bodyKind": "kantheon_question",
+  "bodyJson": {
+    "question": "Jaké byly vratky podle prodejních kanálů za poslední týden?",
+    "deliveryChannels": ["telegram", "web"]
+  },
+  "enabled": true
+}

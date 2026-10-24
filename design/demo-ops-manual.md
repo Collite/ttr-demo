@@ -299,8 +299,9 @@ quirks §0, grep the `correlation_id`) · golem pod logs in `kantheon` (turn orc
 
 Truncate **session** state only: Iris sessions/SSE + feedback; Pythia investigations
 **except** the pinned rehearsal investigation. **Preserve** the standing fixtures: the
-"Channel Health" + "Rehearsal" dashboards, the "Monday channel health brief" Hebe routine,
-all Keycloak users, and the warehouses (read-only, never dirtied). Until the recipe exists,
+"Channel Health" + "Rehearsal" dashboards, Markéta's three Hebe routines (`monday-brief` — the
+"Monday channel health brief" —, `friday-returns`, `clarify-demo`; `data/hebe/routines/`, put back by
+`data/hebe/install-routines.sh`), all Keycloak users, and the warehouses (read-only, never dirtied). Until the recipe exists,
 that means deleting session rows via each store's API/DB (iris-bff `iris` DB, pythia
 `pythia` DB on the central PG) — do it with the fixture allow-list in front of you.
 
@@ -350,7 +351,10 @@ the new vocabulary and the matcher served the old one.
    "Refreshing R1").
 2. **Warm everything**: the node idles with shrunk requests — first tokens are cold. One
    throwaway Golem turn + one Pythia turn (as a *throwaway* session, not Maya's).
-3. **Fire the "Monday channel health brief" routine** — Beat 1 needs the inbox item.
+3. **Fire the "Monday channel health brief" routine** — Beat 1 needs the inbox item and the phone message:
+   `data/hebe/install-routines.sh --fire monday-brief` (installs or updates all three, then fires; the same call as
+   `hebe routines fire monday-brief`). The brief lands in Markéta's inbox and on the presenter's phone within the
+   turn's time.
 4. LLM latency probe (§5.6).
 5. Login checklist: browser profile 1 = Maya (or Markéta), profile 2 = CFO persona, both
    with the CA trusted (§2), both showing the right Discover cards.

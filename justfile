@@ -389,6 +389,14 @@ bi-one-number-test:
 hebe-verify:
     design/hebe-demo/rig-hb/verify.sh
 
+# Markéta's routine fixtures (HE-P1 · S1.3, data/hebe/README.md): install or update all three, idempotent by name.
+#
+#     just hebe-routines                       # over a port-forward to svc/hebe
+#     just hebe-routines --edge                # through the public console as marketa ($HEBE_VERIFY_PASSWORD)
+#     just hebe-routines --fire monday-brief   # pre-show: install, then fire
+hebe-routines *args:
+    data/hebe/install-routines.sh {{args}}
+
 # The rig's own specs (the Keycloak form parsing) — no cluster.
 # Which chats has a Telegram bot seen (B-4.3)? Read-only; the token stays in the vault's 0600 copy, never argv.
 hebe-telegram-chat-id secret="hebe-marketa-telegram-token":
