@@ -115,7 +115,7 @@ entries:
   # phrases on each channel fact's measure (`catalog_sales` / `web_sales` / `store_sales`.ext_sales_price). Those
   # three facts are now sources of `sales` only (model/er/sales.ttrm) and no word reaches them. A channel-qualified
   # question COMPOSES instead: the revenue word binds the measure below (`sales.ext_sales_price`), the channel word
-  # binds the channel — a value label of `sales.channel` (model/lexicon/{cs,en}/channels.ttrm) the resolver binds as
+  # binds the channel — a value label of `sales.channel` (`channels.lex.yaml` beside this file) the resolver binds as
   # `er.entity.sales.channel#marketplace` — and the door restricts by it: `channel = 'marketplace'`.
   # A phrase cannot say both: it is one span with one target, and a span on the member alone would leave the
   # question no measure to read. The inflected channel words the phrases used to carry by TOKENS («webu»,

@@ -91,14 +91,14 @@ CLI, which rebuilt master's archive byte for byte first (`check-lexicon` up to d
 
 | | |
 |---|---|
-| archive id | `sha256:6c26c9758afeb69583d4b6757570d76b73d557dbaccce0e878bd88a9819d4798` (was `85f14290…`) |
-| model id | `sha256:406f1af6007f1364fe1416f34332c77d6a23e3d703702fe3d8297aeeb1791304` (was `8a5d11de…`: `sales`, the union query, the facts' labels) |
+| archive id | `sha256:01b950549f3860879529881d11f66cdbd92d9654b4077e9f4f7a34d3b6349c40` (was `85f14290…`) |
+| model id | `sha256:a07deb4f994ec32757ac1e35b68ef64eb54e810a0f3453661221fa9d33b4086d` (was `8a5d11de…`: `sales`, the union query, the facts' labels and revenue facet) |
 | schema | `ttr-lexicon-compiled/v6` |
 | toolchain | `Collite/ttr-core` `grammar/v0.18.1` (the pin; the v0.18.3 CLI builds the same bytes) |
-| entries | **789** (was 812) — **`MEMBER` 219** (was 182: **+37 `DECLARED`**, the channel words on `sales.channel`'s three values; the six value labels fold into them, RG-LEXC-002) · **`MODEL_OBJECT` 283** (was 343: the channel facts' labels, terms and phrases, `channel_sales`' labels; `sales`' labels in) · every other class unchanged |
+| entries | **791** (was 812) — **`MEMBER` 221** (was 182: **+37 `DECLARED`**, the channel words on `sales.channel`'s three values, and **+2 `METADATA`**, the store channel's labels „Kanál prodejen“ / "Store channel"; the other four value labels fold into declared words, RG-LEXC-002) · **`MODEL_OBJECT` 283** (was 343: the channel facts' labels, terms and phrases, `channel_sales`' labels; `sales`' labels in) · every other class unchanged |
 | targets | **57** (was 63) — out: `store_sales`, `web_sales`, `catalog_sales` and their `ext_sales_price`, `channel_sales` and its three attributes; in: `sales`, `sales.channel`, `sales.ext_sales_price`, `sales.quantity` |
-| build warnings | **7** (was 24) — all RG-LEXC-002: a declared channel word that is also its value's label, and «prodejna» on the store dimension (its label) |
-| size | 14,944 bytes |
+| build warnings | **5** (was 24) — all RG-LEXC-002: a declared channel word that is also its value's label, and «prodejna» on the store dimension (its label) |
+| size | 14,963 bytes |
 
 ### 2026-10-23 (CN-P4 S4.5, archive v6)
 

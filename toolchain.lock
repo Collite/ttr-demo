@@ -14,6 +14,7 @@ version = "0.17.3-au.2"
 image = "0.11.15"                # the veles image olymp `clusters/hartland/apps/veles/values.yaml` deploys
 ttr-metadata = "0.18.3"          # `tatrman-ttr-metadata` in ttr-server's `gradle/libs.versions.toml` at `veles/v<image>`;
                                  # the gate builds its Kotlin loader from ttr-core `grammar/v<this>`, stamped with it
-# Flip to true in the PR that rolls veles to the first ttr-metadata that ships ttr-metadata-cli (ttr-core SO-core
-# P0·S0.3 T6); true = the gate fails without the loader, false = the gate says it did not run it.
-strict-load = false
+# true since md/hop HP-H (2026-10-24): the [veles] pin caught up with veles 0.11.15, whose ttr-metadata 0.18.3 ships
+# ttr-metadata-cli (from grammar/v0.18.0; ttr-core SO-core P0·S0.3 T6). true = the gate fails without the loader,
+# false = the gate says it did not run it.
+strict-load = true

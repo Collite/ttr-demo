@@ -94,7 +94,7 @@ test('HP-H — every channel word is an EXACT declared term of its channel, and 
     if (!rowsOf(word, isLang).some((e) => e.targetRef === CHANNEL(value))) problems.push(`${lang} "${word}" does not reach ${CHANNEL(value)}`);
   }
   // The value labels themselves are METADATA members of the same values.
-  for (const [label, value] of [['tržiště', 'marketplace'], ['prodejny', 'store'], ['marketplace', 'marketplace']]) {
+  for (const [label, value] of [['tržiště', 'marketplace'], ['kanál prodejen', 'store'], ['store channel', 'store'], ['marketplace', 'marketplace']]) {
     if (!lexicon.entries.some((e) => e.termNormalized === label && e.targetRef === CHANNEL(value) && e.targetClass === 'MEMBER')) {
       problems.push(`«${label}» is no MEMBER row of ${CHANNEL(value)}`);
     }
@@ -141,8 +141,11 @@ test('#62 — «vratka / vratky / vratek z <kanálu>» is that channel\'s return
   assert.deepEqual(problems, [], problems.join('; '));
 });
 
-// The saved queries' own Czech wording — description, patterns, examples — names the store channel by the
-// DECLARED phrase («tržby z prodejen»), never as a bare «prodejen» restricting revenue («tržby prodejen»).
+// The saved queries' own Czech wording — description, patterns, examples — names the store channel as «tržby z
+// prodejen», never as a bare «prodejen» restricting revenue («tržby prodejen»). ⚑ md/hop HP-H: «tržby z prodejen» was a
+// DECLARED phrase on the store fact's measure and answered; it is now the revenue word beside the store word, which in
+// a restriction asks (the ruling below). The example still reads best this way; whether its chip asks is measured in the
+// HP-H T6 walk, and the wording moves then if it does.
 // Under the ruling that bare word is a FILTER, and a FILTER asks between the store dimension and the store
 // channel; a query's example is what golem offers as a follow-up chip and what its corpus case asks
 // (`p-store-sales-by-month`), so an example that asks is a query nobody reaches. Line-oriented over the

@@ -67,13 +67,18 @@ def relation rel_household_demographics_income_band { from: er.entity.household_
 
 // -- sales (all channels, stacked on er.query.sales_union — md/hop HP-H) --
 // A stacked entity has no table and so no foreign key: each relation states its `join:` pair (the
-// customer_revenue precedent). `store` and `warehouse` are NULLABLE — a store line has no distribution centre,
-// a web or marketplace line no store — so joining either keeps only the lines that have one.
+// customer_revenue precedent). `warehouse` is NULLABLE — a store line has no distribution centre — so joining it
+// keeps only web and marketplace lines.
+//
+// ⛔ No relation to `store`, though `sales.store` carries a store line's store. Four Czech cities and Memphis are both a
+// store and a distribution centre („Brno“ / „Brno DC“), and a bare city resolves through the fact's reach: with the
+// store in reach, «Tržby z tržiště v roce 2025 pro Brno» binds the STORE (an exact name beats the DC's partial one)
+// and answers an empty marketplace — the headline beat (act 2.3). The all-channel fact never reached the store
+// (`channel_sales` had no store column); a store name is the composer's, as by-store questions already are.
 def relation rel_sales_date      { from: er.entity.sales, to: er.entity.date_dim,  cardinality: { from: "0..*", to: "1" },    join: [{ from: er.entity.sales.sold_date, to: er.entity.date_dim.sk }] }
 def relation rel_sales_item      { from: er.entity.sales, to: er.entity.item,      cardinality: { from: "0..*", to: "1" },    join: [{ from: er.entity.sales.item, to: er.entity.item.sk }] }
 def relation rel_sales_customer  { from: er.entity.sales, to: er.entity.customer,  cardinality: { from: "0..*", to: "1" },    join: [{ from: er.entity.sales.customer, to: er.entity.customer.sk }] }
 def relation rel_sales_promo     { from: er.entity.sales, to: er.entity.promotion, cardinality: { from: "0..*", to: "0..1" }, join: [{ from: er.entity.sales.promo, to: er.entity.promotion.sk }] }
-def relation rel_sales_store     { from: er.entity.sales, to: er.entity.store,     cardinality: { from: "0..*", to: "0..1" }, join: [{ from: er.entity.sales.store, to: er.entity.store.sk }] }
 // LR ⚑LR-9 — NULLABLE: a store line has no distribution center, so joining drops store lines.
 def relation rel_sales_warehouse { from: er.entity.sales, to: er.entity.warehouse, cardinality: { from: "0..*", to: "0..1" }, join: [{ from: er.entity.sales.warehouse, to: er.entity.warehouse.sk }] }
 

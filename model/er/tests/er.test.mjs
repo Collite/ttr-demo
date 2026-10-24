@@ -123,7 +123,7 @@ test('T6.5 — er2db completeness: every entity has an er2db_entity, every attri
   assert.deepEqual(unboundAttributes, [], `attributes without er2db_attribute: ${unboundAttributes.join(', ')}`);
 });
 
-test('T6.6 — ResolveArea("hartland") is green: non-empty, contains sales and the 3 channel facts it reads', () => {
+test('T6.6 — ResolveArea("hartland") is green: non-empty, names the all-channel fact sales', () => {
   const resolved = project.areaTable.get('hartland');
   assert.ok(resolved, 'area "hartland" not found');
   assert.ok(resolved.resolvedEntities.length > 0, 'resolvedEntities is empty');
@@ -408,10 +408,12 @@ test('HP-H — sales is stacked on the logical query sales_union: three branches
     'er.entity.item': [['er.entity.sales.item', 'er.entity.item.sk']],
     'er.entity.customer': [['er.entity.sales.customer', 'er.entity.customer.sk']],
     'er.entity.promotion': [['er.entity.sales.promo', 'er.entity.promotion.sk']],
-    'er.entity.store': [['er.entity.sales.store', 'er.entity.store.sk']],
     'er.entity.warehouse': [['er.entity.sales.warehouse', 'er.entity.warehouse.sk']],
   });
   assert.deepEqual(entity.semantics?.entries?.measures, ['ext_sales_price', 'quantity'], 'revenue first: the default measure of a bare „tržby“');
+  // The store stays out of the fact's reach: «… pro Brno» on the marketplace must reach the DC, not the store
+  // of the same name (relations.ttrm).
+  assert.ok(!('er.entity.store' in pairs), 'sales reaches the store');
 });
 
 test('HP-H — channel_sales is folded into sales; customer_revenue reads sales', () => {
@@ -432,6 +434,9 @@ test('⚑H-7 — the three channel facts are sources only: no label, so no METAD
     assert.ok(e, `${name} is declared (sales reads it)`);
     assert.equal(e.labelPlural ?? undefined, undefined, `${name} carries a labelPlural`);
     assert.equal(e.displayLabel ?? undefined, undefined, `${name} carries a displayLabel`);
+    // Nor the revenue facet: a composer reading the model sees one object that offers revenue.
+    assert.equal(e.semantics?.entries?.measures ?? undefined, undefined, `${name} still declares measures`);
+    assert.match(e.description?.value ?? '', /a SOURCE of `sales`/, `${name}'s description does not point at sales`);
   }
   // `sales`' own label names the object, never a revenue or channel word (a label outranks a declared phrase).
   const fold = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();

@@ -129,13 +129,17 @@ bearer rule had nothing to restrict to). Now the union is the model's: `er/sales
 `er.query.sales_union` over `store_sales`, `web_sales` and `catalog_sales` and the entity `sales` stacked on it —
 `channel` an attribute (`store` · `web` · `marketplace`), `store` a store line's, `warehouse` a web or marketplace
 line's, relations by `join:` pairs. What a reader would not guess:
+- **no relation to `store`**: four Czech cities and Memphis are both a store and a DC, and a bare city resolves through
+  the fact's reach — with the store in reach, «Tržby z tržiště … pro Brno» would bind the store and answer an empty
+  marketplace. A store name is the composer's (as by-store questions already were on `channel_sales`);
 - the channel literals are **CAST to VARCHAR** in the body: bare, the translator types them CHAR(5)/CHAR(3)/CHAR(11),
   unifies the union at CHAR(11) and writes padded `'store      '`, which `channel = 'store'` never matches;
 - the DC-scope row rule needs no entry for `sales`: the body is inlined where `sales` is read, so the rule on
   `web_sales` and `catalog_sales` narrows those lines, and the store channel stays whole (Bora, 2026-10-24);
 - **the three channel facts are sources only** (⚑H-7). The mechanism is the vocabulary: they carry no
   `displayLabel`/`labelPlural` (a label is a METADATA term) and no lexicon term names them or their attributes
-  (`lexicon/tests/store-family.test.mjs` holds it). Every channel word is a value of `sales.channel` instead — its
+  (`lexicon/tests/store-family.test.mjs` holds it), nor the revenue facet (`semantics { measures }`), and their
+  descriptions point at `sales` — what a composer reads. Every channel word is a value of `sales.channel` instead — its
   `valueLabels` plus `lexicon/aliases/channels.lex.yaml` — which the resolver binds as `er.entity.sales.channel#<value>`
   and the query door restricts by. They stay in the package (the union reads them, and so may the composer's SQL), and
   the db-lane `q.hartland.*` queries read their tables;
