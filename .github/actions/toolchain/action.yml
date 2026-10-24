@@ -146,12 +146,13 @@ runs:
     - uses: gradle/actions/setup-gradle@v4
       if: steps.restore.outputs.cache-hit != 'true' || (inputs.with-loader == 'true' && env.STRICT_LOAD == 'true' && steps.loader-restore.outputs.cache-hit != 'true') || (inputs.with-recipes == 'true' && steps.ttrp-restore.outputs.cache-hit != 'true')
 
-    # The model pin supplies the lexicon; recipe checks use only the independent CLI below.
-    - name: Build the lexicon CLI
+    # The model pin supplies the lexicon and the conceptual model's `ttr` (ttr-concept: `ttr cn hygiene`, CN-P6 S6.1);
+    # recipe checks use only the independent CLI below.
+    - name: Build the lexicon CLI and ttr
       if: steps.restore.outputs.cache-hit != 'true'
       shell: bash
       working-directory: tatrman
-      run: ./gradlew :packages:kotlin:ttr-lexicon-cli:installDist
+      run: ./gradlew :packages:kotlin:ttr-lexicon-cli:installDist :packages:kotlin:ttr-concept:installDist
 
     - uses: actions/cache/save@v4
       if: steps.restore.outputs.cache-hit != 'true'

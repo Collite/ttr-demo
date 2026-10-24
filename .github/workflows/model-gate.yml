@@ -19,6 +19,9 @@
 #                                 was served and its words were not, so questions about it came back
 #                                 as "I don't recognise …". `check-model` already guards the other
 #                                 generated artifact; this is its missing twin.
+#   just check-cn-hygiene         model/cn/tests/hygiene.md is what `ttr cn hygiene` prints now — ADDED
+#                                 2026-10-24, CN-P6 S6.1: the conceptual model's report (every concept's grounding
+#                                 grade and hop, the definitions' findings) is a golden the cn suite reads
 #   just routing-check            the routing corpus's schema (run-set/routing/) — ADDED 2026-10-15
 #   just routing-test             the corpus runner's own specs (scripts/test_routing_run.py) — ADDED
 #                                 2026-10-15. Both need no cluster and no secrets; before, they ran
@@ -104,6 +107,13 @@ jobs:
       # the schema line and so the archive id move. The model side: resolved-packages.json unchanged; the loader now
       # warns `cn/cnc-deprecated` on the twelve `roles:` files (accepted in model/tests/project-harness.mjs).
       #
+      # grammar/v0.18.3 (2026-10-24, CN-P6 S6.1): md/hop's DERIVED hop (grammar/v0.18.2, ttr-core#269) in the editor
+      # toolchain and in `ttr cn hygiene` — hartland's conceptual package authors no md2er, so at v0.18.1 every
+      # md-grounded concept read `md-grounded-hop-missing`. The readers were rolled before: veles 0.11.15 is built on
+      # ttr-metadata 0.18.3 ([veles] below), and the archive schema is still `ttr-lexicon-compiled/v6`, which lex-matcher
+      # 0.11.5 and resolver 0.11.23 read. v0.18.3 rebuilt master's archive and resolved-packages.json byte for byte, and
+      # master's model suites passed on it, before this branch changed the model.
+      #
       # The pin lives in toolchain.lock ([ttr-core].ref) since 2026-10-21 (SO-demo P0, ⚑SO-P-4), beside the veles image
       # hartland deploys and the ttr-metadata version it was built with ([veles].image, [veles].ttr-metadata) — one file
       # read by this gate, regenerate.yml and olymp's release checklist. The history above is the lock's; the rule is
@@ -175,6 +185,12 @@ jobs:
       - name: lexicon.tar.zst is not stale
         working-directory: hartland
         run: just check-lexicon
+
+      # CN-P6 S6.1: the conceptual model's hygiene report, over model/ plus the automation package (the parametric
+      # phases read its parameters) — the golden model/cn/tests/cn.test.mjs reads (A-H-5: no hop missing, no md2er).
+      - name: cn hygiene report is not stale
+        working-directory: hartland
+        run: just check-cn-hygiene
 
       # SO-demo P0 (D-28; review-121 ⚑R121-A/B): the files as veles loads them, with the loader built
       # from ttr-core at veles's ttr-metadata version and stamped with it (the toolchain action). `--strict`
