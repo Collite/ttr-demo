@@ -25,8 +25,8 @@
 
 | Flag | Question | Default | Verdict | Date |
 |---|---|---|---|---|
-| HB-⚑1 | instance: rebind `dev` to Maya / new `maya` instance | keep `dev` (HB-D2) | — | — |
-| HB-⚑2 | console: HTTPRoute `hebe.…nip.io` / port-forward | HTTPRoute | — | — |
+| HB-⚑1 | instance: rebind `dev` to Maya / new `maya` instance | keep `dev` (HB-D2) | **new instance `marketa`**, persona Markéta Nováková, demos in Czech; `dev` retired (⚑HE-4 amended → HE-D-4, HE-D-10) | 2026-10-23 |
+| HB-⚑2 | console: HTTPRoute `hebe.…nip.io` / port-forward | HTTPRoute | **HTTPRoute, default kept:** `hebe.hartland.collite.cz` behind the OIDC edge, `console.auth = edge` (⚑HE-5 → HE-D-5) | 2026-10-23 |
 | HB-⚑3 | Telegram bot + vault seed; stage phone; 2nd account for Beat 6 | Bora creates; Bora's phone | — | — |
 | HB-⚑4 | governance beat: all three strikes / receipts-only | all three | — | — |
 | HB-⚑5 | offline-tolerance pocket (local `personal` profile) | one spoken line, no build | — | — |
@@ -37,7 +37,10 @@
 - [ ] [`tasks-hb-p0-preflight.md`](./tasks-hb-p0-preflight.md) (7 tasks)
 
 ### HB-P1 — Instance & identity *(cluster/vault privileges; olymp PRs)*
-- [ ] [`tasks-hb-p1-instance-identity.md`](./tasks-hb-p1-instance-identity.md) (8 tasks)
+- [x] [`tasks-hb-p1-instance-identity.md`](./tasks-hb-p1-instance-identity.md) (8 tasks) — **met by HE-P1
+  (2026-10-25).** The HE arc ran this phase (`project/kantheon/features/hebe/tasks/tasks-p1-*.md`) against
+  contracts §2 as amended by HE-D-4. `rig-hb/verify.sh` passes 12 checks, with 0 failures, against hebe 0.11.7
+  (1 n/a: the stranger step, B-4.4).
 
 ### HB-P2 — Fixtures
 - [ ] [`tasks-hb-p2-fixtures.md`](./tasks-hb-p2-fixtures.md) (8 tasks)
@@ -54,3 +57,4 @@
 | Date | Session | What moved | Notes |
 |---|---|---|---|
 | 2026-07-23 | planning | corpus + task lists authored | awaiting Bora: ⚑ verdicts (⚑3 gates P1) |
+| 2026-10-25 | HE dev | **HB-P1 met by HE-P1**; ⚑1/⚑2 filled from ⚑HE-4/⚑HE-5 | rig 12 pass on hebe 0.11.7; the brief reached the phone and the Iris inbox (HE-P1·S1.3 T6) |
