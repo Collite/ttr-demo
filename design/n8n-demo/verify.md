@@ -69,3 +69,12 @@ Local checks use a fake kubectl and loopback HTTP n8n/Mailpit servers, with no r
 ```sh
 just n8n-test
 ```
+
+
+For P3, `just n8n-verify --phase 3` selects V1–V10. V10 calls `seed-n8n-content.sh --verify`, checking the
+reviewed graph/settings/credential IDs and that the latest draft is the published version. It also verifies
+missing-key denial and a successful authenticated echo; this produces an echo execution, never a sales mail.
+Supply `--content-dir`, `--pg-ro-password-file` and `--webhook-key-file` as needed; the owner password-file
+option is shared with V7. The original private webhook key defaults to the state path in [runbook.md](runbook.md).
+The wrapper keeps vault credentials in private files, and timed-out verification stops its process group.
+V11 remains explicitly pending. A successful local-fake run is not live certification.

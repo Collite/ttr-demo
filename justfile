@@ -458,6 +458,10 @@ n8n-seed-users *FLAGS:
 n8n-verify *FLAGS:
     scripts/verify-n8n.sh {{FLAGS}}
 
+# Restore demo content and publish its reviewed versions; --verify checks content and echoes the webhook.
+n8n-seed-content *FLAGS:
+    scripts/seed-n8n-content.sh {{FLAGS}}
+
 # Seed + verification rig against local fakes; discovers the future content seed tests too.
 n8n-test:
     python3 -B -m unittest discover -s scripts -p 'test_*n8n*.py'

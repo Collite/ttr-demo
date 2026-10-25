@@ -36,7 +36,7 @@
 #                                 BI-4 S4.2: the import Job exits 0 on a bundle it could not import
 #   just hebe-seed-test           Hebe's two identity seed scripts against a fake az + curl: no secret in
 #                                 output or argv, only an Offline token stored — ADDED 2026-10-23, HE-P1 S1.1
-#   just n8n-test                 n8n seed + P1 verification rig against local fakes — N8 S2.2/S1.2
+#   just n8n-test                 n8n identity/content seeds + verification rig against local fakes — N8 P1/P2/P3
 #   just load-model              the model as veles loads it: the Kotlin loader, strict, built from
 #                                 ttr-core at veles's ttr-metadata version (grammar/v<[veles].ttr-metadata>,
 #                                 stamped with it) — ADDED 2026-10-21, SO-demo P0. Veles drops a file

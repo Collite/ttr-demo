@@ -1,4 +1,4 @@
-"""Read-only n8n P1/P2 verification. Standard library only; errors never print response/command bodies."""
+"""n8n P1/P2/P3 verification (P3 sends a small echo request). Standard library only; errors never print response/command bodies."""
 import argparse
 import base64
 from dataclasses import dataclass
@@ -118,14 +118,14 @@ def decode_json(raw, description):
         raise CheckError(f'{description}: invalid JSON (body withheld)') from error
 
 
-def verify_personas(command, *, env, timeout=150):
+def verify_personas(command, *, env, timeout=150, description='persona'):
     # Terminate the whole wrapper group on timeout, including az/Python children. TERM lets the
     # wrapper's EXIT trap remove private password files; killing only bash could leave them behind.
     try:
         process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                    env=env, start_new_session=True)
     except OSError as error:
-        raise CheckError('persona verification unavailable (output withheld)') from error
+        raise CheckError(description + ' verification unavailable (output withheld)') from error
     try:
         return process.wait(timeout=timeout)
     except (subprocess.TimeoutExpired, KeyboardInterrupt) as error:
@@ -143,14 +143,15 @@ def verify_personas(command, *, env, timeout=150):
             process.wait()
         if isinstance(error, KeyboardInterrupt):
             raise
-        raise CheckError('persona verification timed out (output withheld)') from None
+        raise CheckError(description + ' verification timed out (output withheld)') from None
 
 
 class Rig:
-    def __init__(self, context, url, image, *, phase=1, seed_args=(), realm=None,
+    def __init__(self, context, url, image, *, phase=1, seed_args=(), content_args=(), realm=None,
                  mailpit_url='https://mail.hartland.collite.cz', keycloak_url='https://keycloak.hartland.collite.cz'):
         self.context, self.url, self.image = context, url.rstrip('/'), image
         self.phase, self.seed_args, self.realm = phase, list(seed_args), realm
+        self.content_args = list(content_args)
         self.mailpit_url, self.keycloak_url = mailpit_url.rstrip('/'), keycloak_url.rstrip('/')
 
     def kubectl(self, namespace, *args):
@@ -269,13 +270,21 @@ class Rig:
                 'Mailpit search has no invitation mail or an invalid response shape (body withheld)')
         return f'Mailpit recipient search for tomas: {len(messages)} message(s); bodies withheld'
 
+    def content(self):
+        command = [str(Path(__file__).with_name('seed-n8n-content.sh')), '--verify', *self.content_args]
+        code = verify_personas(command, env={**os.environ, 'N8N_URL': self.url}, description='content')
+        require(code == 0, 'content verification failed (output withheld); run n8n-seed-content --verify for safe diagnostics')
+        return 'reviewed workflow content/published versions match; authenticated webhook echo verified'
+
     def run(self):
         checks = [('Application', self.application), ('pod, persistence and image', self.workload),
                   ('public health', self.health), ('owner claimed', self.owner),
                   ('push channel', self.push), ('database', self.database)]
-        if self.phase == 2:
+        if self.phase >= 2:
             checks += [('persona sign-ins', self.personas), ('Mailpit edge and SMTP discovery', self.mailpit),
                        ('invitation mail', self.invitation)]
+        if self.phase >= 3:
+            checks += [('demo content', self.content)]
         failures = 0
         for number, (name, check) in enumerate(checks, 1):
             try:
@@ -294,13 +303,16 @@ class Rig:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Read-only n8n checks: default P1 V1–V6; --phase 2 also authenticates personas and checks Mailpit. '
+    parser = argparse.ArgumentParser(description='n8n checks: default P1 V1–V6; --phase 2 adds personas/Mailpit; --phase 3 also verifies demo content. '
         'Environment: KUBE_CONTEXT=hartland, N8N_URL=https://n8n.hartland.collite.cz, N8N_IMAGE=' + IMAGE)
-    parser.add_argument('--phase', type=int, choices=[1, 2], default=1)
+    parser.add_argument('--phase', type=int, choices=[1, 2, 3], default=1)
     olymp = Path(os.environ.get('OLYMP_DIR', Path(__file__).resolve().parents[2] / 'olymp'))
     parser.add_argument('--realm', default=str(olymp / 'platform/auth/keycloak/overlays/hartland/realm/kantheon.json'))
     parser.add_argument('--owner-password-file', help='P2: private file instead of the owner vault read')
     parser.add_argument('--member-password-file', help='P2: private file instead of the member vault read')
+    parser.add_argument('--content-dir', help='P3: workflow JSON directory')
+    parser.add_argument('--pg-ro-password-file', help='P3: private read-only DB password file')
+    parser.add_argument('--webhook-key-file', help='P3: original private webhook key file')
     args = parser.parse_args()
     url = os.environ.get('N8N_URL', 'https://n8n.hartland.collite.cz')
     try:
@@ -309,15 +321,20 @@ def main():
         mailpit = os.environ.get('MAILPIT_URL', 'https://mail.hartland.collite.cz')
         keycloak = os.environ.get('KEYCLOAK_URL', 'https://keycloak.hartland.collite.cz')
         seed_args = ['--realm', args.realm]
-        if args.phase == 2:
+        content_args = []
+        if args.phase >= 2:
             for base in [mailpit, keycloak]:
                 require(not parsed_url(base).query, 'base URLs cannot contain a query')
             for option, value in [('--owner-password-file', args.owner_password_file),
                                   ('--member-password-file', args.member_password_file)]:
                 if value:
                     seed_args += [option, value]
+        if args.phase >= 3:
+            for option, value in [('--dir', args.content_dir), ('--owner-password-file', args.owner_password_file),
+                                  ('--pg-ro-password-file', args.pg_ro_password_file), ('--webhook-key-file', args.webhook_key_file)]:
+                if value: content_args += [option, value]
         return Rig(os.environ.get('KUBE_CONTEXT', 'hartland'), url, os.environ.get('N8N_IMAGE', IMAGE),
-                   phase=args.phase, seed_args=seed_args, realm=args.realm,
+                   phase=args.phase, seed_args=seed_args, content_args=content_args, realm=args.realm,
                    mailpit_url=mailpit, keycloak_url=keycloak).run()
     except CheckError as error:
         parser.error(str(error))
