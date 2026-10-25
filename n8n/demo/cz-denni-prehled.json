@@ -1,0 +1,130 @@
+{
+  "name": "Denní přehled prodeje",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "id": "2e92af5c-d628-4555-a352-795c00ced04a",
+      "name": "Každý den v 07:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -416,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT c.channel, SUM(c.ext_sales_price) AS revenue\nFROM channel_sales c\nJOIN date_dim d ON c.sold_date_sk = d.d_date_sk\nWHERE d.d_year = 2025\nGROUP BY c.channel",
+        "options": {}
+      },
+      "id": "00f38d32-fad4-4034-b9a2-4c01b32940dc",
+      "name": "Tržby podle kanálu",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -144,
+        16
+      ],
+      "credentials": {
+        "postgres": {
+          "name": "hartland-cz-pg"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const labels = {store: 'Prodejny', web: 'Web', marketplace: 'Tržiště'};\nconst escape = value => String(value).replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;', \"'\":'&#39;'}[c]));\nconst rows = $input.all().map(({json}) => `<tr><td>${escape(labels[json.channel] ?? json.channel)}</td><td>${escape(new Intl.NumberFormat('cs-CZ', {style: 'currency', currency: 'CZK'}).format(Number(json.revenue)))}</td></tr>`).join('');\nreturn [{json: {html: `<h2>Denní přehled prodeje</h2><p>Referenční prodeje Hartland za rok 2025; nejde o dnešní tržby.</p><table><thead><tr><th>Kanál</th><th>Tržby</th></tr></thead><tbody>${rows}</tbody></table><p>Hartland n8n</p>`}}];"
+      },
+      "id": "caf0b6c9-da55-40cd-8657-f4ccdce0134b",
+      "name": "Český přehled",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        144,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "Hartland n8n <n8n@hartland.example>",
+        "toEmail": "marketa@hartland.example",
+        "subject": "=Denní přehled prodeje — {{ $now.toFormat('d. M. yyyy') }}",
+        "html": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "711faff4-8071-4c43-b9e6-44cf723d22c2",
+      "name": "Odeslat do Mailpitu",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        432,
+        16
+      ],
+      "webhookId": "2e2a8442-0343-4818-821e-a334b6470023",
+      "credentials": {
+        "smtp": {
+          "name": "mailpit-smtp"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Každý den v 07:00": {
+      "main": [
+        [
+          {
+            "node": "Tržby podle kanálu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tržby podle kanálu": {
+      "main": [
+        [
+          {
+            "node": "Český přehled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Český přehled": {
+      "main": [
+        [
+          {
+            "node": "Odeslat do Mailpitu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timezone": "Europe/Prague"
+  },
+  "active": true,
+  "meta": {
+    "ttrDemo": {
+      "runSet": "a1-2-revenue-by-channel",
+      "validation": "run-set/routing/validation/channel-2025.yaml",
+      "n8nVersion": "2.44.6"
+    }
+  }
+}

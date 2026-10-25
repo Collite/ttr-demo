@@ -1,0 +1,62 @@
+{
+  "name": "Webhook echo (test)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "echo",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "61b6c9d2-451a-42c6-86f4-e97524cb04e3",
+      "name": "Webhook echo",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        -144,
+        16
+      ],
+      "webhookId": "d018528d-219a-4235-a32a-792a13959116",
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "webhook-echo-key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.body }}",
+        "options": {}
+      },
+      "id": "f8259d15-f7a3-4310-94d9-13a4af87f06f",
+      "name": "Vrátit JSON",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        144,
+        16
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook echo": {
+      "main": [
+        [
+          {
+            "node": "Vrátit JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timezone": "Europe/Prague"
+  },
+  "active": true
+}
