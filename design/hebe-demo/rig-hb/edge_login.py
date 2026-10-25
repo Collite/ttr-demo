@@ -1,11 +1,11 @@
 """Sign in through the hebe console's OIDC edge as one persona and report what the console answered.
 
-    python3 -I edge_login.py <host> <user> [--forge-identity <name>] [--path /api/status]
+    python3 -I edge_login.py <host> <user> [--forge-identity <name>] [--path /api/status] [--body-limit 300]
 
 The persona's password comes from $HEBE_VERIFY_PASSWORD, never argv. It follows the real browser flow: GET the console
 → 302 to Keycloak → POST the login form → 302 to the edge's /oauth2/callback → the edge sets its cookies → 302 back to
-the path → the console's answer. It prints one JSON line: {"status": <the console's HTTP status>, "body": <first 300
-chars>}. The status is 0 when the flow broke before the console answered, with "error" saying where.
+the path → the console's answer. It prints one JSON line: {"status": <the console's HTTP status>, "body": <the first
+--body-limit chars, 300 by default>}. The status is 0 when the flow broke before the console answered, with "error" saying where.
 
 --forge-identity sends `x-forwarded-user: <name>` on every request, as a client trying to name someone else would. The
 edge must strip it (ClientTrafficPolicy earlyRequestHeaders), so the console still sees the signed-in user.
@@ -48,7 +48,7 @@ class _Forge(urllib.request.BaseHandler):
     https_request = http_request
 
 
-def sign_in(host: str, user: str, password: str, path: str, forge: str | None) -> dict:
+def sign_in(host: str, user: str, password: str, path: str, forge: str | None, body_limit: int = 300) -> dict:
     jar = http.cookiejar.CookieJar()
     handlers: list[urllib.request.BaseHandler] = [urllib.request.HTTPCookieProcessor(jar)]
     if forge:
@@ -73,7 +73,7 @@ def sign_in(host: str, user: str, password: str, path: str, forge: str | None) -
     status, url, page = fetch(urllib.request.Request(action, data=form, method="POST"))
     if urllib.parse.urlparse(url).hostname != host:
         return {"status": 0, "error": f"the sign-in did not come back to the console (ended at {url}, HTTP {status})", "body": page[:300]}
-    return {"status": status, "body": page[:300]}
+    return {"status": status, "body": page[:body_limit]}
 
 
 def main() -> int:
@@ -82,12 +82,13 @@ def main() -> int:
     p.add_argument("user")
     p.add_argument("--forge-identity")
     p.add_argument("--path", default="/api/status")
+    p.add_argument("--body-limit", type=int, default=300)
     a = p.parse_args()
     password = os.environ.get("HEBE_VERIFY_PASSWORD", "")
     if not password:
         print(json.dumps({"status": 0, "error": "HEBE_VERIFY_PASSWORD is not set"}))
         return 2
-    print(json.dumps(sign_in(a.host, a.user, password, a.path, a.forge_identity)))
+    print(json.dumps(sign_in(a.host, a.user, password, a.path, a.forge_identity, a.body_limit)))
     return 0
 
 

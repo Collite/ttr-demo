@@ -417,7 +417,7 @@ hebe-telegram-chat-id secret="hebe-marketa-telegram-token":
     scripts/telegram-chat-id.sh {{secret}}
 
 hebe-verify-test:
-    python3 -B -m unittest design/hebe-demo/rig-hb/test_edge_login.py design/hebe-demo/rig-hb/test_verify_helpers.py
+    python3 -B -m unittest design/hebe-demo/rig-hb/test_edge_login.py design/hebe-demo/rig-hb/test_verify_helpers.py design/hebe-demo/rig-hb/test_brief_check.py
 
 # ── the Superset dashboards (BI-4, contracts C-23) ───────────────────────────────────────────────
 # dashboards/README.md. Bundles per dashboard and world; olymp's superset-dashboards Application
