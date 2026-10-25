@@ -27,7 +27,7 @@ def templates():
                     'id': 'old-instance-id'}}} if cred else {}))
     return [dict(name='Denní přehled prodeje', active=True, settings={'timezone': 'Europe/Prague'},
                  nodes=[node('DB', 'postgres', 'postgres'), node('Mail', 'emailSend', 'smtp')], connections={}),
-            dict(name='Webhook echo (test)', active=True, settings={},
+            dict(name='Webhook echo (test)', active=True, settings={}, meta={'ttrDemo':{'probe':'webhook-echo'}},
                  nodes=[node('Echo', 'webhook', 'httpHeaderAuth')], connections={})]
 
 
@@ -89,7 +89,9 @@ def handler(state):
                     return self.answer({'count':len(items),'data':items[skip:skip+take]}, envelope=False)
                 assert 'active' not in payload, payload
                 item = {**payload, 'id': 'w' + str(len(state.flows)+1), 'versionId': 'v1', 'checksum': 's1', 'active': False, 'activeVersionId': None}
-                item['settings']={k:v for k,v in item['settings'].items() if v!='DEFAULT' and not (k=='executionTimeout' and v==-1)}
+                # n8n@2.44.6 workflows.controller.ts:107 -> workflow-creation.service.ts:
+                # create stores settings verbatim; removeDefaultValues runs only on update.
+                # Keep POST unlike PATCH below, including any erroneous DEFAULT markers.
                 state.flows.append(item)
                 return self.answer(item)
             if path.startswith('/rest/workflows/'):
@@ -143,6 +145,7 @@ class ContentTest(unittest.TestCase):
     def test_fresh_maps_all_credentials_and_publishes_versions(self):
         self.seed()
         self.assertEqual(len(self.state.creds), 3); self.assertEqual(len(self.state.flows), 2)
+        self.assertEqual(self.run_seed('--verify').returncode,0)
         for w in self.state.flows:
             self.assertTrue(w['active']); self.assertEqual(w['activeVersionId'], w['versionId'])
             for n in w['nodes']:
@@ -212,6 +215,15 @@ class ContentTest(unittest.TestCase):
         for source in (ROOT/'n8n/demo').glob('*.json'):
             (self.workflows/source.name).write_text(source.read_text())
         self.seed(); r=self.run_seed('--verify'); self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+        posts=[payload for method,path,payload in self.state.calls if method=='POST' and path=='/rest/workflows']
+        self.assertEqual(len(posts),2)
+        for payload in posts:
+            self.assertNotIn('DEFAULT',payload['settings'].values())
+            self.assertNotIn('executionTimeout',payload['settings'])
+            self.assertEqual(payload['pinData'],{})
+            self.assertEqual(payload['projectId'],'personal-owner')
+        echo=json.loads((ROOT/'n8n/demo/webhook-echo.json').read_text())
+        self.assertEqual(echo['meta']['ttrDemo']['probe'],'webhook-echo')
         for flow in self.state.flows:
             self.assertEqual(flow['settings']['timezone'],'Europe/Prague')
         digest=next(w for w in self.state.flows if w['name']=='Denní přehled prodeje')
@@ -264,6 +276,7 @@ class ContentTest(unittest.TestCase):
         flow.update(pinData={'DB':[{'json':{'fake':True}}]},staticData={'lastRun':'kept'})
         flow['settings'].update(errorWorkflow='rehearsal',executionTimeout=90,saveManualExecutions=True)
         r=self.run_seed('--verify');self.assertEqual(r.returncode,1);self.assertIn('pinData',r.stderr)
+        self.assertNotIn('response shape',r.stderr)
         self.seed();self.assertEqual(unrelated,untouched);self.assertEqual(flow['pinData'],{});self.assertEqual(flow['staticData'],{'lastRun':'kept'})
         for key in ['errorWorkflow','executionTimeout','saveManualExecutions']: self.assertNotIn(key,flow['settings'])
         self.assertEqual(self.run_seed('--verify').returncode,0)
@@ -317,6 +330,27 @@ class ContentTest(unittest.TestCase):
         d['nodes'][0]['parameters']['path']='echo';d['nodes'][0].pop('credentials')
         d['nodes'].append(dict(d['nodes'][0],name='Response',type='n8n-nodes-base.respondToWebhook'))
         p.write_text(json.dumps(d));self.assertEqual(self.run_seed().returncode,1);self.assertEqual(self.state.calls,[])
+    def test_unmarked_webhook_response_workflow_imports_without_demo_assumptions(self):
+        for path in self.workflows.glob('*.json'): path.unlink()
+        doc=templates()[1];doc.pop('meta');doc['name']='deliver'
+        doc['nodes'][0].pop('credentials');doc['nodes'][0]['parameters']={'httpMethod':'POST','path':'deliver','responseMode':'responseNode'}
+        doc['nodes'].append(dict(doc['nodes'][0],name='Response',type='n8n-nodes-base.respondToWebhook'))
+        (self.workflows/'deliver.json').write_text(json.dumps(doc))
+        from scripts.seed_n8n_content import documents, echo_paths
+        self.assertEqual(echo_paths(documents(self.workflows)),[])
+        self.seed();self.assertEqual(self.state.creds,[])
+        self.assertFalse((self.dir/'webhook-key').exists())
+        self.state.calls.clear();r=self.run_seed('--verify');self.assertEqual(r.returncode,0,r.stderr)
+        self.assertFalse(any(path.startswith('/webhook/') for _,path,_ in self.state.calls))
+    def test_local_and_drift_messages_do_not_blame_response_shape(self):
+        from scripts.seed_n8n_content import documents, check_flow, SeedError
+        empty=self.dir/'empty';empty.mkdir()
+        with self.assertRaises(SeedError) as error: documents(empty)
+        self.assertEqual(str(error.exception),'workflow files (empty directory)')
+        doc=dict(name='Pinned',active=True,nodes=[],connections={},settings={})
+        flow=dict(doc,id='id',versionId='v1',activeVersionId='v1',pinData={'DB':[{'json':{}}]})
+        with self.assertRaises(SeedError) as error: check_flow(flow,doc,{})
+        self.assertEqual(str(error.exception),'workflow pinData must be empty')
     def test_status_diagnostics_and_local_file_errors(self):
         self.seed();self.state.echo_status=404
         r=self.run_seed('--verify');self.assertEqual(r.returncode,1);self.assertIn('HTTP 404',r.stderr)
@@ -324,7 +358,7 @@ class ContentTest(unittest.TestCase):
         self.state.echo_status=403
         r=self.run_seed('--verify');self.assertIn('HTTP 403',r.stderr)
         for p in self.workflows.glob('*.json'):p.unlink()
-        r=self.run_seed();self.assertNotIn('HTTP',r.stderr)
+        r=self.run_seed();self.assertNotIn('HTTP',r.stderr);self.assertNotIn('response shape',r.stderr)
     def test_truncated_response_is_clean_error(self):
         self.state.truncated='/rest/credentials'
         r=self.run_seed();self.assertEqual(r.returncode,1);self.assertIn('ERROR:',r.stderr);self.assertNotIn('Traceback',r.stderr)
