@@ -164,6 +164,10 @@ jobs:
         working-directory: hartland
         run: python3 -m unittest scripts/test_build_recipes.py scripts/test_toolchain_ttrp.py
 
+      - name: OpenMetadata rig regressions (offline)
+        working-directory: hartland
+        run: just openmetadata-test
+
       - name: Hebe rig specs (Keycloak form parsing, verify.sh helpers)
         working-directory: hartland
         run: just hebe-verify-test

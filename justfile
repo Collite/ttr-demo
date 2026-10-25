@@ -12,6 +12,14 @@
 verify-model:
     node --test $(find model agents lexicon automation -name '*.test.mjs')
 
+# XM-P3: read-only catalog acceptance after scan + two successful projection Jobs.
+verify-openmetadata:
+    bash scripts/verify-openmetadata.sh
+
+# Offline regressions for pagination, retained links and honest no-op Job evidence.
+openmetadata-test:
+    python3 -m unittest scripts/test_verify_openmetadata.py
+
 # GX (NLS-P6.2) — check every mounted `intent.yaml` against the plan-composer placeholder
 # contract. The kantheon sibling is `IntentPromptContractSpec`; this repo has no CI lane, and
 # an uncontracted placeholder renders EMPTY with nothing anywhere saying so — which is exactly

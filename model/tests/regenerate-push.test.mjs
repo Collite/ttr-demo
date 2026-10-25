@@ -112,6 +112,9 @@ test('P2 — the branch moved to a head whose generated/ is current: exit 0, ori
     // Someone else regenerated the same head first.
     const other = f.clone('other');
     assert.equal(f.run(other, 'regenerate-local.sh').status, 10);
+    // Regeneration also creates model.tar.zst when the save removed the old archive.
+    // Stage the full generated/ bundle, as the real push script does; -am misses new files.
+    f.git(other, 'add', 'generated');
     f.git(other, ...ID, 'commit', '-q', '-am', 'regenerated elsewhere');
     f.git(other, 'push', '-q', 'origin', `HEAD:refs/heads/${BRANCH}`);
     const current = f.head();

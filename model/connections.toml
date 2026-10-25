@@ -14,6 +14,10 @@ schema   = "dbo"     # binds to modeler.toml's [schemas.dbo] handle
 currency = "USD"     # display fact — surfaces via lexicon locale en
 locale   = "en"
 
+[connection.locators]
+openmetadata.service = "hartland-pg"
+openmetadata.schema = "public"  # dbo is the model handle; modeler.toml [schemas.dbo].db-schema
+
 [[connection]]
 id       = "pg-hartland-cz"
 database = "hartland_cz"
@@ -21,3 +25,7 @@ dialect  = "postgres"
 schema   = "dbo"
 currency = "CZK"     # display fact — surfaces via lexicon locale cs
 locale   = "cs"
+
+[connection.locators]
+openmetadata.service = "hartland-pg"
+openmetadata.schema = "public"

@@ -1,0 +1,3 @@
+# C-8 authored rename ledger; add entries only for intentional model renames:
+# - {from: <old-qname>, to: <new-qname>, since: <snapshot-version>}
+[]
