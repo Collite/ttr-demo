@@ -170,6 +170,7 @@ class RigTests(unittest.TestCase):
     def test_deprecated_objects_do_not_satisfy_default_thresholds(self):
         for check_name, count, mark in (
             ("Entities glossary", 40, lambda x: x.update(status="Deprecated")),
+            ("Entities glossary", 40, lambda x: x.update(entityStatus="Deprecated")),
             ("metrics", 6, lambda x: x.update(tags=[{"tagFQN": "Tatrman.Deprecated"}])),
         ):
             from copy import deepcopy

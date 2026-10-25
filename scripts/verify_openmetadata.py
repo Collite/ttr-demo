@@ -187,6 +187,7 @@ def checks(catalog, env):
             and ".er.entity." in "." + t.get("extension", {}).get("ttrQname", "")
             and not t.get("parent")
             and t.get("status") != "Deprecated"
+            and t.get("entityStatus") != "Deprecated"
         ]
         minimum = int(env.get("OM_MIN_ENTITIES", "40"))
         require(len(terms) >= minimum, f"{len(terms)} entities < {minimum}")
