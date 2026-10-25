@@ -39,7 +39,7 @@ def main() -> int:
         f'-Dhartland.root={ROOT}', f'-Dhartland.grammar={pins["TTRP_VERSION"]}',
         ':services:automation:hartlandVerifyPublishedCatalog',
         ':services:automation:test', '--tests', 'org.tatrman.automation.runner.HartlandWriterPreviewSpec',
-        '--console=plain', '--max-workers=2',
+        ':services:automation:ktlintCheck', '--console=plain', '--max-workers=2',
     ], cwd=server, env=os.environ.copy())
 
 

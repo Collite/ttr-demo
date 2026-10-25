@@ -90,7 +90,7 @@ test('T1.4 — a pin missing or empty is refused, naming it (an empty ref = an u
 test('T1.5 — a value of the wrong shape is refused, naming the key (they reach $GITHUB_ENV and `export`)', async () => {
   // Each case rewrites the lock's line that STARTS WITH `from`. Every pin is matched by its key's prefix, not its
   // value, so a pin bump does not break this test (the [ttr-core] ref did at grammar/v0.18.1, CN-P4 S4.5, and the
-  // [veles] pins at veles 0.11.15, md/hop HP-H); the [ttrp] ref is a commit sha and never starts with `grammar/v`.
+  // [veles] pins at veles 0.11.15, md/hop HP-H); the independent [ttrp] ref may be a release tag or commit.
   const cases = [
     ['ref = "grammar/v', 'ref = "grammar/v0.17.0$(true)"', '[ttr-core].ref'],
     ['ref = "grammar/v', 'ref = "main"', '[ttr-core].ref'],
