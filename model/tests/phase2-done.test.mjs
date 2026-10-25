@@ -26,6 +26,7 @@ test('DONE 2 — resolves against both connection descriptors (schema-identical,
   // above resolved against. The handle is a catalog label, not a database schema.
   // Only descriptor schema handles; openmetadata.schema is the catalog's physical name.
   const schemas = [...toml.matchAll(/^schema\s*=\s*"([^"]+)"/gm)].map((m) => m[1]);
+  assert.equal(schemas.length, connections.length, 'every connection needs a schema handle');
   assert.ok(schemas.every((s) => s === 'dbo'), `every connection must target the same schema handle: ${schemas.join(', ')}`);
 });
 

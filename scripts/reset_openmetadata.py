@@ -1,4 +1,4 @@
-"""Plan/reset only Hartland's two projected glossaries and six authored metrics."""
+"""Plan/reset only Hartland's two projected glossaries and model-owned metrics."""
 
 import argparse
 import os
@@ -6,9 +6,7 @@ from pathlib import Path
 from urllib.parse import quote
 from urllib.request import Request, build_opener
 
-from verify_openmetadata import Catalog, NoRedirect, require
-
-MEASURES = {"revenue", "quantity", "orderCount", "lineCount", "returnAmount", "onHandQty"}
+from verify_openmetadata import Catalog, NoRedirect, model_owned_metric, require
 
 
 def targets(catalog):
@@ -17,8 +15,7 @@ def targets(catalog):
         if item["name"] in {"hartland Entities", "hartland Concepts"}:
             result.append(("glossaries", item["id"], item["name"]))
     for item in catalog.listing("metrics", "extension"):
-        qname = item.get("extension", {}).get("ttrQname", "")
-        if item["name"] in MEASURES and qname == "md.measure." + item["name"]:
+        if model_owned_metric(item):
             result.append(("metrics", item["id"], item["name"]))
     return result
 

@@ -18,7 +18,7 @@ spec.loader.exec_module(rig)
 
 FQN = "hartland-pg.hartland_us.public.store_sales"
 TERM = "hartland Entities.store_sales"
-ZERO = dict(snapshot="fixture-1", created=0, updated=0, deprecated=0, linked=0, warnings=0)
+ZERO = dict(not_modified=False, snapshot="fixture-1", created=0, updated=0, deprecated=0, linked=0, warnings=0)
 
 
 def catalog():
@@ -80,6 +80,13 @@ def jobs():
     ]
 
 
+def pod_response(name):
+    return json.dumps({"items": [
+        {"metadata": {"name": name + "-failed"}, "status": {"phase": "Failed"}},
+        {"metadata": {"name": name}, "status": {"phase": "Succeeded"}},
+    ]})
+
+
 class RigTests(unittest.TestCase):
     def setUp(self):
         self.env = {"OM_MIN_TABLES": "1", "OM_MIN_ENTITIES": "1", "OM_MIN_METRICS": "1"}
@@ -122,7 +129,7 @@ class RigTests(unittest.TestCase):
 
     def test_noop_requires_two_successful_nonoverlapping_jobs_same_snapshot(self):
         pair = jobs()
-        output = [json.dumps({"items": pair}), json.dumps({**ZERO, "created": 7}), json.dumps(ZERO)]
+        output = [json.dumps({"items": pair}), pod_response("one"), json.dumps({**ZERO, "created": 7}), pod_response("two"), json.dumps(ZERO)]
         commands = []
 
         def execute(args, **kwargs):
@@ -131,6 +138,8 @@ class RigTests(unittest.TestCase):
 
         self.assertIn("zero", rig.check_noop("hartland", execute))
         self.assertTrue(all(cmd[:3] == ["kubectl", "--context", "hartland"] for cmd in commands))
+        log_commands = [c for c in commands if "logs" in c]
+        self.assertEqual([c[-3:] for c in log_commands], [["pod/one", "-c", "project"], ["pod/two", "-c", "project"]])
         for mutate in (
             lambda p: p.pop(),
             lambda p: p[-1]["status"].update(succeeded=0),
@@ -143,9 +152,38 @@ class RigTests(unittest.TestCase):
 
     def test_updated_counter_or_changed_source_is_not_noop(self):
         for latest in ({**ZERO, "updated": 1}, {**ZERO, "snapshot": "fixture-2"}):
-            output = iter([json.dumps({"items": jobs()}), json.dumps(ZERO), json.dumps(latest)])
+            output = iter([json.dumps({"items": jobs()}), pod_response("one"), json.dumps(ZERO), pod_response("two"), json.dumps(latest)])
             with self.assertRaises(ValueError):
                 rig.check_noop("hartland", lambda *a, output=output, **k: next(output))
+
+    def test_noop_rejects_cached_runs_and_legacy_connector(self):
+        for first, second, message in (
+            ({**ZERO, "not_modified": True}, ZERO, "first Job did not sync"),
+            (ZERO, {**ZERO, "not_modified": True}, "second Job did not sync"),
+            (ZERO, {k: v for k, v in ZERO.items() if k != "not_modified"}, "connector >= 0.1.2"),
+        ):
+            output = iter([json.dumps({"items": jobs()}), pod_response("one"), json.dumps(first),
+                           pod_response("two"), json.dumps(second)])
+            with self.assertRaisesRegex(ValueError, message):
+                rig.check_noop("hartland", lambda *a, **k: next(output))
+
+    def test_deprecated_objects_do_not_satisfy_default_thresholds(self):
+        for check_name, count, mark in (
+            ("Entities glossary", 40, lambda x: x.update(status="Deprecated")),
+            ("metrics", 6, lambda x: x.update(tags=[{"tagFQN": "Tatrman.Deprecated"}])),
+        ):
+            from copy import deepcopy
+            cat = catalog()
+            original = cat.terms()[0] if count == 40 else cat.listing()[0]
+            items = [deepcopy(original) for _ in range(count)]
+            if count == 40:
+                cat.terms = lambda: items
+            else:
+                cat.listing = lambda *args: items
+            self.assertTrue(dict(rig.checks(cat, {}))[check_name]())
+            mark(items[-1])
+            with self.assertRaises(ValueError):
+                dict(rig.checks(cat, {}))[check_name]()
 
     def test_pagination_retains_later_pages_and_rejects_cursor_cycles(self):
         cat = rig.Catalog("https://catalog.example", "secret")
@@ -202,6 +240,7 @@ class RigTests(unittest.TestCase):
                         "name": "revenue",
                         "extension": {"ttrQname": "md.measure.revenue"},
                     },
+                    {"id": "seventh", "name": "x", "extension": {"ttrQname": "md.measure.x"}},
                     {
                         "id": "foreign-metric",
                         "name": "quantity",
@@ -214,7 +253,7 @@ class RigTests(unittest.TestCase):
 
         self.assertEqual(
             reset.targets(Fake()),
-            [("glossaries", "ours", "hartland Entities"), ("metrics", "ours-metric", "revenue")],
+            [("glossaries", "ours", "hartland Entities"), ("metrics", "ours-metric", "revenue"), ("metrics", "seventh", "x")],
         )
         output = io.StringIO()
         with (

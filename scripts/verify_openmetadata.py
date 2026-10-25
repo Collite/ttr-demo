@@ -18,9 +18,13 @@ class NoRedirect(HTTPRedirectHandler):
         return None
 
 
+class CheckError(ValueError):
+    """Only locally authored diagnostics are safe to show without response bodies."""
+
+
 def require(ok, message):
     if not ok:
-        raise ValueError(message)
+        raise CheckError(message)
 
 
 class Catalog:
@@ -81,6 +85,10 @@ class Catalog:
         )
 
 
+def model_owned_metric(item):
+    return item.get("extension", {}).get("ttrQname", "").startswith("md.measure.")
+
+
 def columns(items):
     for item in items:
         yield item
@@ -106,6 +114,7 @@ def summary(log):
         ),
         "invalid summary counters",
     )
+    require(type(result.get("not_modified")) is bool, "need connector >= 0.1.2 (not_modified missing/invalid)")
     return result
 
 
@@ -130,16 +139,21 @@ def check_noop(context, execute=subprocess.check_output):
         pair[0]["status"]["completionTime"] <= pair[1]["status"]["startTime"],
         "projection Jobs overlapped",
     )
-    summaries = [
-        summary(
-            execute(
-                base + ["logs", "job/" + job["metadata"]["name"], "--container", "project"],
-                text=True,
-                timeout=30,
-            )
-        )
-        for job in pair
-    ]
+    summaries = []
+    for job in pair:
+        pods = json.loads(execute(
+            base + ["get", "pods", "-l", "job-name=" + job["metadata"]["name"], "-o", "json"],
+            text=True, timeout=30,
+        ))["items"]
+        succeeded = [p for p in pods if p.get("status", {}).get("phase") == "Succeeded"]
+        require(len(succeeded) == 1, "expected exactly one Succeeded pod per projection Job")
+        summaries.append(summary(execute(
+            base + ["logs", "pod/" + succeeded[0]["metadata"]["name"], "-c", "project"],
+            text=True, timeout=30,
+        )))
+    for index, value in enumerate(summaries):
+        require(value["not_modified"] is False,
+                ("first" if index == 0 else "second") + " Job did not sync (304); run the idempotency pair")
     require(summaries[0]["snapshot"] == summaries[1]["snapshot"], "source changed between Jobs")
     require(
         all(
@@ -172,6 +186,7 @@ def checks(catalog, env):
             if t.get("glossary", {}).get("name") == "hartland Entities"
             and ".er.entity." in "." + t.get("extension", {}).get("ttrQname", "")
             and not t.get("parent")
+            and t.get("status") != "Deprecated"
         ]
         minimum = int(env.get("OM_MIN_ENTITIES", "40"))
         require(len(terms) >= minimum, f"{len(terms)} entities < {minimum}")
@@ -180,8 +195,9 @@ def checks(catalog, env):
     def metrics():
         items = [
             m
-            for m in catalog.listing("metrics", "extension")
-            if ".md.measure." in "." + m.get("extension", {}).get("ttrQname", "")
+            for m in catalog.listing("metrics", "extension,tags")
+            if model_owned_metric(m)
+            and not any(t.get("tagFQN") == "Tatrman.Deprecated" for t in m.get("tags") or [])
         ]
         minimum = int(env.get("OM_MIN_METRICS", "6"))
         require(len(items) >= minimum, f"{len(items)} metrics < {minimum}")
@@ -271,6 +287,9 @@ def main():
     for name, check in checks(catalog, os.environ):
         try:
             print(f"pass {name}: {check()}")
+        except CheckError as exc:
+            print(f"fail {name}: {exc}")
+            failures += 1
         except Exception:
             # Neither response bodies nor exception text can leak credentials into rig output.
             print(f"fail {name}: check did not pass")
