@@ -42,3 +42,11 @@ The second workflow, **`regenerate`**, rebuilds `generated/` on a change's branc
 the Studio's GitHub App — dispatched by the Studio's *Propose*, and run on any pull request that
 touches the model (`generated/README.md` has the mechanics). Locally, `scripts/regenerate-local.sh`
 is the same job. Planned and tracked in `project/platform/features/studio/` (SO-demo).
+
+## OpenMetadata
+
+The [catalog demo](design/demo-openmetadata.md) covers physical scans, the model
+projection, CN concepts, the read-only `just verify-openmetadata` rig and Bora's
+manual reset. Jobs are deployed by Olymp. The Studio browser round trip remains
+pending the separate Studio deployment; the catalog URL is
+<https://openmetadata.hartland.collite.cz>.
