@@ -42,7 +42,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const labels = {store: 'Prodejny', web: 'Web', marketplace: 'Tržiště'};\nconst escape = value => String(value).replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;', \"'\":'&#39;'}[c]));\nconst rows = $input.all().map(({json}) => `<tr><td>${escape(labels[json.channel] ?? json.channel)}</td><td>${escape(new Intl.NumberFormat('cs-CZ', {style: 'currency', currency: 'CZK'}).format(Number(json.revenue)))}</td></tr>`).join('');\nreturn [{json: {html: `<h2>Denní přehled prodeje</h2><p>Referenční prodeje Hartland za rok 2025; nejde o dnešní tržby.</p><table><thead><tr><th>Kanál</th><th>Tržby</th></tr></thead><tbody>${rows}</tbody></table><p>Hartland n8n</p>`}}];"
+        "jsCode": "const labels = {store: 'Kanál prodejen', web: 'Web', marketplace: 'Tržiště'};\nconst escape = value => String(value).replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;', \"'\":'&#39;'}[c]));\nconst rows = $input.all().sort((a, b) => Number(b.json.revenue) - Number(a.json.revenue)).map(({json}) => `<tr><td>${escape(labels[json.channel] ?? json.channel)}</td><td>${escape(new Intl.NumberFormat('cs-CZ', {style: 'currency', currency: 'CZK'}).format(Number(json.revenue)))}</td></tr>`).join('');\nreturn [{json: {html: `<h2>Denní přehled prodeje</h2><p>Referenční prodeje Hartland za rok 2025; nejde o dnešní tržby.</p><table><thead><tr><th>Kanál</th><th>Tržby</th></tr></thead><tbody>${rows}</tbody></table><p>Hartland n8n</p>`}}];"
       },
       "id": "caf0b6c9-da55-40cd-8657-f4ccdce0134b",
       "name": "Český přehled",

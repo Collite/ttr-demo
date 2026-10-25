@@ -12,7 +12,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit, parse_qs
 import unittest
 
-from scripts.verify_n8n_lib import CheckError, http_code, managed_role_version, websocket_status, probe_push, verify_personas
+from scripts.verify_n8n_lib import CheckError, http_code, managed_role_version, websocket_status, probe_push, run_private_wrapper
 
 ROOT = Path(__file__).resolve().parents[1]
 IMAGE = 'docker.n8n.io/n8nio/n8n:2.44.6'
@@ -304,7 +304,7 @@ print('PRIVATE_BAD_JSON' if d.get('malformed') == kind else json.dumps(d[kind]))
                           "trap 'exit 143' TERM\nprintf 'PRIVATE' > \"$PRIVATE_TEST_FILE\"\nsleep 30\n")
         script.chmod(0o755)
         with self.assertRaisesRegex(CheckError, 'timed out'):
-            verify_personas([str(script)], env={**os.environ, 'PRIVATE_TEST_FILE': str(secret)}, timeout=0.5)
+            run_private_wrapper([str(script)], env={**os.environ, 'PRIVATE_TEST_FILE': str(secret)}, timeout=0.5)
         self.assertFalse(secret.exists())
 
     def p2_args(self):

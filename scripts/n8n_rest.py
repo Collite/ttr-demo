@@ -1,12 +1,15 @@
 """Shared n8n 2.44.6 REST session and private-file helpers; no response-body leaks."""
 from __future__ import annotations
 import http.cookiejar
+import http.client
+import os
 import json
 from pathlib import Path
 import re
 import stat
 import urllib.error
 import urllib.request
+import urllib.parse
 
 class SeedError(Exception):
     pass
@@ -35,8 +38,9 @@ class Client:
             with self.opener.open(request, timeout=30) as response:
                 status, raw = response.status, response.read()
         except urllib.error.HTTPError as error:
-            status, raw = error.code, error.read()
-        except (OSError, urllib.error.URLError):
+            # Error bodies can contain secrets; do not read them.
+            status, raw = error.code, b''
+        except (OSError, urllib.error.URLError, http.client.HTTPException):
             raise SeedError(f'{path.split("?")[0]}: connection failed') from None
         excerpt = ': ' + raw[:200].decode('utf-8', 'replace') if safe_excerpt else ' (body withheld)'
         if status != 200:
@@ -56,9 +60,10 @@ class Client:
             raise SeedError('HTTP 200: authentication response missing n8n-auth cookie')
 
 
-def expect(condition, endpoint):
+def expect(condition, message, *, status=None):
     if not condition:
-        raise SeedError(f'{endpoint}: HTTP 200, unexpected n8n 2.44.6 response shape (body withheld)')
+        prefix = f'HTTP {status}, ' if status is not None else ''
+        raise SeedError(f'{prefix}{message}: unexpected n8n 2.44.6 response shape (body withheld)')
 
 
 def identity(data, person, role, endpoint):
@@ -66,20 +71,41 @@ def identity(data, person, role, endpoint):
            and data.get('role') == role and isinstance(data.get('id'), str), endpoint)
 
 
-def private_file(path):
+def _private_regular_file(path):
     if not path:
         raise SeedError('password file required (use the shell wrapper for vault reads)')
-    file = Path(path)
     try:
+        file = Path(path)
         mode = file.stat().st_mode
         if not stat.S_ISREG(mode) or mode & 0o077:
-            raise SeedError('password files must be regular files readable only by their owner (chmod 600)')
-        value = file.read_text().rstrip('\r\n')
+            raise SeedError('private files must be regular files readable only by their owner (chmod 600)')
+        return file.read_text()
     except OSError:
-        raise SeedError('cannot read password file') from None
+        raise SeedError('cannot read private file') from None
+
+
+def private_file(path):
+    value = _private_regular_file(path).rstrip('\r\n')
     if not value:
         raise SeedError('password file is empty')
     return value
+
+
+def state_home():
+    value = os.environ.get('XDG_STATE_HOME', '')
+    return Path(value) if value and Path(value).is_absolute() else Path.home()/'.local/state'
+
+
+def validate_base_url(url):
+    try:
+        parsed = urllib.parse.urlsplit(url)
+        valid = (parsed.scheme in ('http', 'https') and parsed.hostname
+                 and not (parsed.username or parsed.password or parsed.query or parsed.fragment))
+        parsed.port
+    except ValueError:
+        valid = False
+    if not valid:
+        raise SeedError('URLs must be HTTP(S) base URLs without credentials, query or fragment')
 
 
 def password_file(path):

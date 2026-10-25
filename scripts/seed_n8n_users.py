@@ -19,9 +19,9 @@ import urllib.request
 
 
 try:
-    from .n8n_rest import SeedError, Client, expect, identity, password_file, login
+    from .n8n_rest import SeedError, Client, expect, identity, password_file, login, validate_base_url
 except ImportError:  # Direct script entry point.
-    from n8n_rest import SeedError, Client, expect, identity, password_file, login
+    from n8n_rest import SeedError, Client, expect, identity, password_file, login, validate_base_url
 
 
 def personas(realm_path, owner):
@@ -195,14 +195,9 @@ def main(argv=None):
     args.context = os.environ.get('KUBE_CONTEXT', 'hartland')
     for url in [args.url] + ([] if args.mailpit in ('proxy', 'none') else [args.mailpit]):
         try:
-            parsed = urllib.parse.urlsplit(url)
-            valid = (parsed.scheme in ('http', 'https') and parsed.hostname
-                     and not (parsed.username or parsed.password or parsed.query or parsed.fragment))
-            parsed.port  # Validate the port before sending any request.
-        except ValueError:
-            valid = False
-        if not valid:
-            parser.error('URLs must be HTTP(S) base URLs without credentials, query or fragment')
+            validate_base_url(url)
+        except SeedError as error:
+            parser.error(str(error))
     try:
         personas(args.realm, args.owner)
     except SeedError as error:

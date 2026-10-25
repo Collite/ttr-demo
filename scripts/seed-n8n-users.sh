@@ -36,6 +36,7 @@ if "$N8N_DRY_RUN" || "$N8N_HELP"; then
   exec python3 -B "$N8N_SCRIPT_DIR/seed_n8n_users.py" "${N8N_ARGS[@]}"
 fi
 
+# Keep this private-temp/vault block identical to seed-n8n-content.sh.
 N8N_SEED_TMP="$(mktemp -d "${TMPDIR:-/tmp}/n8n-seed.XXXXXXXX")"
 trap 'rm -rf -- "$N8N_SEED_TMP"' EXIT
 trap 'exit 130' INT

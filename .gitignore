@@ -21,3 +21,6 @@ model/db/.schema-ref/
 
 *.bundle.new/
 *.bundle.old/
+
+# Ignore accidental old relative content-seed state.
+/hartland-n8n/
