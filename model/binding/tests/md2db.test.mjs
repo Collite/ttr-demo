@@ -151,3 +151,16 @@ test('T6.7 — no profit/margin/cost measure or domain anywhere in md', () => {
   }
   assert.deepEqual(offenders, [], `profit/margin/cost leaked into md: ${offenders.join(', ')}`);
 });
+
+test('T6.9 — the calendar\'s month and year calc maps read date_dim: every fact\'s day is an int key, not a date (CN-P6 ⚑S62-2)', () => {
+  // Inline, a calc map is a date extraction on the fact's day column; every fact binds Calendar.day to its
+  // `*_date_sk` (an int into date_dim), and PostgreSQL has no EXTRACT on an integer — so a month or year filter on
+  // any md path failed to run. With a case table the lowering joins date_dim on the key and reads its column.
+  for (const { def } of allDefsOfKind('md2dbCubelet')) {
+    const day = def.attributes?.['Calendar.day']?.column;
+    if (day !== undefined) assert.match(day, /_date_sk$/, `${def.name}: Calendar.day binds ${day}`);
+  }
+  const caseTable = (map) => allDefsOfKind('md2dbMap').find(({ def }) => def.mapRef === map)?.def;
+  assert.deepEqual(caseTable('md.day_to_month')?.columns, { 'md.Day': 'd_date_sk', 'md.Month': 'd_moy' });
+  assert.deepEqual(caseTable('md.day_to_year')?.columns, { 'md.Day': 'd_date_sk', 'md.Year': 'd_year' });
+});

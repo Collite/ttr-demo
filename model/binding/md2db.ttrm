@@ -145,6 +145,22 @@ def md2db_cubelet inventory_fact {
     }
 }
 
+// ===== the calendar's calc maps read date_dim (CN-P6 S6.2 ⚑S62-2) =====
+// Every fact dates itself by a surrogate key: `Calendar.day` binds `*_sold_date_sk` / `*_returned_date_sk`, an int into
+// date_dim, not a date. Inline, a calc map is a date extraction on that column — `EXTRACT(MONTH FROM ss_sold_date_sk)` —
+// which PostgreSQL refuses (no extract on an integer), so no month or year filter on an md path could run. A calc map
+// with a case table is joined instead (MdPathLowering: the fact's day column = the table's Day column, then the `to`
+// column), so month and year come from date_dim's own d_moy / d_year — the key the facts already hold.
+// Not done here: `day_to_week` (weekOfYear is a week of the year; date_dim has only the absolute d_week_seq, so a case
+// table would change what a week is) and `month_to_qtr` (a chained calc over a computed month — the lowering's
+// follow-up). A day RANGE still compares the key with a date; that needs the Calendar keyed by the date key.
+// The TS lint's `md-binding-on-calc-map` predates the case-table lowering (md dot-path S4-A5) and calls this an error;
+// the Kotlin loader and the lowering take it, as ttr-concept's own golden world does (worlds/sales/md-binding.ttrm).
+// ttr-disable-next-line md-binding-on-calc-map
+def md2db_map day_to_month_map { map: md.day_to_month, target: db.dbo.date_dim, columns: { md.Day: d_date_sk, md.Month: d_moy } }
+// ttr-disable-next-line md-binding-on-calc-map
+def md2db_map day_to_year_map  { map: md.day_to_year,  target: db.dbo.date_dim, columns: { md.Day: d_date_sk, md.Year: d_year } }
+
 // ===== Stage 2.3 table-backed Product maps — case columns, all on the one denormalized
 // item row =====
 def md2db_map item_to_manuf_map     { map: md.item_to_manuf,     target: db.dbo.item, columns: { ItemCode: i_item_sk, ManufacturerCode: i_manufact } }
