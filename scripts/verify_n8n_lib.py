@@ -118,7 +118,7 @@ def decode_json(raw, description):
         raise CheckError(f'{description}: invalid JSON (body withheld)') from error
 
 
-def verify_personas(command, *, env, timeout=150, description='persona'):
+def run_private_wrapper(command, *, env, timeout=150, description='persona'):
     # Terminate the whole wrapper group on timeout, including az/Python children. TERM lets the
     # wrapper's EXIT trap remove private password files; killing only bash could leave them behind.
     try:
@@ -231,7 +231,7 @@ class Rig:
         # The shipped wrapper keeps vault values in private temporary files. Never forward its output:
         # errors or future CLI changes must not leak credentials into the rig's transcript.
         command = [str(Path(__file__).with_name('seed-n8n-users.sh')), '--verify', *self.seed_args]
-        code = verify_personas(command, env={**os.environ, 'N8N_URL': self.url, 'KUBE_CONTEXT': self.context})
+        code = run_private_wrapper(command, env={**os.environ, 'N8N_URL': self.url, 'KUBE_CONTEXT': self.context})
         require(code == 0, 'persona sign-in verification failed (output withheld); run n8n-seed-users --verify for safe diagnostics')
         return 'seed-n8n-users --verify: owner and Czech members authenticated; no invitations sent'
 
@@ -272,7 +272,7 @@ class Rig:
 
     def content(self):
         command = [str(Path(__file__).with_name('seed-n8n-content.sh')), '--verify', *self.content_args]
-        code = verify_personas(command, env={**os.environ, 'N8N_URL': self.url}, description='content')
+        code = run_private_wrapper(command, env={**os.environ, 'N8N_URL': self.url}, description='content')
         require(code == 0, 'content verification failed (output withheld); run n8n-seed-content --verify for safe diagnostics')
         return 'reviewed workflow content/published versions match; authenticated webhook echo verified'
 

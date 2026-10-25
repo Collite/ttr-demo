@@ -7,7 +7,9 @@ Use Hartland while it is up. n8n 2.44.6 Community Edition; English UI, Czech dem
 
 Use the merged checkout, Azure CLI logged into vault `hartland`, and `kubectl` access to context `hartland`.
 The content seed reads `n8n-owner-password` and `pg-hartland-cz-ro` into private temporary files, then removes
-those files. It does not reset the owner or modify database grants. Without Azure, supply private mode-0600
+those files. `--verify` only reads the owner password; it never reads the PG vault key. Other `--dir`
+imports require only credentials referenced by their documents. It does not reset the owner or modify database grants.
+Without Azure, supply private mode-0600
 files with `--owner-password-file PATH` and `--pg-ro-password-file PATH`.
 
 ```sh
@@ -18,11 +20,14 @@ just n8n-verify --phase 3
 
 The seed upserts three named credentials and two workflows. It checks the returned version/checksum and
 publishes with `POST /rest/workflows/{id}/activate`; PATCH alone only saves a draft in this n8n version.
-A repeated seed restores the reviewed definitions without creating duplicates. Publication enables the daily
+The seed resolves Markéta’s personal project first; same-named objects in other projects are counted and ignored.
+An archived example stays archived and a fresh copy is created. A repeated seed restores the reviewed graph
+without duplicates. Publication enables the daily
 07:00 Europe/Prague schedule and production webhook; it does not manually fire the sales query or send a test mail.
 
 The first import generates a random webhook key in
-`${XDG_STATE_HOME:-$HOME/.local/state}/hartland-n8n/webhook-echo-key` (private directory, file 0600).
+`<state-home>/hartland-n8n/webhook-echo-key` (private directory, file 0600).
+State-home is `XDG_STATE_HOME` only when non-empty and absolute, otherwise `$HOME/.local/state`.
 Use `--webhook-key-file PATH` on both seed/verify/rig to override it. Preserve this file privately between rehearsals;
 verification needs it because n8n masks secret values even for the owner. If a webhook credential already exists
 and the original key file is missing, the seed fails without rotating it or overwriting content. Recover the
@@ -66,7 +71,9 @@ import json, os, urllib.request
 from pathlib import Path
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, *args): return None
-key_file = Path(os.environ.get('XDG_STATE_HOME', Path.home()/'.local/state'))/'hartland-n8n/webhook-echo-key'
+state = os.environ.get('XDG_STATE_HOME', '')
+state_home = Path(state) if state and Path(state).is_absolute() else Path.home()/'.local/state'
+key_file = state_home/'hartland-n8n/webhook-echo-key'
 request = urllib.request.Request('https://n8n.hartland.collite.cz/webhook/echo',
     json.dumps({'ahoj': 'světe'}).encode(),
     headers={'Content-Type': 'application/json', 'X-Demo-Key': key_file.read_text().strip()})
@@ -77,10 +84,27 @@ PY
 
 ## Reset and quirks
 
-`just n8n-seed-content` restores the two reviewed workflows after rehearsal edits and publishes those versions.
-It preserves the webhook key, refreshes the DB/SMTP configuration and leaves unrelated workflows untouched.
-It does not erase executions or Mailpit messages. If an editor has an active write lock, close it and retry;
-do not force another person's save. Before rehearsing, run `--verify` again.
+**Close every editor tab on the two demo workflows before a reset.** On Community Edition the seed overwrites
+unconditionally: PATCH ignores `expectedChecksum`, and there is no editor-lock protection. A stale tab’s next
+save can put the mangled graph back. The seed still sends the checksum for licensed PATCH and publication.
+
+`just n8n-seed-content` restores the reviewed name/nodes/connections, clears `pinData`, and publishes those versions.
+It restores reviewed settings, resets absent `errorWorkflow`, `timezone`, `saveDataErrorExecution`,
+`saveDataSuccessExecution`, `saveManualExecutions`, `saveExecutionProgress` to instance defaults, and resets an
+absent `executionTimeout` to Hartland’s instance default `-1` (unlimited). It preserves the webhook key,
+refreshes referenced DB/SMTP credentials and leaves unrelated workflows and other users’ projects untouched.
+Archived examples stay archived; reset creates a fresh copy in Markéta’s project.
+
+It leaves `staticData` (schedule state), metadata, node groups, executions and Mailpit messages alone.
+Settings cannot in general be deleted through n8n’s merge PATCH. `--verify` requires exact reviewed settings,
+except the modal’s automatically inserted defaults: `callerPolicy: workflowsFromSameOwner`,
+`availableInMCP: false`, `timeSavedMode: fixed`. A different/additional setting fails naming its **key**, never its
+value; correct it manually in Settings before retrying. Nonempty `pinData` always fails verification.
+Before rehearsing, run `--verify` again.
+
+In the first live rehearsal, deliberately pin rows and save, confirm verify fails, close the editor and reset;
+archive the echo and confirm reset creates a fresh working copy. Also rehearse an open/stale tab save so the
+operator sees that verify catches the resulting draft; close the tab before the final reset.
 
 Community Edition has no SSO or workflow sharing: the n8n login is separate from Keycloak, and members see their
 own workflows. Markéta is the owner/presenter. Mailpit's public inbox uses Keycloak and the Hartland role.

@@ -51,7 +51,7 @@ def handler(state):
             path = urlsplit(self.path).path
             payload = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0)))) if self.command in ['POST','PATCH'] else None
             state.calls.append((self.command, path, copy.deepcopy(payload)))
-            if state.truncated == path:
+            if state.truncated == path and (path != '/webhook/echo' or self.headers.get('X-Demo-Key')):
                 self.send_response(200); self.send_header('Content-Length', '1000'); self.end_headers()
                 self.wfile.write(b'{'); self.close_connection=True; return
             if state.broken == path:
@@ -104,7 +104,7 @@ def handler(state):
                     else: return self.answer({}, 404)
                 elif self.command == 'PATCH':
                     assert 'active' not in payload, payload
-                    assert payload['expectedChecksum'] == flow['checksum'], payload
+                    assert isinstance(payload['expectedChecksum'],str), payload  # CE ignores a stale checksum.
                     if flow.get('isArchived'): return self.answer({},400)
                     settings={**flow.get('settings',{}),**payload.get('settings',{})}
                     defaults={'errorWorkflow','timezone','saveDataErrorExecution','saveDataSuccessExecution','saveManualExecutions','saveExecutionProgress'}
@@ -218,7 +218,7 @@ class ContentTest(unittest.TestCase):
         self.assertEqual(next(n for n in digest['nodes'] if n['type'].endswith('.scheduleTrigger'))['parameters']['rule']['interval'][0]['triggerAtHour'],7)
         query=next(n for n in digest['nodes'] if n['type'].endswith('.postgres'))['parameters']['query']
         oracle=(ROOT/'run-set/routing/validation/channel-2025.yaml').read_text().split('core: |\n',1)[1].split('assert:',1)[0]
-        self.assertEqual(' '.join(query.split()), ' '.join(oracle.split()))
+        self.assertEqual(query, oracle.strip().replace('  SELECT','SELECT').replace('\n  ','\n'))
         code=next(n for n in digest['nodes'] if n['type'].endswith('.code'))['parameters']['jsCode']
         fixture=[{'json':{'channel':'store','revenue':'1234.50'}},{'json':{'channel':'<unsafe>','revenue':'1'}}]
         result=subprocess.run(['node','-e', "const [code,items]=JSON.parse(process.argv[1]);console.log(JSON.stringify(new Function('$input',code)({all:()=>items})));",json.dumps([code,fixture])],capture_output=True,text=True,check=True)
@@ -246,7 +246,7 @@ class ContentTest(unittest.TestCase):
             'PATH':str(bin_dir)+os.pathsep+os.environ['PATH'],'TMPDIR':str(self.dir),'FAKE_OWNER':OWNER,'FAKE_PG':PG},
             capture_output=True,text=True,timeout=10)
         self.assertEqual(r.returncode,1)
-        self.assertEqual(list(self.dir.glob('n8n-content.*')),[])
+        self.assertEqual(list(self.dir.glob('n8n-seed.*')),[])
         self.assertNotIn(OWNER,r.stdout+r.stderr);self.assertNotIn(PG,r.stdout+r.stderr)
 
     def test_private_files_required(self):
@@ -259,10 +259,12 @@ class ContentTest(unittest.TestCase):
 
     def test_reset_clears_pins_and_mergeable_settings_preserves_runtime_state(self):
         self.seed(); flow=self.state.flows[0]
+        unrelated={**copy.deepcopy(flow),'id':'unrelated','name':'Unrelated'}
+        self.state.flows.append(unrelated);untouched=copy.deepcopy(unrelated)
         flow.update(pinData={'DB':[{'json':{'fake':True}}]},staticData={'lastRun':'kept'})
         flow['settings'].update(errorWorkflow='rehearsal',executionTimeout=90,saveManualExecutions=True)
         r=self.run_seed('--verify');self.assertEqual(r.returncode,1);self.assertIn('pinData',r.stderr)
-        self.seed();self.assertEqual(flow['pinData'],{});self.assertEqual(flow['staticData'],{'lastRun':'kept'})
+        self.seed();self.assertEqual(unrelated,untouched);self.assertEqual(flow['pinData'],{});self.assertEqual(flow['staticData'],{'lastRun':'kept'})
         for key in ['errorWorkflow','executionTimeout','saveManualExecutions']: self.assertNotIn(key,flow['settings'])
         self.assertEqual(self.run_seed('--verify').returncode,0)
     def test_unknown_settings_fail_with_key_without_value(self):
@@ -272,6 +274,9 @@ class ContentTest(unittest.TestCase):
     def test_editor_default_settings_are_allowed_but_changed_values_fail(self):
         self.seed();self.state.flows[0]['settings'].update(callerPolicy='workflowsFromSameOwner',availableInMCP=False,timeSavedMode='fixed')
         self.assertEqual(self.run_seed('--verify').returncode,0)
+        self.state.flows[0]['settings']['errorWorkflow']='secret-id'
+        r=self.run_seed('--verify');self.assertIn('errorWorkflow',r.stderr);self.assertNotIn('secret-id',r.stderr)
+        del self.state.flows[0]['settings']['errorWorkflow']
         self.state.flows[0]['settings']['availableInMCP']=True
         self.assertEqual(self.run_seed('--verify').returncode,1)
     def test_archived_echo_is_untouched_and_recreated(self):
@@ -287,9 +292,20 @@ class ContentTest(unittest.TestCase):
         self.assertEqual(r.returncode,0,r.stderr);self.assertIn('2 same-named items in other projects ignored',r.stdout)
         self.assertEqual((foreign_flow,foreign_cred),before);self.assertEqual(self.run_seed('--verify').returncode,0)
         self.assertTrue(all(w['projectId']=='personal-owner' for w in self.state.flows[:2]))
+        # With only the peer's digest remaining, reset creates Markéta's own copy.
+        self.state.flows.remove(self.state.flows[0]);self.seed()
+        self.assertEqual((foreign_flow,foreign_cred),before)
+        self.assertTrue(any(w['name']==foreign_flow['name'] and w['projectId']=='personal-owner' for w in self.state.flows))
     def test_digest_only_requires_no_webhook_key_or_unused_credential(self):
         (self.workflows/'1.json').unlink();self.seed()
         self.assertFalse((self.dir/'webhook-key').exists());self.assertEqual(len(self.state.creds),2)
+    def test_echo_only_wrapper_needs_no_pg_vault_read(self):
+        (self.workflows/'0.json').unlink()
+        r=subprocess.run([str(ROOT/'scripts/seed-n8n-content.sh'),'--dir',str(self.workflows),
+            '--owner-password-file',str(self.dir/'owner'),'--webhook-key-file',str(self.dir/'webhook-key')],
+            env={**os.environ,'N8N_URL':self.url},text=True,capture_output=True,timeout=10)
+        self.assertEqual(r.returncode,0,r.stderr);self.assertEqual(len(self.state.creds),1)
+        self.assertEqual(self.state.creds[0]['name'],'webhook-echo-key')
     def test_verify_needs_no_pg_file_and_renamed_echo_still_probes(self):
         p=self.workflows/'1.json';d=json.loads(p.read_text());d['name']='Renamed echo';p.write_text(json.dumps(d))
         self.seed();(self.dir/'pg').unlink();self.state.calls.clear()
@@ -298,6 +314,9 @@ class ContentTest(unittest.TestCase):
     def test_invalid_echo_shape_fails_before_login(self):
         p=self.workflows/'1.json';d=json.loads(p.read_text());d['nodes'][0]['parameters'].pop('path');p.write_text(json.dumps(d))
         self.assertEqual(self.run_seed().returncode,1);self.assertEqual(self.state.calls,[])
+        d['nodes'][0]['parameters']['path']='echo';d['nodes'][0].pop('credentials')
+        d['nodes'].append(dict(d['nodes'][0],name='Response',type='n8n-nodes-base.respondToWebhook'))
+        p.write_text(json.dumps(d));self.assertEqual(self.run_seed().returncode,1);self.assertEqual(self.state.calls,[])
     def test_status_diagnostics_and_local_file_errors(self):
         self.seed();self.state.echo_status=404
         r=self.run_seed('--verify');self.assertEqual(r.returncode,1);self.assertIn('HTTP 404',r.stderr)
@@ -309,6 +328,8 @@ class ContentTest(unittest.TestCase):
     def test_truncated_response_is_clean_error(self):
         self.state.truncated='/rest/credentials'
         r=self.run_seed();self.assertEqual(r.returncode,1);self.assertIn('ERROR:',r.stderr);self.assertNotIn('Traceback',r.stderr)
+        self.state.truncated=None;self.seed();self.state.truncated='/webhook/echo'
+        r=self.run_seed('--verify');self.assertEqual(r.returncode,1);self.assertIn('ERROR:',r.stderr);self.assertNotIn('Traceback',r.stderr)
     def test_empty_or_relative_xdg_uses_absolute_home_state(self):
         from scripts.n8n_rest import state_home
         for value in ['', 'rel']:

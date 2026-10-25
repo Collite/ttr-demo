@@ -32,3 +32,7 @@ The first command restores the reviewed content and publishes its exact draft ve
 these two named workflows. It leaves other workflows alone. `--dir n8n` can import future AU workflows from that
 directory; only immediate `*.json` children are selected, so it does not also import `n8n/demo/` recursively.
 See the runbook for passwords, the private webhook-key file and reset/rehearsal steps. Never commit credential exports.
+
+Reset is scoped to the signed-in owner’s personal project. Close the demo editors first; reset clears pinned
+data and resettable settings, preserves runtime history/state, and verify rejects unsupported setting drift.
+See the runbook’s reset section for exact limits.
