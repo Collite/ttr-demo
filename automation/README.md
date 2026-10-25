@@ -28,7 +28,7 @@ would report every one of those names unresolved (the lexicon build refuses to l
 under `../model/` names an automation object; `../model/` only carries the lifecycles (`states:`) the actions are
 checked against.
 
-Recipe authoring uses grammar **0.18**, released compiler **0.18.11**; model/reader checks remain pinned to **0.18.3** in `toolchain.lock`. The extension the recipes
+Recipe authoring uses grammar **0.18**, released compiler **0.18.11**; the TS/lexicon toolchain remains **0.18.3**. The strict serving-loader pin is **0.18.8** / veles **0.11.17**, adopted from current master in `toolchain.lock`. The extension the recipes
 run on is in `../model/` — the documents (`model/er/orders.ttrm`, `returns-flow.ttrm`, `proposals.ttrm`) and their
 words (`model/lexicon/{en,cs}/automation.ttrm`); see the "Automation extension" paragraph of `../model/README.md`.
 

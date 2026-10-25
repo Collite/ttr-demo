@@ -1,4 +1,6 @@
 # hartland's MEASURE vocabulary — er-targeted (re-authored 2026-08-13).
+# Live on hartland after a merge to master: Veles serves it within ~1 min (60 s poll), the matcher loads it within
+# ~2–3 min (the ArgoCD webhook syncs the archive, fuzzy re-checks every 120 s) — SO D-28.
 #
 # ── Why this file exists again ────────────────────────────────────────────────────────
 # RV-P3.2 T4 authored an `aliases/` + `values/` area whose measure rows pointed at `md.`.

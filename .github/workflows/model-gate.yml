@@ -36,7 +36,7 @@
 #                                 BI-4 S4.2: the import Job exits 0 on a bundle it could not import
 #   just hebe-seed-test           Hebe's two identity seed scripts against a fake az + curl: no secret in
 #                                 output or argv, only an Offline token stored — ADDED 2026-10-23, HE-P1 S1.1
-#   just n8n-test                 n8n owner/persona bootstrap against local HTTP fakes — N8 S2.2
+#   just n8n-test                 n8n identity/content seeds + verification rig against local fakes — N8 P1/P2/P3
 #   just load-model              the model as veles loads it: the Kotlin loader, strict, built from
 #                                 ttr-core at veles's ttr-metadata version (grammar/v<[veles].ttr-metadata>,
 #                                 stamped with it) — ADDED 2026-10-21, SO-demo P0. Veles drops a file
@@ -156,7 +156,7 @@ jobs:
         working-directory: hartland
         run: just check-literate-recipes
 
-      - name: n8n identity seed (fake n8n + Mailpit)
+      - name: n8n seed and verification rig (local fakes)
         working-directory: hartland
         run: just n8n-test
 
@@ -167,6 +167,10 @@ jobs:
       - name: Recipe build script regressions
         working-directory: hartland
         run: python3 -m unittest scripts/test_build_recipes.py scripts/test_toolchain_ttrp.py scripts/test_writer_preview.py
+
+      - name: OpenMetadata rig regressions (offline)
+        working-directory: hartland
+        run: just openmetadata-test
 
       - name: Hebe rig specs (Keycloak form parsing, verify.sh helpers)
         working-directory: hartland

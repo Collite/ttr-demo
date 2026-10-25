@@ -18,17 +18,22 @@ Never spoken: profile/axis names (`k8s`, `platform_identity`…), module names, 
 
 Instance **`dev`** on hartland (HB-D2), verified/probed then adjusted to:
 
-| Concern | Target | Where it lives |
-|---|---|---|
-| Profile | `k8s` (already set) | olymp values `hebe.profile` |
-| Bound user | **`maya`** (Keycloak realm `kantheon`) | `hebe-dev` secret (Keycloak client creds + bound-user) — provisioning runbook §4.4 |
-| Telegram | bot token (⚑HB-3) + `[channels.telegram]` config | `hebe-dev` secret + values `extraToml` |
-| chat_user_map | presenter's Telegram chat-id → `maya`; **nothing else mapped** | hebe settings (console/config) — the Beat-6 rejection depends on this being the ONLY row |
-| Console | reachable per ⚑HB-2 (route `hebe.20-218-224-115.nip.io` default; else port-forward `svc/hebe 8765`) | olymp HTTPRoute or ops-manual §6 recipe |
-| Console auth | per `console_auth` axis as shipped for k8s (probe; password-from-secret acceptable for the demo) | `hebe-dev` secret |
-| LLM | llm-gateway `/v1`, `claude-sonnet-4-6`, embeddings `ada-002` (already set) | values `extraToml [llm]` |
-| Registry | registered + heartbeating, `non_routable` honored (Beat 0 fact) | capabilities-mcp — verify via list/search vs routing view |
-| Storage | PG schema `hebe_dev` (memory/workspace/receipts) on central PG | provisioned by `just hebe-provision dev` |
+> **Amended by HE-D-4:** the instance is **`marketa`**, bound to Markéta (secret `hebe-marketa`, schema `hebe_marketa`),
+> run from the collite image. The last column is what HE-P1 · S1.2 delivered. `rig-hb/verify.sh` checked it on
+> 2026-10-24 (hebe 0.11.6, llm-gateway 0.11.4): 12 pass · 0 fail · 1 n/a, twice, the second run after
+> `rollout restart deploy/hebe`.
+
+| Concern | Target | Where it lives | Met (HE-P1·S1.2) |
+|---|---|---|---|
+| Profile | `k8s` (already set) | olymp values `hebe.profile` | met: `k8s`, `storage=postgres`, `tools.posture=restricted` |
+| Bound user | **`maya`** (Keycloak realm `kantheon`) | `hebe-dev` secret (Keycloak client creds + bound-user) — provisioning runbook §4.4 | met as **`marketa`**: the OBO token's `sub` is marketa (rig `obo-identity`); `hebe-marketa` carries the seven keys |
+| Telegram | bot token (⚑HB-3) + `[channels.telegram]` config | `hebe-dev` secret + values `extraToml` | met: round trip from the presenter's phone, chat history kept (rig `telegram`); token rotation is olymp#148 |
+| chat_user_map | presenter's Telegram chat-id → `maya`; **nothing else mapped** | hebe settings (console/config) — the Beat-6 rejection depends on this being the ONLY row | met: one row, presenter's chat → marketa. The stranger step is not in the demo (B-4.4), so rig `unmapped-chat` is n/a |
+| Console | reachable per ⚑HB-2 (route `hebe.20-218-224-115.nip.io` default; else port-forward `svc/hebe 8765`) | olymp HTTPRoute or ops-manual §6 recipe | met: `https://hebe.hartland.collite.cz`, an HTTPRoute on the shared edge (rig `console-redirect`) |
+| Console auth | per `console_auth` axis as shipped for k8s (probe; password-from-secret acceptable for the demo) | `hebe-dev` secret | met: `console_auth="edge"` (OIDC at the gateway, client `hebe-console`). marketa → 200, maya → 403, maya with a forged identity header → 403 |
+| LLM | llm-gateway `/v1`, `claude-sonnet-4-6`, embeddings `ada-002` (already set) | values `extraToml [llm]` | met with other models: `gpt-4.1` (no Anthropic key on hartland) and embeddings `text-embedding-3-small` (no `ada-002` deployment exists; olymp#152). Memory write → search checked live |
+| Registry | registered + heartbeating, `non_routable` honored (Beat 0 fact) | capabilities-mcp — verify via list/search vs routing view | met: `hebe-marketa` registered `non_routable`, absent from the routing view (rig `registry`, `routing-view`) |
+| Storage | PG schema `hebe_dev` (memory/workspace/receipts) on central PG | provisioned by `just hebe-provision dev` | met as `hebe_marketa`: the receipt chain verifies across restarts, 8 records, and records 7 and 8 were written after a restart (rig `receipts-chain`) |
 
 Any delta between probed reality and this table is an HB-P1 task (values/secret/provision
 re-run via olymp PR — freeze rules apply, architecture §3).

@@ -1,0 +1,10 @@
+{
+  "name": "clarify-demo",
+  "cron": "0 7 * * 3",
+  "bodyKind": "kantheon_question",
+  "bodyJson": {
+    "question": "Jaký je obrat?",
+    "deliveryChannels": ["telegram", "web"]
+  },
+  "enabled": false
+}

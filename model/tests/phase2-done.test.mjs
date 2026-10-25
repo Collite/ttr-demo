@@ -24,7 +24,9 @@ test('DONE 2 — resolves against both connection descriptors (schema-identical,
   assert.deepEqual(connections, ['pg-hartland-us', 'pg-hartland-cz'], 'an undeclared connection appeared');
   // "Schema-identical" = every descriptor declares schema="dbo", the modeler.toml handle everything
   // above resolved against. The handle is a catalog label, not a database schema.
-  const schemas = [...toml.matchAll(/schema\s*=\s*"([^"]+)"/g)].map((m) => m[1]);
+  // Only descriptor schema handles; openmetadata.schema is the catalog's physical name.
+  const schemas = [...toml.matchAll(/^schema\s*=\s*"([^"]+)"/gm)].map((m) => m[1]);
+  assert.equal(schemas.length, connections.length, 'every connection needs a schema handle');
   assert.ok(schemas.every((s) => s === 'dbo'), `every connection must target the same schema handle: ${schemas.join(', ')}`);
 });
 

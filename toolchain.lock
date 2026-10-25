@@ -10,8 +10,8 @@ ref = "grammar/v0.18.3"          # the gate's toolchain checkout (was inline in 
 ref = "grammar/v0.18.11"          # accepted Core#307, includes declared writer-default evidence and concat
 
 [veles]
-image = "0.11.15"                # the veles image olymp `clusters/hartland/apps/veles/values.yaml` deploys
-ttr-metadata = "0.18.3"          # `tatrman-ttr-metadata` in ttr-server's `gradle/libs.versions.toml` at `veles/v<image>`;
+image = "0.11.17"                # XM-P3: /model/export with public connections/locators; paired Olymp rollout
+ttr-metadata = "0.18.8"          # `tatrman-ttr-metadata` in ttr-server's `gradle/libs.versions.toml` at `veles/v<image>`;
                                  # the gate builds its Kotlin loader from ttr-core `grammar/v<this>`, stamped with it
 # true since md/hop HP-H (2026-10-24): the [veles] pin caught up with veles 0.11.15, whose ttr-metadata 0.18.3 ships
 # ttr-metadata-cli (from grammar/v0.18.0; ttr-core SO-core P0·S0.3 T6). true = the gate fails without the loader,

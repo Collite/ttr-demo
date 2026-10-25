@@ -4,7 +4,7 @@
 #
 #   scripts/regenerate-local.sh [<checkout>]          # default: the checkout this script is in
 #
-# Rebuilds generated/ (resolved-packages.json + lexicon.tar.zst) with the toolchain toolchain.lock pins, then:
+# Rebuilds generated/ (resolved-packages.json + lexicon.tar.zst + model.tar.zst) with the toolchain toolchain.lock pins, then:
 #   exit 0   nothing stale: generated/ already matched, nothing changed. The loop guard: the workflow pushes nothing,
 #            so its own push → pull_request → run chain stops after one bot commit.
 #   exit 10  stale: generated/ rebuilt and left in the tree for the caller to commit

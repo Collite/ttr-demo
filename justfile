@@ -12,6 +12,14 @@
 verify-model:
     node --test $(find model agents lexicon automation -name '*.test.mjs')
 
+# XM-P3: read-only catalog acceptance after scan + two successful projection Jobs.
+verify-openmetadata:
+    bash scripts/verify-openmetadata.sh
+
+# Offline regressions for pagination, retained links and honest no-op Job evidence.
+openmetadata-test:
+    python3 -m unittest scripts/test_verify_openmetadata.py
+
 # GX (NLS-P6.2) — check every mounted `intent.yaml` against the plan-composer placeholder
 # contract. The kantheon sibling is `IntentPromptContractSpec`; this repo has no CI lane, and
 # an uncontracted placeholder renders EMPTY with nothing anywhere saying so — which is exactly
@@ -52,14 +60,20 @@ check-model cli="node ../tatrman/packages/migrate/dist/cli.js":
 # The archive IS committed to generated/, beside resolved-packages.json — same precedent,
 # and `check-lexicon` is only a gate if there is something committed to check. Reasoning and
 # the size measurement: lexicon/README.md.
+#
+# Then generated/model.tar.zst — model/ as a snapshot archive, the model the resolver's cn doors serve (CN-P6 S6.2,
+# scripts/cn-model-snapshot.mjs). The doors serve it only when its content id is this archive's `modelSnapshotHash`,
+# so one recipe writes both.
 build-lexicon cli="../tatrman/packages/kotlin/ttr-lexicon-cli/build/install/ttr-lexicon/bin/ttr-lexicon":
     {{cli}} build "$(pwd)" --out generated/lexicon.tar.zst --verbose
+    node scripts/cn-model-snapshot.mjs
 
 # Drift check: recompile in memory and compare the archive id against generated/. Exits 3
 # when stale or absent, mirroring `check-model`. Only meaningful where the archive exists
 # (a fresh clone has none) — CI runs `build-lexicon` first.
 check-lexicon cli="../tatrman/packages/kotlin/ttr-lexicon-cli/build/install/ttr-lexicon/bin/ttr-lexicon":
     {{cli}} build "$(pwd)" --check --out generated/lexicon.tar.zst
+    node scripts/cn-model-snapshot.mjs --check
 
 # ── the conceptual model (CN-P6 S6.1) ─────────────────────────────────────────
 # `ttr cn hygiene` (ttr-concept, Kotlin) over model/ PLUS the automation package: the parametric phases read its
@@ -397,13 +411,21 @@ bi-one-number-test:
 hebe-verify:
     design/hebe-demo/rig-hb/verify.sh
 
+# Markéta's routine fixtures (HE-P1 · S1.3, data/hebe/README.md): install or update all three, idempotent by name.
+#
+#     just hebe-routines                       # over a port-forward to svc/hebe
+#     just hebe-routines --edge                # through the public console as marketa ($HEBE_VERIFY_PASSWORD)
+#     just hebe-routines --fire monday-brief   # pre-show: install, then fire
+hebe-routines *args:
+    data/hebe/install-routines.sh {{args}}
+
 # The rig's own specs (the Keycloak form parsing) — no cluster.
 # Which chats has a Telegram bot seen (B-4.3)? Read-only; the token stays in the vault's 0600 copy, never argv.
 hebe-telegram-chat-id secret="hebe-marketa-telegram-token":
     scripts/telegram-chat-id.sh {{secret}}
 
 hebe-verify-test:
-    python3 -B -m unittest design/hebe-demo/rig-hb/test_edge_login.py design/hebe-demo/rig-hb/test_verify_helpers.py
+    python3 -B -m unittest design/hebe-demo/rig-hb/test_edge_login.py design/hebe-demo/rig-hb/test_verify_helpers.py design/hebe-demo/rig-hb/test_brief_check.py
 
 # ── the Superset dashboards (BI-4, contracts C-23) ───────────────────────────────────────────────
 # dashboards/README.md. Bundles per dashboard and world; olymp's superset-dashboards Application
@@ -448,6 +470,14 @@ hebe-seed-test:
 n8n-seed-users *FLAGS:
     scripts/seed-n8n-users.sh {{FLAGS}}
 
-# Discovers the content seed tests too, once that later stage adds them.
+# Read-only P1 checks; --phase 2 adds vault-backed persona sign-ins and Mailpit checks.
+n8n-verify *FLAGS:
+    scripts/verify-n8n.sh {{FLAGS}}
+
+# Restore demo content and publish its reviewed versions; --verify checks content and echoes the webhook.
+n8n-seed-content *FLAGS:
+    scripts/seed-n8n-content.sh {{FLAGS}}
+
+# Seed + verification rig against local fakes; discovers the future content seed tests too.
 n8n-test:
-    python3 -B -m unittest discover -s scripts -p 'test_seed_n8n*.py'
+    python3 -B -m unittest discover -s scripts -p 'test_*n8n*.py'

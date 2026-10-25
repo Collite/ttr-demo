@@ -10,7 +10,9 @@ tags:
 - LQ
 notes: |
   ttr-demo#78. „tržby zákazníka“ / "customer revenue" are declared on `er.entity.customer_revenue.revenue`, the measure
-  of the entity stacked on the logical query `er.query.revenue_per_customer` (all-time revenue, one row per customer),
-  so the average is a plain AVG over it. LLM: the door has no average operator (n3, kantheon#182). The validation
-  tells the per-customer average (≈ 121,000 in hartland_us) from the per-LINE one (≈ 2,200) that the bare revenue
-  word would give.
+  of the entity stacked on the logical query `er.query.revenue_per_customer` (all-time revenue, one row per customer).
+  LLM: the door has no average operator (n3, kantheon#182). The validation tells the per-customer average (≈ 121,000
+  in hartland_us) from the per-LINE one (≈ 2,200) that the bare revenue word would give.
+  2026-10-24 — the question states no period, so it reads the last 12 complete months (kantheon#194, kept by Bora's
+  ruling): gpt-6.1-sol applies the window (the composer then sums the sales lines in it per customer), and the
+  validation follows; before, it expected the all-time average, which gpt-5-mini gave by skipping the window.

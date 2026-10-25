@@ -1,0 +1,344 @@
+"""n8n P1/P2/P3 verification (P3 sends a small echo request). Standard library only; errors never print response/command bodies."""
+import argparse
+import base64
+from dataclasses import dataclass
+import hashlib
+import http.client
+import json
+import os
+import signal
+from pathlib import Path
+import subprocess
+from urllib.parse import urlsplit, urlencode
+import uuid
+
+IMAGE = 'docker.n8n.io/n8nio/n8n:2.44.6'
+# Chart n8n-1.24.43's `n8n.main.name` helper; the Deployment/Service are simply `n8n`.
+CONTAINER = 'n8n-main'
+PVC = 'n8n-main-persistence'
+GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
+TIMEOUT = 10
+
+
+class CheckError(Exception):
+    """Safe, operator-facing failure without raw HTTP, subprocess output or credentials."""
+
+
+def require(condition, message):
+    if not condition:
+        raise CheckError(message)
+
+
+@dataclass
+class HTTPResult:
+    status: int
+    headers: dict
+    body: bytes
+
+
+def parsed_url(url):
+    try:
+        parsed = urlsplit(url)
+        require(parsed.scheme in ('http', 'https') and parsed.hostname and parsed.port != 0,
+                'N8N_URL must be an http(s) URL')
+        require(not (parsed.username or parsed.password or parsed.fragment),
+                'N8N_URL cannot contain credentials or a fragment')
+        return parsed
+    except ValueError as error:
+        raise CheckError('invalid N8N_URL') from error
+
+
+def http_get(url, *, headers=None, timeout=TIMEOUT):
+    """No redirects or cookies; TLS validation on. A WebSocket 101 is read without blocking on a body."""
+    parsed = parsed_url(url)
+    connection_type = http.client.HTTPSConnection if parsed.scheme == 'https' else http.client.HTTPConnection
+    connection = connection_type(parsed.hostname, parsed.port, timeout=timeout)
+    try:
+        path = parsed.path or '/'
+        if parsed.query:
+            path += '?' + parsed.query
+        connection.request('GET', path, headers=headers or {})
+        response = connection.getresponse()
+        body = b'' if response.status == 101 else response.read(262145)
+        require(len(body) <= 262144, 'HTTP response exceeds 256 KiB')
+        return HTTPResult(response.status, {k.lower(): v for k, v in response.getheaders()}, body)
+    except (OSError, http.client.HTTPException) as error:
+        raise CheckError('HTTP request failed (connection, timeout or TLS)') from error
+    finally:
+        connection.close()
+
+
+def http_code(url, *, timeout=TIMEOUT):
+    return http_get(url, timeout=timeout).status
+
+
+def managed_role_version(cluster, role='n8n'):
+    """CNPG's resourceVersion is a string; a stale password status cannot hide reconciliation errors."""
+    try:
+        managed = cluster['status']['managedRolesStatus']
+        require(role not in managed.get('cannotReconcile', {}), 'CNPG cannot reconcile the n8n role')
+        for state, roles in managed.get('byStatus', {}).items():
+            require(role not in roles or state == 'reconciled', 'CNPG n8n role is not reconciled')
+        version = managed['passwordStatus'][role]['resourceVersion']
+        require(isinstance(version, str) and bool(version.strip()), 'CNPG n8n password resourceVersion is absent')
+        return version
+    except (KeyError, TypeError, AttributeError) as error:
+        raise CheckError('CNPG managedRolesStatus/passwordStatus.n8n shape is missing or invalid') from error
+
+
+def websocket_status(status):
+    # 401 means the authentication gate is reached; only a validated 101 proves an HTTP upgrade.
+    return status in (101, 401)
+
+
+def probe_push(base_url):
+    """A proper RFC6455 request. n8n 2.44.6's ws.handleUpgrade precedes Express authentication."""
+    parsed = parsed_url(base_url)
+    key = base64.b64encode(os.urandom(16)).decode()
+    origin = f'{parsed.scheme}://{parsed.netloc}'
+    response = http_get(base_url.rstrip('/') + '/rest/push?pushRef=' + uuid.uuid4().hex, headers={
+        'Connection': 'Upgrade', 'Upgrade': 'websocket', 'Sec-WebSocket-Version': '13',
+        'Sec-WebSocket-Key': key, 'Origin': origin,
+    })
+    if response.status == 101:
+        expected = base64.b64encode(hashlib.sha1((key + GUID).encode()).digest()).decode()
+        require(response.headers.get('upgrade', '').lower() == 'websocket'
+                and 'upgrade' in [part.strip().lower() for part in response.headers.get('connection', '').split(',')]
+                and response.headers.get('sec-websocket-accept') == expected,
+                'HTTP 101 has an invalid WebSocket handshake')
+    return response.status
+
+
+def decode_json(raw, description):
+    try:
+        value = json.loads(raw)
+        require(isinstance(value, dict), f'{description}: expected a JSON object')
+        return value
+    except (ValueError, TypeError) as error:
+        raise CheckError(f'{description}: invalid JSON (body withheld)') from error
+
+
+def run_private_wrapper(command, *, env, timeout=150, description='persona'):
+    # Terminate the whole wrapper group on timeout, including az/Python children. TERM lets the
+    # wrapper's EXIT trap remove private password files; killing only bash could leave them behind.
+    try:
+        process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                   env=env, start_new_session=True)
+    except OSError as error:
+        raise CheckError(description + ' verification unavailable (output withheld)') from error
+    try:
+        return process.wait(timeout=timeout)
+    except (subprocess.TimeoutExpired, KeyboardInterrupt) as error:
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.wait()
+        if isinstance(error, KeyboardInterrupt):
+            raise
+        raise CheckError(description + ' verification timed out (output withheld)') from None
+
+
+class Rig:
+    def __init__(self, context, url, image, *, phase=1, seed_args=(), content_args=(), realm=None,
+                 mailpit_url='https://mail.hartland.collite.cz', keycloak_url='https://keycloak.hartland.collite.cz'):
+        self.context, self.url, self.image = context, url.rstrip('/'), image
+        self.phase, self.seed_args, self.realm = phase, list(seed_args), realm
+        self.content_args = list(content_args)
+        self.mailpit_url, self.keycloak_url = mailpit_url.rstrip('/'), keycloak_url.rstrip('/')
+
+    def kubectl(self, namespace, *args):
+        command = ['kubectl', '--context', self.context, '--request-timeout=10s', '-n', namespace, *args]
+        try:
+            result = subprocess.run(command, text=True, capture_output=True, timeout=20, check=False)
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise CheckError('kubectl unavailable or timed out (output withheld)') from error
+        require(result.returncode == 0, 'kubectl command failed (output withheld)')
+        return result.stdout.strip()
+
+    def get(self, namespace, kind, name=None, *extra):
+        args = ['get', kind] + ([name] if name else []) + list(extra) + ['-o', 'json']
+        return decode_json(self.kubectl(namespace, *args), f'{namespace}/{kind}')
+
+    def application(self):
+        app = self.get('argocd', 'application', 'middleware')
+        sync, health = app['status']['sync']['status'], app['status']['health']['status']
+        require(sync == 'Synced' and health == 'Healthy', 'middleware Application is not Synced/Healthy')
+        return 'middleware Synced/Healthy'
+
+    def workload(self):
+        deployment = self.get('middleware', 'deployment', 'n8n')
+        status, desired = deployment['status'], deployment['spec']['replicas']
+        require(desired == 1 and status.get('readyReplicas') == desired
+                and status.get('updatedReplicas') == desired and status.get('replicas') == desired
+                and status.get('observedGeneration', 0) >= deployment['metadata']['generation'],
+                'n8n Deployment rollout is not ready at its current generation')
+        template = deployment['spec']['template']['spec']
+        require(any(c.get('name') == CONTAINER and c.get('image') == self.image for c in template['containers']),
+                'Deployment image does not match N8N_IMAGE')
+        pods = self.get('middleware', 'pods', None, '-l', 'app.kubernetes.io/instance=n8n,app.kubernetes.io/component=main')
+        active = [p for p in pods['items'] if not p['metadata'].get('deletionTimestamp')]
+        require(bool(active), 'no active n8n main pod')
+        for pod in active:
+            require(any(c.get('name') == CONTAINER and c.get('image') == self.image for c in pod['spec']['containers']),
+                    'active pod image does not match N8N_IMAGE')
+            require(any(c.get('type') == 'Ready' and c.get('status') == 'True'
+                        for c in pod['status'].get('conditions', [])), 'n8n main pod is not Ready')
+        volumes = {v['name'] for v in template.get('volumes', [])
+                   if v.get('persistentVolumeClaim', {}).get('claimName') == PVC}
+        main = next(c for c in template['containers'] if c.get('name') == CONTAINER)
+        require(any(m.get('name') in volumes and m.get('mountPath') == '/home/node/.n8n'
+                    for m in main.get('volumeMounts', [])),
+                'Deployment does not mount n8n persistence PVC')
+        pvc = self.get('middleware', 'pvc', PVC)
+        require(pvc['status']['phase'] == 'Bound', 'n8n persistence PVC is not Bound')
+        return f'{len(active)} Ready main pod; PVC {PVC} Bound; image {self.image}'
+
+    def health(self):
+        live = http_code(self.url + '/healthz')
+        ready = http_code(self.url + '/healthz/readiness')
+        require(live == ready == 200, f'gateway /healthz HTTP {live}, /healthz/readiness HTTP {ready}')
+        return 'gateway /healthz and /healthz/readiness HTTP 200'
+
+    def owner(self):
+        response = http_get(self.url + '/rest/settings')
+        require(response.status == 200, f'/rest/settings HTTP {response.status}')
+        settings = decode_json(response.body, '/rest/settings')
+        claimed = settings['data']['userManagement']['showSetupOnFirstLoad']
+        require(claimed is False, 'owner setup is unclaimed or settings shape changed')
+        return 'showSetupOnFirstLoad=false; owner claimed'
+
+    def push(self):
+        status = probe_push(self.url)
+        require(websocket_status(status), f'push probe HTTP {status}; expected 101 upgrade or 401 authentication')
+        return ('HTTP 101; valid WebSocket upgrade' if status == 101 else
+                'HTTP 401; authentication reached (authenticated editor connection still requires browser check)')
+
+    def database(self):
+        db_type = self.kubectl('middleware', 'exec', 'deployment/n8n', '-c', CONTAINER, '--', 'printenv', 'DB_TYPE')
+        require(db_type == 'postgresdb', 'n8n runtime DB_TYPE is not postgresdb')
+        version = managed_role_version(self.get('data', 'cluster', 'postgres'))
+        return f'postgresdb; CNPG n8n password resourceVersion={version}'
+
+    def personas(self):
+        # The shipped wrapper keeps vault values in private temporary files. Never forward its output:
+        # errors or future CLI changes must not leak credentials into the rig's transcript.
+        command = [str(Path(__file__).with_name('seed-n8n-users.sh')), '--verify', *self.seed_args]
+        code = run_private_wrapper(command, env={**os.environ, 'N8N_URL': self.url, 'KUBE_CONTEXT': self.context})
+        require(code == 0, 'persona sign-in verification failed (output withheld); run n8n-seed-users --verify for safe diagnostics')
+        return 'seed-n8n-users --verify: owner and Czech members authenticated; no invitations sent'
+
+    def mailpit(self):
+        response = http_get(self.mailpit_url + '/')
+        require(response.status == 302, f'Mailpit edge HTTP {response.status}; expected OIDC redirect')
+        target = parsed_url(response.headers.get('location', ''))
+        expected = parsed_url(self.keycloak_url)
+        require((target.scheme, target.hostname, target.port or (443 if target.scheme == 'https' else 80))
+                == (expected.scheme, expected.hostname, expected.port or (443 if expected.scheme == 'https' else 80))
+                and target.path == expected.path.rstrip('/') + '/realms/kantheon/protocol/openid-connect/auth',
+                'Mailpit redirect is not the expected Keycloak authorization endpoint')
+        # Only DNS discovery; the invitation stage proves actual SMTP delivery.
+        self.kubectl('middleware', 'exec', 'deployment/n8n', '-c', CONTAINER, '--', 'node', '-e',
+            "require('node:dns').promises.lookup('mailpit-smtp.middleware').then(()=>process.exit(0),()=>process.exit(1))")
+        return 'HTTP 302 to Keycloak; mailpit-smtp.middleware resolves inside n8n-main'
+
+    def invitation(self):
+        # Read only search metadata. Message bodies contain live signup tokens and are unnecessary here.
+        try:
+            from .seed_n8n_users import personas, SeedError
+        except ImportError:  # Direct CLI entry point.
+            from seed_n8n_users import personas, SeedError
+        try:
+            _, members = personas(self.realm, 'marketa')
+        except SeedError as error:
+            raise CheckError('cannot read Czech persona roster') from error
+        tomas = next((p for p in members if p['username'] == 'tomas'), None)
+        require(tomas is not None, 'Czech persona tomas is missing from the realm')
+        query = urlencode({'query': 'to:' + tomas['email']})
+        path = '/api/v1/namespaces/middleware/services/mailpit-http:80/proxy/api/v1/search?' + query
+        result = decode_json(self.kubectl('middleware', 'get', '--raw', path), 'Mailpit search')
+        messages = result.get('messages')
+        require(isinstance(messages, list) and bool(messages)
+                and all(isinstance(m, dict) and isinstance(m.get('ID'), str) and bool(m['ID']) for m in messages),
+                'Mailpit search has no invitation mail or an invalid response shape (body withheld)')
+        return f'Mailpit recipient search for tomas: {len(messages)} message(s); bodies withheld'
+
+    def content(self):
+        command = [str(Path(__file__).with_name('seed-n8n-content.sh')), '--verify', *self.content_args]
+        code = run_private_wrapper(command, env={**os.environ, 'N8N_URL': self.url}, description='content')
+        require(code == 0, 'content verification failed (output withheld); run n8n-seed-content --verify for safe diagnostics')
+        return 'reviewed workflow content/published versions match; authenticated webhook echo verified'
+
+    def run(self):
+        checks = [('Application', self.application), ('pod, persistence and image', self.workload),
+                  ('public health', self.health), ('owner claimed', self.owner),
+                  ('push channel', self.push), ('database', self.database)]
+        if self.phase >= 2:
+            checks += [('persona sign-ins', self.personas), ('Mailpit edge and SMTP discovery', self.mailpit),
+                       ('invitation mail', self.invitation)]
+        if self.phase >= 3:
+            checks += [('demo content', self.content)]
+        failures = 0
+        for number, (name, check) in enumerate(checks, 1):
+            try:
+                evidence = check()
+                print(f'✓ V{number} {name} — {evidence}')
+            except (CheckError, KeyError, TypeError, AttributeError, ValueError) as error:
+                failures += 1
+                evidence = str(error) if isinstance(error, CheckError) else 'response shape missing or invalid (body withheld)'
+                print(f'✗ V{number} {name} — {evidence}')
+        pending = [(number, phase) for number, phase in [(7, 2), (8, 2), (9, 2), (10, 3), (11, 4)]
+                   if number > len(checks)]
+        for number, phase in pending:
+            print(f'○ V{number} not yet (P{phase})')
+        print(f'{len(checks) - failures} pass · {failures} fail · {len(pending)} not yet')
+        return 1 if failures else 0
+
+
+def main():
+    parser = argparse.ArgumentParser(description='n8n checks: default P1 V1–V6; --phase 2 adds personas/Mailpit; --phase 3 also verifies demo content. '
+        'Environment: KUBE_CONTEXT=hartland, N8N_URL=https://n8n.hartland.collite.cz, N8N_IMAGE=' + IMAGE)
+    parser.add_argument('--phase', type=int, choices=[1, 2, 3], default=1)
+    olymp = Path(os.environ.get('OLYMP_DIR', Path(__file__).resolve().parents[2] / 'olymp'))
+    parser.add_argument('--realm', default=str(olymp / 'platform/auth/keycloak/overlays/hartland/realm/kantheon.json'))
+    parser.add_argument('--owner-password-file', help='P2: private file instead of the owner vault read')
+    parser.add_argument('--member-password-file', help='P2: private file instead of the member vault read')
+    parser.add_argument('--content-dir', help='P3: workflow JSON directory')
+    parser.add_argument('--pg-ro-password-file', help='P3: private read-only DB password file')
+    parser.add_argument('--webhook-key-file', help='P3: original private webhook key file')
+    args = parser.parse_args()
+    url = os.environ.get('N8N_URL', 'https://n8n.hartland.collite.cz')
+    try:
+        parsed = parsed_url(url)
+        require(not parsed.query, 'N8N_URL base cannot contain a query')
+        mailpit = os.environ.get('MAILPIT_URL', 'https://mail.hartland.collite.cz')
+        keycloak = os.environ.get('KEYCLOAK_URL', 'https://keycloak.hartland.collite.cz')
+        seed_args = ['--realm', args.realm]
+        content_args = []
+        if args.phase >= 2:
+            for base in [mailpit, keycloak]:
+                require(not parsed_url(base).query, 'base URLs cannot contain a query')
+            for option, value in [('--owner-password-file', args.owner_password_file),
+                                  ('--member-password-file', args.member_password_file)]:
+                if value:
+                    seed_args += [option, value]
+        if args.phase >= 3:
+            for option, value in [('--dir', args.content_dir), ('--owner-password-file', args.owner_password_file),
+                                  ('--pg-ro-password-file', args.pg_ro_password_file), ('--webhook-key-file', args.webhook_key_file)]:
+                if value: content_args += [option, value]
+        return Rig(os.environ.get('KUBE_CONTEXT', 'hartland'), url, os.environ.get('N8N_IMAGE', IMAGE),
+                   phase=args.phase, seed_args=seed_args, content_args=content_args, realm=args.realm,
+                   mailpit_url=mailpit, keycloak_url=keycloak).run()
+    except CheckError as error:
+        parser.error(str(error))
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
