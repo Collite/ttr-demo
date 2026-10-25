@@ -454,7 +454,7 @@ hebe-seed-test:
 n8n-seed-users *FLAGS:
     scripts/seed-n8n-users.sh {{FLAGS}}
 
-# Read-only P1 checks. Claim the owner first; later-phase rows are explicitly pending.
+# Read-only P1 checks; --phase 2 adds vault-backed persona sign-ins and Mailpit checks.
 n8n-verify *FLAGS:
     scripts/verify-n8n.sh {{FLAGS}}
 

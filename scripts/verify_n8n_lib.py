@@ -1,4 +1,4 @@
-"""Read-only n8n P1 verification. Standard library only; errors never print response/command bodies."""
+"""Read-only n8n P1/P2 verification. Standard library only; errors never print response/command bodies."""
 import argparse
 import base64
 from dataclasses import dataclass
@@ -6,8 +6,10 @@ import hashlib
 import http.client
 import json
 import os
+import signal
+from pathlib import Path
 import subprocess
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlencode
 import uuid
 
 IMAGE = 'docker.n8n.io/n8nio/n8n:2.44.6'
@@ -116,9 +118,40 @@ def decode_json(raw, description):
         raise CheckError(f'{description}: invalid JSON (body withheld)') from error
 
 
+def verify_personas(command, *, env, timeout=150):
+    # Terminate the whole wrapper group on timeout, including az/Python children. TERM lets the
+    # wrapper's EXIT trap remove private password files; killing only bash could leave them behind.
+    try:
+        process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                   env=env, start_new_session=True)
+    except OSError as error:
+        raise CheckError('persona verification unavailable (output withheld)') from error
+    try:
+        return process.wait(timeout=timeout)
+    except (subprocess.TimeoutExpired, KeyboardInterrupt) as error:
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.wait()
+        if isinstance(error, KeyboardInterrupt):
+            raise
+        raise CheckError('persona verification timed out (output withheld)') from None
+
+
 class Rig:
-    def __init__(self, context, url, image):
+    def __init__(self, context, url, image, *, phase=1, seed_args=(), realm=None,
+                 mailpit_url='https://mail.hartland.collite.cz', keycloak_url='https://keycloak.hartland.collite.cz'):
         self.context, self.url, self.image = context, url.rstrip('/'), image
+        self.phase, self.seed_args, self.realm = phase, list(seed_args), realm
+        self.mailpit_url, self.keycloak_url = mailpit_url.rstrip('/'), keycloak_url.rstrip('/')
 
     def kubectl(self, namespace, *args):
         command = ['kubectl', '--context', self.context, '--request-timeout=10s', '-n', namespace, *args]
@@ -193,10 +226,56 @@ class Rig:
         version = managed_role_version(self.get('data', 'cluster', 'postgres'))
         return f'postgresdb; CNPG n8n password resourceVersion={version}'
 
+    def personas(self):
+        # The shipped wrapper keeps vault values in private temporary files. Never forward its output:
+        # errors or future CLI changes must not leak credentials into the rig's transcript.
+        command = [str(Path(__file__).with_name('seed-n8n-users.sh')), '--verify', *self.seed_args]
+        code = verify_personas(command, env={**os.environ, 'N8N_URL': self.url, 'KUBE_CONTEXT': self.context})
+        require(code == 0, 'persona sign-in verification failed (output withheld); run n8n-seed-users --verify for safe diagnostics')
+        return 'seed-n8n-users --verify: owner and Czech members authenticated; no invitations sent'
+
+    def mailpit(self):
+        response = http_get(self.mailpit_url + '/')
+        require(response.status == 302, f'Mailpit edge HTTP {response.status}; expected OIDC redirect')
+        target = parsed_url(response.headers.get('location', ''))
+        expected = parsed_url(self.keycloak_url)
+        require((target.scheme, target.hostname, target.port or (443 if target.scheme == 'https' else 80))
+                == (expected.scheme, expected.hostname, expected.port or (443 if expected.scheme == 'https' else 80))
+                and target.path == expected.path.rstrip('/') + '/realms/kantheon/protocol/openid-connect/auth',
+                'Mailpit redirect is not the expected Keycloak authorization endpoint')
+        # Only DNS discovery; the invitation stage proves actual SMTP delivery.
+        self.kubectl('middleware', 'exec', 'deployment/n8n', '-c', CONTAINER, '--', 'node', '-e',
+            "require('node:dns').promises.lookup('mailpit-smtp.middleware').then(()=>process.exit(0),()=>process.exit(1))")
+        return 'HTTP 302 to Keycloak; mailpit-smtp.middleware resolves inside n8n-main'
+
+    def invitation(self):
+        # Read only search metadata. Message bodies contain live signup tokens and are unnecessary here.
+        try:
+            from .seed_n8n_users import personas, SeedError
+        except ImportError:  # Direct CLI entry point.
+            from seed_n8n_users import personas, SeedError
+        try:
+            _, members = personas(self.realm, 'marketa')
+        except SeedError as error:
+            raise CheckError('cannot read Czech persona roster') from error
+        tomas = next((p for p in members if p['username'] == 'tomas'), None)
+        require(tomas is not None, 'Czech persona tomas is missing from the realm')
+        query = urlencode({'query': 'to:' + tomas['email']})
+        path = '/api/v1/namespaces/middleware/services/mailpit-http:80/proxy/api/v1/search?' + query
+        result = decode_json(self.kubectl('middleware', 'get', '--raw', path), 'Mailpit search')
+        messages = result.get('messages')
+        require(isinstance(messages, list) and bool(messages)
+                and all(isinstance(m, dict) and isinstance(m.get('ID'), str) and bool(m['ID']) for m in messages),
+                'Mailpit search has no invitation mail or an invalid response shape (body withheld)')
+        return f'Mailpit recipient search for tomas: {len(messages)} message(s); bodies withheld'
+
     def run(self):
         checks = [('Application', self.application), ('pod, persistence and image', self.workload),
                   ('public health', self.health), ('owner claimed', self.owner),
                   ('push channel', self.push), ('database', self.database)]
+        if self.phase == 2:
+            checks += [('persona sign-ins', self.personas), ('Mailpit edge and SMTP discovery', self.mailpit),
+                       ('invitation mail', self.invitation)]
         failures = 0
         for number, (name, check) in enumerate(checks, 1):
             try:
@@ -206,21 +285,40 @@ class Rig:
                 failures += 1
                 evidence = str(error) if isinstance(error, CheckError) else 'response shape missing or invalid (body withheld)'
                 print(f'✗ V{number} {name} — {evidence}')
-        for number, phase in [(7, 2), (8, 2), (9, 2), (10, 3), (11, 4)]:
+        pending = [(number, phase) for number, phase in [(7, 2), (8, 2), (9, 2), (10, 3), (11, 4)]
+                   if number > len(checks)]
+        for number, phase in pending:
             print(f'○ V{number} not yet (P{phase})')
-        print(f'{6 - failures} pass · {failures} fail · 5 not yet')
+        print(f'{len(checks) - failures} pass · {failures} fail · {len(pending)} not yet')
         return 1 if failures else 0
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Read-only n8n P1 V1–V6 checks; later-phase checks stay pending. '
+    parser = argparse.ArgumentParser(description='Read-only n8n checks: default P1 V1–V6; --phase 2 also authenticates personas and checks Mailpit. '
         'Environment: KUBE_CONTEXT=hartland, N8N_URL=https://n8n.hartland.collite.cz, N8N_IMAGE=' + IMAGE)
-    parser.parse_args()
+    parser.add_argument('--phase', type=int, choices=[1, 2], default=1)
+    olymp = Path(os.environ.get('OLYMP_DIR', Path(__file__).resolve().parents[2] / 'olymp'))
+    parser.add_argument('--realm', default=str(olymp / 'platform/auth/keycloak/overlays/hartland/realm/kantheon.json'))
+    parser.add_argument('--owner-password-file', help='P2: private file instead of the owner vault read')
+    parser.add_argument('--member-password-file', help='P2: private file instead of the member vault read')
+    args = parser.parse_args()
     url = os.environ.get('N8N_URL', 'https://n8n.hartland.collite.cz')
     try:
         parsed = parsed_url(url)
         require(not parsed.query, 'N8N_URL base cannot contain a query')
-        return Rig(os.environ.get('KUBE_CONTEXT', 'hartland'), url, os.environ.get('N8N_IMAGE', IMAGE)).run()
+        mailpit = os.environ.get('MAILPIT_URL', 'https://mail.hartland.collite.cz')
+        keycloak = os.environ.get('KEYCLOAK_URL', 'https://keycloak.hartland.collite.cz')
+        seed_args = ['--realm', args.realm]
+        if args.phase == 2:
+            for base in [mailpit, keycloak]:
+                require(not parsed_url(base).query, 'base URLs cannot contain a query')
+            for option, value in [('--owner-password-file', args.owner_password_file),
+                                  ('--member-password-file', args.member_password_file)]:
+                if value:
+                    seed_args += [option, value]
+        return Rig(os.environ.get('KUBE_CONTEXT', 'hartland'), url, os.environ.get('N8N_IMAGE', IMAGE),
+                   phase=args.phase, seed_args=seed_args, realm=args.realm,
+                   mailpit_url=mailpit, keycloak_url=keycloak).run()
     except CheckError as error:
         parser.error(str(error))
 
