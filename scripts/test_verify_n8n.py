@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import urlsplit, parse_qs
 import unittest
 
 from scripts.verify_n8n_lib import CheckError, http_code, managed_role_version, websocket_status, probe_push
@@ -37,6 +38,17 @@ def fixture():
 
 
 class FakeHTTP(BaseHTTPRequestHandler):
+    def do_POST(self):
+        self.server.requests.append((self.path, dict(self.headers)))
+        payload = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
+        assert self.path == '/rest/login', self.path
+        email = payload['emailOrLdapLoginId']
+        self.send_response(401 if email == self.server.bad_login else 200)
+        self.send_header('Set-Cookie', 'n8n-auth=' + email + '; Path=/')
+        self.end_headers()
+        self.wfile.write(json.dumps({'data': {'id': email, 'email': email,
+            'role': 'global:owner' if email.startswith('marketa@') else 'global:member'}}).encode())
+
     def do_GET(self):
         self.server.requests.append((self.path, dict(self.headers)))
         if self.path.startswith('/rest/push?'):
@@ -48,6 +60,18 @@ class FakeHTTP(BaseHTTPRequestHandler):
                 key = self.headers.get('Sec-WebSocket-Key', '')
                 accept = base64.b64encode(hashlib.sha1((key + GUID).encode()).digest()).decode()
                 self.send_header('Sec-WebSocket-Accept', 'bad' if self.server.bad_accept else accept)
+            self.end_headers()
+            return
+        if self.path == '/rest/login':
+            email = self.headers.get('Cookie', '').removeprefix('n8n-auth=')
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(json.dumps({'data': {'id': email, 'email': email,
+                'role': 'global:owner' if email.startswith('marketa@') else 'global:member'}}).encode())
+            return
+        if self.path == '/mailpit/':
+            self.send_response(self.server.mail_code)
+            self.send_header('Location', self.server.mail_location)
             self.end_headers()
             return
         code = self.server.codes.get(self.path, 200)
@@ -71,6 +95,9 @@ class VerifyTest(unittest.TestCase):
         self.directory = Path(self.temp.name)
         self.server = ThreadingHTTPServer(('127.0.0.1', 0), FakeHTTP)
         self.server.codes = {}
+        self.server.bad_login = None
+        self.server.mail_code = 302
+        self.server.mail_location = 'https://keycloak.hartland.collite.cz/realms/kantheon/protocol/openid-connect/auth?client_id=mailpit'
         self.server.requests = []
         self.server.push_code = 401
         self.server.bad_accept = False
@@ -89,6 +116,12 @@ from pathlib import Path
 args = sys.argv[1:]
 with open(os.environ['N8N_FAKE_CALLS'], 'a') as f: f.write(json.dumps(args) + '\\n')
 d = json.loads(Path(os.environ['N8N_FAKE_STATE']).read_text())
+if '--raw' in args:
+    assert args[-1].startswith('/api/v1/namespaces/middleware/services/mailpit-http:80/proxy/api/v1/search?query=to%3Acfo-cz%40hartland.example'), args
+    print(json.dumps(d.get('mail', {'messages': [{'ID': 'PRIVATE_INVITE_TOKEN'}]}))); sys.exit(0)
+if 'exec' in args and 'node' in args:
+    assert args[args.index('-c') + 1] == 'n8n-main', args
+    print(d.get('dns', 'resolved')); sys.exit(d.get('dns_exit', 0))
 if 'exec' in args:
     assert args[-3:] == ['--', 'printenv', 'DB_TYPE'], args
     assert args[args.index('-c') + 1] == 'n8n-main', args
@@ -262,6 +295,85 @@ print('PRIVATE_BAD_JSON' if d.get('malformed') == kind else json.dumps(d[kind]))
         self.assertNotIn('PRIVATE_PASSWORD', result.stdout + result.stderr)
         self.assertEqual(self.server.requests, [])
         self.assertFalse(self.calls.exists())
+
+
+    def p2_args(self):
+        realm = self.directory / 'realm.json'
+        realm.write_text(json.dumps({'users': [dict(username=u, email=e, firstName=u, lastName='Test',
+            attributes={'world': ['cz']}) for u, e in [('marketa', 'marketa@hartland.example'),
+            ('tomas', 'cfo-cz@hartland.example'), ('petr', 'petr@hartland.example')]]}))
+        paths = []
+        for name in ['owner', 'member']:
+            file = self.directory / name
+            file.write_text('PRIVATE-Password9!')
+            file.chmod(0o600)
+            paths += ['--' + name + '-password-file', str(file)]
+        return ['--phase', '2', '--realm', str(realm), *paths]
+
+    def run_p2(self, **env):
+        return self.run_rig(*self.p2_args(), env_extra={'MAILPIT_URL': self.url + '/mailpit', **env})
+
+    def test_p2_checks_real_seed_verify_cli_and_keeps_only_p3_p4_pending(self):
+        result = self.run_p2()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for n in range(1, 10):
+            self.assertIn(f'✓ V{n} ', result.stdout)
+        self.assertIn('9 pass · 0 fail · 2 not yet', result.stdout)
+        logins = [p for p, _ in self.server.requests if p == '/rest/login']
+        self.assertEqual(len(logins), 6)  # POST then current-session GET for each identity.
+        self.assertNotIn('PRIVATE', result.stdout + result.stderr)
+        for line in self.calls.read_text().splitlines():
+            args = json.loads(line)
+            self.assertEqual(args[:2], ['--context', 'test-context'])
+            self.assertFalse(any(a in args for a in ['apply', 'patch', 'delete', 'create', 'secret']))
+
+    def test_p2_failed_persona_fails_v7_but_mail_checks_continue(self):
+        self.server.bad_login = 'cfo-cz@hartland.example'
+        result = self.run_p2()
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn('✗ V7 ', result.stdout)
+        self.assertIn('✓ V8 ', result.stdout)
+        self.assertIn('✓ V9 ', result.stdout)
+        self.assertNotIn('PRIVATE', result.stdout + result.stderr)
+
+    def test_mailpit_redirect_requires_exact_keycloak_origin_and_auth_path(self):
+        for location in ['https://keycloak.hartland.collite.cz.evil.test/realms/kantheon/protocol/openid-connect/auth',
+                         'https://keycloak.hartland.collite.cz/other',
+                         'http://keycloak.hartland.collite.cz/realms/kantheon/protocol/openid-connect/auth',
+                         'https://keycloak.hartland.collite.cz:444/realms/kantheon/protocol/openid-connect/auth',
+                         'https://user:PRIVATE@keycloak.hartland.collite.cz/realms/kantheon/protocol/openid-connect/auth']:
+            self.server.mail_location = location
+            result = self.run_p2()
+            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+            self.assertIn('✗ V8 ', result.stdout)
+            self.assertNotIn('PRIVATE', result.stdout + result.stderr)
+
+    def test_mailpit_200_or_dns_failure_fails_v8(self):
+        self.server.mail_code = 200
+        result = self.run_p2()
+        self.assertIn('✗ V8 ', result.stdout)
+        self.assertEqual(result.returncode, 1)
+        self.server.mail_code = 302
+        self.data['dns_exit'] = 1
+        result = self.run_p2()
+        self.assertIn('✗ V8 ', result.stdout)
+        self.assertEqual(result.returncode, 1)
+
+    def test_empty_or_malformed_mail_search_fails_v9_without_body(self):
+        for mail in [{'messages': []}, {'messages': [{'ID': ''}]}, {'secret': 'PRIVATE_INVITE_TOKEN'}]:
+            self.data['mail'] = mail
+            result = self.run_p2()
+            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+            self.assertIn('✗ V9 ', result.stdout)
+            self.assertNotIn('PRIVATE', result.stdout + result.stderr)
+
+    def test_p2_bad_url_fails_before_requests_or_secret_reads(self):
+        for key in ['MAILPIT_URL', 'KEYCLOAK_URL']:
+            result = self.run_p2(**{key: 'https://user:PRIVATE@example.com'})
+            self.assertEqual(result.returncode, 2)
+            self.assertEqual(self.server.requests, [])
+            self.assertFalse(self.calls.exists())
+            self.assertNotIn('PRIVATE', result.stdout + result.stderr)
 
 
 if __name__ == '__main__':
