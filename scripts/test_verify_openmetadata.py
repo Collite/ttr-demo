@@ -26,7 +26,7 @@ def catalog():
         "fullyQualifiedName": FQN,
         "extension": {
             "ttrQname": "db.dbo.store_sales",
-            "ttrUrl": "https://studio.hartland.collite.cz/viewer?qname=db.dbo.store_sales",
+            "ttrUrl": "https://studio.hartland.collite.cz/m/hartland/s/db",
         },
         "tags": [{"tagFQN": "Tatrman.Grounded"}, {"tagFQN": TERM, "source": "Glossary"}],
         "columns": [
@@ -40,10 +40,10 @@ def catalog():
     term = {
         "fullyQualifiedName": TERM,
         "glossary": {"name": "hartland Entities"},
-        "extension": {"ttrQname": "er.entity.store_sales"},
+        "extension": {"ttrQname": "er.entity.store_sales", "ttrUrl": "https://studio.hartland.collite.cz/m/hartland/s/er"},
     }
     metric = {
-        "extension": {"ttrQname": "md.measure.revenue", "ttrAdditivity": "additive"},
+        "extension": {"ttrQname": "md.measure.revenue", "ttrAdditivity": "additive", "ttrUrl": "https://studio.hartland.collite.cz/m/hartland/s/md"},
         "metricExpression": {"code": "sum"},
     }
 
@@ -109,7 +109,7 @@ class RigTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             dict(rig.checks(cat, self.env))["term-to-asset link"]()
 
-    def test_url_must_open_the_expected_object(self):
+    def test_url_rejects_the_retired_viewer_route(self):
         cat = catalog()
         cat.store_sales()["extension"]["ttrUrl"] = (
             "https://studio.hartland.collite.cz/viewer?qname=wrong"
@@ -126,6 +126,31 @@ class RigTests(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 rig.summary(text)
+
+    def test_model_links_reject_wrong_workspace_subject_or_extra_query(self):
+        for path in ("/m/foreign/s/db", "/m/hartland/s/er", "/m/hartland/s/db?sel=ignored"):
+            cat = catalog()
+            cat.store_sales()["extension"]["ttrUrl"] = "https://studio.hartland.collite.cz" + path
+            with self.assertRaises(ValueError):
+                dict(rig.checks(cat, self.env))["Studio URL"]()
+
+    def test_model_link_check_includes_terms_and_metrics(self):
+        for target in ("term", "metric"):
+            cat = catalog()
+            item = cat.terms()[0] if target == "term" else cat.listing("metrics")[0]
+            item["extension"]["ttrUrl"] = "https://studio.hartland.collite.cz/m/hartland/s/db"
+            with self.assertRaises(ValueError):
+                dict(rig.checks(cat, self.env))["Studio URL"]()
+
+    def test_cn_terms_must_not_advertise_a_studio_renderer(self):
+        cat = catalog()
+        term = cat.terms()[0]
+        term["extension"] = {"ttrQname": "cn.kind.Product"}
+        check = dict(rig.checks(cat, self.env))["Studio URL"]
+        self.assertTrue(check())
+        term["extension"]["ttrUrl"] = "https://studio.hartland.collite.cz/m/hartland/s/cnc"
+        with self.assertRaises(ValueError):
+            check()
 
     def test_noop_requires_two_successful_nonoverlapping_jobs_same_snapshot(self):
         pair = jobs()

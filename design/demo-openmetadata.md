@@ -3,7 +3,7 @@
 The catalog receives the physical inventory from Postgres and a projection of the
 authored model from Veles. Model changes remain reviewed repository changes.
 
-Prerequisites: the paired XM-P3 PRs are merged; Veles0.11.17 and connector0.1.2 are
+Prerequisites: the paired XM-P3 PRs are merged; Veles0.11.17 and connector0.1.3 are
 published; the bot Secret is synced; the scan/projection Job template exists in
 `openmetadata`. Olymp's Stage boundary ends before deployment. The commands below
 are the subsequent operator/demo sequence, not evidence that it has run.
@@ -40,7 +40,7 @@ kubectl --context hartland -n openmetadata logs pod/<succeeded-pod> -c project
 
 Use fresh Job names when repeating. Inspect both initContainer logs on a failed
 scan and the main summary on success. Warnings mean incomplete projection;
-connector0.1.2 preserves the previous state so a later run retries skipped assets.
+connector0.1.3 preserves the previous state so a later run retries skipped assets.
 Do not manufacture source snapshots or delete the primary state claim.
 
 ## Show the beats (about 15 minutes)
@@ -54,16 +54,23 @@ Do not manufacture source snapshots or delete the primary state claim.
    `ttrAdditivity` (`onHandQty` is semi-additive). “The model stack in the catalog,
    pulled from one projection.” The actual catalog counts belong in XM's tracker
    after execution; authored counts above are the expected inventory.
-3. **Deep link — pending Studio deployment.** Inspect the table's `ttrUrl`, e.g.
-   `https://studio.hartland.collite.cz/viewer?qname=db.dbo.store_sales`. The rig
-   verifies this address and object identity. **Studio was removed from Hartland
-   with the investment estate; its replacement is a separate SO effort.** Do not
-   present a successful browser round trip until that viewer is deployed and the
-   exact URL opens this object. Record this beat as pending if the route is absent.
-4. **Concepts.** CN-P6 has landed: open `hartland Concepts`. Show `Item`/Product,
-   the role/event structure and English/Czech synonyms. The default glossary
-   projection preserves the CN information that the OM2.0.6 RDF importer loses.
-5. **Later — XM-P5.** Edit a description in OM → harvest into a proposed one-line
+3. **Deep link — whole-model demo scope.** Bora approved model-level navigation
+   for the interim demo (2026-10-25). Open the table's `ttrUrl`:
+   `https://studio.hartland.collite.cz/m/hartland/s/db`. From an E-R term, open
+   `https://studio.hartland.collite.cz/m/hartland/s/er`; metrics and MD terms open
+   `/m/hartland/s/md`. These links open the whole model. Find Product/item or
+   store_sales manually; do not claim the originating object is selected.
+   Studio is deployed. After connector0.1.3 is published/pinned and a real projection
+   updates OM, verify a click from OM in the browser, including login. The rig
+   checks the model URL contract and absence of obsolete CN links; it cannot prove
+   browser navigation. `/viewer?qname=…` is unsupported and must not be used.
+4. **Concepts in OM.** Open `hartland Concepts`: Product (`cn.kind.Item`), Customer
+   (`cn.role.Customer`) and Customer with overdue invoices (`cn.phase.DebtorCustomer`).
+   Show related terms and English/Czech synonyms. The new `cn` model is distinct
+   from Studio's legacy `cnc` renderer; this demo stays in OM for concepts. The
+   connector removes their obsolete Studio URLs while preserving glossary content.
+   Exact-object Studio selection and a new-CN diagram remain explicit follow-ups.
+5. **Later — MW harvest-back (absorbed XM-P5).** Edit a description in OM → harvest into a proposed one-line
    repository PR. This phase does not implement harvest-back.
 
 ## Prove a second sync is a no-op
