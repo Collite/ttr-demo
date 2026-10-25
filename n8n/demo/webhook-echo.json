@@ -58,5 +58,10 @@
     "binaryMode": "separate",
     "timezone": "Europe/Prague"
   },
-  "active": true
+  "active": true,
+  "meta": {
+    "ttrDemo": {
+      "probe": "webhook-echo"
+    }
+  }
 }

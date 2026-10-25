@@ -89,7 +89,8 @@ unconditionally: PATCH ignores `expectedChecksum`, and there is no editor-lock p
 save can put the mangled graph back. The seed still sends the checksum for licensed PATCH and publication.
 
 `just n8n-seed-content` restores the reviewed name/nodes/connections, clears `pinData`, and publishes those versions.
-It restores reviewed settings, resets absent `errorWorkflow`, `timezone`, `saveDataErrorExecution`,
+Creation sends reviewed settings unchanged. On updates only, it restores reviewed settings and resets absent
+`errorWorkflow`, `timezone`, `saveDataErrorExecution`,
 `saveDataSuccessExecution`, `saveManualExecutions`, `saveExecutionProgress` to instance defaults, and resets an
 absent `executionTimeout` to Hartland’s instance default `-1` (unlimited). It preserves the webhook key,
 refreshes referenced DB/SMTP credentials and leaves unrelated workflows and other users’ projects untouched.

@@ -19,8 +19,10 @@ node ids and the Webhook node's routing id are retained to keep the graph stable
 
 To re-export: open the draft in the pinned editor, edit the nodes, **More actions → Export JSON**, then strip
 root `id`, `versionId`, `meta.instanceId`, tags and pin data. Restore the symbolic credential references,
-`settings.timezone`, publication intent and run-set metadata above. Never publish a credential-less authoring
-copy. Review the diff before replacing these files.
+`settings.timezone`, publication intent and run-set metadata above. On the echo file also restore
+`meta.ttrDemo.probe: "webhook-echo"`: this portable-only marker requires the keyed echo node even if a
+re-export dropped its credential reference. Other Webhook → Respond to Webhook workflows need no demo key.
+Never publish a credential-less authoring copy. Review the diff before replacing these files.
 
 ```sh
 just n8n-seed-content

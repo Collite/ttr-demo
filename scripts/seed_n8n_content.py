@@ -28,6 +28,11 @@ EDITOR_DEFAULT_SETTINGS = {'callerPolicy': 'workflowsFromSameOwner',
     'availableInMCP': False, 'timeSavedMode': 'fixed'}
 
 
+def require(condition, message):
+    if not condition:
+        raise SeedError(message)
+
+
 def referenced_credentials(docs):
     return {ref['name'] for doc in docs for node in doc['nodes']
             for ref in node.get('credentials', {}).values()}
@@ -41,12 +46,14 @@ def echo_paths(docs):
         nodes = [n for n in doc['nodes'] if n['type'] == 'n8n-nodes-base.webhook'
                  and n['parameters'].get('authentication') == 'headerAuth'
                  and n.get('credentials', {}).get('httpHeaderAuth', {}).get('name') == 'webhook-echo-key']
-        echo_shape = any(n['type'] == 'n8n-nodes-base.respondToWebhook' for n in doc['nodes']) and any(n['type'] == 'n8n-nodes-base.webhook' for n in doc['nodes'])
-        if uses_key or echo_shape:
-            expect(bool(nodes), 'workflow file echo example lacks a keyed webhook')
+        meta = doc.get('meta')
+        demo = meta.get('ttrDemo') if isinstance(meta, dict) else None
+        marked_echo = isinstance(demo, dict) and demo.get('probe') == 'webhook-echo'
+        if uses_key or marked_echo:
+            require(bool(nodes), 'workflow file echo example lacks a keyed webhook')
         for node in nodes:
             path = node['parameters'].get('path')
-            expect(isinstance(path, str) and bool(path) and not path.startswith('/')
+            require(isinstance(path, str) and bool(path) and not path.startswith('/')
                    and all(part not in ('', '.', '..') for part in path.split('/'))
                    and node['parameters'].get('httpMethod') == 'POST', 'workflow file echo webhook path/method')
             paths.append(path)
@@ -59,17 +66,17 @@ def documents(directory):
         docs = [json.loads(p.read_text()) for p in sorted(Path(directory).glob('*.json'))]
     except (ValueError, OSError, UnicodeError):
         raise SeedError('cannot read workflow JSON files (contents withheld)') from None
-    expect(bool(docs), 'workflow files (empty directory)')
+    require(bool(docs), 'workflow files (empty directory)')
     names = set()
     for doc in docs:
-        expect(isinstance(doc, dict) and isinstance(doc.get('name'), str) and bool(doc['name'])
+        require(isinstance(doc, dict) and isinstance(doc.get('name'), str) and bool(doc['name'])
                and type(doc.get('active')) is bool and isinstance(doc.get('nodes'), list) and bool(doc['nodes'])
                and isinstance(doc.get('connections'), dict) and isinstance(doc.get('settings'), dict), 'workflow file')
-        expect(doc['name'] not in names, 'duplicate workflow file name'); names.add(doc['name'])
+        require(doc['name'] not in names, 'duplicate workflow file name'); names.add(doc['name'])
         for node in doc['nodes']:
-            expect(isinstance(node, dict) and all(k in node for k in ['name','type','typeVersion','position','parameters']), 'workflow node')
+            require(isinstance(node, dict) and all(k in node for k in ['name','type','typeVersion','position','parameters']), 'workflow node')
             for kind, ref in node.get('credentials', {}).items():
-                expect(isinstance(ref, dict) and CREDENTIAL_TYPES.get(ref.get('name')) == kind, 'workflow credential reference')
+                require(isinstance(ref, dict) and CREDENTIAL_TYPES.get(ref.get('name')) == kind, 'workflow credential reference')
     echo_paths(docs)
     return docs
 
@@ -108,15 +115,17 @@ def credential_data(pg_password, webhook_key):
             'webhook-echo-key': {'name': 'X-Demo-Key', 'value': webhook_key}}
 
 
-def mapped(doc, creds):
+def mapped(doc, creds, *, reset=False):
     payload = {key: copy.deepcopy(doc[key]) for key in ['name', 'nodes', 'connections', 'settings']}
     payload['pinData'] = {}
-    payload['settings'] = {**{k: 'DEFAULT' for k in DEFAULTABLE_SETTINGS},
-                           'executionTimeout': -1, **payload['settings']}
+    # Only update strips these reset markers; create stores its settings verbatim.
+    if reset:
+        payload['settings'] = {**{k: 'DEFAULT' for k in DEFAULTABLE_SETTINGS},
+                               'executionTimeout': -1, **payload['settings']}
     for node in payload['nodes']:
         for kind, ref in node.get('credentials', {}).items():
             name = ref['name']; c = creds.get(name)
-            expect(c is not None and c.get('type') == kind, 'missing or mismatched credential')
+            require(c is not None and c.get('type') == kind, 'missing or mismatched credential')
             node['credentials'][kind] = {'name': name, 'id': c['id']}
     return payload
 
@@ -124,16 +133,17 @@ def mapped(doc, creds):
 def check_flow(flow, doc, creds):
     expect(isinstance(flow, dict) and isinstance(flow.get('id'), str)
            and isinstance(flow.get('versionId'), str), 'workflow detail')
-    expect(flow.get('active') is doc['active'] and
+    require(flow.get('active') is doc['active'] and
            (not doc['active'] or flow.get('activeVersionId') == flow['versionId']), 'workflow publication (draft not served)')
     # Compare portable content, ignoring editor-inserted optional fields on nodes.
     expected = mapped(doc, creds)
-    expect(flow.get('name') == expected['name'] and flow.get('connections') == expected['connections'], 'workflow content')
-    expect(isinstance(flow.get('nodes'), list) and len(flow['nodes']) == len(expected['nodes']), 'workflow nodes')
+    require(flow.get('name') == expected['name'] and flow.get('connections') == expected['connections'], 'workflow content')
+    expect(isinstance(flow.get('nodes'), list), 'workflow nodes')
+    require(len(flow['nodes']) == len(expected['nodes']), 'workflow nodes differ')
     actual = {n['name']: n for n in flow['nodes']}
     for node in expected['nodes']:
-        expect(node['name'] in actual and all(actual[node['name']].get(k) == v for k,v in node.items()), 'workflow node content')
-    expect(not flow.get('pinData'), 'workflow pinData must be empty')
+        require(node['name'] in actual and all(actual[node['name']].get(k) == v for k,v in node.items()), 'workflow node content')
+    require(not flow.get('pinData'), 'workflow pinData must be empty')
     actual_settings = flow.get('settings')
     expect(isinstance(actual_settings, dict), 'workflow settings')
     desired = doc['settings']
@@ -143,7 +153,7 @@ def check_flow(flow, doc, creds):
         else:
             valid = key in EDITOR_DEFAULT_SETTINGS and type(actual_settings[key]) is type(EDITOR_DEFAULT_SETTINGS[key]) and actual_settings[key] == EDITOR_DEFAULT_SETTINGS[key]
         # Name only the key; values may refer to private workflows/configuration.
-        expect(valid, 'workflow settings key ' + key + ' differs; manual correction required')
+        require(valid, 'workflow settings key ' + key + ' differs; manual correction required')
 
 
 def webhook_key_file(path, *, create):
@@ -222,7 +232,7 @@ def run(args):
     probes = echo_paths(docs)
     if args.verify:
         for doc in docs:
-            expect(doc['name'] in flows, 'missing workflow')
+            require(doc['name'] in flows, 'missing workflow')
             flow = client.call('/rest/workflows/' + urllib.parse.quote(flows[doc['name']]['id'], safe=''))
             check_flow(flow, doc, creds)
         for path in probes: verify_echo(creds, args.url, key, path)
@@ -242,7 +252,7 @@ def run(args):
         creds[name] = c
         print('credential ready: ' + name)
     for doc in docs:
-        payload = mapped(doc, creds)
+        payload = mapped(doc, creds, reset=doc['name'] in flows)
         if doc['name'] in flows:
             wid = urllib.parse.quote(flows[doc['name']]['id'], safe='')
             before = client.call('/rest/workflows/' + wid)
