@@ -1,5 +1,9 @@
 # HB-P1 — Instance & identity
 
+> **Met by HE-P1 (2026-10-25); these boxes stay as written.** The HE arc ran this phase, for the instance `marketa`
+> (HE-D-4), not `dev`. Its tasks and evidence are in `project/kantheon/features/hebe/tasks/tasks-p1-*.md`, and
+> `rig-hb/verify.sh` passes 12 checks (0 fail). See [`00-task-management.md`](./00-task-management.md).
+
 > Target = contracts §2 table. Pre-flight: P0 probes done; **⚑1/⚑2 verdicts** (defaults:
 > keep `dev`, HTTPRoute); **⚑3 delivered** (bot token in the vault). All changes via olymp
 > PRs / the §4.4 provisioning runbook; freeze-calendar checked (task-mgmt rule 7). TDD =
