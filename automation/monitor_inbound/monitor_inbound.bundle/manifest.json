@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "ttrpVersion": 2,
-  "toolchain": "org.tatrman:ttrp:0.18.7-auh.2",
+  "toolchain": "org.tatrman:ttrp:0.18.11",
   "program": "monitor_inbound.ttrp",
   "world": {
     "qname": "hartland.worlds.demo",

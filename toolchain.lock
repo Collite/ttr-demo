@@ -7,8 +7,7 @@ ref = "grammar/v0.18.3"          # the gate's toolchain checkout (was inline in 
 [ttrp]
 # Recipe builds/checks move independently of the model reader and serving image.
 # A commit pin requires a prerelease version; delete version when moving ref to a release tag.
-ref = "89d379ea27c5a6f9226baae83c00c436f407e4e5" # literate layout/fixtures + deferred derivation, based on grammar/v0.18.7
-version = "0.18.7-auh.2"
+ref = "grammar/v0.18.11"          # accepted Core#307, includes declared writer-default evidence and concat
 
 [veles]
 image = "0.11.15"                # the veles image olymp `clusters/hartland/apps/veles/values.yaml` deploys
@@ -18,3 +17,7 @@ ttr-metadata = "0.18.3"          # `tatrman-ttr-metadata` in ttr-server's `gradl
 # ttr-metadata-cli (from grammar/v0.18.0; ttr-core SO-core P0·S0.3 T6). true = the gate fails without the loader,
 # false = the gate says it did not run it.
 strict-load = true
+
+# Test runtime only: real loader/verifier/preview, independent of the deployed image.
+[automation-preview]
+server-ref = "5a09aebd4afd270a6056263bc4e06bb9c3f809d6" # accepted Server#312 merge

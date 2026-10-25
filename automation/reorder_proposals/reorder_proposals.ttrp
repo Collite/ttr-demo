@@ -27,7 +27,7 @@ context weekly_demand(in pairs, out rows) target erp {
         pairs -> join(right: load(er.entity.sales_line), kind: inner, on: left.item = right.item and left.warehouse = right.warehouse)
               -> within(sold_date, last: weeks(:demand_period))
               -> aggregate { group_by: item, warehouse  sold = sum(quantity) }
-              -> calc(weekly_demand = sold * 1.0 / :demand_period)
+              -> calc(weekly_demand = cast(sold as bigint) * 1.0 / :demand_period)
               -> rows
     }
 
@@ -43,8 +43,8 @@ decision cover(in pairs, in on_hand, in weekly_demand) {
     }
 
 actions {
-        cover.propose -> propose { item: item, warehouse: warehouse, on_hand: on_hand, weekly_demand: weekly_demand,
-                                   proposed_qty: proposed_qty }
+        cover.propose -> propose { item: item, warehouse: warehouse, on_hand: on_hand, weekly_demand: round(weekly_demand * 100) * 0.01,
+                                   proposed_qty: cast(proposed_qty as int) }
         cover.propose -> ask     { who: role.buyer, about: warehouse, action: start { process: "purchasing" },
                                    group_by: warehouse, due: 2 working_days }
     }

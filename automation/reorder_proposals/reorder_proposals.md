@@ -2,6 +2,8 @@
 
 For every product in every distribution center, compare the latest on-hand quantity with demand from web and marketplace orders fulfilled by that center. The parameters are `demand_period` (8 weeks), `cover_target` (3 weeks) and `order_up_to` (6 weeks).
 
+The proposal writer maps all eight required attributes explicitly. Its optional defaults derive a retry-stable negative bigint proposal ID from the pinned run and candidate, retain the run UUID, and set state to `proposed`. Coverage decisions use unrounded weekly demand; only the stored demand is rounded to two decimal places, and proposed quantity is cast to an integer. Full approval preview still needs Server support for the nested purchasing action and working-day duration.
+
 ```ttrp preamble
 uses world "hartland.worlds.demo"
 import hartland.*
@@ -47,7 +49,7 @@ context weekly_demand(in pairs, out rows) target erp {
         pairs -> join(right: load(er.entity.sales_line), kind: inner, on: left.item = right.item and left.warehouse = right.warehouse)
               -> within(sold_date, last: weeks(:demand_period))
               -> aggregate { group_by: item, warehouse  sold = sum(quantity) }
-              -> calc(weekly_demand = sold * 1.0 / :demand_period)
+              -> calc(weekly_demand = cast(sold as bigint) * 1.0 / :demand_period)
               -> rows
     }
 ```
@@ -71,8 +73,8 @@ Preview the proposal table before any write (C-6). Proposals are held pending ap
 
 ```ttrp
 actions {
-        cover.propose -> propose { item: item, warehouse: warehouse, on_hand: on_hand, weekly_demand: weekly_demand,
-                                   proposed_qty: proposed_qty }
+        cover.propose -> propose { item: item, warehouse: warehouse, on_hand: on_hand, weekly_demand: round(weekly_demand * 100) * 0.01,
+                                   proposed_qty: cast(proposed_qty as int) }
         cover.propose -> ask     { who: role.buyer, about: warehouse, action: start { process: "purchasing" },
                                    group_by: warehouse, due: 2 working_days }
     }

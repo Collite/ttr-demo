@@ -11,7 +11,7 @@
 
 ## What it does
 
-- `cover.propose` → `propose`: `item` = `item`, `on_hand` = `on_hand`, `proposed_qty` = `proposed_qty`, `warehouse` = `warehouse`, `weekly_demand` = `weekly_demand`. would propose reordering {proposed_qty} of item {item} for center {warehouse}
+- `cover.propose` → `propose`: `item` = `item`, `on_hand` = `on_hand`, `proposed_qty` = `cast(proposed_qty as integer)`, `warehouse` = `warehouse`, `weekly_demand` = `round(weekly_demand * 100) * 0.01`. would propose reordering {proposed_qty} of item {item} for center {warehouse}
 - `cover.propose` → `ask`: `about` = `warehouse`, `action` = `start { process: "purchasing" }`, `due` = `2 working_days`, `group_by` = `warehouse`, `who` = `role.buyer`. would ask {who} to approve {action} for {about}
 
 ## Parameters

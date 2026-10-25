@@ -108,11 +108,11 @@ def table warehouse_outage {
 }
 
 def table reorder_proposal {
-    // `bigserial` in the DDL — TTR-M has no bigint, and `int` reads it correctly at demo volumes.
+    // Physical bigserial is bigint; generated AU keys use its negative signed 64-bit range.
     description: "Reorder proposals (AU H-3) — written by the reorder_proposals recipe, empty at build. rp_state: proposed · approved · rejected · started."
     primaryKey: [rp_proposal_id]
     columns: [
-        def column rp_proposal_id   { type: int, isKey: true },
+        def column rp_proposal_id   { type: bigint, isKey: true },
         def column rp_run           { type: varchar },                                         // the automation run that proposed it
         def column rp_item_sk       { type: int },
         def column rp_warehouse_sk  { type: int },
@@ -131,6 +131,6 @@ def table winback_mail {
         def column wm_quarter     { type: varchar, isKey: true },                              // e.g. 2026-Q4
         def column wm_offer       { type: varchar },
         def column wm_run         { type: varchar },                                         // the automation run that mailed it
-        def column wm_mailed_at   { type: timestamp }                                        // timestamptz in the DDL
+        def column wm_mailed_at   { type: datetime }                                        // timestamptz in the DDL
     ]
 }

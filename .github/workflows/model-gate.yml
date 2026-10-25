@@ -166,7 +166,7 @@ jobs:
 
       - name: Recipe build script regressions
         working-directory: hartland
-        run: python3 -m unittest scripts/test_build_recipes.py scripts/test_toolchain_ttrp.py
+        run: python3 -m unittest scripts/test_build_recipes.py scripts/test_toolchain_ttrp.py scripts/test_writer_preview.py
 
       - name: Hebe rig specs (Keycloak form parsing, verify.sh helpers)
         working-directory: hartland

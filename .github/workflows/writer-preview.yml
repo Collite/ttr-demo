@@ -1,0 +1,60 @@
+# Hartland's authored mappings and committed bundles against an accepted Server, with only Query tables faked.
+name: writer-preview
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  writer-preview:
+    runs-on: ubuntu-latest
+    steps:
+      # Deliberately not named hartland: the verifier must use declared packages, never checkout paths.
+      - uses: actions/checkout@v4
+        with:
+          path: bundle
+          persist-credentials: false
+
+      - name: Read and require the accepted preview runtime pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          pins="$(python3 bundle/scripts/toolchain-lock.py bundle/toolchain.lock)"
+          while IFS='=' read -r key value; do export "$key=$value"; done <<<"$pins"
+          : "${AU_PREVIEW_SERVER_REF:?toolchain.lock must pin automation-preview.server-ref}"
+          echo "$pins" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v4
+        with:
+          repository: Collite/ttr-server
+          ref: ${{ env.AU_PREVIEW_SERVER_REF }}
+          path: server
+          persist-credentials: false
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Governed H3 writer and full H5 preview
+        working-directory: bundle
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/writer-preview.py --server ../server
+
+      - name: Retain named preview results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: writer-preview-results
+          path: server/services/automation/build/test-results/test/TEST-*.xml
+          if-no-files-found: error

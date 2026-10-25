@@ -2,6 +2,8 @@
 
 Pro každé zboží v každém distribučním centru porovnáme poslední známou zásobu s poptávkou z webových objednávek a objednávek tržiště vyřízených daným centrem. Parametry jsou `demand_period` (Období poptávky (týdny), 8), `cover_target` (Cílové krytí zásob (týdny), 3) a `order_up_to` (Doobjednat na (týdny), 6).
 
+Zápis návrhu výslovně mapuje všech osm povinných atributů. Volitelné výchozí hodnoty odvozují záporné bigint ID návrhu ze stejného připnutého běhu a kandidáta i při opakování, zachovají UUID běhu a nastaví stav `proposed`. O krytí rozhoduje nezaokrouhlená týdenní poptávka; až ukládaná poptávka se zaokrouhlí na dvě desetinná místa a navržené množství se převede na celé číslo. Úplný náhled schválení stále vyžaduje podporu Serveru pro vnořenou akci nákupu a lhůtu v pracovních dnech.
+
 ```ttrp preamble
 uses world "hartland.worlds.demo"
 import hartland.*
@@ -47,7 +49,7 @@ context weekly_demand(in pairs, out rows) target erp {
         pairs -> join(right: load(er.entity.sales_line), kind: inner, on: left.item = right.item and left.warehouse = right.warehouse)
               -> within(sold_date, last: weeks(:demand_period))
               -> aggregate { group_by: item, warehouse  sold = sum(quantity) }
-              -> calc(weekly_demand = sold * 1.0 / :demand_period)
+              -> calc(weekly_demand = cast(sold as bigint) * 1.0 / :demand_period)
               -> rows
     }
 ```
@@ -71,8 +73,8 @@ Před jakýmkoli zápisem zobrazíme tabulku návrhů (C-6). Návrhy čekají na
 
 ```ttrp
 actions {
-        cover.propose -> propose { item: item, warehouse: warehouse, on_hand: on_hand, weekly_demand: weekly_demand,
-                                   proposed_qty: proposed_qty }
+        cover.propose -> propose { item: item, warehouse: warehouse, on_hand: on_hand, weekly_demand: round(weekly_demand * 100) * 0.01,
+                                   proposed_qty: cast(proposed_qty as int) }
         cover.propose -> ask     { who: role.buyer, about: warehouse, action: start { process: "purchasing" },
                                    group_by: warehouse, due: 2 working_days }
     }

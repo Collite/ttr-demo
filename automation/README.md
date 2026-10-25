@@ -28,7 +28,7 @@ would report every one of those names unresolved (the lexicon build refuses to l
 under `../model/` names an automation object; `../model/` only carries the lifecycles (`states:`) the actions are
 checked against.
 
-Written in ttr-core grammar **0.16** (the CI pin, `.github/workflows/model-gate.yml`). The extension the recipes
+Recipe authoring uses grammar **0.18**, released compiler **0.18.11**; model/reader checks remain pinned to **0.18.3** in `toolchain.lock`. The extension the recipes
 run on is in `../model/` — the documents (`model/er/orders.ttrm`, `returns-flow.ttrm`, `proposals.ttrm`) and their
 words (`model/lexicon/{en,cs}/automation.ttrm`); see the "Automation extension" paragraph of `../model/README.md`.
 
@@ -51,9 +51,9 @@ recipe or golden seed changes. The bundles include the golden YAML seeds and the
 CI checks literate artifacts before rebuilding. A prose-only source edit, canonical hand edit, missing sidecar or
 changed explanation fails; rebuild the document and commit all derived artifacts together.
 
-The recipe toolchain pins the exact compiler fix commit **89d379e**, based on **grammar/v0.18.7**, stamped
-**0.18.7-auh.2**. It preserves each H-2 recipe's own golden tests and places its bundle beside the canonical
-program. This development pin awaits upstream review; it does not require a serving-reader change.
+The recipe toolchain uses released **grammar/v0.18.11**, containing the accepted document/multi-recipe,
+writer-default evidence and concat fixes. The separate `[automation-preview].server-ref` pins accepted
+Server#312 merge **5a09aebd** for the preview CI job; it does not change a deployed image.
 The model/reader pins remain independent. H-1's `release_order.md` is authoritative; its canonical
 recipe preserves P2's code apart from whitespace/comments. The `.ttrd` records the actual source filename and
 spans. The existing `document: "releasing-a-placed-order.md"` identifier is retained for compatibility with the
@@ -75,8 +75,11 @@ check compares both languages without modifying source files; missing/stale Czec
 All outputs from both languages are validated before any committed artifact is replaced. Ops twins use the same
 native extractor in derivation-only mode, so no compiled fingerprint or generated explanation is claimed for them.
 
-All six bundle manifests hash their generated English READMEs and both worlds' seeds. SQL, schemas, catalogs
-and all approval fingerprints are unchanged by this authoring migration. `uv run scripts/seed-goldens.py --world cz`
+All six bundle manifests hash their generated English READMEs and both worlds' seeds. H3 now preserves decimal
+demand before division, rounds only the stored two-place demand and casts proposed quantity to int. Its model
+key matches physical bigint; H5 mailing time matches physical timestamptz via datetime. The existing DDL is
+unchanged. Explicit writer defaults map every required proposal/mailing attribute; H3/H5 now carry text/2
+approval evidence for those declarations and targets. The other four recipes retain their approval text hashes. `uv run scripts/seed-goldens.py --world cz`
 generates 27 business and four synthetic ops seeds for each world. The ops fixtures come from
 `authoring-stubs/automation/ops/expected/`, use explicit `stub-<world>-…` keys, and are not observations of
 served operational data. Replace those synthetic cases during Server P4 certification. Live runs, non-seed pins and
@@ -106,3 +109,20 @@ Worktrees with another basename build/check in a temporary `hartland/` copy unti
 Winback keeps documented workarounds for [#252](https://github.com/Collite/ttr-core/issues/252),
 [#253](https://github.com/Collite/ttr-core/issues/253), and [#254](https://github.com/Collite/ttr-core/issues/254).
 `RECIPES_REPRO_PASSES=2` enables a second local reproducibility pass; CI uses one test rebuild per recipe.
+
+
+The `writer-preview` workflow and `just writer-preview /path/to/clean/server` run the Hartland-owned spec
+against the exact accepted Server checkout named in the lock. The runner refuses a wrong commit or local
+changes, verifies **services/automation runtimeClasspath** against published 0.18.11 (translator/proto
+0.12.11), and disables Maven Local. Query result tables are mocked; real bundle loading, approval coverage,
+bindings, staging, native preview and writer assignment checks run. The CI checkout is deliberately named
+`bundle` to guard package resolution independently of its path. JUnit XML retains all five named cases.
+
+The gate covers H3's complete **writer projection**, including negative retry-stable bigint ID, run/state,
+all required attributes and two-place stored demand. This is a deliberate projection, not full H3 approval
+preview: the original recipe still refuses its nested purchasing action/working-day duration, which has a
+separate expected-refusal case. Physical key conflicts must be refused transactionally by P2; derived IDs
+are not globally collision-free. Full H5 tests both routes, UTC quarter/year boundaries, Prague/US edge
+instants, pinned Open time, replayed rows and empty selection. H5's mailing key uses the UTC quarter of
+as-of in both worlds; D-129's rolling 92-day exclusion stays independent of that label. No connector or
+physical write runs in this gate. Actual deployed US/CZ runs, ops support and P3 exit remain pending.

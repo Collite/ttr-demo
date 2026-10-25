@@ -2,6 +2,8 @@
 
 Zákazníci, kteří ve dvanácti měsících předcházejících posledním dvanácti měsícům nakoupili alespoň čtyřikrát a v posledních dvanácti měsících nenakoupili, dostanou nabídku k návratu. Parametr `active_orders` (Objednávky před obdobím bez objednávky) je 4 a `quiet_months` (Období bez objednávky (měsíce)) je 12. Parametr `mail_window` (Interval win-back e-mailů) je 92 dnů: nejvýše jeden e-mail za toto klouzavé období (výklad pravidla jednou za čtvrtletí pro demo, D-129).
 
+Klíč záznamu e-mailu používá **kalendářní čtvrtletí v UTC** podle připnutého okamžiku as-of (`YYYY-Qn`), v obou světech. Proto 1. 1. 2027 v 00:30 v Praze patří do `2026-Q4`, zatímco 31. 12. 2026 ve 20:00 v pásmu UTC−05:00 patří do `2027-Q1`. Tento údaj nemění klouzavý interval 92 dnů. UUID běhu a čas záznamu e-mailu se přebírají z potvrzeného kontextu otevření běhu, nezávisle na as-of.
+
 ```ttrp preamble
 uses world "hartland.worlds.demo"
 import hartland.*

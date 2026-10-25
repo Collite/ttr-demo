@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "ttrpVersion": 2,
-  "toolchain": "org.tatrman:ttrp:0.18.7-auh.2",
+  "toolchain": "org.tatrman:ttrp:0.18.11",
   "program": "winback.ttrp",
   "world": {
     "qname": "hartland.worlds.demo",
@@ -131,7 +131,7 @@
             },
             {
               "name": "last_mailed",
-              "type": "timestamp"
+              "type": "datetime"
             }
           ],
           "params": [
@@ -468,7 +468,7 @@
       "er.entity.winback_mail"
     ],
     "fingerprints": {
-      "text": "sha256:fb62429828a4afe6ec2a02c89e114628b41d7c06ffd3565b48baf7ee1d09f3d9",
+      "text": "sha256:94a8df72375dd999552dcdd8ecf7075c78a3439708615730a125ad1cce98754d",
       "values": "sha256:d8352c31b971440aa43d107154959e46256b6f6d981375d8c9e0fd7c9716c86f",
       "labels": "sha256:bb99d3dfc6f7dccc74217a0b7e925c9a2af77e8d4b4bc4d7a567be4edd083e56"
     },
@@ -480,11 +480,23 @@
       "tests/premium.yaml",
       "tests/standard.cz.yaml",
       "tests/standard.yaml"
-    ]
+    ],
+    "approvalDependencies": {
+      "version": 1,
+      "imports": [
+        "hartland",
+        "hartland.automation"
+      ],
+      "textBase": "sha256:fb62429828a4afe6ec2a02c89e114628b41d7c06ffd3565b48baf7ee1d09f3d9",
+      "actions": {
+        "emit": "sha256:0113a4daa5efb57003db800541fc5d487ffb2502e17c7c893b1100f83a196784",
+        "record": "sha256:d6896b11c42c9eb1791f6bdbbdbeed7b5d2745ac41e7ff10cfd8fa5efb3415f7"
+      }
+    }
   },
   "files": {
     "README.md": "sha256:9e43ff7f26bc9b190bc945f13e4cf81c5e52098e172679ca9c5d944c16de9dc3",
-    "catalog/winback.ttrm": "sha256:5bda2f0f8efae8668582f810602c6e51b2a94886299f064acd3861fcc8af9664",
+    "catalog/winback.ttrm": "sha256:ad4a74b4369fd6b84918ae09b375fb29957fc9afc30a91f8eb8915e180244e19",
     "catalog/winback_verdict.ttrm": "sha256:fc3d78ebb1f947e0b06d3b121fb3b5f8ecb7ee8e1b0f8f475945c5aacea1330d",
     "islands/band.rows.sql": "sha256:7f518ca0be7564d12256e22af8b2950cf1589c6b737bb58adc72db963f034052",
     "islands/lapsed.customers.sql": "sha256:20a3ff63703b15ecd905be909ebc731d99ef79937e8e74410e7fcafb0e26a806",

@@ -49,7 +49,7 @@ async function readerOn(text) {
 }
 
 test('T1.1 — the lock: [ttr-core] ref; [veles] image, ttr-metadata and strict-load', () => {
-  assert.deepEqual(Object.keys(lock).sort(), ['ttr-core', 'ttrp', 'veles']);
+  assert.deepEqual(Object.keys(lock).sort(), ['automation-preview', 'ttr-core', 'ttrp', 'veles']);
   assert.deepEqual(Object.keys(lock['ttr-core']), ['ref']);
   assert.deepEqual(Object.keys(lock.veles), ['image', 'ttr-metadata', 'strict-load']);
 });
@@ -70,6 +70,7 @@ test('T1.3 — scripts/toolchain-lock.py (the reader the workflows use) prints t
     `TTRP_REF=${lock.ttrp.ref}`,
     `STRICT_LOAD=${lock.veles['strict-load']}`,
     `TTRP_VERSION=${lock.ttrp.version ?? lock.ttrp.ref.replace("grammar/v", "")}`,
+    `AU_PREVIEW_SERVER_REF=${lock["automation-preview"]["server-ref"]}`,
   ]);
 });
 
@@ -132,3 +133,15 @@ for (const [ref, version, accepted] of [
     }
   });
 }
+
+test('preview runtime pin refuses malformed or missing commits before exporting any environment', async () => {
+  for (const ref of ['master', '', 'a'.repeat(39), '$(true)', 'a'.repeat(40) + '\\nEVIL=1']) {
+    const run = await readerOn(lockText.replace(/^server-ref = .*$/m, `server-ref = "${ref}"`));
+    assert.notEqual(run.status, 0);
+    assert.equal(run.stdout, '');
+    assert.match(run.stderr, /\[automation-preview\]\.server-ref/);
+  }
+  const run = await readerOn(lockText.replace(/^server-ref = .*$/m, ''));
+  assert.notEqual(run.status, 0);
+  assert.equal(run.stdout, '');
+});

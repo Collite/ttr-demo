@@ -2,6 +2,8 @@
 
 Customers who bought at least four times in the twelve months before the last twelve months, and nothing in the last twelve months, receive a win-back offer. `active_orders` is 4 and `quiet_months` is 12. The `mail_window` is 92 days: at most one win-back mail per customer in that rolling window (the demo’s interpretation of once per quarter, D-129).
 
+The mailing record key uses the **UTC calendar quarter** of the pinned as-of instant (`YYYY-Qn`), in both worlds. Thus 2027-01-01 00:30 in Prague is `2026-Q4`, while 2026-12-31 20:00 at UTC−05:00 is `2027-Q1`. This label does not change the rolling 92-day exclusion. The run UUID and mailing timestamp come from committed Open context, independently of as-of.
+
 ```ttrp preamble
 uses world "hartland.worlds.demo"
 import hartland.*
