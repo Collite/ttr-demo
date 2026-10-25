@@ -12,7 +12,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit, parse_qs
 import unittest
 
-from scripts.verify_n8n_lib import CheckError, http_code, managed_role_version, websocket_status, probe_push
+from scripts.verify_n8n_lib import CheckError, http_code, managed_role_version, websocket_status, probe_push, verify_personas
 
 ROOT = Path(__file__).resolve().parents[1]
 IMAGE = 'docker.n8n.io/n8nio/n8n:2.44.6'
@@ -296,6 +296,16 @@ print('PRIVATE_BAD_JSON' if d.get('malformed') == kind else json.dumps(d[kind]))
         self.assertEqual(self.server.requests, [])
         self.assertFalse(self.calls.exists())
 
+
+    def test_persona_timeout_terminates_wrapper_group_and_removes_private_files(self):
+        secret = self.directory / 'private-temp'
+        script = self.directory / 'blocked-verifier.sh'
+        script.write_text("#!/bin/sh\nset -eu\ntrap 'rm -f -- \"$PRIVATE_TEST_FILE\"' EXIT\n"
+                          "trap 'exit 143' TERM\nprintf 'PRIVATE' > \"$PRIVATE_TEST_FILE\"\nsleep 30\n")
+        script.chmod(0o755)
+        with self.assertRaisesRegex(CheckError, 'timed out'):
+            verify_personas([str(script)], env={**os.environ, 'PRIVATE_TEST_FILE': str(secret)}, timeout=0.5)
+        self.assertFalse(secret.exists())
 
     def p2_args(self):
         realm = self.directory / 'realm.json'

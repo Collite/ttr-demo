@@ -7,7 +7,7 @@ After the reviewed olymp P1 deployment is merged and Ready, claim the owner imme
 just n8n-verify
 ```
 
-The rig reads cluster status, public n8n endpoints, and `DB_TYPE` inside the n8n container. It does not
+By default, the rig reads cluster status, public n8n endpoints, and `DB_TYPE` inside the n8n container. It does not
 set up users, sign in, read Secrets, or change cluster resources. It needs `kubectl`, Python 3 and access
 to context `hartland`; no Azure login or password is needed for verification.
 
@@ -20,9 +20,36 @@ to context `hartland`; no Azure login or password is needed for verification.
 | V5 | full WebSocket handshake returns validated HTTP 101, or HTTP 401 reaches authentication |
 | V6 | runtime DB_TYPE=postgresdb and CNPG has a password Secret resourceVersion for the n8n role |
 
-Every row runs even when an earlier row fails. Exit 0 means V1–V6 passed; exit 1 means at least one failed;
-exit 2 means invalid command arguments or base URL. V7–V11 explicitly print `not yet` for P2/P3/P4 and do
-not count as certified. `--help` makes no requests.
+Every selected row runs even when an earlier row fails. Exit 0 means all selected rows passed; exit 1 means
+at least one failed; exit 2 means invalid command arguments or base URL. By default V7–V11 explicitly print
+`not yet` for P2/P3/P4 and do not count as certified. `--help` makes no requests.
+
+After Mailpit is deployed and the members have been seeded:
+
+```sh
+just n8n-verify --phase 2
+```
+
+This selects V1–V9, leaving V10/V11 pending. V7 runs `seed-n8n-users.sh --verify`: it signs in as Markéta,
+Tomáš and Petr, checking each current-session identity and role. It never creates accounts or sends invitations.
+The wrapper reads the two vault passwords into private temporary files and deletes them afterwards; Azure CLI
+access is required unless you supply `--owner-password-file PATH` and `--member-password-file PATH` (0600).
+`--realm PATH` or `OLYMP_DIR` selects the realm roster, exactly as for the seed script. Credential values never
+enter argv, environment or rig output. V7 fails if the verifier exits nonzero or exceeds 150 seconds; the other
+rows still run. For safe per-persona diagnostics, run `just n8n-seed-users --verify` directly.
+
+| Row | Evidence required |
+|---|---|
+| V7 | owner and Czech members authenticate with the correct email and global role |
+| V8 | Mailpit returns 302 to the exact configured Keycloak authorization endpoint; SMTP Service DNS resolves inside n8n-main |
+| V9 | Mailpit API Service-proxy search for Tomáš's realm email returns at least one message |
+
+V8 follows no redirects. Override `MAILPIT_URL` and `KEYCLOAK_URL` for a different deployment or local fakes;
+they default to `https://mail.hartland.collite.cz` and `https://keycloak.hartland.collite.cz`. URLs with credentials,
+fragments or queries are refused before any check or vault read. V9 reads search metadata only and prints a
+count; no message body or invitation link is displayed. It proves mail exists for the recipient, not that an
+old invitation token remains usable. V8 does not certify role denial or NetworkPolicy enforcement; those
+remain separate checks. DNS discovery does not replace the stage's actual SMTP-delivery check.
 
 Override defaults with `KUBE_CONTEXT`, `N8N_URL` (default `https://n8n.hartland.collite.cz`) and `N8N_IMAGE`
 (default `docker.n8n.io/n8nio/n8n:2.44.6`). TLS validation stays on; redirects are not followed. Failed

@@ -32,6 +32,7 @@ After Mailpit and SMTP are ready:
 ```sh
 just n8n-seed-users
 just n8n-seed-users --verify
+just n8n-verify --phase 2
 ```
 
 The default Mailpit mode is `proxy`: each search/message read uses
