@@ -19,10 +19,10 @@ Markéta's standing routines on hartland, installed by script and preserved by e
 - **Delivery:** every routine delivers to `telegram` (the presenter's phone) and `web` (Markéta's Iris inbox, a
   `brief` row since iris-bff 0.11.17).
 
-**Time zone.** Hebe evaluates `cron` in **UTC**. The fixtures carry the winter offset (CET = UTC+1), so they fire at
-07:00 and 16:00 Prague time from the last Sunday of October to the last Sunday of March. In summer (CEST) they fire
-an hour later, local time. Shift the hour, and re-run the installer, if the demo needs the exact wall-clock time in
-summer.
+**Time zone.** The `cron` hours are Prague wall-clock time: hartland's Hebe evaluates cron in its `[routines]
+time_zone` (`Europe/Prague`), so a routine keeps its local hour across the DST changes. That needs a Hebe image with
+the setting (and the setting in hartland's values); on an older one cron is UTC and these fire an hour late in winter,
+two in summer. Re-run the installer after the image is live, so the stored schedule is recomputed in the zone.
 
 ## Install, fire, list
 

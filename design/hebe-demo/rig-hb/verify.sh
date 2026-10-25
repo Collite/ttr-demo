@@ -6,12 +6,13 @@
 #   HEBE_VERIFY_PASSWORD=… verify.sh                  # + the console sign-in checks (the personas' demo password)
 #   HEBE_VERIFY_TELEGRAM=ok HEBE_VERIFY_STRANGER=dropped verify.sh   # + the two phone checks, once seen
 #   HEBE_VERIFY_STRANGER=not-performed                # the stranger step is not in the demo (B-4.4): N/A, not open
+#   HEBE_VERIFY_ISOLATION=refused verify.sh           # + the console's isolation, once a direct in-cluster call was refused
 #
 # Exit: 0 every check PASS · 1 any FAIL · 3 no FAIL, but a check is SKIP or MANUAL (T8 needs 0, twice, the second run
 # after `kubectl --context hartland -n kantheon rollout restart deploy/hebe`).
 #
-# Reads only. kubectl only GETs (`get`, and `get --raw` through the API server's service proxy, because port-forward and
-# exec are not used here). The sign-in checks drive the real browser flow through the public edge as marketa and maya
+# Reads only. kubectl only GETs (`get`, and `get --raw` through the API server's service and pod proxies, because
+# port-forward and exec are not used here). The sign-in checks drive the real browser flow through the public edge as marketa and maya
 # (edge_login.py); they write nothing. The durability check keeps one small state file ($HEBE_VERIFY_STATE) so a run
 # after a restart can see that the receipt chain survived.
 set -uo pipefail
@@ -24,6 +25,8 @@ INSTANCE="${INSTANCE:-marketa}"
 BOUND_USER="${BOUND_USER:-marketa}"
 OTHER_USER="${OTHER_USER:-maya}"           # a hartland user who is NOT in console_users
 HOST="${HOST:-hebe.hartland.collite.cz}"
+IRIS_HOST="${IRIS_HOST:-iris.hartland.collite.cz}"
+ROUTINE="${ROUTINE:-monday-brief}"        # the routine whose last scheduled run the `brief` row reads
 IMAGE_REPO="${IMAGE_REPO:-ghcr.io/collite/hebe}"
 REGISTRY="${REGISTRY:-capabilities-mcp:7501}"
 STATE="${HEBE_VERIFY_STATE:-${HOME}/.config/hebe-verify/${INSTANCE}.json}"
@@ -45,6 +48,22 @@ proxy_get() {
   kc get --raw "/api/v1/namespaces/$NS/services/$1/proxy$2" 2>&1 | python3 -I -c 'import sys
 s = sys.stdin.read(); i = s.find("{"); j = s.rfind("}")
 print(s[i:j + 1].replace("\n", " ") if 0 <= i < j else "")'
+}
+# GET through the API server's POD proxy: it answers for a pod that is not Ready, where the service proxy has no
+# endpoint (review-152 R3 — the rig read /ready through the service and went blind exactly when /ready failed).
+pod_proxy_get() {
+  kc get --raw "/api/v1/namespaces/$NS/pods/$1/proxy$2" 2>&1 | python3 -I -c 'import sys
+s = sys.stdin.read(); i = s.find("{"); j = s.rfind("}")
+print(s[i:j + 1].replace("\n", " ") if 0 <= i < j else "")'
+}
+# The label selector of a deployment's JSON on stdin (`k=v,k2=v2`), for `get pods -l`.
+selector_of() { jq_py "','.join(k + '=' + v for k, v in sorted(d['spec']['selector']['matchLabels'].items()))"; }
+# The newest pod of the deployment $SVC (empty when there is none).
+hebe_pod() {
+  local sel
+  sel="$(kc -n "$NS" get deploy "$SVC" -o json 2>/dev/null | selector_of)"
+  [ -n "$sel" ] || return 0
+  kc -n "$NS" get pods -l "$sel" --sort-by=.metadata.creationTimestamp -o jsonpath='{.items[-1:].metadata.name}' 2>/dev/null
 }
 # One field of a JSON document on stdin, by a Python expression over `d` ("" when it fails).
 jq_py() { python3 -I -c "import json,sys
@@ -68,8 +87,12 @@ check_pod() {
 # ── 2. /ready and what it says (the doctor's checks, readable without exec) ───────────────────────────────────────
 READY_JSON=""
 check_ready() {
-  READY_JSON="$(proxy_get "$SVC:$PORT" /ready)"
-  [ -n "$READY_JSON" ] || { fail ready "no JSON from /ready through the service proxy"; return; }
+  local pod
+  pod="$(hebe_pod)"
+  [ -n "$pod" ] || { fail ready "no pod for deployment $NS/$SVC"; return; }
+  # the full /ready (the kubelet probes ?scope=serving), through the pod: it answers while the pod is not Ready
+  READY_JSON="$(pod_proxy_get "$pod:$PORT" /ready)"
+  [ -n "$READY_JSON" ] || { fail ready "no JSON from /ready through the pod proxy ($pod)"; return; }
   if [ "$(jq_py "d['ok']" <<<"$READY_JSON")" = True ]; then
     pass ready "200: $(jq_py "', '.join(c['name'] for c in d['checks'])" <<<"$READY_JSON")"
   else
@@ -182,6 +205,31 @@ check_durability() {
   pass receipts-chain "verifies, $records records${saved:+ (was $saved at the last run)}"
 }
 
+# ── 5b. the brief: the routine's last scheduled run reached the inbox and every channel, once (review-152 R9) ──────
+check_brief() {
+  if [ -z "${HEBE_VERIFY_PASSWORD:-}" ]; then skip brief "needs the console sign-in (HEBE_VERIFY_PASSWORD)"; return; fi
+  local out v detail
+  out="$(python3 -I "$HERE/brief_check.py" "$HOST" "$IRIS_HOST" "$BOUND_USER" "$ROUTINE")"
+  v="$(jq_py "d.get('verdict')" <<<"$out")"; detail="$(jq_py "d.get('detail')" <<<"$out")"
+  case "$v" in
+    PASS) pass brief "$detail" ;;
+    SKIP) skip brief "$detail" ;;
+    *) fail brief "${detail:-no answer from brief_check.py: ${out:0:120}}" ;;
+  esac
+}
+
+# ── 5c. isolation: a caller that reaches the pod around the gateway is refused (manual, review-152 R1) ─────────────
+# verify.sh stays read-only, so this one is the operator's: from a throwaway pod in another namespace, a forged
+# header with no edge token must be refused (Hebe verifies the edge's token itself) or never arrive (the NetworkPolicy).
+check_isolation() {
+  local how="kubectl --context $CONTEXT -n default run iso-probe --rm -i --restart=Never --image=curlimages/curl -- curl -sS -m5 -o /dev/null -w '%{http_code}' -H 'x-forwarded-user: $BOUND_USER' http://$SVC.$NS:$PORT/api/status"
+  case "${HEBE_VERIFY_ISOLATION:-}" in
+    refused) pass isolation "a direct call with a forged header was refused (401, or no connection)" ;;
+    "") manual isolation "run: $how — 401 or a timeout, then HEBE_VERIFY_ISOLATION=refused" ;;
+    *) fail isolation "the operator reported: $HEBE_VERIFY_ISOLATION" ;;
+  esac
+}
+
 # ── 6. the phone (manual, HB-⚑3 / B-4) ────────────────────────────────────────────────────────────────────────────
 check_phone() {
   case "${HEBE_VERIFY_TELEGRAM:-}" in
@@ -211,6 +259,8 @@ check_registry
 check_console_redirect
 check_console_logins
 check_durability
+check_brief
+check_isolation
 check_phone
 echo "$PASS pass · $FAIL fail · $OPEN open$([ "$NA" -gt 0 ] && echo " · $NA n/a")"
 [ "$FAIL" -gt 0 ] && exit 1

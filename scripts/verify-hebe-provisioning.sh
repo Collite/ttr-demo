@@ -11,6 +11,7 @@ set -uo pipefail
 
 CONTEXT="${CONTEXT:-hartland}"
 INSTANCE="${INSTANCE:-marketa}"
+BOUND_USER="${BOUND_USER:-$INSTANCE}"     # [security] bound_user: the user the OBO token must be for
 SECRET="hebe-$INSTANCE"
 SCHEMA="hebe_$INSTANCE"
 EMBED_MODEL="${EMBED_MODEL:-text-embedding-3-small}"   # [llm] embedding_model in clusters/<c>/apps/hebe/values.yaml (olymp#152)
@@ -84,20 +85,31 @@ case "$logs" in
 esac
 printf '%s\n' "$logs" | grep -qi "Successfully applied\|migrat" && ok "Flyway ran" || true
 
-head_ "5. /ready (through the API server's service proxy; no exec)"
-readyjson=$(k get --raw "/api/v1/namespaces/kantheon/services/hebe:8765/proxy/ready" 2>&1)
-readyline=$(printf '%s' "$readyjson" | python3 -I -c 'import json, sys
+head_ "5. /ready (through the API server's pod proxy; no exec) and the OBO identity"
+# The pod proxy answers for a pod that is not Ready, where the service proxy has no endpoint to send to.
+pod=$(k -n kantheon get pods -l app.kubernetes.io/name=hebe --sort-by=.metadata.creationTimestamp \
+  -o jsonpath='{.items[-1:].metadata.name}' 2>/dev/null)
+readyjson=$(k get --raw "/api/v1/namespaces/kantheon/pods/${pod:-none}:8765/proxy/ready" 2>&1)
+readyfield() { printf '%s' "$readyjson" | python3 -I -c 'import json, sys
 s = sys.stdin.read(); i = s.find("{")
 try:
     d = json.loads(s[i:]) if i >= 0 else {}
 except ValueError:
     d = {}
-names = [c.get("name") for c in d.get("checks", [])]
-print(("ok " if d.get("ok") else "failing ") + ", ".join(d.get("failing") or names))' 2>/dev/null)
+'"$1" 2>/dev/null; }
+readyline=$(readyfield 'names = [c.get("name") for c in d.get("checks", [])]
+print(("ok " if d.get("ok") else "failing ") + ", ".join(d.get("failing") or names))')
 case "$readyline" in
   "ok "*)      ok "/ready ok: ${readyline#ok }" ;;
   "failing "*) bad "/ready failing: ${readyline#failing }" ;;
   *)           bad "/ready unreadable: ${readyjson:0:160}" ;;
+esac
+# contracts §9: the OBO token is for the bound user (the identity check's detail carries sub/preferred_username/azp)
+identity=$(readyfield 'print(next((c.get("detail", "") for c in d.get("checks", []) if c.get("name") == "identity"), ""))')
+case "$identity" in
+  *"preferred_username=$BOUND_USER "*) ok "OBO token is for $BOUND_USER (${identity%% preferred_username*})" ;;
+  "") bad "/ready has no identity check (platform axis off, or /ready unreadable)" ;;
+  *)  bad "OBO identity is not $BOUND_USER: ${identity:0:160}" ;;
 esac
 
 head_ "6. gateway key accepted, embeddings served (hebe's own key, from its mounted Secret)"
@@ -122,6 +134,22 @@ if [ "$ready" = "true" ]; then
 else
   printf '  SKIP  gateway check (pod not Ready)\n'
 fi
+
+head_ "7. the registry entry (contracts §9)"
+entry=$(k get --raw "/api/v1/namespaces/kantheon/services/capabilities-mcp:7501/proxy/v1/capabilities/hebe-$INSTANCE" 2>&1 \
+  | python3 -I -c 'import json, sys
+s = sys.stdin.read(); i = s.find("{"); j = s.rfind("}")
+try:
+    d = json.loads(s[i:j + 1]) if 0 <= i < j else {}
+except ValueError:
+    d = {}
+a = (d.get("capability") or {}).get("agent") or {}
+print("registered non_routable" if a.get("nonRoutable") else ("registered ROUTABLE" if a else ""))' 2>/dev/null)
+case "$entry" in
+  "registered non_routable") ok "hebe-$INSTANCE registered in capabilities-mcp, non_routable" ;;
+  "registered ROUTABLE")     bad "hebe-$INSTANCE registered but NOT non_routable — the cascade could delegate to it" ;;
+  *)                         bad "hebe-$INSTANCE is not registered in capabilities-mcp" ;;
+esac
 
 printf '\n'
 [ "$FAILED" = 0 ] && { printf 'ALL GREEN — hebe is provisioned.\n'; exit 0; }
