@@ -40,13 +40,14 @@ async function fixture() {
   execFileSync('git', ['init', '-q', '--bare', origin]);
   const seed = path.join(work, 'seed');
   for (const d of ['model/er', 'generated', 'scripts']) await mkdir(path.join(seed, d), { recursive: true });
-  for (const f of ['justfile', 'toolchain.lock', 'scripts/toolchain-lock.py', 'scripts/regenerate-local.sh', 'scripts/regenerate-push.sh']) {
-    await cp(path.join(root, f), path.join(seed, f));
-  }
+  const scripts = ['toolchain-lock.py', 'regenerate-local.sh', 'regenerate-push.sh', 'cn-model-snapshot.mjs'].map((s) => `scripts/${s}`);
+  for (const f of ['justfile', 'toolchain.lock', ...scripts]) await cp(path.join(root, f), path.join(seed, f));
   const model0 = 'model er\npackage hartland\n';
   await writeFile(path.join(seed, 'model/er/one.ttrm'), model0);
   await writeFile(path.join(seed, 'generated/resolved-packages.json'), built(model0));
   await writeFile(path.join(seed, 'generated/lexicon.tar.zst'), built(model0));
+  // build-lexicon also packs model/ (the real script, no toolchain): seed it current, as the lexicon is.
+  execFileSync('node', [path.join(seed, 'scripts/cn-model-snapshot.mjs')], { stdio: 'ignore' });
   execFileSync('git', ['init', '-q', seed]);
   git(seed, ...ID, 'add', '.');
   git(seed, ...ID, 'commit', '-q', '-m', 'base');
@@ -98,7 +99,7 @@ test('P1 — the branch moved during the build: regenerated on the new head and 
     const model = `${f.show(moved, 'model/er/one.ttrm')}\n`;
     assert.equal(`${f.show(head, 'generated/lexicon.tar.zst')}\n`, built(model), 'built from the NEW head\'s model');
     assert.deepEqual(f.git(f.origin, 'diff', '--name-only', moved, head).split('\n').sort(),
-      ['generated/lexicon.tar.zst', 'generated/resolved-packages.json']);
+      ['generated/lexicon.tar.zst', 'generated/model.tar.zst', 'generated/resolved-packages.json']);
   } finally {
     await f.done();
   }

@@ -7,9 +7,16 @@
 # `data`. That is what makes the ~1 MiB ConfigMap cap the real limit: 5,762 bytes of archive is
 # ~7.7 KB encoded, ~136x under it. `lexicon/README.md` records where that trade flips.
 #
-# ⚑ Deliberately scoped to the ONE file. `resolved-packages.json` also lives in this directory and
+# ⚑ Deliberately scoped to the two archives. `resolved-packages.json` also lives in this directory and
 # is a build artifact of a different consumer (the TS Modeler CLI); it is not deployed, and naming
 # it here would put it in a ConfigMap nobody mounts.
+#
+# `model.tar.zst` (CN-P6 S6.2, scripts/cn-model-snapshot.mjs) — model/ as a snapshot archive, the model the
+# resolver's cn doors serve (`RESOLVER_CONCEPT_MODEL_PATH` in olymp's hartland resolver values). The doors serve it
+# only when its content id is the lexicon's `modelSnapshotHash`, so the two ride ONE ConfigMap: a single update swaps
+# both files, and the pin never sees one without the other. The other readers name their file and ignore it.
+# Measured 2026-10-25: 18,304 + 56,517 bytes of archive ≈ 100 KB base64 — under the ConfigMap cap ~10x, and under the
+# 256 KB annotation cap the client-side apply's last-applied copy is held to ~2.5x (olymp's app is not server-side).
 #
 # The ArgoCD source pins the same branch veles serves the model from (METADATA_GIT_BRANCH in
 # olymp's hartland veles values) — the archive carries `resolvedFrom.modelSnapshotId`, so lexicon
@@ -21,6 +28,7 @@ configMapGenerator:
   - name: hartland-lexicon
     files:
       - lexicon.tar.zst
+      - model.tar.zst
 generatorOptions:
   # Stable name — the charts reference `hartland-lexicon` by a fixed `lexicon.configMapName`,
   # exactly as the golem chart references `<shem>-shem`.

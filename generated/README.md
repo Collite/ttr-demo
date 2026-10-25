@@ -15,7 +15,14 @@ Committed despite being compressed binary (~8 KB): the drift gate needs somethin
 against, and the reviewable part — the archive id and the per-class entry counts — is printed by
 the build and recorded in `lexicon/README.md`. See that file for the full reasoning.
 
-`kustomization.yaml` — renders `lexicon.tar.zst` (and only it) into the `hartland-lexicon`
+`model.tar.zst` — `model/` as a snapshot archive (`snapshot.json` + `docs/<path>`, ttr-snapshot's
+format), the model the resolver's cn doors serve (CN-P6 S6.2). Written by `scripts/cn-model-snapshot.mjs`,
+which `just build-lexicon` runs after the lexicon: the doors serve it only when its content id equals the
+lexicon's `modelSnapshotHash`, so the two are built and shipped together. Freshness is judged on content, not
+bytes (another zstd build packs other bytes; the reader does not care), so a rebuild leaves a current archive
+untouched; `just check-lexicon` fails when it is stale or the lexicon pins another model.
+
+`kustomization.yaml` — renders `lexicon.tar.zst` and `model.tar.zst` (and only them) into the `hartland-lexicon`
 ConfigMap that the cluster's readers mount (RV-P3.3). olymp's `lexicon` Application applies this
 directory at the same ref veles serves the model from. Binary ⇒ kustomize emits `binaryData`;
 measured 7,856 B → 10,626 B base64 → 11,325 B of manifest, 1.08% of the ~1 MiB ConfigMap cap.

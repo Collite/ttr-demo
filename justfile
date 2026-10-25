@@ -52,14 +52,20 @@ check-model cli="node ../tatrman/packages/migrate/dist/cli.js":
 # The archive IS committed to generated/, beside resolved-packages.json — same precedent,
 # and `check-lexicon` is only a gate if there is something committed to check. Reasoning and
 # the size measurement: lexicon/README.md.
+#
+# Then generated/model.tar.zst — model/ as a snapshot archive, the model the resolver's cn doors serve (CN-P6 S6.2,
+# scripts/cn-model-snapshot.mjs). The doors serve it only when its content id is this archive's `modelSnapshotHash`,
+# so one recipe writes both.
 build-lexicon cli="../tatrman/packages/kotlin/ttr-lexicon-cli/build/install/ttr-lexicon/bin/ttr-lexicon":
     {{cli}} build "$(pwd)" --out generated/lexicon.tar.zst --verbose
+    node scripts/cn-model-snapshot.mjs
 
 # Drift check: recompile in memory and compare the archive id against generated/. Exits 3
 # when stale or absent, mirroring `check-model`. Only meaningful where the archive exists
 # (a fresh clone has none) — CI runs `build-lexicon` first.
 check-lexicon cli="../tatrman/packages/kotlin/ttr-lexicon-cli/build/install/ttr-lexicon/bin/ttr-lexicon":
     {{cli}} build "$(pwd)" --check --out generated/lexicon.tar.zst
+    node scripts/cn-model-snapshot.mjs --check
 
 # ── the conceptual model (CN-P6 S6.1) ─────────────────────────────────────────
 # `ttr cn hygiene` (ttr-concept, Kotlin) over model/ PLUS the automation package: the parametric phases read its

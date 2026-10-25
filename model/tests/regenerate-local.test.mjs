@@ -49,10 +49,14 @@ before(async () => {
   await mkdir(path.join(checkout, 'model/er'), { recursive: true });
   await mkdir(path.join(checkout, 'generated'), { recursive: true });
   await mkdir(path.join(checkout, 'scripts'), { recursive: true });
-  for (const f of ['justfile', 'toolchain.lock', 'scripts/toolchain-lock.py']) await cp(path.join(root, f), path.join(checkout, f));
+  for (const f of ['justfile', 'toolchain.lock', 'scripts/toolchain-lock.py', 'scripts/cn-model-snapshot.mjs']) {
+    await cp(path.join(root, f), path.join(checkout, f));
+  }
   await writeFile(path.join(checkout, 'model/er/one.ttrm'), 'model er\npackage hartland\n');
   await writeFile(path.join(checkout, 'generated/resolved-packages.json'), 'v0');
   await writeFile(path.join(checkout, 'generated/lexicon.tar.zst'), 'v0');
+  // build-lexicon also packs model/ (scripts/cn-model-snapshot.mjs, the real script: it needs no toolchain).
+  await writeFile(path.join(checkout, 'generated/model.tar.zst'), 'v0');
   await writeFile(path.join(work, 'stub'), STUB);
   await chmod(path.join(work, 'stub'), 0o755);
   execFileSync('git', ['init', '-q', checkout]);
@@ -69,6 +73,7 @@ test('R1 — a stale generated/ is rebuilt and left in the tree: exit 10, only g
   assert.equal(r.status, 10, r.stderr + r.stdout);
   assert.deepEqual(git('status', '--porcelain').split('\n').filter(Boolean).sort(), [
     ' M generated/lexicon.tar.zst',
+    ' M generated/model.tar.zst',
     ' M generated/resolved-packages.json',
   ]);
   assert.equal(await readFile(path.join(checkout, 'generated/lexicon.tar.zst'), 'utf-8'), 'v1');
