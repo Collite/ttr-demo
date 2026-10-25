@@ -17,8 +17,8 @@ Five named cases use actual committed Hartland bundles, the Server loader/verifi
 PartRunner/staging and ApplyPlanner. Only Query result tables are faked. They cover six-bundle
 approval coverage in an arbitrary checkout path, all required H3 writer fields/exact bigint ID,
 full H5 both routes/eleven UTC boundary and edge instants, pinned Open context, replayed actions
-and rows (except written_at), idempotent completion and empty routes. The fifth scope includes
-a separate assertion that full H3 still refuses its nested purchasing action/duration;
+and rows (except written_at), idempotent completion and empty routes. A separate case asserts
+that full H3 still refuses its nested purchasing action/duration;
 a writer projection is not full H3 approval support.
 
 JUnit XML is in the Server checkout's `services/automation/build/test-results/test/` and retained
