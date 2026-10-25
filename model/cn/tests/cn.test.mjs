@@ -34,7 +34,10 @@ const defs = (pred) => [...project.asts]
   .filter(([uri]) => uri.startsWith('file://'))
   .flatMap(([uri, ast]) => (ast.definitions ?? []).filter((d) => pred(d, ast)).map((def) => ({ def, uri, ast })));
 const cnDefs = defs((_, ast) => ast.modelDirective?.modelCode === 'cn');
-const named = (stereotype) => cnDefs.filter(({ def }) => def.stereotype === stereotype || def.kind === stereotype).map(({ def }) => def.name).sort();
+// A def the cn candidate store promoted carries `sources:` (the promoter writes it; no authored def does) — CN-P6 S6.2 T6.
+const sourcesOf = ({ def }) => (def.properties ?? []).find((p) => p.key === 'sources');
+const authored = cnDefs.filter((d) => !sourcesOf(d));
+const named = (stereotype) => authored.filter(({ def }) => def.stereotype === stereotype || def.kind === stereotype).map(({ def }) => def.name).sort();
 
 // The S6.1 list (T2, T4) on the estate's names. `Inventory`, `WarehouseOutage`, `PriceList` and `CustomerPrice` are the
 // events the definitions read (DC-9, DC-2); `Party` was dropped (Q16-5).
@@ -53,13 +56,21 @@ test('C1 — the package parses clean: model/cn, its binding file and the two ne
   for (const f of files) assert.deepEqual(project.parseErrorsByFile.get(f), [], `${f} parses with no error`);
 });
 
-test('C2 — the concepts are the S6.1 list, every one of them defined once', () => {
+test('C2 — the authored concepts are the S6.1 list, every concept defined once', () => {
   assert.deepEqual(named('kind'), KINDS);
   assert.deepEqual(named('role'), ROLES);
   assert.deepEqual(named('event'), EVENTS);
   assert.deepEqual(named('phase'), PHASES);
   const all = cnDefs.map(({ def }) => def.name);
   assert.deepEqual(all.filter((n, i) => all.indexOf(n) !== i), [], 'one cn name space');
+});
+
+test('C2b — a promoted concept names where it came from: doc://, recipe:// or question:// (cn contracts §6)', () => {
+  for (const d of cnDefs.filter(sourcesOf)) {
+    const refs = (sourcesOf(d).value?.items ?? []).map((v) => v.value);
+    assert.ok(refs.length > 0, `${d.def.name}: sources: lists at least one ref`);
+    for (const r of refs) assert.match(String(r), /^(doc|recipe|question):\/\/\S+$/, `${d.def.name}: ${r}`);
+  }
 });
 
 test('C3 — A-H-5: every md-grounded concept reaches er through the derived hop; no md2er is authored', () => {

@@ -113,3 +113,10 @@ def event ReturnLine {
     involves: [ReturnRequest as request, Customer, Item],
     qualities: [return_quantity, return_unit_price, return_reason, requested_resolution, line_state, way]
 }
+
+def phase LargeOrder {
+    of: Order,
+    label: { cs: "Velká objednávka", en: "Large order" },
+    sources: ["recipe://hartland.automation/release_order#s1"],
+    definition: """order_value > 1000000"""
+}
