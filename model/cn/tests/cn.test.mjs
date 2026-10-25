@@ -148,6 +148,20 @@ test('C9 — channel_returns is the cousin of sales: three branches over the ret
   assert.deepEqual(lexicon.entries.filter((e) => e.targetRef?.startsWith('er.entity.channel_returns')).map((e) => e.termNormalized), [], 'no word names it');
 });
 
+// S6.2 T2: the cn er renderer correlates an event's participant through its relation's `join:` pairs, and an fk-only
+// relation has none — `on_hand` (ranging over Inventory) was refused on the live door until the inventory pair stated it.
+test('C10 — every relation a cn participant path names states its join pairs beside the fk', async () => {
+  const binding = await readFile(path.join(hartlandRoot, 'model/binding/cn.ttrm'), 'utf-8');
+  const relations = await readFile(path.join(hartlandRoot, 'model/er/relations.ttrm'), 'utf-8');
+  const used = [...new Set([...binding.matchAll(/er\.relation\.(\w+)/g)].map((m) => m[1]))];
+  assert.ok(used.length > 20, `${used.length} participant relations`);
+  const fkOnly = used.filter((r) => {
+    const def = relations.match(new RegExp(`^def relation ${r}\\s*\\{.*\\}\\s*$`, 'm'))?.[0];
+    return !def || !/\bjoin:\s*\[/.test(def);
+  });
+  assert.deepEqual(fkOnly, [], 'participant relations with no join pairs (or not one-line defs in relations.ttrm)');
+});
+
 // ---- T6 · the words ----
 
 const terms = (lang) => defs((d, ast) => d.kind === 'term' && ast.modelDirective?.modelCode === 'lexicon' && ast.modelDirective?.locale === lang && String(d.target?.path ?? '').startsWith('cn.'));
