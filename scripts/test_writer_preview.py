@@ -32,7 +32,7 @@ class PreviewRuntimeTest(unittest.TestCase):
                 (app / 'toolchain.lock').write_text(
                     '[ttr-core]\nref="grammar/v0.18.3"\n[ttrp]\nref="grammar/v0.18.11"\n'
                     '[veles]\nimage="0.11.15"\nttr-metadata="0.18.3"\nstrict-load=true\n'
-                    f'[automation-preview]\nserver-ref="{ref}"\n',
+                    f'[automation-preview]\nserver-ref="{ref}"\ngrammar="0.18.12"\n',
                 )
 
             def run():
@@ -55,7 +55,7 @@ class PreviewRuntimeTest(unittest.TestCase):
             self.assertEqual(accepted.returncode, 0, accepted.stderr)
             args = (server / 'invoked').read_text().splitlines()
             self.assertEqual(args[0], str(server.resolve()))
-            self.assertIn('-Dhartland.grammar=0.18.11', args)
+            self.assertIn('-Dhartland.grammar=0.18.12', args)
             self.assertIn(f'-Dhartland.root={app.resolve()}', args)
             self.assertIn('org.tatrman.automation.runner.HartlandWriterPreviewSpec', args)
             self.assertFalse(any('frontend' in arg for arg in args))

@@ -71,6 +71,7 @@ test('T1.3 — scripts/toolchain-lock.py (the reader the workflows use) prints t
     `STRICT_LOAD=${lock.veles['strict-load']}`,
     `TTRP_VERSION=${lock.ttrp.version ?? lock.ttrp.ref.replace("grammar/v", "")}`,
     `AU_PREVIEW_SERVER_REF=${lock["automation-preview"]["server-ref"]}`,
+    `AU_PREVIEW_GRAMMAR=${lock["automation-preview"].grammar}`,
   ]);
 });
 
@@ -144,4 +145,14 @@ test('preview runtime pin refuses malformed or missing commits before exporting 
   const run = await readerOn(lockText.replace(/^server-ref = .*$/m, ''));
   assert.notEqual(run.status, 0);
   assert.equal(run.stdout, '');
+});
+
+test('preview runtime grammar refuses missing or unsafe versions without exporting environment', async () => {
+  for (const value of [null, 'master', '0.18', '0.18.12-au.1', '$(true)']) {
+    const text = lockText.replace(/^grammar = .*$/m, value === null ? '' : `grammar = "${value}"`);
+    const run = await readerOn(text);
+    assert.notEqual(run.status, 0);
+    assert.equal(run.stdout, '');
+    assert.match(run.stderr, /\[automation-preview\]\.grammar/);
+  }
 });

@@ -32,11 +32,11 @@ def main() -> int:
         verify_server(server, expected)
     except (KeyError, ValueError, subprocess.CalledProcessError) as error:
         parser.exit(1, f'writer-preview: {error}\n')
-    print(f'Hartland preview: Server {expected}; published grammar {pins["TTRP_VERSION"]}', flush=True)
+    print(f'Hartland preview: Server {expected}; published runtime grammar {pins["AU_PREVIEW_GRAMMAR"]}', flush=True)
     return subprocess.call([
         str(server / 'gradlew'),
         '-I', str(ROOT / 'automation/tests/writer-preview/init.gradle'),
-        f'-Dhartland.root={ROOT}', f'-Dhartland.grammar={pins["TTRP_VERSION"]}',
+        f'-Dhartland.root={ROOT}', f'-Dhartland.grammar={pins["AU_PREVIEW_GRAMMAR"]}',
         ':services:automation:hartlandVerifyPublishedCatalog',
         ':services:automation:test', '--tests', 'org.tatrman.automation.runner.HartlandWriterPreviewSpec',
         ':services:automation:ktlintCheck', '--console=plain', '--max-workers=2',

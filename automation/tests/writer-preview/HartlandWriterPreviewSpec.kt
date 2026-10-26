@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.tatrman.automation.runner
 
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
-import org.tatrman.automation.api.AutomationException
-import org.tatrman.automation.api.ErrorCode
+import kotlinx.serialization.json.put
 import org.tatrman.automation.apply.ApplyPlanner
 import org.tatrman.automation.apply.ApplyRow
 import org.tatrman.automation.apply.PreviewMetadata
@@ -37,7 +36,7 @@ class HartlandWriterPreviewSpec :
         val root = Path.of(System.getProperty("hartland.root"))
         val bundle =
             BundleLoader(AuthorMap(emptyMap())).load(
-                Checkout(root, "master", "0123456789abcdef", "bora", "bora@post.cz"),
+                Checkout(root, "master", "0123456789abcdef", "fixture", "fixture@example.invalid"),
                 BundleKind.SERVED,
             )
         val run = UUID.fromString("01234567-89ab-cdef-0123-456789abcdef")
@@ -157,10 +156,28 @@ class HartlandWriterPreviewSpec :
             bundle.recipes.values.forEach { it.coverage.refusal shouldBe null }
         }
 
-        "full H3 currently refuses its deferred nested purchasing action" {
-            shouldThrow<AutomationException> {
-                preview("reorder_proposals", Instant.parse("2026-04-01T00:00:00Z"))
-            }.code shouldBe ErrorCode.PREVIEW_UNSUPPORTED
+        "full H3 previews the proposal and deferred buyer ask with a working-day duration" {
+            val plan = preview("reorder_proposals", Instant.parse("2026-04-01T00:00:00Z"))
+            val projection = preview("reorder_proposals", Instant.parse("2026-04-01T00:00:00Z"), writerOnly = true)
+            plan.rows shouldBe projection.rows
+            plan.actions.map { it.action } shouldBe listOf("propose", "ask")
+            plan.actions.first() shouldBe projection.actions.single()
+            val ask = plan.actions.single { it.action == "ask" }
+            ask.arguments["action"] shouldBe
+                buildJsonObject {
+                    put("action", "start")
+                    put("arguments", buildJsonObject { put("process", "purchasing") })
+                    put("deferred", true)
+                }
+            ask.arguments["due"] shouldBe
+                buildJsonObject {
+                    put("amount", 2)
+                    put("unit", "working_days")
+                }
+            ask.arguments["group_by"] shouldBe JsonPrimitive(3)
+            ask.would shouldBe "would ask role.buyer to approve start { process: \"purchasing\" } for 3"
+            ask.batchRows shouldBe emptyList()
+            plan.rows.none { it.entity == "automation.task" || it.entity == "automation.obligation" } shouldBe true
         }
 
         "H3 writer projection produces an exact bigint key and every required proposal attribute" {
@@ -217,15 +234,11 @@ class HartlandWriterPreviewSpec :
             }
         }
 
-        "empty H3 writer and H5 selections produce no actions" {
+        "empty full H3 and H5 selections produce no actions or rows" {
             for (name in listOf("reorder_proposals", "winback")) {
-                preview(
-                    name,
-                    Instant.parse("2026-04-01T00:00:00Z"),
-                    empty = true,
-                    writerOnly = name == "reorder_proposals",
-                ).actions shouldBe
-                    emptyList()
+                val plan = preview(name, Instant.parse("2026-04-01T00:00:00Z"), empty = true)
+                plan.actions shouldBe emptyList()
+                plan.rows shouldBe emptyList()
             }
         }
     })

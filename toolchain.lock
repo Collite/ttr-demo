@@ -20,4 +20,5 @@ strict-load = true
 
 # Test runtime only: real loader/verifier/preview, independent of the deployed image.
 [automation-preview]
-server-ref = "5a09aebd4afd270a6056263bc4e06bb9c3f809d6" # accepted Server#312 merge
+server-ref = "88c12a8beac5e4d9c43e9bc64f3e61135fc4897b" # accepted Server#320 merge
+grammar = "0.18.12" # published Server runtime; recipe authoring stays on 0.18.11

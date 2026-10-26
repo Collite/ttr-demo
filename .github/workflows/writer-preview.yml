@@ -44,7 +44,7 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Governed H3 writer and full H5 preview
+      - name: Governed full H3 and H5 preview
         working-directory: bundle
         env:
           GITHUB_ACTOR: ${{ github.actor }}

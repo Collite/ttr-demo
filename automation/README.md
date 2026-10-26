@@ -53,7 +53,7 @@ changed explanation fails; rebuild the document and commit all derived artifacts
 
 The recipe toolchain uses released **grammar/v0.18.11**, containing the accepted document/multi-recipe,
 writer-default evidence and concat fixes. The separate `[automation-preview].server-ref` pins accepted
-Server#312 merge **5a09aebd** for the preview CI job; it does not change a deployed image.
+Server#320 merge **88c12a8b** for the preview CI job; it does not change a deployed image.
 The model/reader pins remain independent. H-1's `release_order.md` is authoritative; its canonical
 recipe preserves P2's code apart from whitespace/comments. The `.ttrd` records the actual source filename and
 spans. The existing `document: "releasing-a-placed-order.md"` identifier is retained for compatibility with the
@@ -113,16 +113,17 @@ Winback keeps documented workarounds for [#252](https://github.com/Collite/ttr-c
 
 The `writer-preview` workflow and `just writer-preview /path/to/clean/server` run the Hartland-owned spec
 against the exact accepted Server checkout named in the lock. The runner refuses a wrong commit or local
-changes, verifies **services/automation runtimeClasspath** against published 0.18.11 (translator/proto
-0.12.11), and disables Maven Local. Query result tables are mocked; real bundle loading, approval coverage,
+changes, verifies **services/automation runtimeClasspath** against the separate preview grammar pin
+0.18.12 (translator/proto 0.12.11), and disables Maven Local. Query result tables are mocked; real bundle loading, approval coverage,
 bindings, staging, native preview and writer assignment checks run. The CI checkout is deliberately named
 `bundle` to guard package resolution independently of its path. JUnit XML retains all five named cases.
 
 The gate covers H3's complete **writer projection**, including negative retry-stable bigint ID, run/state,
-all required attributes and two-place stored demand. This is a deliberate projection, not full H3 approval
-preview: the original recipe still refuses its nested purchasing action/working-day duration, which has a
-separate expected-refusal case. Physical key conflicts must be refused transactionally by P2; derived IDs
-are not globally collision-free. Full H5 tests both routes, UTC quarter/year boundaries, Prague/US edge
+all required attributes and two-place stored demand. Full H3 must produce that same proposal plus the buyer
+ask with deferred `start`/`purchasing`, `2 working_days`, warehouse grouping and would-text; replay is stable
+and empty full H3 emits no actions or rows. These values are descriptive preview evidence. Callee resolution,
+task creation/dispatch and calendar deadlines remain separate P3 work. Physical key conflicts must be refused
+transactionally by P2; derived IDs are not globally collision-free. Full H5 tests both routes, UTC quarter/year boundaries, Prague/US edge
 instants, pinned Open time, replayed rows and empty selection. H5's mailing key uses the UTC quarter of
 as-of in both worlds; D-129's rolling 92-day exclusion stays independent of that label. No connector or
 physical write runs in this gate. Actual deployed US/CZ runs, ops support and P3 exit remain pending.

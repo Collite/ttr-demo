@@ -7,7 +7,8 @@ action, the justfile's lock-reading recipes and scripts/regenerate-local.sh shar
 All or nothing, and every value shape-checked (review-121 R4): the lines are appended to $GITHUB_ENV and `export`ed
 by shell callers, so a value that is not a plain tag or version — a `$(…)`, a space, an escaped newline — is refused
 with the key named, never printed. An empty TTR_CORE_REF in particular would check out ttr-core's default branch:
-the unpinned toolchain the lock exists to prevent. Exports TTRP_REF and TTRP_VERSION too; when present, automation-preview exports a strictly pinned AU_PREVIEW_SERVER_REF. The deliberate widening
+the unpinned toolchain the lock exists to prevent. Exports TTRP_REF and TTRP_VERSION too; when present,
+automation-preview exports AU_PREVIEW_SERVER_REF and AU_PREVIEW_GRAMMAR. The deliberate widening
 for recipe commit pins accepts -<word>.<n> only for [ttrp].version; release tag versions must match their tag.
 """
 import re
@@ -65,7 +66,11 @@ def main(argv: list[str]) -> None:
         ref = preview.get("server-ref") if isinstance(preview, dict) else None
         if not isinstance(ref, str) or not re.fullmatch(r"[0-9a-f]{40}", ref):
             sys.exit(f"{path}: [automation-preview].server-ref must be a 40-hex commit")
+        grammar = preview.get("grammar")
+        if not isinstance(grammar, str) or not re.fullmatch(VERSION, grammar):
+            sys.exit(f"{path}: [automation-preview].grammar must be X.Y.Z")
         lines.append(f"AU_PREVIEW_SERVER_REF={ref}")
+        lines.append(f"AU_PREVIEW_GRAMMAR={grammar}")
     print("\n".join(lines))
 
 
