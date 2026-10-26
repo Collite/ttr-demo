@@ -130,3 +130,6 @@ def term winback_mail_cs {
     for: er.entity.winback_mail
     forms: ["win-back e-maily", "win-back e-mailů"]
 }
+
+// sources: recipe://hartland.automation/release_order#s1
+def term velka_objednavka { for: cn.LargeOrder, forms: ["velká objednávka", "velké objednávky", "velkých objednávek", "velkou objednávku", "velkým objednávkám", "velké objednávce", "velkými objednávkami"] }

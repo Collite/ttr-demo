@@ -9,7 +9,7 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from urllib.parse import parse_qs, quote, urlencode, urlsplit
+from urllib.parse import quote, urlencode, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 
@@ -251,15 +251,35 @@ def checks(catalog, env):
         return "glossary tag points to an existing projected term"
 
     def url():
-        parsed = urlsplit(catalog.store_sales().get("extension", {}).get("ttrUrl", ""))
-        require(
-            parsed.scheme == "https"
-            and parsed.hostname == "studio.hartland.collite.cz"
-            and parsed.path == "/viewer"
-            and parse_qs(parsed.query).get("qname") == ["db.dbo.store_sales"],
-            "invalid Studio viewer URL",
-        )
-        return "Studio /viewer with the table qname; browser round trip remains manual"
+        def model_url(asset, model):
+            parsed = urlsplit(asset.get("extension", {}).get("ttrUrl", ""))
+            require(
+                parsed.scheme == "https"
+                and parsed.netloc == "studio.hartland.collite.cz"
+                and parsed.path == f"/m/hartland/s/{model}"
+                and not parsed.query
+                and not parsed.fragment,
+                f"invalid Studio {model} model URL",
+            )
+
+        model_url(catalog.store_sales(), "db")
+        for term in catalog.terms():
+            qname = term.get("extension", {}).get("ttrQname", "")
+            if term.get("entityStatus") == "Deprecated" or term.get("status") == "Deprecated":
+                continue
+            if qname.startswith(("er.", "md.")):
+                model_url(term, qname.split(".", 1)[0])
+            elif qname.startswith("cn."):
+                require(
+                    "ttrUrl" not in term.get("extension", {}),
+                    "CN demo stays in OM; obsolete Studio URL must be removed",
+                )
+        for metric in catalog.listing("metrics", "extension,tags"):
+            if model_owned_metric(metric) and not any(
+                t.get("tagFQN") == "Tatrman.Deprecated" for t in metric.get("tags") or []
+            ):
+                model_url(metric, "md")
+        return "Studio model routes db/er/md; CN stays in OM; browser check remains manual"
 
     return [
         ("version", version),
