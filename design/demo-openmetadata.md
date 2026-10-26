@@ -3,10 +3,13 @@
 The catalog receives the physical inventory from Postgres and a projection of the
 authored model from Veles. Model changes remain reviewed repository changes.
 
-Prerequisites: the paired XM-P3 PRs are merged; Veles0.11.17 and connector0.1.4 are
+Prerequisites: the paired XM-P3 PRs are merged; Veles 0.11.17 and connector 0.1.4 are
 published; the bot Secret is synced; the scan/projection Job template exists in
 `openmetadata`. Olymp's Stage boundary ends before deployment. The commands below
 are the subsequent operator/demo sequence, not evidence that it has run.
+Merge order: fixed server PR 323, publish and verify connector 0.1.4, then merge
+Olymp PR 192 and this rig's PR 143 together. This rig requires the native properties
+populated by the subsequent 0.1.4 projection; do not run it as 0.1.3 acceptance.
 
 The current model contains **36 physical tables/views, 40 ER entities, six measures
 and 83 CN concepts**. `dbo` is a model handle; the physical Postgres schema is
@@ -40,7 +43,7 @@ kubectl --context hartland -n openmetadata logs pod/<succeeded-pod> -c project
 
 Use fresh Job names when repeating. Inspect both initContainer logs on a failed
 scan and the main summary on success. Warnings mean incomplete projection;
-connector0.1.4 preserves the previous state so a later run retries skipped assets.
+connector 0.1.4 preserves the previous state so a later run retries skipped assets.
 Do not manufacture source snapshots or delete the primary state claim.
 
 ## Show the beats (about 15 minutes)
@@ -63,7 +66,7 @@ Do not manufacture source snapshots or delete the primary state claim.
    **Open dimensional model in Studio** on MD terms/metrics. The original `ttrUrl`
    string stays available to integrations. These links open the whole model. Find Product/item or
    store_sales manually; do not claim the originating object is selected.
-   Studio is deployed. After connector0.1.4 is published/pinned and a real projection
+   Studio is deployed. After connector 0.1.4 is published/pinned and a real projection
    updates OM, verify a click from OM in the browser, including login. The rig
    checks native hyperlink registration/value, model URLs and absence of CN links; it cannot prove
    browser navigation. `/viewer?qname=…` is unsupported and must not be used.

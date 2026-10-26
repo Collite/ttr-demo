@@ -47,17 +47,22 @@ def catalog():
         "metricExpression": {"code": "sum"},
     }
 
-    for item in (table, term, metric):
+    for item, label in ((table, "database"), (term, "E-R"), (metric, "dimensional")):
         item["extension"]["ttrStudioLink"] = {
-            "url": item["extension"]["ttrUrl"], "displayText": "Open model in Studio"
+            "url": item["extension"]["ttrUrl"], "displayText": f"Open {label} model in Studio"
         }
 
     class FakeCatalog:
         def get(self, path):
             if path == "metadata/types/name/hyperlink-cp":
                 return {"id": "native-hyperlink-type"}
+            if path == "metadata/types/name/string":
+                return {"id": "string-type"}
             if path.startswith("metadata/types/"):
-                return {"customProperties": [{"name": "ttrStudioLink", "propertyType": {"id": "native-hyperlink-type"}}]}
+                return {"customProperties": [
+                    {"name": "ttrStudioLink", "propertyType": {"id": "native-hyperlink-type"}},
+                    {"name": "ttrUrl", "propertyType": {"id": "string-type"}},
+                ]}
             return {"version": "2.0.6"}
 
         def tables(self):
@@ -182,6 +187,52 @@ class RigTests(unittest.TestCase):
         cat.terms()[0]["extension"] = {"ttrQname": "cn.kind.Product", "ttrStudioLink": {"url": "https://studio.hartland.collite.cz/m/hartland/s/cnc", "displayText": "Unsupported"}}
         with self.assertRaises(ValueError):
             dict(rig.checks(cat, self.env))["Studio URL"]()
+
+    def test_labels_match_the_exact_presenter_steps(self):
+        for label in ("Old", "Open database model in Studio"):
+            cat = catalog()
+            cat.terms()[0]["extension"]["ttrStudioLink"]["displayText"] = label
+            with self.assertRaises(ValueError):
+                dict(rig.checks(cat, self.env))["Studio URL"]()
+
+    def test_original_url_registry_remains_string_on_all_link_entity_types(self):
+        for kind in ("table", "glossaryTerm", "metric"):
+            cat = catalog()
+            original = cat.get
+
+            def get(path):
+                result = original(path)
+                if path == f"metadata/types/name/{kind}?fields=customProperties":
+                    result["customProperties"][1]["propertyType"]["id"] = "native-hyperlink-type"
+                return result
+
+            cat.get = get
+            with self.assertRaises(ValueError):
+                dict(rig.checks(cat, self.env))["Studio URL"]()
+
+    def test_foreign_glossary_links_are_outside_hartland_acceptance(self):
+        cat = catalog()
+        foreign = {"glossary": {"name": "foreign Entities"},
+                   "extension": {"ttrQname": "er.entity.foreign",
+                                 "ttrUrl": "https://studio.example/viewer?qname=old"}}
+        terms = cat.terms() + [foreign]
+        cat.terms = lambda: terms
+        self.assertTrue(dict(rig.checks(cat, self.env))["Studio URL"]())
+
+    def test_deprecated_hartland_terms_have_neither_link(self):
+        for glossary in ("hartland Entities", "hartland Concepts"):
+            for status in ("entityStatus", "status"):
+                for key in ("ttrUrl", "ttrStudioLink"):
+                    cat = catalog()
+                    term = cat.terms()[0]
+                    term["glossary"]["name"] = glossary
+                    term[status] = "Deprecated"
+                    term["extension"] = {"ttrQname": "er.entity.retired", key: "stale"}
+                    check = dict(rig.checks(cat, self.env))["Studio URL"]
+                    with self.assertRaises(ValueError):
+                        check()
+                    del term["extension"][key]
+                    self.assertTrue(check())
 
     def test_noop_requires_two_successful_nonoverlapping_jobs_same_snapshot(self):
         pair = jobs()
