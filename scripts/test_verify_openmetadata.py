@@ -47,8 +47,17 @@ def catalog():
         "metricExpression": {"code": "sum"},
     }
 
+    for item in (table, term, metric):
+        item["extension"]["ttrStudioLink"] = {
+            "url": item["extension"]["ttrUrl"], "displayText": "Open model in Studio"
+        }
+
     class FakeCatalog:
         def get(self, path):
+            if path == "metadata/types/name/hyperlink-cp":
+                return {"id": "native-hyperlink-type"}
+            if path.startswith("metadata/types/"):
+                return {"customProperties": [{"name": "ttrStudioLink", "propertyType": {"id": "native-hyperlink-type"}}]}
             return {"version": "2.0.6"}
 
         def tables(self):
@@ -152,6 +161,28 @@ class RigTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             check()
 
+    def test_native_hyperlink_missing_malformed_or_wrong_target_is_rejected(self):
+        for value in (None, "https://studio.hartland.collite.cz/m/hartland/s/db",
+                      {"url": "https://foreign.example", "displayText": "Open model"},
+                      {"url": "https://studio.hartland.collite.cz/m/hartland/s/db", "displayText": ""}):
+            cat = catalog()
+            cat.store_sales()["extension"]["ttrStudioLink"] = value
+            with self.assertRaises(ValueError):
+                dict(rig.checks(cat, self.env))["Studio URL"]()
+
+    def test_native_hyperlink_registry_type_is_required(self):
+        cat = catalog()
+        original = cat.get
+        cat.get = lambda path: {"customProperties": [{"name": "ttrStudioLink", "propertyType": {"id": "string-type"}}]} if "?fields=customProperties" in path else original(path)
+        with self.assertRaises(ValueError):
+            dict(rig.checks(cat, self.env))["Studio URL"]()
+
+    def test_cn_terms_must_not_have_native_studio_links(self):
+        cat = catalog()
+        cat.terms()[0]["extension"] = {"ttrQname": "cn.kind.Product", "ttrStudioLink": {"url": "https://studio.hartland.collite.cz/m/hartland/s/cnc", "displayText": "Unsupported"}}
+        with self.assertRaises(ValueError):
+            dict(rig.checks(cat, self.env))["Studio URL"]()
+
     def test_noop_requires_two_successful_nonoverlapping_jobs_same_snapshot(self):
         pair = jobs()
         output = [json.dumps({"items": pair}), pod_response("one"), json.dumps({**ZERO, "created": 7}), pod_response("two"), json.dumps(ZERO)]
@@ -233,7 +264,8 @@ class RigTests(unittest.TestCase):
 
     def test_main_counts_failures_without_printing_secrets(self):
         cat = catalog()
-        cat.get = lambda path: {"version": "wrong"}
+        original = cat.get
+        cat.get = lambda path: {"version": "wrong"} if path == "system/version" else original(path)
         output = io.StringIO()
         with (
             patch.dict(os.environ, self.env, clear=True),

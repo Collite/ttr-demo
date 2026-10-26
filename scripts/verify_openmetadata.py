@@ -251,6 +251,13 @@ def checks(catalog, env):
         return "glossary tag points to an existing projected term"
 
     def url():
+        native = catalog.get("metadata/types/name/hyperlink-cp")
+        for kind in ("table", "glossaryTerm", "metric"):
+            registry = catalog.get(f"metadata/types/name/{kind}?fields=customProperties")
+            prop = next((p for p in registry.get("customProperties", []) if p["name"] == "ttrStudioLink"), None)
+            require(prop is not None and prop["propertyType"]["id"] == native["id"],
+                    f"{kind}.ttrStudioLink must use native hyperlink-cp")
+
         def model_url(asset, model):
             parsed = urlsplit(asset.get("extension", {}).get("ttrUrl", ""))
             require(
@@ -261,6 +268,10 @@ def checks(catalog, env):
                 and not parsed.fragment,
                 f"invalid Studio {model} model URL",
             )
+            link = asset.get("extension", {}).get("ttrStudioLink")
+            require(isinstance(link, dict) and link.get("url") == parsed.geturl()
+                    and isinstance(link.get("displayText"), str) and link["displayText"].strip(),
+                    f"missing or invalid native Studio {model} hyperlink")
 
         model_url(catalog.store_sales(), "db")
         for term in catalog.terms():
@@ -271,7 +282,7 @@ def checks(catalog, env):
                 model_url(term, qname.split(".", 1)[0])
             elif qname.startswith("cn."):
                 require(
-                    "ttrUrl" not in term.get("extension", {}),
+                    not ({"ttrUrl", "ttrStudioLink"} & term.get("extension", {}).keys()),
                     "CN demo stays in OM; obsolete Studio URL must be removed",
                 )
         for metric in catalog.listing("metrics", "extension,tags"):
@@ -279,7 +290,7 @@ def checks(catalog, env):
                 t.get("tagFQN") == "Tatrman.Deprecated" for t in metric.get("tags") or []
             ):
                 model_url(metric, "md")
-        return "Studio model routes db/er/md; CN stays in OM; browser check remains manual"
+        return "native Studio hyperlinks db/er/md; CN stays in OM; browser click remains manual"
 
     return [
         ("version", version),

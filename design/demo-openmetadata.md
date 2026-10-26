@@ -3,7 +3,7 @@
 The catalog receives the physical inventory from Postgres and a projection of the
 authored model from Veles. Model changes remain reviewed repository changes.
 
-Prerequisites: the paired XM-P3 PRs are merged; Veles0.11.17 and connector0.1.3 are
+Prerequisites: the paired XM-P3 PRs are merged; Veles0.11.17 and connector0.1.4 are
 published; the bot Secret is synced; the scan/projection Job template exists in
 `openmetadata`. Olymp's Stage boundary ends before deployment. The commands below
 are the subsequent operator/demo sequence, not evidence that it has run.
@@ -40,7 +40,7 @@ kubectl --context hartland -n openmetadata logs pod/<succeeded-pod> -c project
 
 Use fresh Job names when repeating. Inspect both initContainer logs on a failed
 scan and the main summary on success. Warnings mean incomplete projection;
-connector0.1.3 preserves the previous state so a later run retries skipped assets.
+connector0.1.4 preserves the previous state so a later run retries skipped assets.
 Do not manufacture source snapshots or delete the primary state claim.
 
 ## Show the beats (about 15 minutes)
@@ -55,14 +55,17 @@ Do not manufacture source snapshots or delete the primary state claim.
    pulled from one projection.” The actual catalog counts belong in XM's tracker
    after execution; authored counts above are the expected inventory.
 3. **Deep link — whole-model demo scope.** Bora approved model-level navigation
-   for the interim demo (2026-10-25). Open the table's `ttrUrl`:
+   for the interim demo (2026-10-25). In Custom Properties, click the table's
+   `ttrStudioLink` label **Open database model in Studio**:
    `https://studio.hartland.collite.cz/m/hartland/s/db`. From an E-R term, open
    `https://studio.hartland.collite.cz/m/hartland/s/er`; metrics and MD terms open
-   `/m/hartland/s/md`. These links open the whole model. Find Product/item or
+   `/m/hartland/s/md`. Use **Open E-R model in Studio** on ER terms and
+   **Open dimensional model in Studio** on MD terms/metrics. The original `ttrUrl`
+   string stays available to integrations. These links open the whole model. Find Product/item or
    store_sales manually; do not claim the originating object is selected.
-   Studio is deployed. After connector0.1.3 is published/pinned and a real projection
+   Studio is deployed. After connector0.1.4 is published/pinned and a real projection
    updates OM, verify a click from OM in the browser, including login. The rig
-   checks the model URL contract and absence of obsolete CN links; it cannot prove
+   checks native hyperlink registration/value, model URLs and absence of CN links; it cannot prove
    browser navigation. `/viewer?qname=…` is unsupported and must not be used.
 4. **Concepts in OM.** Open `hartland Concepts`: Product (`cn.kind.Item`), Customer
    (`cn.role.Customer`) and Customer with overdue invoices (`cn.phase.DebtorCustomer`).
