@@ -219,7 +219,7 @@ class RigTests(unittest.TestCase):
         cat.terms = lambda: terms
         self.assertTrue(dict(rig.checks(cat, self.env))["Studio URL"]())
 
-    def test_deprecated_hartland_terms_have_neither_link(self):
+    def test_deprecated_hartland_terms_keep_legacy_links(self):
         for glossary in ("hartland Entities", "hartland Concepts"):
             for status in ("entityStatus", "status"):
                 for key in ("ttrUrl", "ttrStudioLink"):
@@ -229,10 +229,24 @@ class RigTests(unittest.TestCase):
                     term[status] = "Deprecated"
                     term["extension"] = {"ttrQname": "er.entity.retired", key: "stale"}
                     check = dict(rig.checks(cat, self.env))["Studio URL"]
-                    with self.assertRaises(ValueError):
-                        check()
-                    del term["extension"][key]
                     self.assertTrue(check())
+
+    def test_nondeprecated_orphan_uses_exact_er_model_link(self):
+        cat = catalog()
+        orphan = {"glossary": {"name": "hartland Entities"},
+                  "entityStatus": "Approved",
+                  "extension": {"ttrQname": "er.entity.orphan",
+                                "ttrUrl": "https://studio.hartland.collite.cz/m/hartland/s/er",
+                                "ttrStudioLink": {
+                                    "url": "https://studio.hartland.collite.cz/m/hartland/s/er",
+                                    "displayText": "Open E-R model in Studio"}}}
+        terms = cat.terms() + [orphan]
+        cat.terms = lambda: terms
+        check = dict(rig.checks(cat, self.env))["Studio URL"]
+        self.assertTrue(check())
+        orphan["extension"]["ttrStudioLink"]["displayText"] = "Open database model in Studio"
+        with self.assertRaises(ValueError):
+            check()
 
     def test_noop_requires_two_successful_nonoverlapping_jobs_same_snapshot(self):
         pair = jobs()

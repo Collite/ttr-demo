@@ -286,8 +286,6 @@ def checks(catalog, env):
                 continue
             qname = term.get("extension", {}).get("ttrQname", "")
             if term.get("entityStatus") == "Deprecated" or term.get("status") == "Deprecated":
-                require(not ({"ttrUrl", "ttrStudioLink"} & term.get("extension", {}).keys()),
-                        "deprecated Hartland term must have neither Studio link")
                 continue
             if qname.startswith(("er.", "md.")):
                 model_url(term, qname.split(".", 1)[0])
