@@ -39,6 +39,7 @@ def catalog():
     }
     term = {
         "fullyQualifiedName": TERM,
+        "entityStatus": "Approved",
         "glossary": {"name": "hartland Entities"},
         "extension": {"ttrQname": "er.entity.store_sales", "ttrUrl": "https://studio.hartland.collite.cz/m/hartland/s/er"},
     }
@@ -226,10 +227,22 @@ class RigTests(unittest.TestCase):
                     cat = catalog()
                     term = cat.terms()[0]
                     term["glossary"]["name"] = glossary
+                    term.pop("entityStatus", None)
                     term[status] = "Deprecated"
                     term["extension"] = {"ttrQname": "er.entity.retired", key: "stale"}
                     check = dict(rig.checks(cat, self.env))["Studio URL"]
                     self.assertTrue(check())
+
+    def test_noneligible_orphan_keeps_links(self):
+        for field in ("entityStatus", "status"):
+            for status in ("Rejected", "In Review", "Archived", "Unprocessed", None):
+                with self.subTest(field=field, status=status):
+                    cat = catalog()
+                    orphan = {"glossary": {"name": "hartland Entities"}, field: status,
+                              "extension": {"ttrQname": "er.entity.orphan", "ttrUrl": "stale"}}
+                    terms = cat.terms() + [orphan]
+                    cat.terms = lambda: terms
+                    self.assertTrue(dict(rig.checks(cat, self.env))["Studio URL"]())
 
     def test_nondeprecated_orphan_uses_exact_er_model_link(self):
         cat = catalog()

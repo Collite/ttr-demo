@@ -285,7 +285,7 @@ def checks(catalog, env):
             if (term.get("glossary") or {}).get("name") not in {"hartland Entities", "hartland Concepts"}:
                 continue
             qname = term.get("extension", {}).get("ttrQname", "")
-            if term.get("entityStatus") == "Deprecated" or term.get("status") == "Deprecated":
+            if (term.get("entityStatus") or term.get("status")) not in {"Approved", "Draft"}:
                 continue
             if qname.startswith(("er.", "md.")):
                 model_url(term, qname.split(".", 1)[0])
