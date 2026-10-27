@@ -24,7 +24,7 @@ untouched; `just check-lexicon` fails when it is stale or the lexicon pins anoth
 
 `kustomization.yaml` — renders `lexicon.tar.zst` and `model.tar.zst` (and only them) into the `hartland-lexicon`
 ConfigMap that the cluster's readers mount (RV-P3.3). olymp's `lexicon` Application applies this
-directory at the same ref veles serves the model from. Binary ⇒ kustomize emits `binaryData`;
+directory at the same ref metadata serves the model from. Binary ⇒ kustomize emits `binaryData`;
 measured 7,856 B → 10,626 B base64 → 11,325 B of manifest, 1.08% of the ~1 MiB ConfigMap cap.
 Verify locally with `kustomize build generated/`.
 

@@ -21,7 +21,7 @@ cd "$checkout"
 
 pins="$(python3 scripts/toolchain-lock.py)"   # its own line, so a failed read stops the script
 while IFS='=' read -r key value; do export "$key=$value"; done <<<"$pins"
-echo "toolchain.lock: ttr-core $TTR_CORE_REF · veles ttr-metadata $VELES_TTR_METADATA"
+echo "toolchain.lock: ttr-core $TTR_CORE_REF · metadata ttr-metadata $VELES_TTR_METADATA"
 
 if [ -n "${RESOLVE_CLI:-}" ] && [ -n "${LEXICON_CLI:-}" ]; then
   echo "regenerate: CLI overrides set — the toolchain's ref is not checked"

@@ -154,37 +154,41 @@ build-loader:
     ./gradlew --no-configuration-cache -Pversion="$VELES_TTR_METADATA" :packages:kotlin:ttr-metadata-cli:installDist
 
 # The bump-time check of toolchain.lock's [veles] pins (review-121 R6) — for whoever moves them, not CI (olymp is
-# private). The image olymp deploys on hartland (its origin/master) must be [veles].image, and ttr-server's
-# gradle/libs.versions.toml at veles/v<image> must name [veles].ttr-metadata. Exit 1 on a mismatch, both values
+# private). The metadata image olymp deploys on hartland (origin/master by default) must be [veles].image, and ttr-server's
+# gradle/libs.versions.toml at server-libs/v<image> must name [veles].ttr-metadata. Exit 1 on a mismatch, both values
 # printed. Needs an authenticated `gh`; the olymp half is skipped when there is no olymp checkout.
 #
 #     just check-veles-pin                # olymp beside this checkout
 #     just check-veles-pin ~/Dev/olymp    # elsewhere — positional, not `olymp=…`
-check-veles-pin olymp="../olymp":
+#     just check-veles-pin <olymp-checkout> HEAD  # proposed committed wave, before merge
+# The public recipe and [veles]/VELES_* lock schema retain their names; they are toolchain pins, not server envs.
+check-veles-pin olymp="../olymp" revision="origin/master":
     #!/usr/bin/env bash
     set -euo pipefail
     pins="$(python3 scripts/toolchain-lock.py)"
     while IFS='=' read -r key value; do export "$key=$value"; done <<<"$pins"
     rc=0
-    values=clusters/hartland/apps/veles/values.yaml
+    values=clusters/hartland/apps/metadata/values.yaml
     if git -C "{{olymp}}" rev-parse --git-dir >/dev/null 2>&1; then
-      git -C "{{olymp}}" fetch -q origin 2>/dev/null || echo "check-veles-pin: could not fetch {{olymp}} — reading its last-fetched origin/master" >&2
-      deployed="$(git -C "{{olymp}}" show "origin/master:$values" \
+      if [ "{{revision}}" = origin/master ]; then
+        git -C "{{olymp}}" fetch -q origin 2>/dev/null || echo "check-veles-pin: could not fetch {{olymp}} — reading its last-fetched origin/master" >&2
+      fi
+      deployed="$(git -C "{{olymp}}" show "{{revision}}:$values" \
         | awk '/^image:/{f=1;next} f&&/^[^ #]/{f=0} f&&/^ +tag:/{gsub(/["\047]/,"",$2); print $2; exit}')"
       if [ "$deployed" = "$VELES_IMAGE" ]; then
-        echo "ok   olymp origin/master $values: veles $deployed = [veles].image"
+        echo "ok   olymp {{revision}} $values: metadata $deployed = [veles].image"
       else
-        echo "FAIL olymp origin/master $values: veles '$deployed' ≠ [veles].image '$VELES_IMAGE'" >&2; rc=1
+        echo "FAIL olymp {{revision}} $values: metadata '$deployed' ≠ [veles].image '$VELES_IMAGE'" >&2; rc=1
       fi
     else
       echo "skipped: no olymp checkout at {{olymp}}"
     fi
-    toml="$(gh api "repos/Collite/ttr-server/contents/gradle/libs.versions.toml?ref=veles/v$VELES_IMAGE" --jq .content | base64 -d)"
+    toml="$(gh api "repos/Collite/ttr-server/contents/gradle/libs.versions.toml?ref=server-libs/v$VELES_IMAGE" --jq .content | base64 -d)"
     built="$(printf '%s\n' "$toml" | sed -n 's/^tatrman-ttr-metadata *= *"\([^"]*\)".*/\1/p' | head -1)"
     if [ "$built" = "$VELES_TTR_METADATA" ]; then
-      echo "ok   ttr-server veles/v$VELES_IMAGE: tatrman-ttr-metadata $built = [veles].ttr-metadata"
+      echo "ok   ttr-server server-libs/v$VELES_IMAGE: tatrman-ttr-metadata $built = [veles].ttr-metadata"
     else
-      echo "FAIL ttr-server veles/v$VELES_IMAGE: tatrman-ttr-metadata '$built' ≠ [veles].ttr-metadata '$VELES_TTR_METADATA'" >&2; rc=1
+      echo "FAIL ttr-server server-libs/v$VELES_IMAGE: tatrman-ttr-metadata '$built' ≠ [veles].ttr-metadata '$VELES_TTR_METADATA'" >&2; rc=1
     fi
     exit $rc
 

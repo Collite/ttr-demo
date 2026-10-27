@@ -8,7 +8,7 @@
 // a closed package, plus the entities listed outside one. An agent with no areas is the whole model (V-44). Tags are
 // refused: no agent here scopes by them, and their closure is not implemented here.
 //
-// `.ttrg`, not VL's `.yaml`: Veles serves only `.ttrg` files as layouts (ttr-metadata Source.kt, V-37). Written with
+// `.ttrg`, not VL's `.yaml`: Metadata serves only `.ttrg` files as layouts (ttr-metadata Source.kt, V-37). Written with
 // the toolchain's own `writeTtrg`, so the files are in VL's canonical form; the graph is named after the file. The
 // folder is this script's: a layout for an agent that no longer exists is deleted.
 //
