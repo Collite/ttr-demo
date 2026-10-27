@@ -280,20 +280,29 @@ def checks(catalog, env):
                     }[model],
                     f"missing or invalid native Studio {model} hyperlink")
 
+        def eligible(term):
+            status = term.get("entityStatus") or term.get("status")
+            require(bool(status), "cannot decide link eligibility: Hartland term has no status")
+            return status in {"Approved", "Draft"}
+
         model_url(catalog.store_sales(), "db")
+        checked_terms = 0
         for term in catalog.terms():
             if (term.get("glossary") or {}).get("name") not in {"hartland Entities", "hartland Concepts"}:
                 continue
             qname = term.get("extension", {}).get("ttrQname", "")
-            if (term.get("entityStatus") or term.get("status")) not in {"Approved", "Draft"}:
+            if not eligible(term):
                 continue
             if qname.startswith(("er.", "md.")):
                 model_url(term, qname.split(".", 1)[0])
+                checked_terms += 1
             elif qname.startswith("cn."):
                 require(
                     not ({"ttrUrl", "ttrStudioLink"} & term.get("extension", {}).keys()),
                     "CN demo stays in OM; obsolete Studio URL must be removed",
                 )
+        minimum = int(env.get("OM_MIN_ENTITIES", "40"))
+        require(checked_terms >= minimum, f"{checked_terms} checked ER/MD term links < {minimum}")
         for metric in catalog.listing("metrics", "extension,tags"):
             if model_owned_metric(metric) and not any(
                 t.get("tagFQN") == "Tatrman.Deprecated" for t in metric.get("tags") or []

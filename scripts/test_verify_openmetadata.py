@@ -7,6 +7,7 @@ import os
 import sys
 import unittest
 from contextlib import redirect_stdout
+from copy import deepcopy
 from pathlib import Path
 from unittest.mock import patch
 
@@ -160,6 +161,8 @@ class RigTests(unittest.TestCase):
     def test_cn_terms_must_not_advertise_a_studio_renderer(self):
         cat = catalog()
         term = cat.terms()[0]
+        terms = cat.terms() + [deepcopy(term)]
+        cat.terms = lambda: terms
         term["extension"] = {"ttrQname": "cn.kind.Product"}
         check = dict(rig.checks(cat, self.env))["Studio URL"]
         self.assertTrue(check())
@@ -225,7 +228,9 @@ class RigTests(unittest.TestCase):
             for status in ("entityStatus", "status"):
                 for key in ("ttrUrl", "ttrStudioLink"):
                     cat = catalog()
-                    term = cat.terms()[0]
+                    term = deepcopy(cat.terms()[0])
+                    terms = cat.terms() + [term]
+                    cat.terms = lambda: terms
                     term["glossary"]["name"] = glossary
                     term.pop("entityStatus", None)
                     term[status] = "Deprecated"
@@ -235,7 +240,7 @@ class RigTests(unittest.TestCase):
 
     def test_noneligible_orphan_keeps_links(self):
         for field in ("entityStatus", "status"):
-            for status in ("Rejected", "In Review", "Archived", "Unprocessed", None):
+            for status in ("Rejected", "In Review", "Archived", "Unprocessed"):
                 with self.subTest(field=field, status=status):
                     cat = catalog()
                     orphan = {"glossary": {"name": "hartland Entities"}, field: status,
@@ -274,6 +279,25 @@ class RigTests(unittest.TestCase):
                     term["extension"]["ttrStudioLink"]["displayText"] = "Old"
                     with self.assertRaises(ValueError):
                         check()
+
+    def test_missing_status_fails_eligibility(self):
+        for status in ({}, {"entityStatus": None}, {"status": ""}):
+            cat = catalog()
+            term = cat.terms()[0]
+            term.pop("entityStatus")
+            term.update(status)
+            with self.assertRaisesRegex(ValueError, "cannot decide link eligibility"):
+                dict(rig.checks(cat, self.env))["Studio URL"]()
+
+    def test_ineligible_terms_cannot_satisfy_link_floor(self):
+        cat = catalog()
+        cat.terms()[0]["entityStatus"] = "Rejected"
+        with self.assertRaisesRegex(ValueError, "0 checked ER/MD term links < 1"):
+            dict(rig.checks(cat, self.env))["Studio URL"]()
+
+    def test_term_link_floor_uses_configured_minimum(self):
+        with self.assertRaisesRegex(ValueError, "1 checked ER/MD term links < 40"):
+            dict(rig.checks(catalog(), {}))["Studio URL"]()
 
     def test_noop_requires_two_successful_nonoverlapping_jobs_same_snapshot(self):
         pair = jobs()
@@ -321,7 +345,6 @@ class RigTests(unittest.TestCase):
             ("Entities glossary", 40, lambda x: x.update(entityStatus="Deprecated")),
             ("metrics", 6, lambda x: x.update(tags=[{"tagFQN": "Tatrman.Deprecated"}])),
         ):
-            from copy import deepcopy
             cat = catalog()
             original = cat.terms()[0] if count == 40 else cat.listing()[0]
             items = [deepcopy(original) for _ in range(count)]
