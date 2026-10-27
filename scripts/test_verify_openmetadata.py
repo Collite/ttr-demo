@@ -213,7 +213,7 @@ class RigTests(unittest.TestCase):
 
     def test_foreign_glossary_links_are_outside_hartland_acceptance(self):
         cat = catalog()
-        foreign = {"glossary": {"name": "foreign Entities"},
+        foreign = {"glossary": {"name": "foreign Entities"}, "entityStatus": "Approved",
                    "extension": {"ttrQname": "er.entity.foreign",
                                  "ttrUrl": "https://studio.example/viewer?qname=old"}}
         terms = cat.terms() + [foreign]
@@ -260,6 +260,20 @@ class RigTests(unittest.TestCase):
         orphan["extension"]["ttrStudioLink"]["displayText"] = "Open database model in Studio"
         with self.assertRaises(ValueError):
             check()
+
+    def test_approved_and_draft_links_checked_with_both_status_fields(self):
+        for field in ("entityStatus", "status"):
+            for status in ("Approved", "Draft"):
+                with self.subTest(field=field, status=status):
+                    cat = catalog()
+                    term = cat.terms()[0]
+                    term.pop("entityStatus", None)
+                    term[field] = status
+                    check = dict(rig.checks(cat, self.env))["Studio URL"]
+                    self.assertTrue(check())
+                    term["extension"]["ttrStudioLink"]["displayText"] = "Old"
+                    with self.assertRaises(ValueError):
+                        check()
 
     def test_noop_requires_two_successful_nonoverlapping_jobs_same_snapshot(self):
         pair = jobs()
