@@ -19,7 +19,7 @@
 # 256 KB annotation cap the client-side apply's last-applied copy is held to ~2.5x (olymp's app is not server-side).
 #
 # The ArgoCD source pins the same branch veles serves the model from (METADATA_GIT_BRANCH in
-# olymp's hartland veles values) — the archive carries `resolvedFrom.modelSnapshotId`, so lexicon
+# olymp's hartland metadata values) — the archive carries `resolvedFrom.modelSnapshotId`, so lexicon
 # and model must move together or the artifact describes a model the estate is not serving.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization

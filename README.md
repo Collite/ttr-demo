@@ -34,8 +34,8 @@ request, the **`model-gate`** check green on it, one approving review, the merge
 (`.github/workflows/model-gate.yml`) checks out the ttr-core toolchain beside this repo at the ref
 **`toolchain.lock`** pins — `[ttr-core].ref`, the toolchain the serving images were built against —
 and runs every suite, the two drift checks (`generated/` matches the model) and, once that toolchain
-ships the CLI, the Kotlin loader's strict load at the version veles serves with
-(`[veles].ttr-metadata`). Moving a pin is a change like any other: made in the PR that rolls the
+ships the CLI, the Kotlin loader's strict load at the version metadata serves with
+(`[veles].ttr-metadata`). The model service is metadata — formerly `veles` (2026-10); the lock table keeps its established name. Moving a pin is a change like any other: made in the PR that rolls the
 readers, with `generated/` rebuilt by the new toolchain in the same commit.
 
 The second workflow, **`regenerate`**, rebuilds `generated/` on a change's branch and pushes it as
