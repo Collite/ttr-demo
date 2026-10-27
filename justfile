@@ -160,7 +160,7 @@ build-loader:
 #
 #     just check-veles-pin                # olymp beside this checkout
 #     just check-veles-pin ~/Dev/olymp    # elsewhere — positional, not `olymp=…`
-#     just check-veles-pin ../olymp-mr-wave1 HEAD  # proposed committed wave, before merge
+#     just check-veles-pin <olymp-checkout> HEAD  # proposed committed wave, before merge
 # The public recipe and [veles]/VELES_* lock schema retain their names; they are toolchain pins, not server envs.
 check-veles-pin olymp="../olymp" revision="origin/master":
     #!/usr/bin/env bash

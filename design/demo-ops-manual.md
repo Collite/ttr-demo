@@ -11,6 +11,9 @@
 > (plan-cluster H5 / tasks-p3-s5) and may not exist yet on your checkout — §7 gives the manual
 > equivalents to use until they land.
 
+The live model service is metadata — formerly `veles` (2026-06-13 → 2026-10), originally
+`ai-platform/infra/metadata`. Historical narrative below retains the earlier name.
+
 ---
 
 ## 1. The cluster at a glance
@@ -308,7 +311,7 @@ that means deleting session rows via each store's API/DB (iris-bff `iris` DB, py
 ### 7.2 After a model or query change (the two-refresh rule — quirks §1.2)
 
 1. Push to `Collite/ttr-demo` (branch `demo-p2`).
-2. veles re-fetch: `VelesService/Refresh {force:true}` (or wait out the poll); confirm
+2. metadata re-fetch: `MetadataService/Refresh {force:true}` (or wait out the poll); confirm
    `ListQueries` → PARSED.
 3. **`kubectl --context hartland -n kantheon rollout restart deployment/golem-hartland`**
    (and `golem-hartland-finance`) — golems cache the ModelBundle at boot; skipping this is
@@ -422,7 +425,7 @@ vocabulary. `just world-smoke <w> hartland --no-restart` re-checks a flip that a
 | Browser hangs at blank page entering Iris | Keycloak host cert not accepted in *that* profile — §2 |
 | Login loops / redirect error | scheme mismatch — you entered via `http://`; use `https://` (§2) |
 | Discover shows wrong card count | check realm roles in Keycloak admin (§3.3); then capabilities-mcp registration (quirks: Shem assembles but never registers) |
-| Pod stuck in Init (`wait-for-veles`) | cross-ns FQDN gate — check `velesGate.url` (golems `_values.yaml`) |
+| Pod stuck in Init (`wait-for-metadata`) | cross-ns FQDN gate — check `metadataGate.url` (golems `_values.yaml`) |
 | Pod ImagePullBackOff after a local build | arm64-only image — rebuild with `CI=true` multi-arch (quirks §5.1) |
 | ExternalSecret app perpetually OutOfSync | known ESO-defaulting noise — already normalized in ArgoCD values; hard-refresh |
 
