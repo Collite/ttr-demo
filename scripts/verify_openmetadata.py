@@ -251,6 +251,16 @@ def checks(catalog, env):
         return "glossary tag points to an existing projected term"
 
     def url():
+        native = catalog.get("metadata/types/name/hyperlink-cp")
+        string = catalog.get("metadata/types/name/string")
+        for kind in ("table", "glossaryTerm", "metric"):
+            registry = catalog.get(f"metadata/types/name/{kind}?fields=customProperties")
+            properties = {p["name"]: p for p in registry.get("customProperties", [])}
+            for name, field_type in (("ttrStudioLink", native), ("ttrUrl", string)):
+                prop = properties.get(name)
+                require(prop is not None and prop["propertyType"]["id"] == field_type["id"],
+                        f"{kind}.{name} has the wrong custom-property type")
+
         def model_url(asset, model):
             parsed = urlsplit(asset.get("extension", {}).get("ttrUrl", ""))
             require(
@@ -261,25 +271,44 @@ def checks(catalog, env):
                 and not parsed.fragment,
                 f"invalid Studio {model} model URL",
             )
+            link = asset.get("extension", {}).get("ttrStudioLink")
+            require(isinstance(link, dict) and link.get("url") == parsed.geturl()
+                    and link.get("displayText") == {
+                        "db": "Open database model in Studio",
+                        "er": "Open E-R model in Studio",
+                        "md": "Open dimensional model in Studio",
+                    }[model],
+                    f"missing or invalid native Studio {model} hyperlink")
+
+        def eligible(term):
+            status = term.get("entityStatus") or term.get("status")
+            require(bool(status), "cannot decide link eligibility: Hartland term has no status")
+            return status in {"Approved", "Draft"}
 
         model_url(catalog.store_sales(), "db")
+        checked_terms = 0
         for term in catalog.terms():
+            if (term.get("glossary") or {}).get("name") not in {"hartland Entities", "hartland Concepts"}:
+                continue
             qname = term.get("extension", {}).get("ttrQname", "")
-            if term.get("entityStatus") == "Deprecated" or term.get("status") == "Deprecated":
+            if not eligible(term):
                 continue
             if qname.startswith(("er.", "md.")):
                 model_url(term, qname.split(".", 1)[0])
+                checked_terms += 1
             elif qname.startswith("cn."):
                 require(
-                    "ttrUrl" not in term.get("extension", {}),
+                    not ({"ttrUrl", "ttrStudioLink"} & term.get("extension", {}).keys()),
                     "CN demo stays in OM; obsolete Studio URL must be removed",
                 )
+        minimum = int(env.get("OM_MIN_ENTITIES", "40"))
+        require(checked_terms >= minimum, f"{checked_terms} checked ER/MD term links < {minimum}")
         for metric in catalog.listing("metrics", "extension,tags"):
             if model_owned_metric(metric) and not any(
                 t.get("tagFQN") == "Tatrman.Deprecated" for t in metric.get("tags") or []
             ):
                 model_url(metric, "md")
-        return "Studio model routes db/er/md; CN stays in OM; browser check remains manual"
+        return "native Studio hyperlinks db/er/md; CN stays in OM; browser click remains manual"
 
     return [
         ("version", version),
