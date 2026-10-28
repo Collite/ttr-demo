@@ -136,7 +136,8 @@ test('W5 — the Kotlin loader: veles\'s version, stamped, run exactly when the 
 
 test('G1 — triggered by the BFF\'s dispatch and by a pull request touching what generated/ is built from', () => {
   assert.ok('workflow_dispatch' in regen.on);
-  for (const p of ['model/**', 'automation/**', 'modeler.toml', 'lexicon/**', 'toolchain.lock']) {
+  // agents/: an agent's scope is what the Golem's layouts (model/layouts/agent/, built beside generated/) list.
+  for (const p of ['model/**', 'automation/**', 'agents/**', 'modeler.toml', 'lexicon/**', 'toolchain.lock']) {
     assert.ok(regen.on.pull_request.paths.includes(p), p);
   }
   assert.deepEqual(regen.permissions, { contents: 'read' }, 'GITHUB_TOKEN stays read-only: the push is the App\'s');
@@ -182,9 +183,10 @@ test('G5 — the push: scripts/regenerate-push.sh, only when stale with a token;
   assert.match(push.run, /BOT_EMAIL="\$\{bot_id\}\+\$\{APP_SLUG\}\[bot\]@users\.noreply\.github\.com"/);
   assert.ok(!/\$\{\{/.test(push.run), 'no ${{ }} inside run: — a branch name reaches the shell only through env');
   assert.ok(!regenSteps.some((s) => /git (push|commit|add)/.test(s.run ?? '')), 'the workflow commits through the script only');
-  // The script commits generated/ alone, with the agreed message.
+  // The script commits generated/ and the Golem's layouts alone (regenerate-local.sh's two outputs), with the agreed message.
   const script = await readText('scripts/regenerate-push.sh');
-  assert.deepEqual([...script.matchAll(/git add ([^\n]+)/g)].map((m) => m[1].trim()), ['-- generated']);
+  assert.match(script, /^built=\(generated model\/layouts\/agent\)/m);
+  assert.deepEqual([...script.matchAll(/git add ([^\n]+)/g)].map((m) => m[1].trim()), ['-A -- "${present[@]}"']);
   assert.match(script, /commit -q -m "regenerate: generated\/ for \$\(git rev-parse --short HEAD\)"/);
   // Stale and no token: a dispatch exits non-zero, a pull request warns.
   const skips = regenSteps.filter((s) => /steps\.app-token\.outputs\.token == ''/.test(s.if ?? ''));

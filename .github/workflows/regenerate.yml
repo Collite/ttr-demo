@@ -10,7 +10,8 @@
 # opening (review-121 R13).
 #
 # The loop guard is idempotence: the bot's push re-runs this workflow (pull_request: synchronize), which finds
-# generated/ current and pushes nothing. The job never commits model/** — the script refuses a build that changed it.
+# generated/ current and pushes nothing. The job never commits authored model/** — the script refuses a build that
+# changed it; its one folder there is the Golem's layouts, model/layouts/agent/, which nobody authors (just gen-layouts).
 #
 # What the BFF reads: the dispatched run's conclusion (it finds the run as the first `workflow_dispatch` run on the
 # branch created after its dispatch — Actions returns no run id) and the branch head after it. `success` = generated/
@@ -29,8 +30,9 @@ on:
     # Everything generated/ is built from: model/ and automation/ ([ttrp].extra-model-roots — resolved-packages.json
     # lists the automation packages; review-121 R10), the lexicon area, the manifest, and toolchain.lock (a pin moved
     # without generated/ rebuilt is exactly what this job repairs). model/tests/workflows.test.mjs G7 keeps it complete.
-    # Ops authoring stubs feed TTR-P and resolve-packages through extra-model-roots.
-    paths: ['model/**', 'automation/**', 'authoring-stubs/**', 'modeler.toml', 'lexicon/**', 'toolchain.lock']
+    # Ops authoring stubs feed TTR-P and resolve-packages through extra-model-roots. agents/ scopes the Golem's
+    # layouts, model/layouts/agent/ — the one folder under model/ the job rebuilds (scripts/regenerate-local.sh).
+    paths: ['model/**', 'automation/**', 'authoring-stubs/**', 'agents/**', 'modeler.toml', 'lexicon/**', 'toolchain.lock']
 
 permissions:
   contents: read

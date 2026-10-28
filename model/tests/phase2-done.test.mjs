@@ -36,7 +36,7 @@ test('DONE 3 — ResolveArea("hartland") is green', () => {
   assert.ok(resolved.resolvedEntities.length > 0);
 });
 
-test('DONE 4 — ListQueries returns 23: the 17 q.hartland.* with params + the six logical queries', () => {
+test('DONE 4 — ListQueries returns the 17 q.hartland.* with params + the logical queries (six authored by hand)', () => {
   // veles lists every `def query` it loaded (ListQueries; GetModel's namedQueries), a logical query too.
   // A `def query` in a `model er` file is a logical query (LQ): not a q.hartland.* pattern, and agents are
   // meant to ask over the entity stacked on it (LQ-6) — model/er/customer_revenue.ttrm says why its name
@@ -49,8 +49,10 @@ test('DONE 4 — ListQueries returns 23: the 17 q.hartland.* with params + the s
     }
   }
   assert.equal(db.length, 17, 'the D-2 roster + LR\'s channel_revenue_monthly_yoy (2026-10-10) + warehouse_stockout_week_count (2026-10-11)');
-  assert.deepEqual(logical.sort(), ['placed_order_q', 'returns_monthly_by_category', 'returns_union', 'revenue_per_customer', 'sales_union', 'stockouts_monthly_dc'], 'the logical queries (LQ 2026-10-18, BI-4 2026-10-22, md/hop HP-H 2026-10-24, CN-P6 S6.1 2026-10-24)');
-  assert.equal(db.length + logical.length, 23);
+  // At least these six: a Studio change adds logical queries (SO beat E's returns_review and its report's
+  // report_returns_review_q) and cannot edit a test.
+  const authored = ['placed_order_q', 'returns_monthly_by_category', 'returns_union', 'revenue_per_customer', 'sales_union', 'stockouts_monthly_dc'];
+  assert.deepEqual(authored.filter((q) => !logical.includes(q)), [], 'the logical queries (LQ 2026-10-18, BI-4 2026-10-22, md/hop HP-H 2026-10-24, CN-P6 S6.1 2026-10-24)');
 });
 
 test('DONE 5 — cs + en lexicon resolves (zero unresolved for:, project-wide)', () => {
