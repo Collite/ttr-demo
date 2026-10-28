@@ -104,19 +104,27 @@ function stackedOnQuery(def) {
   return !!target && 'entries' in target && target.entries.some((e) => e.key === 'query');
 }
 
+// The same binding written in the binding file: an `er2db_entity` whose target is `{ query: … }`, its refs
+// package-qualified (`hartland.er.entity.x`) — what the Studio's synthesizer writes for `insert-entity { on: … }`
+// (ttr-core SO contracts §1.2; SO beat E's returns_review, D-22). Its attributes are the query's output columns too.
+const localPath = (p) => p.replace(/^hartland\./, '');
+const targetsQuery = (er2db) => !!er2db.target?.entries?.some((e) => e.key === 'query');
+
 test('T6.5 — er2db completeness: every entity has an er2db_entity, every attribute has an er2db_attribute', () => {
   const entities = allDefsOfKind('entity').filter(({ def }) => !stackedOnQuery(def));
   const er2dbEntities = allDefsOfKind('er2dbEntity');
   const er2dbAttributes = allDefsOfKind('er2dbAttribute');
 
-  const boundEntityPaths = new Set(er2dbEntities.map((e) => e.def.entity.path));
-  const boundAttrPaths = new Set(er2dbAttributes.map((a) => a.def.attribute.path));
+  const boundEntityPaths = new Set(er2dbEntities.map((e) => localPath(e.def.entity.path)));
+  const boundAttrPaths = new Set(er2dbAttributes.map((a) => localPath(a.def.attribute.path)));
+  const queryBoundPaths = new Set(er2dbEntities.filter(({ def }) => targetsQuery(def)).map(({ def }) => localPath(def.entity.path)));
 
   const unboundEntities = [];
   const unboundAttributes = [];
   for (const { def } of entities) {
     const entityPath = `er.entity.${def.name}`;
     if (!boundEntityPaths.has(entityPath)) unboundEntities.push(entityPath);
+    if (queryBoundPaths.has(entityPath)) continue; // bound to a query: no er2db_attribute to give
     for (const attr of def.attributes ?? []) {
       const attrPath = `er.entity.${def.name}.${attr.name}`;
       if (!boundAttrPaths.has(attrPath)) unboundAttributes.push(attrPath);
@@ -335,9 +343,10 @@ test('T-LQ-BI — category_return_month is stacked on the logical query returns_
   assert.equal(query.parameters ?? undefined, undefined, 'parameterless (D-23)');
   const entityNames = new Set(allDefsOfKind('entity').map(({ def }) => def.name));
   assert.ok(!entityNames.has(query.name), `the logical query shares its local name with an entity: ${query.name}`);
-  // Not SO's name: beat E authors `returns_review` live, and a master object of that name would empty its change.
+  // Not SO's name: beat E authors `returns_review` live (the Studio demo; the pre-authored `demo/returns-review`).
+  // That the ENTITY is not on master is the runbook's pre-show check, not this test's: the live change merges it, and
+  // a Studio change cannot edit a test.
   assert.notEqual(query.name, 'returns_review');
-  assert.ok(!entityNames.has('returns_review'), 'returns_review is SO beat E\'s, authored live — not on master');
 
   const body = query.sourceText?.value ?? '';
   assert.doesNotMatch(body, /\bdb\.|\bdbo\b|\b(i|r|rr|rrl)_\w+/i, 'the body names a table or a physical column');

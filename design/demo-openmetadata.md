@@ -3,10 +3,13 @@
 The catalog receives the physical inventory from Postgres and a projection of the
 authored model from Veles. Model changes remain reviewed repository changes.
 
-Prerequisites: the paired XM-P3 PRs are merged; Veles0.11.17 and connector0.1.3 are
+Prerequisites: the paired XM-P3 PRs are merged; Veles 0.11.17 and connector 0.1.4 are
 published; the bot Secret is synced; the scan/projection Job template exists in
 `openmetadata`. Olymp's Stage boundary ends before deployment. The commands below
 are the subsequent operator/demo sequence, not evidence that it has run.
+Merge order: fixed server PR 323, publish and verify connector 0.1.4, then merge
+Olymp PR 192 and this rig's PR 143 together. This rig requires the native properties
+populated by the subsequent 0.1.4 projection; do not run it as 0.1.3 acceptance.
 
 The current model contains **36 physical tables/views, 40 ER entities, six measures
 and 83 CN concepts**. `dbo` is a model handle; the physical Postgres schema is
@@ -17,13 +20,13 @@ The investment `entry` estate left Hartland; this demo does not recreate it.
 
 Use the ingestion-bot JWT through `OM_TOKEN` or `OM_TOKEN_FILE`; never paste it into
 a command argument, logs or this repository. `OM_URL` accepts the host or `/api`.
-The optional landing card is a separate Kantheon PR247; the catalog can be opened
+The optional landing card is a separate Kantheon PR 247; the catalog can be opened
 directly at <https://openmetadata.hartland.collite.cz>.
 
 Check that no scheduled/manual projection is running. `Forbid` protects scheduled
-runs only; never overlap manual Jobs on the state PVC. The03:30UTC Job runs
+runs only; never overlap manual Jobs on the state PVC. The 03:30 UTC Job runs
 `scan-us`, then `scan-cz` as initContainers before `project`. A failed scan fails
-the Job and prevents projection. The3600s deadline covers the whole sequence;
+the Job and prevents projection. The 3600 s deadline covers the whole sequence;
 measure the first manual run before tuning it. local-path can keep the PVC Pending
 until the first Job creates its consumer; PVC and CronJob share the same Argo wave.
 
@@ -40,7 +43,7 @@ kubectl --context hartland -n openmetadata logs pod/<succeeded-pod> -c project
 
 Use fresh Job names when repeating. Inspect both initContainer logs on a failed
 scan and the main summary on success. Warnings mean incomplete projection;
-connector0.1.3 preserves the previous state so a later run retries skipped assets.
+connector 0.1.4 preserves the previous state so a later run retries skipped assets.
 Do not manufacture source snapshots or delete the primary state claim.
 
 ## Show the beats (about 15 minutes)
@@ -55,20 +58,26 @@ Do not manufacture source snapshots or delete the primary state claim.
    pulled from one projection.” The actual catalog counts belong in XM's tracker
    after execution; authored counts above are the expected inventory.
 3. **Deep link — whole-model demo scope.** Bora approved model-level navigation
-   for the interim demo (2026-10-25). Open the table's `ttrUrl`:
+   for the interim demo (2026-10-25). In Custom Properties, click the table's
+   `ttrStudioLink` label **Open database model in Studio**:
    `https://studio.hartland.collite.cz/m/hartland/s/db`. From an E-R term, open
    `https://studio.hartland.collite.cz/m/hartland/s/er`; metrics and MD terms open
-   `/m/hartland/s/md`. These links open the whole model. Find Product/item or
+   `/m/hartland/s/md`. Use **Open E-R model in Studio** on ER terms and
+   **Open dimensional model in Studio** on MD terms/metrics. The original `ttrUrl`
+   string stays available to integrations. These links open the whole model. Find Product/item or
    store_sales manually; do not claim the originating object is selected.
-   Studio is deployed. After connector0.1.3 is published/pinned and a real projection
+   Studio is deployed. After connector 0.1.4 is published/pinned and a real projection
    updates OM, verify a click from OM in the browser, including login. The rig
-   checks the model URL contract and absence of obsolete CN links; it cannot prove
+   checks native hyperlink registration/value, model URLs and absence of CN links
+   on Approved/Draft terms; it cannot prove
    browser navigation. `/viewer?qname=…` is unsupported and must not be used.
 4. **Concepts in OM.** Open `hartland Concepts`: Product (`cn.kind.Item`), Customer
    (`cn.role.Customer`) and Customer with overdue invoices (`cn.phase.DebtorCustomer`).
    Show related terms and English/Czech synonyms. The new `cn` model is distinct
    from Studio's legacy `cnc` renderer; this demo stays in OM for concepts. The
-   connector removes their obsolete Studio URLs while preserving glossary content.
+   connector removes obsolete Studio URLs from current concepts while preserving
+   glossary content. Only Approved and Draft out-of-plan terms are normalized;
+   deprecated terms and terms in every other status keep their old links.
    Exact-object Studio selection and a new-CN diagram remain explicit follow-ups.
 5. **Later — MW harvest-back (absorbed XM-P5).** Edit a description in OM → harvest into a proposed one-line
    repository PR. This phase does not implement harvest-back.
@@ -77,7 +86,7 @@ Do not manufacture source snapshots or delete the primary state claim.
 
 Run the following command twice, waiting for each named Job to complete before
 starting the next, without editing the model. Each unique Job name selects its own
-fresh state file, forcing a real full sync against OM instead of an HTTP304.
+fresh state file, forcing a real full sync against OM instead of an HTTP 304.
 Both summaries must say `not_modified: false`; all second-run counters must be zero.
 
 ```sh
@@ -97,7 +106,7 @@ The rig has ten read-only checks and exits with its failure count. It pages thro
 inventory/terms, counts entities separately from attributes, checks retained asset
 links, and compares the latest two labeled projection Jobs: same snapshot, both
 successful real syncs (`not_modified: false`), no overlap, all second-run counters
-zero. A missing marker requires connector >=0.1.2;304 Jobs cannot prove idempotency. It does not fetch Secrets,
+zero. A missing marker requires connector >=0.1.2; 304 Jobs cannot prove idempotency. It does not fetch Secrets,
 trigger Jobs or test a browser. Threshold overrides are `OM_MIN_TABLES`,
 `OM_MIN_ENTITIES`, `OM_MIN_METRICS`; `KUBE_CONTEXT` defaults to `hartland`.
 

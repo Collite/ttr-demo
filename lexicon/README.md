@@ -20,7 +20,7 @@ lexicon/
 > sugar surface** (`model/lexicon/{cs,en}/measures.ttrm` + `examples.ttrm`; `channels.ttrm` stays,
 > its targets are `er.entity.*`). Every one of those rows targeted **`md.`**, and md vocabulary is
 > not usable in its current form: the merged Golem's query door renders a bound ref into a
-> TransDSL data object, and an `md.` ref names neither an object nor an aggregation — the Veles
+> TransDSL data object, and an `md.` ref names neither an object nor an aggregation — the metadata
 > `ModelBundle` carries no md layer to resolve it against, so such a question is refused by name
 > rather than answered (kantheon RV-P6.5, ruling B). **md gets its own exercise**; when it lands,
 > this vocabulary comes back with a binding behind it. Nothing about the `model/md/` model itself
@@ -884,3 +884,5 @@ still exits 0 — so read the warning count, not just the exit code.
    centres); anything at or below three characters cannot fire `typos` at all (⚑M-4).
 5. `just build-lexicon`, then re-record the id and counts above. **Read the warning count**, and
    commit the rebuilt archive with the change.
+
+The live model reader is metadata — formerly `veles` (2026-10); loader/lexicon formats and ports are unchanged.
