@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Commit the rebuilt generated/ and push it to the branch it was built for (SO-demo P0·S0.2, review-121 R9/R11) —
-# regenerate.yml's push step, run after scripts/regenerate-local.sh exited 10.
+# Commit the rebuilt generated/ (and the Golem's layouts, model/layouts/agent/ — the one folder under model/ the build
+# writes, regenerate-local.sh says why) and push it to the branch it was built for (SO-demo P0·S0.2, review-121 R9/R11)
+# — regenerate.yml's push step, run after scripts/regenerate-local.sh exited 10.
 #
 #   scripts/regenerate-push.sh <branch>          # from inside the checkout
 #
@@ -14,8 +15,8 @@
 # Env: BOT_NAME, BOT_EMAIL — the commit's identity. GH_TOKEN (optional) — sent as the HTTP auth header of the push and
 # the fetch for that one command, never written to .git/config (the checkout persists no credentials, review-121 R11).
 #
-# Refuses (exit 1, nothing committed, nothing reset) when anything outside generated/ is modified: a retry resets the
-# tree, so it must never run over someone's edits.
+# Refuses (exit 1, nothing committed, nothing reset) when anything outside generated/ and model/layouts/agent/ is
+# modified: a retry resets the tree, so it must never run over someone's edits.
 set -euo pipefail
 
 branch="${1:?usage: regenerate-push.sh <branch>}"
@@ -23,14 +24,15 @@ branch="${1:?usage: regenerate-push.sh <branch>}"
 attempts="${REGENERATE_PUSH_ATTEMPTS:-3}"
 cd "$(git rev-parse --show-toplevel)"
 
-dirty="$(git status --porcelain -- . ':!generated')"
+built=(generated model/layouts/agent)   # what regenerate-local.sh writes, and all this script ever commits
+dirty="$(git status --porcelain -- . ':!generated' ':!model/layouts/agent')"
 if [ -n "$dirty" ]; then
-  echo "regenerate-push: refusing — files outside generated/ are modified, and a retry would reset them:" >&2
+  echo "regenerate-push: refusing — files outside generated/ and model/layouts/agent/ are modified, and a retry would reset them:" >&2
   echo "$dirty" >&2
   exit 1
 fi
-if [ -z "$(git status --porcelain -- generated)" ]; then
-  echo "regenerate-push: nothing to commit in generated/ — run it after regenerate-local.sh exits 10" >&2
+if [ -z "$(git status --porcelain -- "${built[@]}")" ]; then
+  echo "regenerate-push: nothing to commit in generated/ or model/layouts/agent/ — run it after regenerate-local.sh exits 10" >&2
   exit 1
 fi
 
@@ -46,7 +48,12 @@ authed() {
 }
 
 commit() {
-  git add -- generated
+  # Only the paths that exist on disk or in the index: `git add` refuses a pathspec that matches nothing.
+  local present=() p
+  for p in "${built[@]}"; do
+    if [ -e "$p" ] || [ -n "$(git ls-files -- "$p")" ]; then present+=("$p"); fi
+  done
+  git add -A -- "${present[@]}"
   git -c user.name="$BOT_NAME" -c user.email="$BOT_EMAIL" commit -q -m "regenerate: generated/ for $(git rev-parse --short HEAD)"
 }
 

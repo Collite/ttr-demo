@@ -33,7 +33,8 @@ async function fixture() {
   const stub = path.join(work, 'stub');
   await writeFile(stub, STUB);
   await chmod(stub, 0o755);
-  const env = { ...process.env, RESOLVE_CLI: stub, LEXICON_CLI: stub, BOT_NAME: 'bot[bot]', BOT_EMAIL: '1+bot[bot]@users.noreply.github.com' };
+  // LAYOUTS_CLI `true`: the Golem's layouts are left as they are here (regenerate-local.test.mjs covers them).
+  const env = { ...process.env, RESOLVE_CLI: stub, LEXICON_CLI: stub, LAYOUTS_CLI: 'true', BOT_NAME: 'bot[bot]', BOT_EMAIL: '1+bot[bot]@users.noreply.github.com' };
   delete env.GH_TOKEN;
   const git = (dir, ...args) => execFileSync('git', ['-C', dir, ...args], { encoding: 'utf-8' }).trim();
 
@@ -188,6 +189,29 @@ test('P5 — anything modified outside generated/ is refused before a commit, an
     assert.equal(f.git(ci, 'rev-parse', 'HEAD'), headBefore, 'nothing committed');
     assert.match(await readFile(path.join(ci, 'model/er/one.ttrm'), 'utf-8'), /someone's edit/, 'nothing reset');
     assert.match(f.git(ci, 'status', '--porcelain'), /generated\/lexicon\.tar\.zst/);
+  } finally {
+    await f.done();
+  }
+});
+
+test('P7 — a rebuilt Golem layout (model/layouts/agent/) is committed beside generated/ (Bora\'s ruling 2026-10-28)', async () => {
+  const f = await fixture();
+  try {
+    await f.save('a new entity in the agent\'s area');
+    const ci = f.clone('ci');
+    // The gen-layouts stub: the Golem's layout lists what the model holds, as agent-layout.mjs's area closure does.
+    const stub = path.join(f.work, 'layouts-stub');
+    await writeFile(stub, '#!/usr/bin/env bash\nset -euo pipefail\nmkdir -p model/layouts/agent\n'
+      + 'find model/er -type f | sort | xargs cat | sha256sum | cut -c1-16 > model/layouts/agent/agent_x.ttrg\n');
+    await chmod(stub, 0o755);
+    const layouts = { LAYOUTS_CLI: stub };
+    const regen = f.run(ci, 'regenerate-local.sh', [], layouts);
+    assert.equal(regen.status, 10, regen.stderr + regen.stdout);
+    const before = f.head();
+    const r = f.run(ci, 'regenerate-push.sh', [BRANCH], layouts);
+    assert.equal(r.status, 0, r.stderr + r.stdout);
+    assert.deepEqual(f.git(f.origin, 'diff', '--name-only', before, f.head()).split('\n').sort(),
+      ['generated/lexicon.tar.zst', 'generated/model.tar.zst', 'generated/resolved-packages.json', 'model/layouts/agent/agent_x.ttrg']);
   } finally {
     await f.done();
   }

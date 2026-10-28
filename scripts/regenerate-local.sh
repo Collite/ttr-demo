@@ -4,16 +4,21 @@
 #
 #   scripts/regenerate-local.sh [<checkout>]          # default: the checkout this script is in
 #
-# Rebuilds generated/ (resolved-packages.json + lexicon.tar.zst + model.tar.zst) with the toolchain toolchain.lock pins, then:
-#   exit 0   nothing stale: generated/ already matched, nothing changed. The loop guard: the workflow pushes nothing,
+# Rebuilds generated/ (resolved-packages.json + lexicon.tar.zst + model.tar.zst) and the Golem's layouts
+# (model/layouts/agent/, `just gen-layouts`) with the toolchain toolchain.lock pins, then:
+#   exit 0   nothing stale: both already matched, nothing changed. The loop guard: the workflow pushes nothing,
 #            so its own push → pull_request → run chain stops after one bot commit.
-#   exit 10  stale: generated/ rebuilt and left in the tree for the caller to commit
-#   exit 1   the build failed, or it changed something under model/ (the job never commits model/**)
+#   exit 10  stale: rebuilt and left in the tree for the caller to commit
+#   exit 1   the build failed, or it changed something else under model/ (the job never commits authored model/**)
 #   exit 2   the toolchain at <checkout>/../tatrman is not at toolchain.lock's [ttr-core].ref
 #
-# The toolchain is the justfile's side-by-side `../tatrman`, built. RESOLVE_CLI / LEXICON_CLI override the two CLIs
-# (the recipes' `cli=`); with both set the ref check is skipped — that is the tests' stubs, not a way to build
-# generated/ with another toolchain.
+# model/layouts/agent/ is the one folder under model/ the job writes: nobody authors it — scripts/agent-layout.mjs owns
+# it, from agents/ and the model's area closure — so a new entity in the agent's area makes it stale exactly as it
+# makes the lexicon stale, and the Studio cannot write it (SO-demo P1·S1.2, Bora's ruling 2026-10-28).
+#
+# The toolchain is the justfile's side-by-side `../tatrman`, built. RESOLVE_CLI / LEXICON_CLI / LAYOUTS_CLI override
+# the three builds (the recipes' `cli=`, and the gen-layouts command); with all three set the ref check is skipped —
+# that is the tests' stubs, not a way to build generated/ with another toolchain.
 set -euo pipefail
 
 checkout="$(cd "${1:-$(dirname "$0")/..}" && pwd)"
@@ -23,7 +28,7 @@ pins="$(python3 scripts/toolchain-lock.py)"   # its own line, so a failed read s
 while IFS='=' read -r key value; do export "$key=$value"; done <<<"$pins"
 echo "toolchain.lock: ttr-core $TTR_CORE_REF · metadata ttr-metadata $VELES_TTR_METADATA"
 
-if [ -n "${RESOLVE_CLI:-}" ] && [ -n "${LEXICON_CLI:-}" ]; then
+if [ -n "${RESOLVE_CLI:-}" ] && [ -n "${LEXICON_CLI:-}" ] && [ -n "${LAYOUTS_CLI:-}" ]; then
   echo "regenerate: CLI overrides set — the toolchain's ref is not checked"
 else
   toolchain="$checkout/../tatrman"
@@ -36,23 +41,27 @@ else
 fi
 
 # Content, not `git status`: a file already modified before the build and modified again by it reads the same there.
-model_hash() { find model -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum; }
+# The Golem's layouts are left out: they are the build's to write.
+agent_layouts=model/layouts/agent
+model_hash() { find model -type f -not -path "$agent_layouts/*" -print0 | sort -z | xargs -0 sha256sum | sha256sum; }
 model_before="$(model_hash)"
+
+${LAYOUTS_CLI:-node scripts/agent-layout.mjs} || { echo "regenerate: gen-layouts failed" >&2; exit 1; }
 
 just resolve-packages ${RESOLVE_CLI:+"$RESOLVE_CLI"} || { echo "regenerate: resolve-packages failed" >&2; exit 1; }
 just build-lexicon ${LEXICON_CLI:+"$LEXICON_CLI"} || { echo "regenerate: build-lexicon failed" >&2; exit 1; }
 
 if [ "$(model_hash)" != "$model_before" ]; then
-  echo "regenerate: the build changed files under model/ — refusing (the job never commits model/**):" >&2
-  git status --porcelain -- model >&2
+  echo "regenerate: the build changed files under model/ outside $agent_layouts/ — refusing (the job never commits authored model/**):" >&2
+  git status --porcelain -- model ":!$agent_layouts" >&2
   exit 1
 fi
 
-stale="$(git status --porcelain -- generated)"
+stale="$(git status --porcelain -- generated "$agent_layouts")"
 if [ -z "$stale" ]; then
-  echo "regenerate: nothing stale — generated/ matches the model"
+  echo "regenerate: nothing stale — generated/ and $agent_layouts/ match the model"
   exit 0
 fi
 echo "$stale"
-echo "regenerate: stale — generated/ rebuilt, left in the tree to commit"
+echo "regenerate: stale — rebuilt, left in the tree to commit"
 exit 10
