@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build/check authored recipes with the pinned CLI, staging worktrees for the path-based resolver."""
+"""Build/check authored recipes in place with the pinned declared-package CLI."""
 
 import argparse
 import contextlib
@@ -11,7 +11,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CLI = ROOT / '.modeler/toolchains/ttrp/packages/kotlin/ttrp-cli/build/install/ttrp-cli/bin/ttrp-cli'
@@ -40,28 +39,9 @@ def literate_documents(root):
 
 
 @contextlib.contextmanager
-def recipe_root(root, announce=True, include_bundles=False):
-    if root.name == 'hartland':
-        yield root
-        return
-    with tempfile.TemporaryDirectory(prefix='recipe-stage-') as tmp:
-        stage = Path(tmp) / 'hartland'
-        stage.mkdir()
-        config = root / 'modeler.toml'
-        roots = ['automation']
-        if config.exists():
-            shutil.copy2(config, stage / config.name)
-            roots += tomllib.loads(config.read_text()).get('ttrp', {}).get('extra-model-roots', [])
-        for rel in sorted(set(roots)):
-            if (root / rel).is_dir():
-                ignored = ['*.bundle.new', '*.bundle.old', 'node_modules', '.modeler']
-                if not include_bundles:
-                    ignored.append('*.bundle')
-                shutil.copytree(root / rel, stage / rel, dirs_exist_ok=True,
-                                ignore=shutil.ignore_patterns(*ignored))
-        if announce:
-            print('recipe CLI staged in a hartland directory (ttr-core path resolver workaround)', file=sys.stderr)
-        yield stage
+def recipe_root(root):
+    """Declared packages resolve independently of the checkout's basename."""
+    yield root
 
 
 def replace_bundle(src, bundle):
@@ -145,7 +125,7 @@ def main():
     parser.add_argument('--literate-check', action='store_true', help='Check Markdown-derived artifacts without writing; exit 3 on drift')
     parser.add_argument('--out', type=Path, help='Build into this directory without touching committed bundles')
     parser.add_argument('--recipe', type=Path, help='Limit to one recipe (including deferred authoring probes)')
-    parser.add_argument('--command', choices=['check', 'explain'], help='Pass through a staged CLI authoring command')
+    parser.add_argument('--command', choices=['check', 'explain'], help='Pass through a CLI authoring command')
     args = parser.parse_args()
     cli = Path(args.cli).absolute()
     if not cli.is_file():
@@ -165,7 +145,7 @@ def main():
                  if args.recipe else literate_documents(ROOT) + files)
     if args.command and not args.recipe:
         parser.error('--command requires --recipe')
-    with recipe_root(ROOT, announce=not args.command, include_bundles=args.literate_check) as stage, tempfile.TemporaryDirectory(prefix='recipe-output-') as tmp:
+    with recipe_root(ROOT) as stage, tempfile.TemporaryDirectory(prefix='recipe-output-') as tmp:
         pending = []
         artifacts = []
         owned = set()

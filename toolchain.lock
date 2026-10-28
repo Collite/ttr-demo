@@ -7,7 +7,7 @@ ref = "grammar/v0.18.3"          # the gate's toolchain checkout (was inline in 
 [ttrp]
 # Recipe builds/checks move independently of the model reader and serving image.
 # A commit pin requires a prerelease version; delete version when moving ref to a release tag.
-ref = "grammar/v0.18.11"          # accepted Core#307, includes declared writer-default evidence and concat
+ref = "grammar/v0.18.14"          # accepted Core#316; declared packages resolve from the actual checkout
 
 [veles]
 image = "0.11.30"                # MW-P0.4: renamed metadata service; paired Olymp wave-1 rollout
@@ -21,4 +21,4 @@ strict-load = true
 # Test runtime only: real loader/verifier/preview, independent of the deployed image.
 [automation-preview]
 server-ref = "88c12a8beac5e4d9c43e9bc64f3e61135fc4897b" # accepted Server#320 merge
-grammar = "0.18.12" # published Server runtime; recipe authoring stays on 0.18.11
+grammar = "0.18.12" # published Server runtime; recipe authoring uses independent 0.18.14

@@ -57,7 +57,8 @@ class RecipeBuildTest(unittest.TestCase):
             cli.write_text('''#!/usr/bin/env python3
 import sys,json
 from pathlib import Path
-assert Path.cwd().name == 'hartland'
+assert Path.cwd().name == 'hartland-wt'
+assert Path(sys.argv[2]).resolve() == Path.cwd()/'automation/example/example.ttrp'
 out = Path(sys.argv[sys.argv.index('--out')+1])
 ''' + behavior)
             cli.chmod(0o755)
@@ -87,7 +88,7 @@ out = Path(sys.argv[sys.argv.index('--out')+1])
     def test_wrong_recipe_name_preserves_all_bundles(self):
         self.run_case('p=out/"other.bundle";p.mkdir(parents=True);(p/"manifest.json").write_text("{}")\nprint(json.dumps({"bundle":str(p),"diagnostics":[]}))', 1)
 
-    def test_success_stages_worktree_and_removes_orphans_and_deferred_bundles(self):
+    def test_success_uses_actual_worktree_and_removes_orphans_and_deferred_bundles(self):
         self.run_case(SUCCESS, 0)
 
     def test_out_does_not_modify_source(self):

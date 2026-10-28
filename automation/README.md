@@ -28,7 +28,7 @@ would report every one of those names unresolved (the lexicon build refuses to l
 under `../model/` names an automation object; `../model/` only carries the lifecycles (`states:`) the actions are
 checked against.
 
-Recipe authoring uses grammar **0.18**, released compiler **0.18.11**; the TS/lexicon toolchain remains **0.18.3**. The strict serving-loader pin is **0.18.8** / veles **0.11.17**, adopted from current master in `toolchain.lock`. The extension the recipes
+Recipe authoring uses grammar **0.18**, released compiler **0.18.14**; the TS/lexicon toolchain remains **0.18.3**. The strict serving-loader pin is **0.18.12** / metadata image **0.11.30**, adopted from current master in `toolchain.lock`. The extension the recipes
 run on is in `../model/` — the documents (`model/er/orders.ttrm`, `returns-flow.ttrm`, `proposals.ttrm`) and their
 words (`model/lexicon/{en,cs}/automation.ttrm`); see the "Automation extension" paragraph of `../model/README.md`.
 
@@ -51,8 +51,8 @@ recipe or golden seed changes. The bundles include the golden YAML seeds and the
 CI checks literate artifacts before rebuilding. A prose-only source edit, canonical hand edit, missing sidecar or
 changed explanation fails; rebuild the document and commit all derived artifacts together.
 
-The recipe toolchain uses released **grammar/v0.18.11**, containing the accepted document/multi-recipe,
-writer-default evidence and concat fixes. The separate `[automation-preview].server-ref` pins accepted
+The recipe toolchain uses released **grammar/v0.18.14**, containing the accepted document/multi-recipe,
+writer-default evidence, concat and declared-package resolution fixes. The separate `[automation-preview].server-ref` pins accepted
 Server#320 merge **88c12a8b** for the preview CI job; it does not change a deployed image.
 The model/reader pins remain independent. H-1's `release_order.md` is authoritative; its canonical
 recipe preserves P2's code apart from whitespace/comments. The `.ttrd` records the actual source filename and
@@ -104,8 +104,7 @@ fixture only and is not included in any bundle; remove all three stub files when
 The ops stub lives at `../authoring-stubs/automation/ops/`, outside both roots read by the Server
 (`model/` + `automation/`). Neither veles (`model/`) nor the automation Server (`model/` + `automation/`) loads it. The TTR-P toolchain and `resolve-packages` (`generated/resolved-packages.json`) load this extra root through `modeler.toml`.
 
-Worktrees with another basename build/check in a temporary `hartland/` copy until
-[ttr-core#251](https://github.com/Collite/ttr-core/issues/251) fixes declared-package resolution.
+Recipe build/check uses the actual checkout root; declared packages resolve independently of its basename.
 Winback keeps documented workarounds for [#252](https://github.com/Collite/ttr-core/issues/252),
 [#253](https://github.com/Collite/ttr-core/issues/253), and [#254](https://github.com/Collite/ttr-core/issues/254).
 `RECIPES_REPRO_PASSES=2` enables a second local reproducibility pass; CI uses one test rebuild per recipe.
