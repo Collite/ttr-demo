@@ -42,11 +42,12 @@ const layouts = await Promise.all((await walkTtrg(layoutsDir)).map(async (file) 
 const byName = (name) => layouts.find((l) => l.read.ok && l.read.doc.name === name);
 
 test('L0 — the layouts are there: sales and the Golem\'s two', () => {
-  assert.deepEqual(layouts.map((l) => l.rel), [
-    'model/layouts/agent/agent_hartland.ttrg',
-    'model/layouts/agent/agent_hartland_db.ttrg',
-    'model/layouts/sales.ttrg',
-  ]);
+  // At least these: the Studio's Model page saves layouts here too (Save as layout — SO beat E's returns_review.ttrg),
+  // and a Studio change cannot edit a test. Every layout, saved or not, is held to L1–L3.
+  const rels = layouts.map((l) => l.rel);
+  const missing = ['model/layouts/agent/agent_hartland.ttrg', 'model/layouts/agent/agent_hartland_db.ttrg', 'model/layouts/sales.ttrg']
+    .filter((rel) => !rels.includes(rel));
+  assert.deepEqual(missing, []);
 });
 
 test('L1 — every layout parses with the grammar and reads clean, in VL\'s canonical form, named after its file (V-4, V-5)', () => {
