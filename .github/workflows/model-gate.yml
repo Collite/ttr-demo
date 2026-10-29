@@ -115,6 +115,13 @@ jobs:
       # 0.11.5 and resolver 0.11.23 read. v0.18.3 rebuilt master's archive and resolved-packages.json byte for byte, and
       # master's model suites passed on it, before this branch changed the model.
       #
+      # grammar/v0.18.17 (2026-10-29, SO-demo P2, the runbook's G3): ttr-core#325 — `ttr-lexicon` compiles a term whose
+      # `for:` is package-qualified (`for: hartland.er.entity.returns_review`, the form `@tatrman/edit` writes) instead of
+      # dropping it with RG-LEXC-001 while the build exits 0, so a term the Studio adds reaches the archive. The readers
+      # need no roll: the archive schema is still `ttr-lexicon-compiled/v6` (lex-matcher 0.11.5, resolver 0.11.23), and
+      # the [veles] loader is built from its own tag. v0.18.17 rebuilt master's archive, resolved-packages.json and the
+      # cn hygiene report byte for byte, and master's model suites passed on it, before any branch used it.
+      #
       # The pin lives in toolchain.lock ([ttr-core].ref) since 2026-10-21 (SO-demo P0, ⚑SO-P-4), beside the veles image
       # hartland deploys and the ttr-metadata version it was built with ([veles].image, [veles].ttr-metadata) — one file
       # read by this gate, regenerate.yml and olymp's release checklist. The history above is the lock's; the rule is
