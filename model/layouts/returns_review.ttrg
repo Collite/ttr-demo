@@ -1,0 +1,19 @@
+graph returns_review {
+  model: er,
+  objects: [
+    hartland.er.entity.customer,
+    hartland.er.entity.date_dim,
+    hartland.er.entity.return_receipt,
+    hartland.er.entity.return_request,
+    hartland.er.entity.returns_review
+  ],
+  layout: {
+    nodes: {
+      hartland.er.entity.customer: { x: 1040, y: 0 },
+      hartland.er.entity.date_dim: { x: 1040, y: 300 },
+      hartland.er.entity.return_receipt: { x: 520, y: 300 },
+      hartland.er.entity.return_request: { x: 520, y: 0 },
+      hartland.er.entity.returns_review: { x: 0, y: 0 }
+    }
+  }
+}
