@@ -25,7 +25,7 @@ at the rehearsal itself. Each one breaks a specific step:
 | G2 | ttr-platform `tasks-final-live-checks.md`: L-Setup, L-App, L-V, R6 | the pre-show's `modules` / `served` answers | ttr-platform |
 | G3 | **ttr-core#325**: `ttr-lexicon` drops a term whose `for:` is package-qualified, and the synthesizer writes it that way | the Golem never sees "returns review" (the lexicon has no row for it; check 8 below) | ttr-core, then `toolchain.lock` `[ttr-core].ref` |
 | G4 | **ttr-core#326**: without `file`, `insert-entity` puts the entity in `model/er/calendar.ttrm` and `add-term` puts the terms in `model/lexicon/*/automation.ttrm` | Dan reviews the entity in the calendar file; the compare fails | ttr-core, then a Viewer cut + `studio` image |
-| G5 | **ttr-platform#84**: Propose does not write the roster line (D-22) | `model-gate` T6.2 (exact entity count) goes red, so Merge is refused | ttr-platform (or ttr-demo relaxes T6.2; Bora rules) |
+| G5 | **ttr-platform#84**: Propose writes the roster line (D-22; Bora ruled 2026-10-29, built in ttr-platform#85) — closes when a `studio-bff` with it is deployed | without it `model-gate` T6.2 (exact entity count) goes red, so Merge is refused | ttr-platform → olymp |
 | G6 | **kantheon#272**: the golem caches the model at boot | a new entity is unknown to the Golem until `POST /v1/refresh`; the runbook does it by hand (E7) | kantheon |
 | G7 | the report query's lowering through the door has never run (`CURRENT_DATE`, `EXTRACT(QUARTER …)`, quoted `"year"`/`"quarter"`) | the first preview in R2 is that test | — (rehearsal) |
 | G8 | the query and the entity are both named `returns_review`; hartland's LQ files keep them apart because the Golem's lookup tries a query name first | the Golem may bind the query, not the entity | — (rehearsal: read the protocol in E7) |
@@ -269,7 +269,8 @@ synthesizer, not the inline-`terms` vector. Reproduce them against a master chec
 2. `insert-entity { name, on }` with no `file` or `terms`.
 3. `add-term { target, term, lang }` twice.
 4. The report: `ttr-report new` for the report query, or the BFF's `POST /api/reports/new`.
-5. Whatever Propose adds (the roster line, G5).
+5. Whatever Propose adds: the roster line, `  'returns_review',` alone before `];` of `EXPECTED_ENTITIES` (G5,
+   `modeler.toml [studio.entity-roster]`), no comment line.
 
 Commit the result as Maya's half and the report half, then `scripts/regenerate-local.sh` in the bot's form. The
 2026-10-28 replay with `grammar/v0.18.12` (= Viewer 0.11.4) wrote the same text as the branch, in
