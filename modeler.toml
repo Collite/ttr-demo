@@ -51,6 +51,13 @@ required = true     # a Studio-authored entity/attribute must be bound at creati
                     # `entity-needs-binding` / `attribute-needs-binding`; the gate's T6.5 is the second check
                     # (SO-demo P0, C-6 — read by ttr-core's TS manifest reader from SO-core P0; veles does not read it)
 
+[studio.entity-roster]
+# The gate pins the entity roster (model/er/tests/er.test.mjs T6.2, exact count). Propose writes `  '<entity>',` into
+# this list for every entity the change adds, before it dispatches regenerate.yml (D-22, ttr-platform#84); the Studio
+# reads this table, nothing else does.
+file = "model/er/tests/er.test.mjs"
+list = "EXPECTED_ENTITIES"
+
 [ttrp]
 # The TTR-P toolchain (`ttrp check` / `ttrp build`) loads its models from `models/` beside this manifest. Hartland keeps
 # the model in `model/`, the automation package and world in `automation/` (automation/worlds/demo.ttrm says why they
