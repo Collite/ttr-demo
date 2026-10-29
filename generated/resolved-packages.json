@@ -286,6 +286,11 @@
       "schema": "er"
     },
     {
+      "qname": "hartland.er.entity.returns_review",
+      "package": "hartland",
+      "schema": "er"
+    },
+    {
       "qname": "hartland.er.entity.sales",
       "package": "hartland",
       "schema": "er"
