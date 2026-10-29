@@ -27,6 +27,7 @@ const EXPECTED_ENTITIES = [
   // CN-P6 S6.1 — the ground of cn.Return (channel_returns.ttrm) and cn.PlacedOrder materialized (placed_order.ttrm),
   // both stacked on a logical query; model/cn/tests/cn.test.mjs asserts their shape.
   'channel_returns', 'placed_order',
+  'returns_review',
 ];
 const D5_OUT = ['time_dim', 'web_site', 'web_page', 'catalog_page', 'ship_mode', 'dbgen_version'];
 
