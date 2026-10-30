@@ -154,7 +154,8 @@ build-loader:
     ./gradlew --no-configuration-cache -Pversion="$VELES_TTR_METADATA" :packages:kotlin:ttr-metadata-cli:installDist
 
 # The bump-time check of toolchain.lock's [veles] pins (review-121 R6) — for whoever moves them, not CI (olymp is
-# private). The metadata image olymp deploys on hartland (origin/master by default) must be [veles].image, and ttr-server's
+# private). The metadata image olymp deploys on hartland (origin/master by default; its config.json `version` since
+# olymp D43, the values file's image.tag before) must be [veles].image, and ttr-server's
 # gradle/libs.versions.toml at server-libs/v<image> must name [veles].ttr-metadata. Exit 1 on a mismatch, both values
 # printed. Needs an authenticated `gh`; the olymp half is skipped when there is no olymp checkout.
 #
@@ -168,17 +169,25 @@ check-veles-pin olymp="../olymp" revision="origin/master":
     pins="$(python3 scripts/toolchain-lock.py)"
     while IFS='=' read -r key value; do export "$key=$value"; done <<<"$pins"
     rc=0
-    values=clusters/hartland/apps/metadata/values.yaml
+    app=clusters/hartland/apps/metadata
     if git -C "{{olymp}}" rev-parse --git-dir >/dev/null 2>&1; then
       if [ "{{revision}}" = origin/master ]; then
         git -C "{{olymp}}" fetch -q origin 2>/dev/null || echo "check-veles-pin: could not fetch {{olymp}} — reading its last-fetched origin/master" >&2
       fi
-      deployed="$(git -C "{{olymp}}" show "{{revision}}:$values" \
-        | awk '/^image:/{f=1;next} f&&/^[^ #]/{f=0} f&&/^ +tag:/{gsub(/["\047]/,"",$2); print $2; exit}')"
+      # The release olymp deploys is the app's config.json `version` (olymp D43, 2026-10-30): appset-apps.yaml passes it
+      # as image.tag, and D43's phase 2 drops the tag from values.yaml. A revision from before D43 has only the tag.
+      pinned="$app/config.json version"
+      deployed="$( (git -C "{{olymp}}" show "{{revision}}:$app/config.json" 2>/dev/null || true) \
+        | python3 -c 'import json,sys; t=sys.stdin.read(); print(json.loads(t).get("version", "") if t.strip() else "")')"
+      if [ -z "$deployed" ]; then
+        pinned="$app/values.yaml image.tag"
+        deployed="$(git -C "{{olymp}}" show "{{revision}}:$app/values.yaml" \
+          | awk '/^image:/{f=1;next} f&&/^[^ #]/{f=0} f&&/^ +tag:/{gsub(/["\047]/,"",$2); print $2; exit}')"
+      fi
       if [ "$deployed" = "$VELES_IMAGE" ]; then
-        echo "ok   olymp {{revision}} $values: metadata $deployed = [veles].image"
+        echo "ok   olymp {{revision}} $pinned: metadata $deployed = [veles].image"
       else
-        echo "FAIL olymp {{revision}} $values: metadata '$deployed' ≠ [veles].image '$VELES_IMAGE'" >&2; rc=1
+        echo "FAIL olymp {{revision}} $pinned: metadata '$deployed' ≠ [veles].image '$VELES_IMAGE'" >&2; rc=1
       fi
     else
       echo "skipped: no olymp checkout at {{olymp}}"
