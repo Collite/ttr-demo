@@ -14,25 +14,27 @@ branch against it (SD-D4).
 The personas' passwords live in the realm file only. Never copy them anywhere (olymp#155). Always pass
 `--context hartland`: the box's current context can be `dbf-prod`.
 
-## Open before the first rehearsal (2026-10-28)
+## Gates (opened 2026-10-28; state 2026-10-30)
 
-G1–G5 must close before a rehearsal can pass. G6 has a manual workaround in this runbook. G7–G10 can only be checked
-at the rehearsal itself. Each one breaks a specific step:
+G1–G5 must close before a rehearsal can pass. On 2026-10-30, G1, G3, G4 and G5 are closed and live on hartland, and G2
+is open on L-V only. G6 has a manual workaround in this runbook. G7–G10 can only be checked at the rehearsal itself.
+Each one breaks a specific step:
 
 | # | gate | breaks | owner |
 |---|---|---|---|
-| G1 | `studio-report` released and deployed (olymp P1·S1.2 waits on a `studio-report/v…` tag) | Reports is absent from the rail, so there is no beat R | ttr-platform → olymp |
-| G2 | ttr-platform `tasks-final-live-checks.md`: L-Setup, L-App, L-V, R6 | the pre-show's `modules` / `served` answers | ttr-platform |
+| G1 | `studio-report` released and deployed (olymp P1·S1.2 waits on a `studio-report/v…` tag) | Reports is absent from the rail, so there is no beat R | ttr-platform → olymp — **closed 2026-10-30**: `studio-report` 0.11.1 live. Reports joins the rail only once a report template is served, i.e. after beat E's merge (pre-show check 5) |
+| G2 | ttr-platform `tasks-final-live-checks.md`: L-Setup, L-App, L-V, R6 | the pre-show's `modules` / `served` answers; B2: beat V's CS step shows English labels | ttr-platform — L-Setup, L-App and R6 done; **L-V open**. Its browser findings B1 (the catalog is not ready in 3 s), B2 (CS labels stay English) and B3 (Copy drops `lang=cs`) are what `designer/v0.1.3` fixes, live as `studio` 0.11.20 (ttr-platform#93). The re-certification is ttr-platform's |
 | G3 | **ttr-core#325**: `ttr-lexicon` drops a term whose `for:` is package-qualified, and the synthesizer writes it that way | the Golem never sees "returns review" (the lexicon has no row for it; check 8 below) | ttr-core (fixed in `grammar/v0.18.17`), then `toolchain.lock` `[ttr-core].ref` — **closed 2026-10-29** by the lock bump |
-| G4 | **ttr-core#326**: without `file`, `insert-entity` puts the entity in `model/er/calendar.ttrm` and `add-term` puts the terms in `model/lexicon/*/automation.ttrm` | Dan reviews the entity in the calendar file; the compare fails | ttr-core (fixed in `designer/v0.1.2`, 2026-10-29), then ttr-platform's re-vendor + a Viewer cut + `studio` image |
-| G5 | **ttr-platform#84**: Propose writes the roster line (D-22; Bora ruled 2026-10-29, built in ttr-platform#85) — closes when a `studio-bff` with it is deployed | without it `model-gate` T6.2 (exact entity count) goes red, so Merge is refused | ttr-platform → olymp |
+| G4 | **ttr-core#326**: without `file`, `insert-entity` puts the entity in `model/er/calendar.ttrm` and `add-term` puts the terms in `model/lexicon/*/automation.ttrm` | Dan reviews the entity in the calendar file; the compare fails | ttr-core (fixed in `designer/v0.1.2`, 2026-10-29), then ttr-platform's re-vendor + a Viewer cut + `studio` image — **closed 2026-10-30**: `studio` 0.11.19 deployed (now 0.11.20, Designer 0.1.3, the same ops). The entity lands in its query's file and the terms in `model/lexicon/{en,cs}/returns.ttrm` |
+| G5 | **ttr-platform#84**: Propose writes the roster line (D-22; Bora ruled 2026-10-29, built in ttr-platform#85) — closes when a `studio-bff` with it is deployed | without it `model-gate` T6.2 (exact entity count) goes red, so Merge is refused | ttr-platform → olymp — **closed 2026-10-30**: `studio-bff` 0.11.21 live |
 | G6 | **kantheon#272**: the golem caches the model at boot | a new entity is unknown to the Golem until `POST /v1/refresh`; the runbook does it by hand (E7) | kantheon |
-| G7 | the report query's lowering through the door has never run (`CURRENT_DATE`, `EXTRACT(QUARTER …)`, quoted `"year"`/`"quarter"`) | the first preview in R2 is that test | — (rehearsal) |
+| G7 | the report query's lowering through the door has never run (`CURRENT_DATE`, `EXTRACT(QUARTER …)`, quoted `"year"`/`"quarter"`) | beat R's first **Preview** is that test | — (rehearsal) |
 | G8 | the query and the entity are both named `returns_review`; hartland's LQ files keep them apart because the Golem's lookup tries a query name first | the Golem may bind the query, not the entity | — (rehearsal: read the protocol in E7) |
 | G9 | where a live layout save lands is unconfirmed: the hosted graph wizard writes `<root>/graphs/<slug>.ttrg` (`designer-authoring` `CreateGraphWizard.tsx`), not `model/layouts/returns_review.ttrg` | E5 and the compare's layout file | — (rehearsal; if there is no path to `model/layouts/`, the layout leaves the branch) |
 | G10 | the hosted Designer's remove is not wired (`removeNode` returns `false`, studio 0.11.17) | reverting through the Studio (After the show) | — (rehearsal: the GitHub revert is the fallback) |
 
-When G4 and G5 land, re-author `demo/returns-review` to what the Studio then writes (see the last section).
+`demo/returns-review` was re-authored to what the Studio writes once G4 and G5 had landed (2026-10-30, at
+`grammar/v0.18.17`; see the last section).
 
 ## Pre-show (operator, ~15 min, the morning of the show)
 
@@ -81,12 +83,17 @@ STUDIO=https://studio.hartland.collite.cz
    curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: $AUTH" "$STUDIO/api/reports/health"
    ```
    What to expect:
-   - `model` enabled with `["viewer","modeler"]`, and `reports` enabled. Anything absent carries a `reason` starting
-     with `metadata:` / `capability:` / `licence:`.
+   - `model` enabled with `["viewer","modeler"]`.
+   - `reports` **not** enabled yet, with the reason `metadata: no reports in served Git snapshot`. `studio-report`
+     reads its templates from the served model (source `git`) and turns Reports on only once that model holds one.
+     Master has none until beat E's merge. Any other module that is absent carries a `reason` starting with
+     `metadata:` / `capability:` / `licence:`.
    - The licence is `valid` and not about to expire.
    - `masterSha` equals `servedSha`. A master SHA means the App can read the repo. `toolchain.mismatch` is `false`
      (R6).
-   - `reports/health` returns `200`.
+   - `reports/health` returns `200`. The service itself is up even while Reports is off. You can check that without a
+     bearer: `kubectl --context hartland get --raw /api/v1/namespaces/kantheon/services/studio-report:7320/proxy/capabilities`
+     prints `{"source":"git","reports":false}`.
 6. **No leftover change.** `curl -s -H "Authorization: $AUTH" "$STUDIO/api/model/changes" | jq '.changes[] | {name, branch, state}'`
    should show no open *Returns review*. Discard a leftover in the Studio (before review), or close its PR.
 7. **The reference branch contains master and is green.**
@@ -103,7 +110,9 @@ STUDIO=https://studio.hartland.collite.cz
    git show 'origin/demo/returns-review:generated/lexicon.tar.zst' | zstd -dcq | tar -xO docs/lexicon.json \
      | jq -r '.entries[] | select(.targetRef == "er.entity.returns_review") | "\(.lang)\t\(.sourceTag)\t\(.termNormalized)"'
    ```
-   Until ttr-core#325 lands it prints nothing, and beat E's last step can't work.
+   It printed nothing before ttr-core#325 was fixed (`grammar/v0.18.17`, G3). If it prints nothing now, the branch was
+   regenerated with an older toolchain: check `toolchain.lock`, then rerun check 7's regenerate. Without the rows, beat
+   E's last step can't work.
 9. **The windows.** Open, side by side:
    - the Studio as Maya, on Home;
    - GitHub as Dan, on `Collite/ttr-demo` → Pull requests;
@@ -226,7 +235,9 @@ The clocks to expect and to record (fill in at each rehearsal):
 
 ## Beat R — the report (Dan, ~3 min)
 
-Dan logs in to the Studio.
+Dan logs in to the Studio. **Reports** is in the rail once *served* shows, because `studio-report` then sees the merged
+`report.yaml`. The Studio rereads its modules on login, on window focus and every 5 minutes, and the BFF caches them for
+30 s. So if Dan logged in before the merge was served, refocus the window, or reload after 30 s.
 
 1. **Reports** → *Returns review, this quarter* → **Preview** (the first table, up to 500 rows). It shows one row per
    item category for the current quarter. On 2026-10-28 that was 11 rows for 2026-Q4, 10 categories and one row with
@@ -274,5 +285,6 @@ synthesizer, not the inline-`terms` vector. Reproduce them against a master chec
 
 Commit the result as Maya's half and the report half, then `scripts/regenerate-local.sh` in the bot's form. The
 2026-10-28 replay with `grammar/v0.18.12` (= Viewer 0.11.4) wrote the same text as the branch, in
-`model/er/calendar.ttrm` and `model/lexicon/{en,cs}/automation.ttrm` (G4). `demo-compare.sh` against the replay is the
-check.
+`model/er/calendar.ttrm` and `model/lexicon/{en,cs}/automation.ttrm` (G4). The 2026-10-30 re-authoring at
+`grammar/v0.18.17` (Designer 0.1.2) is the branch as it stands: the entity is in `model/er/returns-review.ttrm` beside its
+query, and the terms are in `model/lexicon/{en,cs}/returns.ttrm`. `demo-compare.sh` against the replay is the check.
