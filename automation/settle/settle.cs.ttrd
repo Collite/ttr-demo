@@ -1,0 +1,296 @@
+{
+    "document": "handling-a-return-request.cs.md",
+    "documentSha": "22b7c931d6f86995566958a617339b5cd71baecdc624a396818fac52e5672b03",
+    "nodes": {
+        "documents": {
+            "block": 21,
+            "generatedSpan": [
+                901,
+                1366
+            ],
+            "paragraph": [
+                15731,
+                15809
+            ],
+            "span": [
+                15811,
+                16276
+            ]
+        },
+        "open_obligations": {
+            "block": 20,
+            "generatedSpan": [
+                539,
+                899
+            ],
+            "paragraph": [
+                15293,
+                15367
+            ],
+            "span": [
+                15369,
+                15729
+            ]
+        },
+        "overdue_days": {
+            "block": 22,
+            "generatedSpan": [
+                1368,
+                1670
+            ],
+            "paragraph": [
+                16278,
+                16341
+            ],
+            "span": [
+                16343,
+                16661
+            ]
+        },
+        "settlement": {
+            "block": 23,
+            "generatedSpan": [
+                1672,
+                3267
+            ],
+            "paragraph": [
+                16663,
+                16836
+            ],
+            "span": [
+                16838,
+                18449
+            ]
+        },
+        "settling": {
+            "block": 19,
+            "generatedSpan": [
+                228,
+                537
+            ],
+            "paragraph": [
+                14829,
+                14980
+            ],
+            "span": [
+                14982,
+                15291
+            ]
+        }
+    },
+    "sentences": [
+        {
+            "nodes": [],
+            "span": [
+                22,
+                492
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                509,
+                734
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                738,
+                852
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                855,
+                1025
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                1028,
+                1152
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                1155,
+                1247
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                1249,
+                1328
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                1690,
+                1749
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                2208,
+                2298
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                2806,
+                3016
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                3905,
+                4075
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                4286,
+                4371
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                5167,
+                5340
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                7274,
+                7573
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                9193,
+                9445
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                9767,
+                9886
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                10472,
+                10549
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                11012,
+                11058
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                11368,
+                11455
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                11714,
+                11875
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                12968,
+                13316
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                14260,
+                14548
+            ]
+        },
+        {
+            "nodes": [
+                "settling"
+            ],
+            "span": [
+                14829,
+                14980
+            ]
+        },
+        {
+            "nodes": [
+                "open_obligations"
+            ],
+            "span": [
+                15293,
+                15367
+            ]
+        },
+        {
+            "nodes": [
+                "documents"
+            ],
+            "span": [
+                15731,
+                15809
+            ]
+        },
+        {
+            "nodes": [
+                "overdue_days"
+            ],
+            "span": [
+                16278,
+                16341
+            ]
+        },
+        {
+            "nodes": [
+                "settlement"
+            ],
+            "span": [
+                16663,
+                16836
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                18451,
+                18650
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                19433,
+                19525
+            ]
+        }
+    ]
+}

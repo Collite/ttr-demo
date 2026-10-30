@@ -104,20 +104,27 @@ def action start {                                                              
     approval:   none
     dry_run:    { en: "would start {process} with {rows.count} rows", cs: "spustil by {process}, řádků: {rows.count}" }
 }
-// H-3 (S2.2 T4): a reorder proposal row — the writer fills `proposal_id`, `run` and `state: proposed`; the buyer's
-// `ask` holds the batch (D-66).
+// H-3: all eight required attributes are mapped; explicit defaults supply omitted metadata.
+// bigint_id_v1 is retry-stable per pinned run/wiring/candidate; the buyer holds the batch (D-66).
 def action propose {
     columns:    [def column item          { type: reorder_proposal.item },
                  def column warehouse     { type: reorder_proposal.warehouse },
                  def column on_hand       { type: reorder_proposal.on_hand },
                  def column weekly_demand { type: reorder_proposal.weekly_demand },
-                 def column proposed_qty  { type: reorder_proposal.proposed_qty }]
+                 def column proposed_qty  { type: reorder_proposal.proposed_qty },
+                 def column proposal_id   { type: reorder_proposal.proposal_id, optional: true },
+                 def column run           { type: reorder_proposal.run, optional: true },
+                 def column state         { type: reorder_proposal.state, optional: true }]
+    writer_defaults: {
+        proposal_id: { generated: bigint_id_v1 },
+        run: { context: run_id },
+        state: { expression: "'proposed'" }
+    }
     sinks:      { native: writer }
     approval:   none
     dry_run:    { en: "would propose reordering {proposed_qty} of item {item} for center {warehouse}", cs: "navrhl by doobjednat {proposed_qty} ks položky {item} pro centrum {warehouse}" }
 }
-// H-5 (S2.2 T4): the win-back mail, and its record (the writer fills `quarter` from the run's as-of, `run` and
-// `mailed_at`).
+// H-5: quarter uses the UTC quarter of pinned as-of (YYYY-Qn); run and mailed_at use committed Open context.
 def action emit {
     columns:    [def column customer { type: customer.sk }, def column offer { type: text }]
     sinks:      { native: deliver, n8n: "n8n-nodes-base.emailSend" }
@@ -126,7 +133,15 @@ def action emit {
     dry_run:    { en: "would mail customer {customer} the {offer} win-back offer", cs: "poslal by zákazníkovi {customer} win-back nabídku {offer}" }
 }
 def action record {
-    columns:    [def column customer { type: winback_mail.customer }, def column offer { type: winback_mail.offer }]
+    columns:    [def column customer { type: winback_mail.customer }, def column offer { type: winback_mail.offer },
+                 def column quarter { type: winback_mail.quarter, optional: true },
+                 def column run { type: winback_mail.run, optional: true },
+                 def column mailed_at { type: winback_mail.mailed_at, optional: true }]
+    writer_defaults: {
+        quarter: { expression: "concat(concat(substring(cast(:as_of as text), 1, 4), '-Q'), case when substring(cast(:as_of as text), 6, 2) <= '03' then '1' when substring(cast(:as_of as text), 6, 2) <= '06' then '2' when substring(cast(:as_of as text), 6, 2) <= '09' then '3' else '4' end)" },
+        run: { context: run_id },
+        mailed_at: { context: started_at }
+    }
     sinks:      { native: writer }
     approval:   none
     dry_run:    { en: "would record the win-back mail to customer {customer}", cs: "zaznamenal by win-back e-mail zákazníkovi {customer}" }

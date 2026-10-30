@@ -64,9 +64,13 @@ test('S2.1 — model/ + automation/ parse, resolve and lint with nothing outside
 
 test('S2.1 — the automation validator (with the toolchain\'s stdlib) finds nothing but the pre-catalog recipe names', () => {
   const diags = validateAutomationProject(docsOf(project), { stdlib });
-  const findings = diags.filter((d) => d.code !== PRECATALOG).map((d) => `${d.severity} ${d.code}: ${d.message}`);
+  const defaultNotices = diags.filter((d) => d.code === 'ttr/automation-unknown-property');
+  assert.deepEqual(defaultNotices.map((d) => d.message).sort(), [
+    "action 'propose': unknown property `writer_defaults:`", "action 'record': unknown property `writer_defaults:`",
+  ]);
+  const findings = diags.filter((d) => d.code !== PRECATALOG && !defaultNotices.includes(d)).map((d) => `${d.severity} ${d.code}: ${d.message}`);
   assert.deepEqual(findings, []);
-  assert.ok(diags.every((d) => d.severity === 'info'), 'the pre-catalog notes are infos');
+  assert.ok(diags.every((d) => d.severity === (defaultNotices.includes(d) ? 'warning' : 'info')));
 });
 
 // The veles view. veles and the lexicon build read `model/` alone; the lexicon build refuses a model that does not
@@ -131,10 +135,12 @@ const ACTIONS = {
     { native: 'obligation' }, 'none'],
   start: [['process:text', 'rows:rows'], undefined, undefined, { native: 'start', n8n: 'n8n-nodes-base.httpRequest' }, 'none'],
   propose: [['item:reorder_proposal.item', 'warehouse:reorder_proposal.warehouse', 'on_hand:reorder_proposal.on_hand',
-    'weekly_demand:reorder_proposal.weekly_demand', 'proposed_qty:reorder_proposal.proposed_qty'], undefined, undefined,
+    'weekly_demand:reorder_proposal.weekly_demand', 'proposed_qty:reorder_proposal.proposed_qty',
+    'proposal_id:reorder_proposal.proposal_id?', 'run:reorder_proposal.run?', 'state:reorder_proposal.state?'], undefined, undefined,
   { native: 'writer' }, 'none'],
   emit: [['customer:customer.sk', 'offer:text'], undefined, undefined, { native: 'deliver', n8n: 'n8n-nodes-base.emailSend' }, 'none'],
-  record: [['customer:winback_mail.customer', 'offer:winback_mail.offer'], undefined, undefined, { native: 'writer' }, 'none'],
+  record: [['customer:winback_mail.customer', 'offer:winback_mail.offer', 'quarter:winback_mail.quarter?',
+    'run:winback_mail.run?', 'mailed_at:winback_mail.mailed_at?'], undefined, undefined, { native: 'writer' }, 'none'],
 };
 
 test('S2.1 T2 — the actions: columns, transition, set, sinks, approval (17 §1; propose/emit/record S2.2 T4)', () => {

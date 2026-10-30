@@ -159,6 +159,10 @@ jobs:
         working-directory: hartland
         run: just hebe-seed-test
 
+      - name: Literate recipe derivations are current (EN + CS)
+        working-directory: hartland
+        run: just check-literate-recipes
+
       - name: n8n seed and verification rig (local fakes)
         working-directory: hartland
         run: just n8n-test
@@ -169,7 +173,7 @@ jobs:
 
       - name: Recipe build script regressions
         working-directory: hartland
-        run: python3 -m unittest scripts/test_build_recipes.py scripts/test_toolchain_ttrp.py scripts/test_check_metadata_pin.py
+        run: python3 -m unittest scripts/test_build_recipes.py scripts/test_toolchain_ttrp.py scripts/test_writer_preview.py scripts/test_check_metadata_pin.py
 
       - name: OpenMetadata rig regressions (offline)
         working-directory: hartland

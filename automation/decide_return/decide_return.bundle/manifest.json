@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "ttrpVersion": 2,
-  "toolchain": "org.tatrman:ttrp:0.17.3-au.2",
+  "toolchain": "org.tatrman:ttrp:0.18.14",
   "program": "decide_return.ttrp",
   "world": {
     "qname": "hartland.worlds.demo",
@@ -1404,17 +1404,26 @@
     },
     "protocol": "always",
     "tests": [
+      "tests/exchange.cz.yaml",
       "tests/exchange.yaml",
+      "tests/refund-after-return.cz.yaml",
       "tests/refund-after-return.yaml",
+      "tests/refund-no-return.cz.yaml",
       "tests/refund-no-return.yaml",
+      "tests/reject-abuse.cz.yaml",
       "tests/reject-abuse.yaml",
+      "tests/reject-late.cz.yaml",
       "tests/reject-late.yaml",
+      "tests/reject-not-ours.cz.yaml",
       "tests/reject-not-ours.yaml",
+      "tests/replacement-no-return.cz.yaml",
       "tests/replacement-no-return.yaml",
+      "tests/to-customer-care.cz.yaml",
       "tests/to-customer-care.yaml"
     ]
   },
   "files": {
+    "README.md": "sha256:71749c38be6dbfce627b151e3cc12969fcf1418b24217c1ada32ff19b7576257",
     "catalog/decide_return.ttrm": "sha256:dc416dded13dc43316011156e21f431800957c26a8e2b5c86046e4e436c6186f",
     "catalog/decide_return_verdict.ttrm": "sha256:c619774e8e6c518b3bba13fa1fd2dc4b04f4b5ed583d4ff5440f0273f5f99f64",
     "islands/bought_here.rows.sql": "sha256:afcc07b9fd35f5081ef2f12a87ba8a6ebe487f590064537defc14acfcbcc6e68",
@@ -1430,13 +1439,21 @@
     "islands/way.reject_not_ours.sql": "sha256:1ba47e4c4700f1c55a8845cc409a71ca5932276f30772a43b581b1a141d5de7d",
     "islands/way.replacement_no_return.sql": "sha256:72f081d9f40e70b80d78b093ad233dcda3e6348baefd1e82430e7f26a3d86e13",
     "islands/way.to_customer_care.sql": "sha256:10c4d366f81b9f7444f3f538cb06f230bbde6ca14684b06d50dcc2e39ee838e0",
+    "tests/exchange.cz.yaml": "sha256:328dc85aea20bcad7ead6e9967be7b0bb1abf2e4755429156cd1fe9158e029b3",
     "tests/exchange.yaml": "sha256:184671b13bf1f4bb285aeca7cf20722619f00ad3f549f0cffecf741966a9b0c6",
+    "tests/refund-after-return.cz.yaml": "sha256:8d7e79c95b72600800df122f31885ee41073dfde00dbda13b4657d7230a67884",
     "tests/refund-after-return.yaml": "sha256:a7fc0117b63589a1901499df784f35a5ce2bd40bdf1ab2e4c435f49385e92b92",
+    "tests/refund-no-return.cz.yaml": "sha256:f5b57c0273e9ddc5d76c03475b356fb7eccd78432c4ef84249eac3624608d2e8",
     "tests/refund-no-return.yaml": "sha256:a7a50caed922124a309499caebe696cbc8830344ac497eb0affbccbefc3b6398",
+    "tests/reject-abuse.cz.yaml": "sha256:7c6c6948d8f0cf2e6e6190f0c573735ba947be60bc1612de805d7891aecdbd54",
     "tests/reject-abuse.yaml": "sha256:83aa850c7db710e04a5e451b4fddcdaec666eaec5952b06a94d9d1412e211393",
+    "tests/reject-late.cz.yaml": "sha256:62a70503eb3d06ba2c37bd73e21c76676840d6d4af271a4d5c091061f3249959",
     "tests/reject-late.yaml": "sha256:18a2c0660a0a00d6cc5c6f18dd82c1f794573693f84b74fe769dcae3f3222af3",
+    "tests/reject-not-ours.cz.yaml": "sha256:11b7f5e801a90be343da1eeabb85de5146c66e4151bb205fec19d030f6796cd4",
     "tests/reject-not-ours.yaml": "sha256:bffe616132899a1be9ef9ef5fe498e73f175975061b0bb2a56efa65045238346",
+    "tests/replacement-no-return.cz.yaml": "sha256:e8c6bde75cdde64c69c9d2a4f0c017e14667c0add36b5766acceed401eec2a56",
     "tests/replacement-no-return.yaml": "sha256:380befe5a01c35cf06b6e61acd4f4ca5edaac0e9878f5d94b4f809a602b55ddf",
+    "tests/to-customer-care.cz.yaml": "sha256:63a65fa375d3449cbf951761dd48240bc2f80fe293f9297b01db0405cc329024",
     "tests/to-customer-care.yaml": "sha256:c01e3aaf1d24081da1ec987798fbfb0df74423d56d6a47d62a8fb735cda32650"
   }
 }

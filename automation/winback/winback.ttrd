@@ -1,0 +1,125 @@
+{
+    "document": "winback.md",
+    "documentSha": "621950d99ae20075590314ec0620b8b3c4538e593b5e59c1e2193c9640ee22c4",
+    "nodes": {
+        "band": {
+            "block": 3,
+            "generatedSpan": [
+                1253,
+                1847
+            ],
+            "paragraph": [
+                2132,
+                2245
+            ],
+            "span": [
+                2247,
+                2853
+            ]
+        },
+        "lapsed": {
+            "block": 2,
+            "generatedSpan": [
+                225,
+                1251
+            ],
+            "paragraph": [
+                987,
+                1090
+            ],
+            "span": [
+                1092,
+                2130
+            ]
+        },
+        "mailed": {
+            "block": 4,
+            "generatedSpan": [
+                1849,
+                2119
+            ],
+            "paragraph": [
+                2855,
+                2956
+            ],
+            "span": [
+                2958,
+                3240
+            ]
+        },
+        "offer": {
+            "block": 5,
+            "generatedSpan": [
+                2121,
+                2615
+            ],
+            "paragraph": [
+                3242,
+                3407
+            ],
+            "span": [
+                3409,
+                3915
+            ]
+        }
+    },
+    "sentences": [
+        {
+            "nodes": [],
+            "span": [
+                12,
+                364
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                366,
+                725
+            ]
+        },
+        {
+            "nodes": [
+                "lapsed"
+            ],
+            "span": [
+                987,
+                1090
+            ]
+        },
+        {
+            "nodes": [
+                "band"
+            ],
+            "span": [
+                2132,
+                2245
+            ]
+        },
+        {
+            "nodes": [
+                "mailed"
+            ],
+            "span": [
+                2855,
+                2956
+            ]
+        },
+        {
+            "nodes": [
+                "offer"
+            ],
+            "span": [
+                3242,
+                3407
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                3917,
+                4107
+            ]
+        }
+    ]
+}

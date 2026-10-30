@@ -1,0 +1,156 @@
+{
+    "document": "release_order.cs.md",
+    "documentSha": "46e23925bec621e332d21960a6ae49141c3ca5c321ad9f26722bcf9bb9f13600",
+    "nodes": {
+        "overdue": {
+            "block": 5,
+            "generatedSpan": [
+                2512,
+                2783
+            ],
+            "paragraph": [
+                3148,
+                3219
+            ],
+            "span": [
+                3221,
+                3492
+            ]
+        },
+        "placed_orders": {
+            "block": 2,
+            "generatedSpan": [
+                241,
+                487
+            ],
+            "paragraph": [
+                378,
+                437
+            ],
+            "span": [
+                439,
+                685
+            ]
+        },
+        "price_differences": {
+            "block": 4,
+            "generatedSpan": [
+                1339,
+                2510
+            ],
+            "paragraph": [
+                1750,
+                1970
+            ],
+            "span": [
+                1972,
+                3143
+            ]
+        },
+        "shortfall": {
+            "block": 3,
+            "generatedSpan": [
+                489,
+                1337
+            ],
+            "paragraph": [
+                744,
+                883
+            ],
+            "span": [
+                885,
+                1745
+            ]
+        },
+        "verdict": {
+            "block": 6,
+            "generatedSpan": [
+                2785,
+                4341
+            ],
+            "paragraph": [
+                3494,
+                3820
+            ],
+            "span": [
+                3822,
+                5390
+            ]
+        }
+    },
+    "sentences": [
+        {
+            "nodes": [],
+            "span": [
+                32,
+                100
+            ]
+        },
+        {
+            "nodes": [
+                "placed_orders"
+            ],
+            "span": [
+                378,
+                437
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                687,
+                739
+            ]
+        },
+        {
+            "nodes": [
+                "shortfall"
+            ],
+            "span": [
+                744,
+                883
+            ]
+        },
+        {
+            "nodes": [
+                "price_differences"
+            ],
+            "span": [
+                1750,
+                1970
+            ]
+        },
+        {
+            "nodes": [
+                "overdue"
+            ],
+            "span": [
+                3148,
+                3219
+            ]
+        },
+        {
+            "nodes": [
+                "verdict"
+            ],
+            "span": [
+                3494,
+                3820
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                5392,
+                5632
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                6329,
+                6593
+            ]
+        }
+    ]
+}

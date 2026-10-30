@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "ttrpVersion": 2,
-  "toolchain": "org.tatrman:ttrp:0.17.3-au.2",
+  "toolchain": "org.tatrman:ttrp:0.18.14",
   "program": "release_order.ttrp",
   "world": {
     "qname": "hartland.worlds.demo",
@@ -825,13 +825,18 @@
     },
     "protocol": "always",
     "tests": [
+      "tests/hold-ar.cz.yaml",
       "tests/hold-ar.yaml",
+      "tests/hold-sales.cz.yaml",
       "tests/hold-sales.yaml",
+      "tests/release-confirmed.cz.yaml",
       "tests/release-confirmed.yaml",
+      "tests/release.cz.yaml",
       "tests/release.yaml"
     ]
   },
   "files": {
+    "README.md": "sha256:b6967a7e619cbb1370d7b84df6fe31eab71a8b72e9b0e61ddf0bc62f577e7c45",
     "catalog/release_order.ttrm": "sha256:df2d51235df94c4bdbe063f8428ce7686f423786239cd88f14eff4e3755fd5a7",
     "catalog/release_order_verdict.ttrm": "sha256:1172675861546a966ea9a1daca8c805386898e3dec5bd81790dd6739123f8909",
     "islands/overdue.rows.sql": "sha256:3730c48e4975b3a5052a7e1a246a7c02f3c783c51505461e037842f503e6755a",
@@ -845,9 +850,13 @@
     "islands/verdict.hold_sales.sql": "sha256:6f2e6c32d0f4b992d76b62189d02f39cf5ac13f6513dc960a85b3c98740cade1",
     "islands/verdict.release.sql": "sha256:1367b24244239242e24d0d310b143b1a2db379f4774f5bbf36faf6c458bc0307",
     "islands/verdict.release_confirmed.sql": "sha256:d78804520394d11aa67c546e504cb65b80c44969521a7d2c5368c8c7f20c8e82",
+    "tests/hold-ar.cz.yaml": "sha256:9df65111021aa9dc47fef2d358a4a9fc52bc1b29d8305a09aae3a34db8942784",
     "tests/hold-ar.yaml": "sha256:c872809d0ff4a43c0825ba740ba66d1928870e3e703a499105485d8441011387",
+    "tests/hold-sales.cz.yaml": "sha256:db9c2e3e408a53398e4c4e1ae3920b163b7b5fad0518a5791e412f8f5bac7bfe",
     "tests/hold-sales.yaml": "sha256:774495768336154af4d87bbe760296035fe43da355969ad9cef8abe4c3509e1e",
+    "tests/release-confirmed.cz.yaml": "sha256:ed674b913da817853fdd55ac3292ba976d95cf92869ca219510d51805db3a735",
     "tests/release-confirmed.yaml": "sha256:18a28d221111a37bab6c15c30e11229e0a075bc4d62cbf8dec8e4df1d1f8eb02",
+    "tests/release.cz.yaml": "sha256:3c16d33b5e5828c1bba5a31f309c7f0a5de5dc72011b65f86b54b8ca15d74360",
     "tests/release.yaml": "sha256:cea0a22f280ded18157091f51d4347fa7bb21e165b77dd371566e164410c83e0"
   }
 }

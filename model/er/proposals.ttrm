@@ -11,7 +11,7 @@ def entity reorder_proposal {
     roles: [transaction]
     displayLabel: { en: "Reorder Proposal", cs: "Návrh na doobjednání" }
     attributes: [
-        def attribute proposal_id   { type: int, isKey: true, description: "Proposal number." },
+        def attribute proposal_id   { type: bigint, isKey: true, description: "Proposal number." },
         def attribute run           { type: text, description: "The automation run that made the proposal." },
         def attribute item          { type: int, description: "Product to reorder — FK to the 'sk' attribute of the Product (item) entity." },
         def attribute warehouse     { type: int, description: "Distribution center to reorder for — FK to the 'sk' attribute of the Distribution Center (warehouse) entity." },
@@ -49,6 +49,6 @@ def entity winback_mail {
             }
         },
         def attribute run       { type: text, description: "The automation run that mailed it." },
-        def attribute mailed_at { type: timestamp, description: "When the mail was sent." }
+        def attribute mailed_at { type: datetime, description: "When the mail was sent." }
     ]
 }

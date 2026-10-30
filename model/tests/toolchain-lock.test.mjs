@@ -49,7 +49,7 @@ async function readerOn(text) {
 }
 
 test('T1.1 — the lock: [ttr-core] ref; [veles] image, ttr-metadata and strict-load', () => {
-  assert.deepEqual(Object.keys(lock).sort(), ['ttr-core', 'ttrp', 'veles']);
+  assert.deepEqual(Object.keys(lock).sort(), ['automation-preview', 'ttr-core', 'ttrp', 'veles']);
   assert.deepEqual(Object.keys(lock['ttr-core']), ['ref']);
   assert.deepEqual(Object.keys(lock.veles), ['image', 'ttr-metadata', 'strict-load']);
 });
@@ -70,6 +70,8 @@ test('T1.3 — scripts/toolchain-lock.py (the reader the workflows use) prints t
     `TTRP_REF=${lock.ttrp.ref}`,
     `STRICT_LOAD=${lock.veles['strict-load']}`,
     `TTRP_VERSION=${lock.ttrp.version ?? lock.ttrp.ref.replace("grammar/v", "")}`,
+    `AU_PREVIEW_SERVER_REF=${lock["automation-preview"]["server-ref"]}`,
+    `AU_PREVIEW_GRAMMAR=${lock["automation-preview"].grammar}`,
   ]);
 });
 
@@ -89,7 +91,7 @@ test('T1.4 — a pin missing or empty is refused, naming it (an empty ref = an u
 test('T1.5 — a value of the wrong shape is refused, naming the key (they reach $GITHUB_ENV and `export`)', async () => {
   // Each case rewrites the lock's line that STARTS WITH `from`. Every pin is matched by its key's prefix, not its
   // value, so a pin bump does not break this test (the [ttr-core] ref did at grammar/v0.18.1, CN-P4 S4.5, and the
-  // [veles] pins at veles 0.11.15, md/hop HP-H); the [ttrp] ref is a commit sha and never starts with `grammar/v`.
+  // [veles] pins at veles 0.11.15, md/hop HP-H); the independent [ttrp] ref may be a release tag or commit.
   const cases = [
     ['ref = "grammar/v', 'ref = "grammar/v0.17.0$(true)"', '[ttr-core].ref'],
     ['ref = "grammar/v', 'ref = "main"', '[ttr-core].ref'],
@@ -132,3 +134,25 @@ for (const [ref, version, accepted] of [
     }
   });
 }
+
+test('preview runtime pin refuses malformed or missing commits before exporting any environment', async () => {
+  for (const ref of ['master', '', 'a'.repeat(39), '$(true)', 'a'.repeat(40) + '\\nEVIL=1']) {
+    const run = await readerOn(lockText.replace(/^server-ref = .*$/m, `server-ref = "${ref}"`));
+    assert.notEqual(run.status, 0);
+    assert.equal(run.stdout, '');
+    assert.match(run.stderr, /\[automation-preview\]\.server-ref/);
+  }
+  const run = await readerOn(lockText.replace(/^server-ref = .*$/m, ''));
+  assert.notEqual(run.status, 0);
+  assert.equal(run.stdout, '');
+});
+
+test('preview runtime grammar refuses missing or unsafe versions without exporting environment', async () => {
+  for (const value of [null, 'master', '0.18', '0.18.12-au.1', '$(true)']) {
+    const text = lockText.replace(/^grammar = .*$/m, value === null ? '' : `grammar = "${value}"`);
+    const run = await readerOn(text);
+    assert.notEqual(run.status, 0);
+    assert.equal(run.stdout, '');
+    assert.match(run.stderr, /\[automation-preview\]\.grammar/);
+  }
+});

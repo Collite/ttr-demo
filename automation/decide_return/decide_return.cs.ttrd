@@ -1,0 +1,313 @@
+{
+    "document": "handling-a-return-request.cs.md",
+    "documentSha": "22b7c931d6f86995566958a617339b5cd71baecdc624a396818fac52e5672b03",
+    "nodes": {
+        "bought_here": {
+            "block": 3,
+            "generatedSpan": [
+                760,
+                1264
+            ],
+            "paragraph": [
+                2208,
+                2298
+            ],
+            "span": [
+                2300,
+                2804
+            ]
+        },
+        "received": {
+            "block": 2,
+            "generatedSpan": [
+                303,
+                758
+            ],
+            "paragraph": [
+                1690,
+                1749
+            ],
+            "span": [
+                1751,
+                2206
+            ]
+        },
+        "request_value": {
+            "block": 5,
+            "generatedSpan": [
+                2153,
+                2360
+            ],
+            "paragraph": [
+                3905,
+                4075
+            ],
+            "span": [
+                4077,
+                4284
+            ]
+        },
+        "return_share": {
+            "block": 4,
+            "generatedSpan": [
+                1266,
+                2151
+            ],
+            "paragraph": [
+                2806,
+                3016
+            ],
+            "span": [
+                3018,
+                3903
+            ]
+        },
+        "stock_at_center": {
+            "block": 6,
+            "generatedSpan": [
+                2362,
+                3138
+            ],
+            "paragraph": [
+                4286,
+                4371
+            ],
+            "span": [
+                4373,
+                5165
+            ]
+        },
+        "way": {
+            "block": 7,
+            "generatedSpan": [
+                3140,
+                5054
+            ],
+            "paragraph": [
+                5167,
+                5340
+            ],
+            "span": [
+                5342,
+                7272
+            ]
+        }
+    },
+    "sentences": [
+        {
+            "nodes": [],
+            "span": [
+                22,
+                492
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                509,
+                734
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                738,
+                852
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                855,
+                1025
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                1028,
+                1152
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                1155,
+                1247
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                1249,
+                1328
+            ]
+        },
+        {
+            "nodes": [
+                "received"
+            ],
+            "span": [
+                1690,
+                1749
+            ]
+        },
+        {
+            "nodes": [
+                "bought_here"
+            ],
+            "span": [
+                2208,
+                2298
+            ]
+        },
+        {
+            "nodes": [
+                "return_share"
+            ],
+            "span": [
+                2806,
+                3016
+            ]
+        },
+        {
+            "nodes": [
+                "request_value"
+            ],
+            "span": [
+                3905,
+                4075
+            ]
+        },
+        {
+            "nodes": [
+                "stock_at_center"
+            ],
+            "span": [
+                4286,
+                4371
+            ]
+        },
+        {
+            "nodes": [
+                "way"
+            ],
+            "span": [
+                5167,
+                5340
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                7274,
+                7573
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                9193,
+                9445
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                9767,
+                9886
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                10472,
+                10549
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                11012,
+                11058
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                11368,
+                11455
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                11714,
+                11875
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                12968,
+                13316
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                14260,
+                14548
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                14829,
+                14980
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                15293,
+                15367
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                15731,
+                15809
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                16278,
+                16341
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                16663,
+                16836
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                18451,
+                18650
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                19433,
+                19525
+            ]
+        }
+    ]
+}
