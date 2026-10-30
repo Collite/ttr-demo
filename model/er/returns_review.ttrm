@@ -13,3 +13,15 @@ JOIN item i ON l.item = i.sk
 LEFT JOIN return_receipt rr ON l.line_id = rr.line_id
 """
 }
+
+def entity returns_review {
+    attributes: [
+        def attribute request_id { type: int },
+        def attribute customer { type: int },
+        def attribute category { type: text },
+        def attribute requested_at { type: date },
+        def attribute received_at { type: date, optional: true },
+        def attribute status { type: text },
+        def attribute amount { type: decimal }
+    ]
+}
