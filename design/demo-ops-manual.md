@@ -11,8 +11,7 @@
 > (plan-cluster H5 / tasks-p3-s5) and may not exist yet on your checkout — §7 gives the manual
 > equivalents to use until they land.
 
-The live model service is metadata — formerly `veles` (2026-06-13 → 2026-10), originally
-`ai-platform/infra/metadata`. Historical narrative below retains the earlier name.
+metadata — formerly `veles` (2026-06-13 → 2026-10), originally `ai-platform/infra/metadata`.
 
 ---
 
@@ -26,12 +25,12 @@ The live model service is metadata — formerly `veles` (2026-06-13 → 2026-10)
 - **GitOps**: ArgoCD self-manages the cluster from `olymp` `master` (app-of-apps
   `root-app-hartland.yaml`). App changes = olymp commits; ArgoCD auto-syncs
   (`demo-quirks.md` §5.4 for forcing a refresh).
-- **Namespaces** (quirks §5.5): spine (veles, query, validate, translate, dispatch, workers,
+- **Namespaces** (quirks §5.5): spine (metadata, query, validate, translate, dispatch, workers,
   query-mcp, llm-gateway) → `ttr-server` · golems + capabilities-mcp → `kantheon` · CNPG
   warehouses (`hartland_us`, `hartland_cz`) → `data` · Keycloak → `auth` · Envoy Gateway →
   `gateway` · ArgoCD → `argocd` · monitoring → `monitoring`.
-- **Model source**: veles serves the TTR-M model from **this repo** (`Collite/ttr-demo`,
-  branch `demo-p2`, subdir `model/`); golems cache the ModelBundle at boot — see §7.4 for the
+- **Model source**: metadata serves the TTR-M model from **this repo** (`Collite/ttr-demo`,
+  branch `master`, subdir `model/`); golems cache the ModelBundle at boot — see §7.4 for the
   two-step refresh after any model change.
 
 ### External URLs (the complete set)
@@ -184,7 +183,7 @@ Browser ── https ──► Envoy Gateway (:443, TLS, wildcard cert)
                                              ▼  (all in ns ttr-server)
                                           query-mcp → theseus→proteus→argos→kyklop→arges
                                              │                                    │
-                                          veles (model, from Collite/ttr-demo)  CNPG data ns:
+                                          metadata (model, from Collite/ttr-demo)  CNPG data ns:
                                                                                  hartland_us / hartland_cz
 ```
 
@@ -226,7 +225,7 @@ Run before every rehearsal (this is the H4 `demo-check` scope until the recipe l
 
 1. **Estate green**: `kubectl --context hartland -n argocd get applications` (or the ArgoCD
    UI) — everything Synced/Healthy.
-2. **Model served**: veles `ListQueries` shows **15/15 `PARSED`** (grpcurl recipe: quirks
+2. **Model served**: metadata `ListQueries` shows **15/15 `PARSED`** (grpcurl recipe: quirks
    §1.4; parse status is async — §1.3).
 3. **One live turn per world** — the full ROPC recipe from quirks §5.3 in a single shell
    call: mint Maya's token (`grant_type=password&client_id=iris&username=maya&password=Hartland!2026&scope=openid`
@@ -248,7 +247,7 @@ Run before every rehearsal (this is the H4 `demo-check` scope until the recipe l
 |---|---|---|
 | golem-hartland / -finance | `kantheon` / `:7420` | REST `/v1/answer/sync`, `/v1/resume` (quirks §5.3) |
 | capabilities-mcp | `kantheon` / `:7501` | Shem registration; Discover reads this |
-| veles | `ttr-server` / `:7260` http-ready, `:7261`+gRPC | no reflection — bring the protos (quirks §1.4) |
+| metadata | `ttr-server` / `:7260` http-ready, `:7261`+gRPC | no reflection — bring the protos (quirks §1.4) |
 | query-mcp | `ttr-server` / `:7307` `/mcp` | the executor's query edge |
 | llm-gateway | `ttr-server` / `:7280` `/v1` | Ktor 2.0 surface, `ttrk-` keys |
 | themis-mcp | `ttr-server` / `:7901` | REST `/v1/resolve` |
@@ -419,7 +418,7 @@ vocabulary. `just world-smoke <w> hartland --no-restart` re-checks a flip that a
 | Answer comes back "0 rows" | quirks §0 — pull `ttr-server/query-*` log by `correlation_id`; it's almost never the data |
 | Golem serves stale/old SQL after a model push | you forgot the golem rollout restart — §7.2 / quirks §1.2 |
 | New lexicon term still not matching after an ArgoCD sync | §7.2b — a ConfigMap sync is not a vocabulary reload; fuzzy re-reads every 10 min here |
-| Query fails parse in veles but runs in psql | Calcite is stricter — quirks §2 (reserved words, alias GROUP BY, `{brace}` params only) |
+| Query fails parse in metadata but runs in psql | Calcite is stricter — quirks §2 (reserved words, alias GROUP BY, `{brace}` params only) |
 | Series truncated at N rows | validator TopN ceiling — `VALIDATE_DEFAULT_TOP_N` (=100 on hartland), quirks §4.1 |
 | Text param matches nothing ("Marketplace") | case-sensitivity — phrase the utterance lowercase until the CaseFoldingParams release lands (quirks §3.3) |
 | Browser hangs at blank page entering Iris | Keycloak host cert not accepted in *that* profile — §2 |

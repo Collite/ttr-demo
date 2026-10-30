@@ -1,5 +1,7 @@
 # `lexicon/` — hartland's declared lexicon area (RV-36)
 
+metadata — formerly `veles` (2026-06-13 → 2026-10), originally `ai-platform/infra/metadata`.
+
 The **root-level data area**: alias/value files, grounding trigger files and skill files that
 compile into the estate's lexicon archive. Added at RV-P3.2.
 
@@ -885,4 +887,4 @@ still exits 0 — so read the warning count, not just the exit code.
 5. `just build-lexicon`, then re-record the id and counts above. **Read the warning count**, and
    commit the rebuilt archive with the change.
 
-The live model reader is metadata — formerly `veles` (2026-10); loader/lexicon formats and ports are unchanged.
+The live model reader is metadata; loader/lexicon formats and ports are unchanged.

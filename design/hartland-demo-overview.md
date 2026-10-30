@@ -1,5 +1,7 @@
 # The Hartland Demo — Overview & Operator's Guide
 
+metadata — formerly `veles` (2026-06-13 → 2026-10), originally `ai-platform/infra/metadata`.
+
 *A reference for the whole Hartland demo: the data, the model, the test fixtures,
 how to stand the cluster up, and the demo story plus the satellite demos that hang
 off it. Written 2026-07-20. Companion to the two authoritative field docs it draws
@@ -227,17 +229,17 @@ Queries #1–#8 carry the demo; #10–#13 are the RCA fan-out branches that *die
 numbers*; #14/#15 are coverage. **No query touches profit/cost** — there is nothing to
 select even if one tried (D-6a).
 
-### 2.5 How the model is served (veles → ModelBundle → golem)
+### 2.5 How the model is served (metadata → ModelBundle → golem)
 
-**veles** polls the model from git `Collite/ttr-demo` (branch `demo-p2`, subdir `model/`)
+**metadata** polls the model from git `Collite/ttr-demo` (branch `master`, subdir `model/`)
 and serves it as a ModelBundle. golem asks Ariadne `ResolveArea(hartland)` → the flat
 `hartland` package → `GetModel`, and loads the 15 `q.hartland.*` as its `preferred_queries`.
 Two operational rules that have bitten hours (demo-quirks §1):
 
-1. **veles filters packages by file *path*, not the declared `package`** — the checkout
+1. **metadata filters packages by file *path*, not the declared `package`** — the checkout
    dir must contain a `/hartland/` segment (`METADATA_GIT_CHECKOUT_DIR=/tmp/metadata-git/hartland`).
-2. **The two-refresh rule** — after any model edit you must refresh *both* veles
-   (`VelesService/Refresh {force:true}`, confirm `ListQueries` → PARSED) **and** golem
+2. **The two-refresh rule** — after any model edit you must refresh *both* metadata
+   (`MetadataService/Refresh {force:true}`, confirm `ListQueries` → PARSED) **and** golem
    (`kubectl rollout restart deployment/golem-hartland -n kantheon` and `-finance`), because
    golem caches the ModelBundle at boot. Skipping the golem restart leaves it sending stale
    SQL that fails at the translator — which golem masks as `STATUS_DONE, 0 rows`.
@@ -346,7 +348,7 @@ off on this cluster (O-5).
 
 ### 4.3 Services (`apps/*`, ~37 dirs) and the demo-turn constellation
 
-- **`ttr-server` ns (the open spine, tatrman-server charts):** `veles` (+`veles-mcp`),
+- **`ttr-server` ns (the open spine, tatrman-server charts):** `metadata` (+`meta-mcp`),
   `dispatch`, `query` (theseus) (+`query-mcp`), `translate`, `validate` (Argos governance),
   `llm-gateway` (gateway 2.0), `nlp`/`fuzzy` (+mcp), `identity`, `health`, plus data-plane
   workers.
@@ -354,7 +356,7 @@ off on this cluster (O-5).
   `themis-mcp`, `pythia`, `hebe`, `kleio`, `metis` (+mcp), `charon` (+mcp), `kallimachos`,
   `pinakes`, `landing`, and the golems.
 
-**A single demo turn flows:** `golem-*` (kantheon :7420) → **veles**.ttr-server (:7261 gRPC,
+**A single demo turn flows:** `golem-*` (kantheon :7420) → **metadata**.ttr-server (:7261 gRPC,
 ResolveArea/model) + **llm-gateway**.ttr-server (:7280, `Bearer ttrk-golem`) → **query-mcp**
 (:7307/mcp) → **theseus** (`ttr-query`) → translate / validate / worker → **hartland-pg**
 (`hartland_us`/`hartland_cz` in ns `data`). `capabilities-mcp` (:7501) handles registration
@@ -363,19 +365,19 @@ so Discover/Themis can route. Cross-namespace hosts **must** be FQDNs.
 ### 4.4 Golems (`golems/`)
 
 `appset-golems.yaml` renders each enabled Shem from three sources: (1) the Shem ConfigMap from
-`Collite/ttr-demo@demo-p2` (`agents/golem/shems/<shem>`, read via the `argocd-hartland-repo`
+`Collite/ttr-demo@master` (`agents/golem/shems/<shem>`, read via the `argocd-hartland-repo`
 cred); (2) the golem chart from `Collite/kantheon@master`; (3) the `$values` ref (olymp).
 Enablement is one JSON per Shem — `golem-hartland.json`, `golem-hartland-finance.json`.
-`_values.yaml` pins the image (`ghcr.io/collite/golem:0.9.4`, `IfNotPresent`), the veles gate,
+`_values.yaml` pins the image (`ghcr.io/collite/golem:0.9.4`, `IfNotPresent`), the metadata gate,
 the nested prompt-bundle mount, the central `golem` DB, and the extraEnv wiring
-(veles/gateway/query-mcp FQDNs, resume-HMAC, `GOLEM_LLM_GATEWAY_KEY`).
+(metadata/gateway/query-mcp FQDNs, resume-HMAC, `GOLEM_LLM_GATEWAY_KEY`).
 
 ### 4.5 Secrets — the hartland vault
 
 All ClusterExternalSecrets pull from ClusterSecretStore `azure-store` →
 **`https://hartland.vault.azure.net/`** (a *separate* vault from olymp01/olymp — Collite
-tenant). The demo-critical ones: `veles-github-pat` (+ `argocd-hartland-repo`, same key —
-model + Shem-bundle access), `golem-llm-gateway-key` (vault `ttrk-golem`),
+tenant). The demo-critical ones: `metadata-github-pat` (vault key `veles-github-pat`)
+and `argocd-hartland-repo` (same vault key — model + Shem-bundle access), `golem-llm-gateway-key` (vault `ttrk-golem`),
 `llm-gateway-secrets` (vault `azure-openai-key` — the real Azure OpenAI provider key),
 `pg-hartland-us-ro` / `-cz-ro`, and the warehouse role passwords in the data overlay
 (`pg-hartland-cred` + the two RO creds).
@@ -408,7 +410,7 @@ H4/H5 rehearsal + freeze.
 4. **The two-refresh rule** after any model edit (§2.5).
 
 Other operational gotchas (demo-quirks.md): golem masks failures as "0 rows"; Helm `extraEnv`
-*replaces* (re-list the chart's veles env or the validator loses it); `VALIDATE_DEFAULT_TOP_N=100`
+*replaces* (re-list the chart's metadata env or the validator loses it); `VALIDATE_DEFAULT_TOP_N=100`
 is set on hartland (§5); images must be multi-arch (the node is amd64 — prefix jib with `CI=true`).
 
 ---
@@ -486,8 +488,8 @@ the platform. Below, honestly labelled by maturity (vocabulary from `tatrman-ser
 - **The Designer / "Studio Viewer" (EXISTS, read-only)** — `tatrman/packages/designer` (React +
   Cytoscape, LSP-in-a-Web-Worker, no server). Renders the `db` schema (tables + FK edges) and `er`
   (entities + crow's-foot relations) with an inspector. Crucially it has a backend selector:
-  **`?veles=<base>` renders the *deployed* Hartland model straight from the running cluster's Veles
-  catalog API** — not just local files. Live *editing* in the Designer is partial/unverified.
+  **`?veles=<base>` renders the *deployed* Hartland model straight from the running cluster's metadata
+  catalog API** — not just local files. The `?veles=` selector and its adapter names remain unchanged (✅MR-7 / VS-6). Live *editing* in the Designer is partial/unverified.
 
 ### 6.2 Show the processing — TTR-P (tatrman)
 

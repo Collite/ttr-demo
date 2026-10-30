@@ -1,9 +1,11 @@
 # Hartland in OpenMetadata — XM-P3
 
-The catalog receives the physical inventory from Postgres and a projection of the
-authored model from Veles. Model changes remain reviewed repository changes.
+metadata — formerly `veles` (2026-06-13 → 2026-10), originally `ai-platform/infra/metadata`.
 
-Prerequisites: the paired XM-P3 PRs are merged; Veles 0.11.17 and connector 0.1.4 are
+The catalog receives the physical inventory from Postgres and a projection of the
+authored model from metadata. Model changes remain reviewed repository changes.
+
+Prerequisites: the paired XM-P3 PRs are merged; metadata 0.11.30 and connector 0.1.4 are
 published; the bot Secret is synced; the scan/projection Job template exists in
 `openmetadata`. Olymp's Stage boundary ends before deployment. The commands below
 are the subsequent operator/demo sequence, not evidence that it has run.

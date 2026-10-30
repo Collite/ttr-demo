@@ -1,5 +1,7 @@
 # generated — committed build artifacts
 
+metadata — formerly `veles` (2026-06-13 → 2026-10), originally `ai-platform/infra/metadata`.
+
 `resolved-packages.json` — the deterministic `packages`/`entities`/`areas` snapshot from the
 tatrman Modeler CLI (`just resolve-packages`), mirroring the `ai-models` repo's convention.
 Regenerate after any `model/` change: `just resolve-packages`. `just check-model` verifies the
