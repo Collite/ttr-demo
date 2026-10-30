@@ -11,8 +11,8 @@ ref = "b29d759294b4dfee31052264645a4fb2ade1a18f"
 version = "0.17.3-au.2"
 
 [veles]
-image = "0.11.30"                # MW-P0.4: renamed metadata service; paired Olymp wave-1 rollout
-ttr-metadata = "0.18.12"         # `tatrman-ttr-metadata` in ttr-server's `gradle/libs.versions.toml` at `server-libs/v<image>`;
+image = "0.11.31"                # Coordinated server issue rollout; paired Olymp Hartland wave
+ttr-metadata = "0.18.16"         # `tatrman-ttr-metadata` in ttr-server's `gradle/libs.versions.toml` at `server-libs/v<image>`;
                                  # the gate builds its Kotlin loader from ttr-core `grammar/v<this>`, stamped with it
 # true since md/hop HP-H (2026-10-24): the [veles] pin caught up with veles 0.11.15, whose ttr-metadata 0.18.3 ships
 # ttr-metadata-cli (from grammar/v0.18.0; ttr-core SO-core P0·S0.3 T6). true = the gate fails without the loader,
