@@ -47,8 +47,11 @@ STUDIO=https://studio.hartland.collite.cz
 
 1. **Master is where the show starts: no `returns_review` on it** (this check moved here from the gate, ttr-demo#145).
    ```bash
-   git grep -n -E 'def (query|entity) returns_review\b|returns_review_q' origin/master -- model   # → no output
+   git grep -n -E 'def (query|entity) returns_review\b|returns_review_q' origin/master -- 'model/*.ttrm' 'model/reports/*/report.yaml'   # → no output
    ```
+   Only model sources and report files: under all of `model/`, the reports README and two test files name
+   `returns_review_q` on master too. On `origin/demo/returns-review` the same grep prints the three definitions and the
+   report.
 2. **Metadata serves master.**
    ```bash
    kubectl --context hartland get --raw /api/v1/namespaces/ttr-server/services/metadata:7260/proxy/status \
