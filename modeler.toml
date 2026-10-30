@@ -64,3 +64,5 @@ list = "EXPECTED_ENTITIES"
 # stay out of `model/`), and the ops authoring stubs in `authoring-stubs/`. TTR-P and resolve-packages read all three;
 # veles reads only `model/`, the automation Server `model/` + `automation/`, and the lexicon build none of this table.
 extra-model-roots = ["model", "automation", "authoring-stubs"]
+
+# Studio propose smoke
