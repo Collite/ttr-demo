@@ -334,3 +334,8 @@ def er2db_attribute winback_mail_quarter_map   { attribute: er.entity.winback_ma
 def er2db_attribute winback_mail_offer_map     { attribute: er.entity.winback_mail.offer,     target: { column: db.dbo.winback_mail.wm_offer } }
 def er2db_attribute winback_mail_run_map       { attribute: er.entity.winback_mail.run,       target: { column: db.dbo.winback_mail.wm_run } }
 def er2db_attribute winback_mail_mailed_at_map { attribute: er.entity.winback_mail.mailed_at, target: { column: db.dbo.winback_mail.wm_mailed_at } }
+
+def er2db_entity returns_review_map {
+    entity: hartland.er.entity.returns_review,
+    target: { query: hartland.er.query.returns_review }
+}
