@@ -1,0 +1,33 @@
+// Compile the Hartland-owned spec alongside the exact accepted Server's unit tier.
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+
+gradle.settingsEvaluated { settings ->
+    settings.dependencyResolutionManagement.repositories.removeAll { repo ->
+        repo instanceof org.gradle.api.artifacts.repositories.MavenArtifactRepository && repo.url.scheme == 'file'
+    }
+}
+gradle.projectsEvaluated {
+    def service = gradle.rootProject.project(':services:automation')
+    def hartland = new File(System.getProperty('hartland.root')).canonicalFile
+    service.kotlin.sourceSets.getByName('test').kotlin.srcDir(new File(hartland, 'automation/tests/writer-preview'))
+    service.tasks.named('test') {
+        systemProperty 'hartland.root', hartland.absolutePath
+        inputs.dir(new File(hartland, 'model'))
+        inputs.dir(new File(hartland, 'automation'))
+        testLogging { events 'passed', 'failed'; exceptionFormat 'full' }
+    }
+    service.tasks.register('hartlandVerifyPublishedCatalog') {
+        doLast {
+            def version = System.getProperty('hartland.grammar')
+            assert version != null
+            def ids = service.configurations.runtimeClasspath.incoming.resolutionResult.allComponents
+                .collect { it.id }.findAll { it instanceof ModuleComponentIdentifier && it.group == 'org.tatrman' }
+            assert ids.any { it.module == 'ttrp-frontend' }
+            ids.sort { it.module }.each { id ->
+                assert id.version == (id.module in ['ttr-translator', 'ttr-plan-proto'] ? '0.12.11' : version)
+                println id.displayName
+            }
+            println 'services/automation runtimeClasspath verified; Maven Local disabled; no candidate override.'
+        }
+    }
+}

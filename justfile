@@ -365,6 +365,14 @@ build-recipes cli="":
 check-recipes cli="":
     python3 scripts/build-recipes.py --check {{ if cli == "" { "" } else { "--cli '" + cli + "'" } }}
 
+# Compare Markdown, canonical recipes, provenance and explanation READMEs without writing.
+check-literate-recipes:
+    python3 scripts/build-recipes.py --literate-check
+
+# Clean accepted Server checkout; toolchain.lock's test-only pin is independent of serving images.
+writer-preview server="../tatrman-server":
+    python3 scripts/writer-preview.py --server "{{server}}"
+
 # CI runs this after build-recipes. Include untracked files: a new bundle must be committed too.
 check-recipe-drift:
     #!/usr/bin/env bash

@@ -7,9 +7,14 @@ contracts §7 and names only what its recipe has; the seeds are what scripts/see
 from __future__ import annotations
 
 import importlib.util
+import contextlib
+import io
 import re
+import shutil
+import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import yaml
 
@@ -69,6 +74,33 @@ class GoldenCases(unittest.TestCase):
         self.assertGreater(len(self.cases), 0)
         self.assertTrue(all(c.parent.parent.name in self.recipes for c in self.cases), "every case sits in a recipe's folder")
 
+    def test_both_worlds_have_explicit_unpinned_synthetic_ops_cases(self) -> None:
+        for world in ('us', 'cz'):
+            for recipe in ('no_run_since', 'obligation_due_passed'):
+                suffix = '' if world == 'us' else '.cz'
+                for route in ('late', 'none'):
+                    source = AUTOMATION / 'ops' / recipe / 'tests' / f'{route}{suffix}.yaml'
+                    text = source.read_text()
+                    case = yaml.safe_load(text)
+                    self.assertIn('SYNTHETIC ops authoring fixture', text)
+                    self.assertNotIn('pinned_from', case)
+                    self.assertEqual(case['world'], world)
+                    self.assertTrue(all(k.startswith(f'stub-{world}-') for k in case['keys']))
+                    self.assertEqual(bool(case['expected']['verdicts']), route == 'late')
+
+    def test_inbound_none_keeps_explicit_keys_without_verdict_rows(self) -> None:
+        case = yaml.safe_load((AUTOMATION / 'monitor_inbound/tests/none.yaml').read_text())
+        self.assertGreater(len(case['keys']), 0)
+        self.assertLessEqual(len(case['keys']), 5)
+        self.assertEqual(case['expected']['verdicts'], [])
+
+    def test_settlement_case_keeps_overlapping_outcomes_for_the_same_key(self) -> None:
+        case = yaml.safe_load((AUTOMATION / 'settle/tests/credit-note-issued.yaml').read_text())
+        routes_by_key = {}
+        for verdict in case['expected']['verdicts']:
+            routes_by_key.setdefault(verdict['key'], set()).add(verdict['route'])
+        self.assertTrue(any({'credit_note_issued', 'money_overdue'} <= routes for routes in routes_by_key.values()))
+
     def test_every_case_is_a_contracts_7_case(self) -> None:
         for path in self.cases:
             with self.subTest(case=str(path.relative_to(ROOT))):
@@ -86,6 +118,9 @@ class GoldenCases(unittest.TestCase):
                 self.assertLessEqual(set(case["expected"]), EXPECTED_KEYS)
                 if "pinned_from" in case:
                     self.assertEqual(set(case["pinned_from"]), {"run", "at", "by"}, "a pinned case names run, at, by")
+                    for field in ("run", "at", "by"):
+                        self.assertIsInstance(case["pinned_from"][field], str)
+                        self.assertTrue(case["pinned_from"][field].strip(), f"pinned_from.{field} is required")
 
     def test_cases_name_only_what_the_recipe_has(self) -> None:
         for path in self.cases:
@@ -111,12 +146,75 @@ class GoldenCases(unittest.TestCase):
             want = seed_goldens.seeds(world) if (seed_goldens.EXPECTED / world).exists() else {}
             committed = {p for p in self.cases if (p.name.endswith(f".{world}.yaml") if world != "us" else p.name.count(".") == 1)
                          and "pinned_from" not in yaml.safe_load(p.read_text())}
-            if world == "cz" and not committed:
-                continue  # the cz seeds come with the CZ twins (P3 · S3.3 T5)
             with self.subTest(world=world):
                 self.assertEqual({str(p.relative_to(ROOT)) for p in committed}, {str(p.relative_to(ROOT)) for p in want})
                 for p in committed:
                     self.assertEqual(p.read_text(), want[p], f"{p.relative_to(ROOT)} is stale: uv run scripts/seed-goldens.py")
+
+
+class PinnedSeedPreservation(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        for folder in ('automation', 'data/automation/expected', 'data/automation/recon', 'authoring-stubs'):
+            shutil.copytree(ROOT / folder, self.root / folder)
+        for name, value in {
+            'ROOT': self.root, 'AUTOMATION': self.root / 'automation',
+            'EXPECTED': self.root / 'data/automation/expected', 'RECON': self.root / 'data/automation/recon',
+        }.items():
+            mock = patch.object(seed_goldens, name, value)
+            mock.start()
+            self.addCleanup(mock.stop)
+
+    def run_cli(self, *args: str) -> tuple[int, str]:
+        with patch('sys.argv', ['seed-goldens.py', *args]), contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()) as err:
+            status = seed_goldens.main()
+        return status, err.getvalue()
+
+    def pin(self, world: str) -> tuple[Path, str]:
+        suffix = '' if world == 'us' else '.cz'
+        path = self.root / f'automation/monitor_inbound/tests/none{suffix}.yaml'
+        case = yaml.safe_load(path.read_text())
+        case['pinned_from'] = {'run': 'observed-run', 'at': '2026-10-24T18:00:00Z', 'by': 'bora'}
+        text = '# Observed silent keys; preserve this evidence exactly.\n' + yaml.safe_dump(case, sort_keys=False)
+        path.write_text(text)
+        return path, text
+
+    def test_generation_and_check_preserve_pinned_cases_in_both_worlds(self) -> None:
+        for world in ('us', 'cz'):
+            with self.subTest(world=world):
+                path, text = self.pin(world)
+                self.assertEqual(self.run_cli('--world', world)[0], 0)
+                self.assertEqual(path.read_text(), text)
+                self.assertEqual(self.run_cli('--world', world, '--check')[0], 0)
+                self.assertNotIn(path, seed_goldens.seeds(world))
+
+    def test_stale_unpinned_case_still_fails_read_only_check(self) -> None:
+        pinned, text = self.pin('us')
+        stale = self.root / 'automation/monitor_inbound/tests/complete.yaml'
+        stale.write_text(stale.read_text() + '# stale\n')
+        before = stale.read_bytes()
+        status, error = self.run_cli('--check')
+        self.assertEqual(status, 3)
+        self.assertIn('complete.yaml', error)
+        self.assertEqual(stale.read_bytes(), before)
+        self.assertEqual(pinned.read_text(), text)
+
+    def test_invalid_pin_or_identity_refuses_before_any_seed_is_written(self) -> None:
+        pinned, _ = self.pin('us')
+        original = yaml.safe_load(pinned.read_text())
+        for change in ({'pinned_from': None}, {'pinned_from': {'run': '', 'at': 'now', 'by': 'bora'}},
+                       {'world': 'cz'}, {'recipe': 'settle'}, {'case': 'wrong'}):
+            with self.subTest(change=change):
+                pinned.write_text(yaml.safe_dump(original | change))
+                other = self.root / 'automation/decide_return/tests/reject.yaml'
+                other.write_text('case: untouched\n')
+                before = {p: p.read_bytes() for p in self.root.rglob('*.yaml')}
+                status, error = self.run_cli()
+                self.assertEqual(status, 2)
+                self.assertIn(str(pinned.relative_to(self.root)), error)
+                self.assertEqual({p: p.read_bytes() for p in self.root.rglob('*.yaml')}, before)
 
 
 if __name__ == "__main__":

@@ -13,8 +13,7 @@ import { loadHartlandProject, ACCEPTED_RESIDUAL_CODES } from './project-harness.
 const MONEY = 'decimal(12,2)';
 
 // ── physical (contracts §1): table → primary key + columns [name, type] ─────────────────────────────
-// Types in TTR-M spelling. `boolean` is `bool` (TTR.g4 has it); `bigserial` is `int` (TTR-M has no
-// bigint); `timestamptz` is `timestamp`; the DDL's `text` is `varchar` (the dims.ttrm precedent).
+// Types in TTR-M spelling. `boolean` is `bool` (TTR.g4 has it); `bigserial` is `bigint`; `timestamptz` is `timestamp`; the DDL's `text` is `varchar` (the dims.ttrm precedent).
 const TABLES = {
   sales_order: {
     pk: ['so_order_number'],
@@ -93,13 +92,13 @@ const TABLES = {
   reorder_proposal: {
     pk: ['rp_proposal_id'],
     columns: [
-      ['rp_proposal_id', 'int'], ['rp_run', 'varchar'], ['rp_item_sk', 'int'], ['rp_warehouse_sk', 'int'], ['rp_on_hand', 'int'],
+      ['rp_proposal_id', 'bigint'], ['rp_run', 'varchar'], ['rp_item_sk', 'int'], ['rp_warehouse_sk', 'int'], ['rp_on_hand', 'int'],
       ['rp_weekly_demand', MONEY], ['rp_proposed_qty', 'int'], ['rp_state', 'varchar'],
     ],
   },
   winback_mail: {
     pk: ['wm_customer_sk', 'wm_quarter'],
-    columns: [['wm_customer_sk', 'int'], ['wm_quarter', 'varchar'], ['wm_offer', 'varchar'], ['wm_run', 'varchar'], ['wm_mailed_at', 'timestamp']],
+    columns: [['wm_customer_sk', 'int'], ['wm_quarter', 'varchar'], ['wm_offer', 'varchar'], ['wm_run', 'varchar'], ['wm_mailed_at', 'datetime']],
   },
 };
 
@@ -267,7 +266,7 @@ const ENTITIES = {
   reorder_proposal: {
     reads: ['table', 'reorder_proposal'],
     attributes: [
-      ['proposal_id', 'int', true, 'rp_proposal_id'], ['run', 'text', false, 'rp_run'], ['item', 'int', false, 'rp_item_sk'],
+      ['proposal_id', 'bigint', true, 'rp_proposal_id'], ['run', 'text', false, 'rp_run'], ['item', 'int', false, 'rp_item_sk'],
       ['warehouse', 'int', false, 'rp_warehouse_sk'], ['on_hand', 'int', false, 'rp_on_hand'],
       ['weekly_demand', MONEY, false, 'rp_weekly_demand'], ['proposed_qty', 'int', false, 'rp_proposed_qty'],
       ['state', 'text', false, 'rp_state'],
@@ -277,7 +276,7 @@ const ENTITIES = {
     reads: ['table', 'winback_mail'],
     attributes: [
       ['customer', 'int', true, 'wm_customer_sk'], ['quarter', 'text', true, 'wm_quarter'], ['offer', 'text', false, 'wm_offer'],
-      ['run', 'text', false, 'wm_run'], ['mailed_at', 'timestamp', false, 'wm_mailed_at'],
+      ['run', 'text', false, 'wm_run'], ['mailed_at', 'datetime', false, 'wm_mailed_at'],
     ],
   },
 };

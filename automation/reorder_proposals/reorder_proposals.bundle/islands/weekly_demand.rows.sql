@@ -1,4 +1,4 @@
-SELECT "item", "warehouse", SUM("quantity") AS "sold", CAST(SUM("quantity") AS DECIMAL(19, 1)) / :demand_period AS "weekly_demand"
+SELECT "item", "warehouse", SUM("quantity") AS "sold", CAST(CAST(SUM("quantity") AS BIGINT) AS DECIMAL(19, 1)) / :demand_period AS "weekly_demand"
 FROM (SELECT "t0"."item", "t0"."warehouse", "t0"."lines", "sales_line0"."order_number", "sales_line0"."line_no", "sales_line0"."quantity", "sales_line0"."unit_price", "sales_line0"."ext_sales_price", "sales_line0"."sold_date", "sales_line0"."customer", "sales_line0"."channel"
         FROM (SELECT "item", "warehouse", COUNT("line_no") AS "lines"
                 FROM "sales_line"

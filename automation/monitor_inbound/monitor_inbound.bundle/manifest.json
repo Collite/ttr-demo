@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "ttrpVersion": 2,
-  "toolchain": "org.tatrman:ttrp:0.17.3-au.2",
+  "toolchain": "org.tatrman:ttrp:0.18.14",
   "program": "monitor_inbound.ttrp",
   "world": {
     "qname": "hartland.worlds.demo",
@@ -1279,14 +1279,20 @@
       }
     ],
     "tests": [
+      "tests/complete.cz.yaml",
       "tests/complete.yaml",
+      "tests/damaged.cz.yaml",
       "tests/damaged.yaml",
+      "tests/expired.cz.yaml",
       "tests/expired.yaml",
+      "tests/none.cz.yaml",
       "tests/none.yaml",
+      "tests/remind.cz.yaml",
       "tests/remind.yaml"
     ]
   },
   "files": {
+    "README.md": "sha256:a3e94677ff6c7b5d768e1af6f1c0e48f63bcc641864ea1d6bfbd92d2ce4cd735",
     "catalog/monitor_inbound.ttrm": "sha256:8f56224a5f35fceca4cc8c5944a1bdc4ec6f48d424e6b3d679cb57e5a9973cdb",
     "catalog/monitor_inbound_verdict.ttrm": "sha256:4aea78f9e2ad3b800c724f6237acdf2828b0509d91e13d818ba209db7676c80e",
     "islands/age.rows.duckdb.sql": "sha256:8e8a48f85967b518a770d36cfc5ae194c6bc59db37affbdbe45ad405669010ed",
@@ -1305,10 +1311,15 @@
     "parts/p_7d39f2a5.sql": "sha256:294b5e9a92cfa1ce6317d22497e1396f6b12afb25ee88e2473ad195f908c6835",
     "parts/p_f7cce9af.sql": "sha256:92217027d15781ea77ce9063c4588fd225545d189197ff181a53f575d07ceab7",
     "parts/p_ff40000e.sql": "sha256:18d735712ae1aabcb4b61d376677b24f67129cd0009d9cba332c1dda58277944",
+    "tests/complete.cz.yaml": "sha256:7802a0431cbfa2b1bb748afd44d7dee89594f7d0f20fcf4eef8ee47158b0736c",
     "tests/complete.yaml": "sha256:e5b642e33e7a36dd03fb8abafa8e62cfd149f70dce8ac7d71062f09c216b59d2",
+    "tests/damaged.cz.yaml": "sha256:fb193d6d4e7cf5f26ac5027184843e9ddd1c955a1dc2f5550383cd62c7d5014f",
     "tests/damaged.yaml": "sha256:f2f96889af6b1d63c4ceaf4ce7d88c76200dfeb87c35c479f45458ce345c7f76",
+    "tests/expired.cz.yaml": "sha256:a6d3ccb68cf258772050566d70f5f5a458015a9edabbd003a7beed23a9c8816f",
     "tests/expired.yaml": "sha256:69c3b6c78f511c177e7c9d766ba9728479f39f2c5864638db848a4d899be45e7",
+    "tests/none.cz.yaml": "sha256:ba4eaa7982e988e3b0d1732ba2b52ab354ce463dc5d579fbedf1c6eab85ece77",
     "tests/none.yaml": "sha256:86c85920582240b26a00b616291ee8fe9e6aa3caad7ac28a81f323b7289c2a89",
+    "tests/remind.cz.yaml": "sha256:172bd710935fab16ea6bdcfe2ad4801755868ba339bbf9e910e9796361184580",
     "tests/remind.yaml": "sha256:0070b864bd48e61b6f0963d89bd8bfe8689812cf5d6e0bd2de5c7ee89040a961"
   }
 }

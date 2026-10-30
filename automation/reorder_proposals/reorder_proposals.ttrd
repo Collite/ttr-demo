@@ -1,0 +1,125 @@
+{
+    "document": "reorder_proposals.md",
+    "documentSha": "27954f87f81447f69b14c3daab7e37bb02649f686a7c1bc74f6f32c106cd5718",
+    "nodes": {
+        "cover": {
+            "block": 5,
+            "generatedSpan": [
+                1354,
+                2064
+            ],
+            "paragraph": [
+                2465,
+                2683
+            ],
+            "span": [
+                2685,
+                3407
+            ]
+        },
+        "on_hand": {
+            "block": 3,
+            "generatedSpan": [
+                509,
+                907
+            ],
+            "paragraph": [
+                1390,
+                1513
+            ],
+            "span": [
+                1515,
+                1925
+            ]
+        },
+        "selling": {
+            "block": 2,
+            "generatedSpan": [
+                262,
+                507
+            ],
+            "paragraph": [
+                1056,
+                1129
+            ],
+            "span": [
+                1131,
+                1388
+            ]
+        },
+        "weekly_demand": {
+            "block": 4,
+            "generatedSpan": [
+                909,
+                1352
+            ],
+            "paragraph": [
+                1927,
+                2006
+            ],
+            "span": [
+                2008,
+                2463
+            ]
+        }
+    },
+    "sentences": [
+        {
+            "nodes": [],
+            "span": [
+                21,
+                274
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                276,
+                757
+            ]
+        },
+        {
+            "nodes": [
+                "selling"
+            ],
+            "span": [
+                1056,
+                1129
+            ]
+        },
+        {
+            "nodes": [
+                "on_hand"
+            ],
+            "span": [
+                1390,
+                1513
+            ]
+        },
+        {
+            "nodes": [
+                "weekly_demand"
+            ],
+            "span": [
+                1927,
+                2006
+            ]
+        },
+        {
+            "nodes": [
+                "cover"
+            ],
+            "span": [
+                2465,
+                2683
+            ]
+        },
+        {
+            "nodes": [],
+            "span": [
+                3409,
+                3683
+            ]
+        }
+    ]
+}
