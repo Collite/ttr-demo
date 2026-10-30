@@ -1,6 +1,8 @@
 # model/layouts — the served layouts
 
-A layout is one named picture of a schema: the cards it shows and, optionally, where they sit. Veles serves every
+metadata — formerly `veles` (2026-06-13 → 2026-10), originally `ai-platform/infra/metadata`.
+
+A layout is one named picture of a schema: the cards it shows and, optionally, where they sit. metadata serves every
 `.ttrg` under `model/` as a layout (`/model/layouts`, `/model/layout?name=`); the Studio's Model page and the Viewer
 list them under **Schemas** as `er · <name>`. The format is ttr-core's *Layout files* page
 (<https://docs.tatrman.org/model/layout-files/>).
@@ -10,7 +12,7 @@ list them under **Schemas** as `er · <name>`. The format is ttr-core's *Layout 
 | `sales.ttrg` | `sales` — the four sales facts, the dimensions they all share above them, the channel-specific ones below | hand |
 | `agent/agent_hartland.ttrg` · `agent/agent_hartland_db.ttrg` | the Golem's own, er and db — every card its area closes over | `just gen-layouts` |
 
-- **`.ttrg`, not `.yaml`.** Veles reads only the TTR form (a `.ttrg`, plus an optional `.ttrl` sidecar). The YAML form
+- **`.ttrg`, not `.yaml`.** metadata reads only the TTR form (a `.ttrg`, plus an optional `.ttrl` sidecar). The YAML form
   is what the Viewer's *Save as…* offers by default; save as **TTR** for a file that goes here.
 - **Write what a layout writer writes:** refs as full qnames (`hartland.er.entity.item`, `hartland.db.dbo.item`),
   sorted alphabetically, integer positions, the graph named after the file. `tests/layouts.test.mjs` reads every file

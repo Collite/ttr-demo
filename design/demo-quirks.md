@@ -1,5 +1,7 @@
 # Hartland demo — quirks & gotchas
 
+metadata — formerly `veles` (2026-06-13 → 2026-10), originally `ai-platform/infra/metadata`.
+
 > Operational field notes for the Kantheon bilingual (US/CZ) TPC-DS pattern-answering
 > demo on the live `hartland` cluster. Everything here **bit us** during bring-up
 > (Stage 3.3, Jul 2026). Read this before touching the demo model, the read spine, or
@@ -25,10 +27,10 @@ where you'll find the actual `translator_rejected` / error message.
 
 ---
 
-## 1. Model serving (veles / Ariadne)
+## 1. Model serving (metadata / Ariadne)
 
 ### 1.1 Package filtering is by FILE PATH, not the declared `package`
-veles classifies a model object into a package by looking for `/<package>/` **in the
+metadata classifies a model object into a package by looking for `/<package>/` **in the
 object's source-file path** (`MetadataServiceImpl.kt`), *not* by the `package hartland`
 declaration in the `.ttrm`. The git-source `id` is hardcoded `github-model`
 (`application.conf`), so the clone lands at `/tmp/metadata-git/github-model/…` — whose
@@ -36,15 +38,15 @@ paths contain no `/hartland/` segment. Result: `GetModel(["hartland"])` matched 
 files even though ResolveArea returned `["hartland"]`.
 
 **Fix (live):** `METADATA_GIT_CHECKOUT_DIR=/tmp/metadata-git/hartland` in
-`olymp/clusters/hartland/apps/veles/values.yaml`, so every source path carries
+`olymp/clusters/hartland/apps/metadata/values.yaml`, so every source path carries
 `/hartland/`.
 
-### 1.2 Two refreshes are needed after a model edit — veles AND golem
-veles pulls the model from `Collite/ttr-demo` (branch `demo-p2`, subdir `model/`) on a
-poll interval; golem fetches the **ModelBundle from veles once at boot and caches it**.
+### 1.2 Two refreshes are needed after a model edit — metadata AND golem
+metadata pulls the model from `Collite/ttr-demo` (branch `master`, subdir `model/`) on a
+poll interval; golem fetches the **ModelBundle from metadata once at boot and caches it**.
 So after you push a model change:
 
-1. **veles**: force a re-fetch — `VelesService/Refresh {force:true}` over gRPC (see §5.3),
+1. **metadata**: force a re-fetch — `MetadataService/Refresh {force:true}` over gRPC (see §5.3),
    or wait for the poll. Confirm with `ListQueries` (parse status flips to PARSED).
 2. **golem**: `kubectl rollout restart deployment/golem-hartland -n kantheon` (and
    `-finance`). Without this, golem keeps serving the **stale** pattern SQL — which then
@@ -56,7 +58,7 @@ Forgetting step 2 cost hours: veles showed 15/15 parsed while golem still sent t
 Right after `Refresh`, `ListQueries` may show `PARSE_STATUS_PENDING` for a few queries —
 parsing runs on a background worker. Poll until it settles to PARSED/FAILED.
 
-### 1.4 veles gRPC has no server reflection
+### 1.4 metadata gRPC has no server reflection
 `grpcurl -plaintext … list` fails ("server does not support the reflection API"). Drive it
 with the proto file:
 `-import-path tatrman-server/shared/proto/src/main/proto -import-path <plan-proto extracted dir> -proto org/tatrman/meta/v1/meta.proto`.
@@ -68,7 +70,7 @@ The extracted plan/common protos live under a `build/extracted-include-protos/*`
 
 Pattern-query `sourceText` is parsed by **Calcite** (via the translator), which is
 **stricter than Postgres**. A query can run fine against `hartland_us` in `psql` and still
-report `PARSE_STATUS_FAILED` in veles. Seen so far:
+report `PARSE_STATUS_FAILED` in metadata. Seen so far:
 
 ### 2.1 Reserved words as identifiers
 A CTE named `returns` → `parse_failed: Encountered ", returns"`. `returns` is a Calcite
@@ -175,8 +177,8 @@ decides the *get*) is tracked as **NEW-4** in
 
 ### 4.2 Helm `extraEnv` REPLACES, it does not merge
 Overriding `extraEnv` in an olymp values file **drops** the chart's default env list. When
-you add `VALIDATE_DEFAULT_TOP_N`, you must repeat the chart's `VELES_HOST`/`VELES_GRPC_PORT`
-entries verbatim, or the validator loses its veles wiring.
+you add `VALIDATE_DEFAULT_TOP_N`, you must repeat the chart's `METADATA_HOST`/`METADATA_GRPC_PORT`
+entries verbatim, or the validator loses its metadata wiring.
 
 ---
 
@@ -203,7 +205,7 @@ Run the whole token-mint → turn → resume flow in a **single** shell invocati
   `POST /v1/resume {resume_token, free_text_answer}`. The resume token is nested at
   `envelopes[0].pendingClarification.resumeToken`. Result rows land in the envelope's
   `contentJson`; step counts in `stepRecords[].rowCount`.
-- **veles Refresh:** `VelesService/Refresh {force:true}` (grpcurl, §1.4 for proto paths).
+- **metadata Refresh:** `MetadataService/Refresh {force:true}` (grpcurl, §1.4 for proto paths).
 
 ### 5.4 ArgoCD sync
 The hartland apps auto-sync from olymp `master` (HEAD) + tatrman-server master. Force a
@@ -314,10 +316,10 @@ Still v2-only, deliberately: typed actions (drilldowns/refetch) and artifact ref
 golem has no `/v1` counterpart for at all.
 
 ### 5.5 Namespaces
-Spine (veles, query, validate, translate, dispatch, workers, query-mcp) → `ttr-server`.
+Spine (metadata, query, validate, translate, dispatch, workers, query-mcp) → `ttr-server`.
 Golems + capabilities-mcp → `kantheon`. Data (CNPG `hartland_us`/`hartland_cz`) → `data`.
-Keycloak → `auth`. golem→veles/query-mcp cross-ns, so those hosts must be FQDNs
-(`veles.ttr-server`, `query-mcp.ttr-server`), not bare names.
+Keycloak → `auth`. golem→metadata/query-mcp cross-ns, so those hosts must be FQDNs
+(`metadata.ttr-server`, `query-mcp.ttr-server`), not bare names.
 
 ---
 

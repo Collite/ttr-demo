@@ -1,5 +1,7 @@
 # automation — the automation agents' package
 
+metadata — formerly `veles` (2026-06-13 → 2026-10), originally `ai-platform/infra/metadata`.
+
 AU — automation agents: designed and planned in `collite-gh/project/kantheon/features/automation-agents/`
 (`design/design.md`, `implementation/hartland/`). This folder is the package of `12` §6, read by the automation
 service beside `../model/` (ttr-server contracts §1.1):
@@ -14,7 +16,7 @@ service beside `../model/` (ttr-server contracts §1.1):
 | `tests/` | the package's suites (`just verify-model` runs them) |
 
 **Why the world is here, not in `../model/`.** Its automation half names the programs and roles of this folder
-and the toolchain's automation entities (`obligation`, …). veles and the lexicon build read `../model/` alone, and
+and the toolchain's automation entities (`obligation`, …). metadata and the lexicon build read `../model/` alone, and
 would report every one of those names unresolved (the lexicon build refuses to load such a model). So nothing
 under `../model/` names an automation object; `../model/` only carries the lifecycles (`states:`) the actions are
 checked against.
@@ -55,7 +57,7 @@ named `TTRP-TYP-001` refusal for row-dependent `minutes(2 * period_minutes)` ari
 fixture only and is not included in any bundle; remove all three stub files when the real package lands.
 
 The ops stub lives at `../authoring-stubs/automation/ops/`, outside both roots read by the Server
-(`model/` + `automation/`). Neither veles (`model/`) nor the automation Server (`model/` + `automation/`) loads it. The TTR-P toolchain and `resolve-packages` (`generated/resolved-packages.json`) load this extra root through `modeler.toml`.
+(`model/` + `automation/`). Neither metadata (`model/`) nor the automation Server (`model/` + `automation/`) loads it. The TTR-P toolchain and `resolve-packages` (`generated/resolved-packages.json`) load this extra root through `modeler.toml`.
 
 Worktrees with another basename build/check in a temporary `hartland/` copy until
 [ttr-core#251](https://github.com/Collite/ttr-core/issues/251) fixes declared-package resolution.

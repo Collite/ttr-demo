@@ -220,6 +220,7 @@
     <div>
       <p class="kicker">Tatrman ecosystem · operator's guide · 2026-07-20</p>
       <h1>The <em>Hartland</em> Demo</h1>
+      <p>metadata — formerly <code>veles</code> (2026-06-13 → 2026-10), originally <code>ai-platform/infra/metadata</code>.</p>
       <p class="standfirst">A category manager types a plain-language question into one box. The platform classifies it, routes it to the right agent, compiles it against a <b>governed model</b> of the warehouse, runs it on real data, and answers in sentences and charts — every block showing its work. The thesis it exists to prove: <b>the LLM handles intent only; everything from intent to data execution is deterministic and governed.</b> The seeded plot is an operational incident — a distribution centre that quietly melts down for ~17 weeks — buried in otherwise-flat data, so an AI-driven investigation lands on the true cause while every wrong hypothesis dies on real numbers. It runs bilingually: the same arc in English over <span class="mono">hartland_us</span> and Czech over <span class="mono">hartland_cz</span>.</p>
       <div class="hero-metrics">
         <div class="metric"><div class="n">15</div><div class="l">curated patterns</div></div>
@@ -354,10 +355,10 @@
       </table></div>
 
       <h3>How the model is served &amp; the two rules that bite</h3>
-      <p>veles polls the model from git <span class="mono">Collite/ttr-demo@demo-p2</span> and serves it as a ModelBundle; golem resolves the area via Ariadne and loads the 15 patterns as its <span class="mono">preferred_queries</span>.</p>
+      <p>metadata polls the model from git <span class="mono">Collite/ttr-demo@master</span> and serves it as a ModelBundle; golem resolves the area via Ariadne and loads the 15 patterns as its <span class="mono">preferred_queries</span>.</p>
       <div class="note">
         <span class="nt">The two-refresh rule</span>
-        <p>After <b>any</b> model edit you must refresh <b>both</b>: veles (<span class="mono">VelesService/Refresh {force:true}</span> → confirm queries flip to PARSED) <b>and</b> golem (<span class="mono">kubectl rollout restart deployment/golem-hartland</span> and <span class="mono">-finance</span>) — golem caches the ModelBundle at boot. Skip the golem restart and it keeps sending stale SQL that fails at the translator — which golem masks as <span class="mono">STATUS_DONE, 0 rows</span>.</p>
+        <p>After <b>any</b> model edit you must refresh <b>both</b>: metadata (<span class="mono">MetadataService/Refresh {force:true}</span> → confirm queries flip to PARSED) <b>and</b> golem (<span class="mono">kubectl rollout restart deployment/golem-hartland</span> and <span class="mono">-finance</span>) — golem caches the ModelBundle at boot. Skip the golem restart and it keeps sending stale SQL that fails at the translator — which golem masks as <span class="mono">STATUS_DONE, 0 rows</span>.</p>
       </div>
       <div class="note">
         <span class="nt">The meta-quirk — never trust a 0-row turn</span>
@@ -396,11 +397,11 @@ kubectl --context &lt;c&gt; -n data apply  -f platform/data/hartland-pg/base/res
       <h3>The runtime constellation for a single demo turn</h3>
       <div class="panel mono" style="font-size:13.5px;line-height:1.9">
         golem-* <span style="color:var(--muted)">(kantheon :7420)</span><br>
-        &nbsp;&nbsp;├─▶ <b>veles</b>.ttr-server <span style="color:var(--muted)">:7261 — ResolveArea / model</span><br>
+        &nbsp;&nbsp;├─▶ <b>metadata</b>.ttr-server <span style="color:var(--muted)">:7261 — ResolveArea / model</span><br>
         &nbsp;&nbsp;├─▶ <b>llm-gateway</b>.ttr-server <span style="color:var(--muted)">:7280 — Bearer ttrk-golem</span><br>
         &nbsp;&nbsp;└─▶ <b>query-mcp</b> :7307/mcp ─▶ <b>theseus</b> ─▶ translate / validate / worker ─▶ <b>hartland-pg</b> <span style="color:var(--muted)">(ns data)</span>
       </div>
-      <p>Cross-namespace hosts <b>must</b> be FQDNs. The golems' Shem bundles come from <span class="mono">Collite/ttr-demo@demo-p2</span>; the image is pinned (<span class="mono">ghcr.io/collite/golem:0.9.4</span>). All secrets pull from a <b>separate</b> vault — <span class="mono">hartland.vault.azure.net</span> (Collite tenant): <span class="mono">veles-github-pat</span>, <span class="mono">ttrk-golem</span>, <span class="mono">azure-openai-key</span>, the pg-hartland RO creds, and the ArgoCD repo cred.</p>
+      <p>Cross-namespace hosts <b>must</b> be FQDNs. The golems' Shem bundles come from <span class="mono">Collite/ttr-demo@master</span>; the image is pinned (<span class="mono">ghcr.io/collite/golem:0.9.4</span>). All secrets pull from a <b>separate</b> vault — <span class="mono">hartland.vault.azure.net</span> (Collite tenant): <span class="mono">metadata-github-pat</span> (vault key <span class="mono">veles-github-pat</span>), <span class="mono">ttrk-golem</span>, <span class="mono">azure-openai-key</span>, the pg-hartland RO creds, and the ArgoCD repo cred.</p>
 
       <h3>The four steps GitOps does <em>not</em> do</h3>
       <p>Run these by hand — the collite-o1 bring-up on 2026-07-20 proved every one is a real gate:</p>
@@ -415,7 +416,7 @@ kubectl --context &lt;c&gt; -n data apply  -f platform/data/hartland-pg/base/res
       </table></div>
       <div class="note plain">
         <span class="nt">Other operational gotchas</span>
-        <p>Helm <span class="mono">extraEnv</span> <em>replaces</em> (re-list the chart's veles env or the validator loses it) · <span class="mono">VALIDATE_DEFAULT_TOP_N=100</span> is set on hartland (see §5) · images must be multi-arch (the node is amd64 — prefix jib with <span class="mono">CI=true</span>).</p>
+        <p>Helm <span class="mono">extraEnv</span> <em>replaces</em> (re-list the chart's metadata env or the validator loses it) · <span class="mono">VALIDATE_DEFAULT_TOP_N=100</span> is set on hartland (see §5) · images must be multi-arch (the node is amd64 — prefix jib with <span class="mono">CI=true</span>).</p>
       </div>
     </section>
 
@@ -470,7 +471,7 @@ kubectl --context &lt;c&gt; -n data apply  -f platform/data/hartland-pg/base/res
       <h4>Show the model — authoring &amp; visualisation</h4>
       <ul>
         <li><span class="tag live">Live</span> <b>VS Code TTR-M editing</b> — open <span class="mono">hartland/model/</span>, edit an entity, watch live diagnostics; push to <span class="mono">demo-p2</span>, do the two-refresh, and <em>the answer changes</em>.</li>
-        <li><span class="tag live">Live</span> <b>The Designer ("Studio Viewer")</b> — a read-only browser renderer of the <span class="mono">db</span>/<span class="mono">er</span> schema; <span class="mono">?veles=&lt;base&gt;</span> renders the <em>deployed</em> Hartland model straight from the running cluster.</li>
+        <li><span class="tag live">Live</span> <b>The Designer ("Studio Viewer")</b> — a read-only browser renderer of the <span class="mono">db</span>/<span class="mono">er</span> schema; <span class="mono">?veles=&lt;base&gt;</span> renders the <em>deployed</em> Hartland model straight from the running cluster’s metadata service; the selector retains its established name (MR-7 / VS-6).</li>
         <li><span class="tag mid">Partial</span> Designer live editing (unverified in-browser).</li>
       </ul>
 

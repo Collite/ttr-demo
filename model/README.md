@@ -1,5 +1,7 @@
 # model — the Hartland TTR-M model
 
+metadata — formerly `veles` (2026-06-13 → 2026-10), originally `ai-platform/infra/metadata`.
+
 One model set (BM-2/BM-5), served over `pg-hartland-us` (USD) and `pg-hartland-cz` (CZK).
 
 - `db/` — `model db`: the physical TPC-DS subset (facts + used dims), types, PK/FK.
@@ -36,7 +38,7 @@ One model set (BM-2/BM-5), served over `pg-hartland-us` (USD) and `pg-hartland-c
 - `queries/` — the `q.hartland.*` preferred queries (#1–15, D-2).
 - `binding/` — cross-model mapping: `er2db` (Stage 2.2) + `md2db` (Stage 2.4) `.ttrm` files.
 - (`worlds/` moved to `../automation/worlds/` at AU P2: the world names the automation package's programs and roles,
-  and veles and the lexicon build read `model/` alone — see the automation paragraph below.)
+  and metadata and the lexicon build read `model/` alone — see the automation paragraph below.)
 - `connections.toml` — the two connection descriptors (`pg-hartland-us`/`pg-hartland-cz`).
   **Not a TTR-M construct** (the grammar has no `connection` def and no per-connection
   currency `unit` — verified against `packages/grammar/src/TTR.g4`): this is a repo-level
@@ -181,7 +183,7 @@ not guess:
   documents by rule (⚑AU-H-3, `lexicon/cs/automation.ttrm`), guarded by
   `lexicon/tests/automation-lexicon.test.mjs`;
 - the world `hartland.worlds.demo` is in `../automation/worlds/demo.ttrm` (AU P2): its automation half names
-  the programs and roles of `../automation/*.ttrm`, and a reader of `model/` alone (veles, the lexicon build)
+  the programs and roles of `../automation/*.ttrm`, and a reader of `model/` alone (metadata, the lexicon build)
   would report each unresolved — the lexicon build refuses such a model. Nothing under `model/` may name an
   automation object (`automation/tests/package.test.mjs`). Nothing in the world names a world's database: the
   engine name is the credential name (`TTR_CONN_ERP`, `TTR_CONN_AUTOMATION`), so one world file serves both

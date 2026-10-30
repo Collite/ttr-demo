@@ -1,5 +1,7 @@
 # hartland
 
+metadata — formerly `veles` (2026-06-13 → 2026-10), originally `ai-platform/infra/metadata`.
+
 The **Hartland** demo world — the single home for everything about the Kantheon capabilities
 demo (the `ai-models`-analog for the demo, D-7/BM-9). Kantheon is code; **all demo assets live
 here**.
@@ -35,7 +37,7 @@ request, the **`model-gate`** check green on it, one approving review, the merge
 **`toolchain.lock`** pins — `[ttr-core].ref`, the toolchain the serving images were built against —
 and runs every suite, the two drift checks (`generated/` matches the model) and, once that toolchain
 ships the CLI, the Kotlin loader's strict load at the version metadata serves with
-(`[veles].ttr-metadata`). The model service is metadata — formerly `veles` (2026-10); the lock table keeps its established name. Moving a pin is a change like any other: made in the PR that rolls the
+(`[veles].ttr-metadata`). The `[veles]` lock table and `just check-veles-pin` recipe retain their established names. Moving a pin is a change like any other: made in the PR that rolls the
 readers, with `generated/` rebuilt by the new toolchain in the same commit.
 
 The second workflow, **`regenerate`**, rebuilds `generated/` on a change's branch and pushes it as
