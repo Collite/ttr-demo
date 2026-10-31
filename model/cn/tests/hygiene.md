@@ -1,6 +1,6 @@
 # Concept hygiene
 
-84 concepts — 66 er-grounded · 11 md-grounded · 7 ungrounded
+94 concepts — 75 er-grounded · 11 md-grounded · 8 ungrounded
 
 | Concept | Stereotype | Grade | Via | Grounding | Hop | Lands on | Open tier |
 |---|---|---|---|---|---|---|---|
@@ -8,42 +8,52 @@
 | cn.BoughtHereLine | phase | er-grounded | direct | — | — | er.entity.return_request_line (← cn.ReturnLine) | — |
 | cn.Channel | kind | er-grounded | direct | er.entity.sales.channel | — | er.entity.sales.channel | — |
 | cn.Customer | role | md-grounded | md-hop | md.dimension.Customer | md.dimension.Customer → er.entity.customer | er.entity.customer | — |
-| cn.CustomerPrice | event | er-grounded | direct | er.entity.customer_price | — | er.entity.customer_price | — |
 | cn.DebtorCustomer | phase | md-grounded | md-hop | — | — | er.entity.customer (← cn.Customer) | — |
+| cn.Document | kind | ungrounded | — | — | — | — | — |
 | cn.HeldOrder | phase | er-grounded | direct | — | — | er.entity.order (← cn.Order) | — |
 | cn.InStockAtCenter | phase | er-grounded | direct | — | — | er.entity.return_request_line (← cn.ReturnLine) | — |
 | cn.Inventory | event | er-grounded | direct | er.entity.inventory | — | er.entity.inventory | — |
-| cn.Invoice | kind | er-grounded | direct | er.entity.invoice | — | er.entity.invoice | — |
-| cn.Invoicing | event | er-grounded | direct | er.entity.invoice | — | er.entity.invoice | — |
+| cn.Invoice | subkind | er-grounded | direct | er.entity.invoice | — | er.entity.invoice | — |
+| cn.InvoiceIssued | event | er-grounded | direct | er.entity.invoice | — | er.entity.invoice | — |
 | cn.Item | kind | md-grounded | md-hop | md.dimension.Product | md.dimension.Product → er.entity.item | er.entity.item | — |
 | cn.LargeOrder | phase | er-grounded | direct | — | — | er.entity.order (← cn.Order) | — |
 | cn.LateReturnLine | phase | er-grounded | direct | — | — | er.entity.return_request_line (← cn.ReturnLine) | — |
-| cn.MarketplaceSale | phase | er-grounded | direct | — | — | er.entity.sales (← cn.Sale) | — |
+| cn.ListPrice | kind | er-grounded | direct | er.entity.price_list | — | er.entity.price_list | — |
+| cn.MarketplaceSale | subkind | er-grounded | direct | — | — | er.entity.sales (← cn.Sale) | — |
 | cn.MispricedLine | phase | er-grounded | direct | — | — | er.entity.sales_line (← cn.OrderLine) | — |
-| cn.Order | event | er-grounded | direct | er.entity.order | — | er.entity.order | — |
-| cn.OrderLine | event | er-grounded | direct | er.entity.sales_line | — | er.entity.sales_line | — |
-| cn.OverdueInvoice | phase | er-grounded | direct | — | — | er.entity.invoice (← cn.Invoicing) | — |
+| cn.OpenInvoice | phase | er-grounded | direct | — | — | er.entity.invoice (← cn.Invoice) | — |
+| cn.OpenOrder | phase | er-grounded | direct | er.entity.order | — | er.entity.order (← cn.Order) | — |
+| cn.Order | kind | er-grounded | direct | er.entity.order | — | er.entity.order | — |
+| cn.OrderDelivered | event | er-grounded | direct | er.entity.order | — | er.entity.order | — |
+| cn.OrderLine | kind | er-grounded | direct | er.entity.sales_line | — | er.entity.sales_line | — |
+| cn.OrderPlaced | event | er-grounded | direct | er.entity.order | — | er.entity.order | — |
+| cn.OutOfService | phase | er-grounded | direct | er.entity.warehouse_outage | — | er.entity.warehouse_outage | — |
+| cn.OverdueInvoice | phase | er-grounded | direct | — | — | er.entity.invoice (← cn.Invoice) | — |
+| cn.PaidInvoice | phase | er-grounded | direct | — | — | er.entity.invoice (← cn.Invoice) | — |
+| cn.PartlyPaidInvoice | phase | er-grounded | direct | — | — | er.entity.invoice (← cn.Invoice) | — |
 | cn.PendingOrder | phase | er-grounded | direct | — | — | er.entity.order (← cn.Order) | — |
 | cn.PlacedOrder | phase | er-grounded | direct | er.entity.placed_order | — | er.entity.placed_order | — |
-| cn.PriceList | event | er-grounded | direct | er.entity.price_list | — | er.entity.price_list | — |
+| cn.PriceAgreement | kind | er-grounded | direct | er.entity.customer_price | — | er.entity.customer_price | — |
 | cn.ReceivedReturnLine | phase | er-grounded | direct | — | — | er.entity.return_request_line (← cn.ReturnLine) | — |
 | cn.Return | event | er-grounded | direct | er.entity.channel_returns | — | er.entity.channel_returns | — |
-| cn.ReturnLine | event | er-grounded | direct | er.entity.return_request_line | — | er.entity.return_request_line | — |
+| cn.ReturnLine | kind | er-grounded | direct | er.entity.return_request_line | — | er.entity.return_request_line | — |
 | cn.ReturnReason | kind | md-grounded | md-hop | md.dimension.ReturnReason | md.dimension.ReturnReason → er.entity.reason | er.entity.reason | — |
-| cn.ReturnRequest | event | er-grounded | direct | er.entity.return_request | — | er.entity.return_request | — |
+| cn.ReturnRequest | kind | er-grounded | direct | er.entity.return_request | — | er.entity.return_request | — |
+| cn.ReturnRequested | event | er-grounded | direct | er.entity.return_request | — | er.entity.return_request | — |
 | cn.Sale | event | er-grounded | direct | er.entity.sales | — | er.entity.sales | — |
 | cn.ShortLine | phase | er-grounded | direct | — | — | er.entity.sales_line (← cn.OrderLine) | — |
 | cn.SmallValueLine | phase | er-grounded | direct | — | — | er.entity.return_request_line (← cn.ReturnLine) | — |
 | cn.Store | kind | md-grounded | md-hop | md.dimension.Store | md.dimension.Store → er.entity.store | er.entity.store | — |
-| cn.StoreSale | phase | er-grounded | direct | — | — | er.entity.sales (← cn.Sale) | — |
+| cn.StoreSale | subkind | er-grounded | direct | — | — | er.entity.sales (← cn.Sale) | — |
 | cn.Warehouse | kind | md-grounded | md-hop | md.dimension.DistributionCentre | md.dimension.DistributionCentre → er.entity.warehouse | er.entity.warehouse | — |
-| cn.WarehouseOutage | event | er-grounded | direct | er.entity.warehouse_outage | — | er.entity.warehouse_outage | — |
-| cn.WebSale | phase | er-grounded | direct | — | — | er.entity.sales (← cn.Sale) | — |
+| cn.WebSale | subkind | er-grounded | direct | — | — | er.entity.sales (← cn.Sale) | — |
+| cn.agreed_price | quality | er-grounded | direct | er.entity.customer_price.price | — | er.entity.customer_price.price (← cn.PriceAgreement) | — |
 | cn.amount | quality | er-grounded | direct | er.entity.invoice.amount | — | er.entity.invoice.amount | — |
 | cn.applicable_price | quality | ungrounded | — | — | — | — | — |
 | cn.as_of_date | quality | er-grounded | direct | er.entity.inventory.as_of_date | — | er.entity.inventory.as_of_date | — |
 | cn.center | quality | er-grounded | direct | er.entity.customer.center | — | er.entity.customer.center | — |
 | cn.channel | quality | er-grounded | direct | er.entity.order.channel | — | er.entity.order.channel | — |
+| cn.channel_price | quality | er-grounded | direct | er.entity.price_list.price | — | er.entity.price_list.price (← cn.ListPrice) | — |
 | cn.cp_from | quality | er-grounded | direct | er.entity.customer_price.valid_from | — | er.entity.customer_price.valid_from | — |
 | cn.cp_price | quality | er-grounded | direct | er.entity.customer_price.price | — | er.entity.customer_price.price | — |
 | cn.cp_to | quality | er-grounded | direct | er.entity.customer_price.valid_to | — | er.entity.customer_price.valid_to | — |
@@ -109,26 +119,29 @@ None — checked once vocabulary versions register (CN-P5 S5.3).
 
 ## Definitions
 
-- cn.AbusiveReturner — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:70: the definition cannot render on md: `ReturnLine`, `ReturnRequest`, `line_state`, `OrderLine`, `line_value`, `return_quantity`, `return_unit_price` have no md grounding and no md element hops to their E-R landing
-- cn.BoughtHereLine — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:57: the definition cannot render on md: `OrderLine`, `ReturnLine`, `ReturnRequest`, `Order` have no md grounding and no md element hops to their E-R landing
-- cn.DebtorCustomer — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:44: the definition cannot render on md: `Invoicing`, `invoice_status` have no md grounding and no md element hops to their E-R landing
-- cn.HeldOrder — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:17: the definition cannot render on md: `state` has no md grounding and no md element hops to its E-R landing
-- cn.InStockAtCenter — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:81: the definition cannot render on md: `ReturnLine`, `center`, `as_of_date`, `return_quantity` have no md grounding and no md element hops to their E-R landing
-- cn.LargeOrder — cn/definition-unreachable(md) (hygiene) at model/cn/concepts.ttrm:121: the definition cannot render on md: `order_value` has no md grounding and no md element hops to its E-R landing
-- cn.LateReturnLine — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:65: the definition cannot render on md: `ReturnLine`, `ReturnRequest`, `Order` have no md grounding and no md element hops to their E-R landing
-- cn.MarketplaceSale — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:13: the definition cannot render on md: `Sale`, `Channel` have no md grounding and no md element hops to their E-R landing
-- cn.MispricedLine — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:33: the definition cannot render on md: `unit_price`, `CustomerPrice`, `OrderLine`, `Order`, `cp_price`, `PriceList`, `pl_channel`, `channel`, `pl_price` have no md grounding and no md element hops to their E-R landing
-- cn.OverdueInvoice — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:39: the definition cannot render on md: `invoice_status`, `Invoicing` have no md grounding and no md element hops to their E-R landing
-- cn.PendingOrder — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:16: the definition cannot render on md: `state` has no md grounding and no md element hops to its E-R landing
-- cn.ReceivedReturnLine — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:51: the definition cannot render on md: `line_state` has no md grounding and no md element hops to its E-R landing
-- cn.ShortLine — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:27: the definition cannot render on md: `line_quantity`, `WarehouseOutage`, `OrderLine`, `as_of_date` have no md grounding and no md element hops to their E-R landing
-- cn.SmallValueLine — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:75: the definition cannot render on md: `return_quantity`, `return_unit_price` have no md grounding and no md element hops to their E-R landing
-- cn.StoreSale — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:11: the definition cannot render on md: `Sale`, `Channel` have no md grounding and no md element hops to their E-R landing
-- cn.WebSale — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:12: the definition cannot render on md: `Sale`, `Channel` have no md grounding and no md element hops to their E-R landing
-- cn.applicable_price — cn/definition-unreachable(md) (hygiene) at model/cn/qualities.ttrm:102: the definition cannot render on md: `CustomerPrice`, `OrderLine`, `Order`, `cp_price`, `PriceList`, `pl_channel`, `channel`, `pl_price` have no md grounding and no md element hops to their E-R landing
-- cn.line_amount — cn/definition-unreachable(md) (hygiene) at model/cn/qualities.ttrm:110: the definition cannot render on md: `return_quantity`, `return_unit_price` have no md grounding and no md element hops to their E-R landing
-- cn.on_hand — cn/definition-unreachable(md) (hygiene) at model/cn/qualities.ttrm:84: the definition cannot render on md: `OrderLine`, `as_of_date` have no md grounding and no md element hops to their E-R landing
-- cn.open_amount — cn/definition-unreachable(md) (hygiene) at model/cn/qualities.ttrm:78: the definition cannot render on md: `amount`, `paid` have no md grounding and no md element hops to their E-R landing
-- cn.outage — cn/definition-unreachable(md) (hygiene) at model/cn/qualities.ttrm:95: the definition cannot render on md: `WarehouseOutage`, `OrderLine` have no md grounding and no md element hops to their E-R landing
-- cn.return_share — cn/definition-unreachable(md) (hygiene) at model/cn/qualities.ttrm:117: the definition cannot render on md: `ReturnLine`, `ReturnRequest`, `line_state`, `OrderLine`, `line_value`, `return_quantity`, `return_unit_price` have no md grounding and no md element hops to their E-R landing
-- cn.short — cn/definition-unreachable(md) (hygiene) at model/cn/qualities.ttrm:89: the definition cannot render on md: `line_quantity`, `OrderLine`, `as_of_date` have no md grounding and no md element hops to their E-R landing
+- cn.AbusiveReturner — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:102: the definition cannot render on md: `ReturnLine`, `ReturnRequest`, `requested_date`, `line_state`, `OrderLine`, `line_date`, `line_value`, `return_quantity`, `return_unit_price` have no md grounding and no md element hops to their E-R landing
+- cn.BoughtHereLine — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:89: the definition cannot render on md: `OrderLine`, `ReturnLine`, `ReturnRequest`, `Order` have no md grounding and no md element hops to their E-R landing
+- cn.DebtorCustomer — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:76: the definition cannot render on md: `Invoice`, `invoice_status`, `due` have no md grounding and no md element hops to their E-R landing
+- cn.HeldOrder — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:20: the definition cannot render on md: `state` has no md grounding and no md element hops to its E-R landing
+- cn.InStockAtCenter — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:113: the definition cannot render on md: `ReturnLine`, `center`, `as_of_date`, `return_quantity` have no md grounding and no md element hops to their E-R landing
+- cn.LargeOrder — cn/definition-unreachable(md) (hygiene) at model/cn/concepts.ttrm:124: the definition cannot render on md: `order_value` has no md grounding and no md element hops to its E-R landing
+- cn.LateReturnLine — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:97: the definition cannot render on md: `ReturnLine`, `ReturnRequest`, `Order`, `delivered_date` have no md grounding and no md element hops to their E-R landing
+- cn.MarketplaceSale — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:16: the definition cannot render on md: `Sale`, `Channel` have no md grounding and no md element hops to their E-R landing
+- cn.MispricedLine — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:49: the definition cannot render on md: `unit_price`, `PriceAgreement`, `OrderLine`, `Order`, `placed_date`, `cp_price`, `ListPrice`, `channel`, `pl_price` have no md grounding and no md element hops to their E-R landing
+- cn.OpenInvoice — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:55: the definition cannot render on md: `invoice_status` has no md grounding and no md element hops to its E-R landing
+- cn.OverdueInvoice — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:61: the definition cannot render on md: `invoice_status`, `due` have no md grounding and no md element hops to their E-R landing
+- cn.PaidInvoice — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:71: the definition cannot render on md: `invoice_status` has no md grounding and no md element hops to its E-R landing
+- cn.PartlyPaidInvoice — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:66: the definition cannot render on md: `paid`, `amount` have no md grounding and no md element hops to their E-R landing
+- cn.PendingOrder — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:19: the definition cannot render on md: `state` has no md grounding and no md element hops to its E-R landing
+- cn.ReceivedReturnLine — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:83: the definition cannot render on md: `line_state` has no md grounding and no md element hops to its E-R landing
+- cn.ShortLine — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:43: the definition cannot render on md: `line_quantity`, `OutOfService`, `OrderLine`, `as_of_date` have no md grounding and no md element hops to their E-R landing
+- cn.SmallValueLine — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:107: the definition cannot render on md: `return_quantity`, `return_unit_price` have no md grounding and no md element hops to their E-R landing
+- cn.StoreSale — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:14: the definition cannot render on md: `Sale`, `Channel` have no md grounding and no md element hops to their E-R landing
+- cn.WebSale — cn/definition-unreachable(md) (hygiene) at model/cn/phases.ttrm:15: the definition cannot render on md: `Sale`, `Channel` have no md grounding and no md element hops to their E-R landing
+- cn.applicable_price — cn/definition-unreachable(md) (hygiene) at model/cn/qualities.ttrm:115: the definition cannot render on md: `PriceAgreement`, `OrderLine`, `Order`, `placed_date`, `cp_price`, `ListPrice`, `channel`, `pl_price` have no md grounding and no md element hops to their E-R landing
+- cn.line_amount — cn/definition-unreachable(md) (hygiene) at model/cn/qualities.ttrm:123: the definition cannot render on md: `return_quantity`, `return_unit_price` have no md grounding and no md element hops to their E-R landing
+- cn.on_hand — cn/definition-unreachable(md) (hygiene) at model/cn/qualities.ttrm:93: the definition cannot render on md: `OrderLine`, `as_of_date` have no md grounding and no md element hops to their E-R landing
+- cn.open_amount — cn/definition-unreachable(md) (hygiene) at model/cn/qualities.ttrm:87: the definition cannot render on md: `amount`, `paid` have no md grounding and no md element hops to their E-R landing
+- cn.outage — cn/definition-unreachable(md) (hygiene) at model/cn/qualities.ttrm:104: the definition cannot render on md: `OutOfService`, `OrderLine` have no md grounding and no md element hops to their E-R landing
+- cn.return_share — cn/definition-unreachable(md) (hygiene) at model/cn/qualities.ttrm:130: the definition cannot render on md: `ReturnLine`, `ReturnRequest`, `requested_date`, `line_state`, `OrderLine`, `line_date`, `line_value`, `return_quantity`, `return_unit_price` have no md grounding and no md element hops to their E-R landing
+- cn.short — cn/definition-unreachable(md) (hygiene) at model/cn/qualities.ttrm:98: the definition cannot render on md: `line_quantity`, `OrderLine`, `as_of_date` have no md grounding and no md element hops to their E-R landing

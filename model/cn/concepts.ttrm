@@ -2,10 +2,13 @@ package hartland
 
 model cn
 
-// CN-P6 S6.1 (= AU-hartland P5 S5.1) — the Hartland conceptual package: design `11` §1 on the estate's real names.
+// CN-P6 S6.1 (= AU-hartland P5 S5.1) — the Hartland conceptual package: design `11` §1 on the estate's real names,
+// re-modelled at CN-P8 S8.3 (design `14` §4, grammar 0.20): things in time. An EVENT is an instant of the stream; what
+// exists with a lifetime or a validity, or relates things, is a KIND (a relator when it `involves:`); what an individual
+// is from birth is a SUBKIND; what it enters and leaves is a PHASE (phases.ttrm). No durative event remains.
 // The kinds, the role and the events here; their qualities in qualities.ttrm, the recipe vocabulary in phases.ttrm,
-// what the `grounds:` sugar cannot say (an event's participant paths and period) in model/binding/cn.ttrm, the words in
-// model/lexicon/{cs,en}/cn.ttrm.
+// what the `grounds:` sugar cannot say (a relator's or an event's participant paths and period) in
+// model/binding/cn.ttrm, the words in model/lexicon/{cs,en}/cn.ttrm.
 //
 // One grounding per concept (CN-D12). Analytical things ground to md and reach er through the DERIVED hop — hartland
 // authors no md2er: md2db and er2db meet on the same table (md/hop HP-P2; design `11` §5, A-H-5). The recipe world
@@ -23,18 +26,19 @@ def kind Warehouse    { label: { en: "Distribution center", cs: "Distribuční c
 def kind ReturnReason { label: { en: "Return reason", cs: "Důvod reklamace" },           grounds: md.ReturnReason }        // hop → er.entity.reason
 // A value kind (AM-27, L16-4): its members are the values of one attribute — store · web · marketplace.
 def kind Channel      { label: { en: "Channel", cs: "Kanál" },                           grounds: er.entity.sales.channel }
-// The document; `Invoicing` below is the act (design `11` §1).
-def kind Invoice      { label: { en: "Invoice", cs: "Faktura" },                         grounds: er.entity.invoice }
+// The documents: abstract, no rows of its own (an invoice is one from issue to archive — a subkind, not a phase).
+def kind Document     { label: { en: "Document", cs: "Doklad" }, abstract: true }
 
 // ---- roles ----
+// A role's defining event must be an event (CN-D6): `Order` is a kind now, so a customer is who places one.
 def role Customer {
     label: { en: "Customer", cs: "Zákazník" },
-    event: Order,
+    event: OrderPlaced,
     grounds: md.Customer                                                         // hop → er.entity.customer
 }
 
-// ---- events: the analytical ones (md cubelets behind them) ----
-// The three channel cubelets are phases of one event (L16-5, phases.ttrm); `Sale` is the stacked `sales` entity
+// ---- events: the analytical ones (md cubelets behind them) — instants ----
+// The three channel cubelets are subkinds of one event (L16-5, phases.ttrm); `Sale` is the stacked `sales` entity
 // over the channel union (md/hop HP-H, A-CN-100) — one grain for "revenue by channel".
 def event Sale {
     label: { en: "Sale", cs: "Prodej" },
@@ -50,6 +54,7 @@ def event Return {
     period: { at: returned_date },
     qualities: [return_amount, returned_quantity, returned_date]
 }
+// A reading is an instantaneous measuring (`08b` §5).
 def event Inventory {
     label: { en: "Stock reading", cs: "Stav zásob" },
     involves: [Item, Warehouse],
@@ -57,62 +62,60 @@ def event Inventory {
     qualities: [quantity_on_hand, as_of_date]
 }
 
-// ---- events: the recipe world (the AU extension) ----
-def event Order {
+// ---- kinds: the recipe world (the AU extension) — relators, the rows that relate things ----
+// No period: an order's lifecycle is the phase `OpenOrder`, bounded by its two events.
+def kind Order {
     label: { en: "Order", cs: "Objednávka" },
-    extent: durative,
     involves: [Customer, Warehouse as fulfilling],
-    // An order is open until it is delivered: no delivered_date is a running order (AM-43).
-    period: { start: placed_date, end: delivered_date, end_open: open },
     qualities: [order_value, state, held_for, channel, placed_date, delivered_date]
 }
-def event OrderLine {
+// The sale EVENT is `Sale` (the cubelet grain); a line is the row an order holds.
+def kind OrderLine {
     label: { en: "Order line", cs: "Řádek objednávky" },
     involves: [Order, Customer, Item, Warehouse],
-    period: { at: line_date },
     qualities: [line_quantity, unit_price, line_value, line_date]
 }
-def event Invoicing {
-    label: { en: "Invoicing", cs: "Fakturace" },
-    extent: durative,
+// `14` §4: the act `Invoicing` became the document and its issue; its states are phases (phases.ttrm).
+def subkind Invoice {
+    of: Document,
+    label: { en: "Invoice", cs: "Faktura" },
     involves: [Customer, Order],
-    period: { start: issued, end: due },
     qualities: [amount, paid, invoice_status, issued, due]
 }
-def event WarehouseOutage {
-    label: { en: "Warehouse outage", cs: "Výpadek skladu" },
-    extent: durative,
-    involves: [Warehouse],
-    period: { start: outage_from, end: outage_to },                              // closed: to_date is the last day
-    qualities: [outage_from, outage_to, outage_reason]
-}
-def event PriceList {
+// A, the object with validity (`14` §3) — the row shape of `price_list` / `customer_price`. Their valued-state
+// projections (B) are `channel_price` / `agreed_price` (qualities.ttrm). `Channel` is a column of the row (AM-27).
+def kind ListPrice {
     label: { en: "List price", cs: "Ceníková cena" },
-    extent: durative,
-    involves: [Item],
+    involves: [Item, Channel],
     period: { start: pl_from, end: pl_to, end_open: open },
     qualities: [pl_price, pl_channel, pl_from, pl_to]
 }
-def event CustomerPrice {
+def kind PriceAgreement {
     label: { en: "Individual price", cs: "Individuální cena" },
-    extent: durative,
     involves: [Customer, Item],
     period: { start: cp_from, end: cp_to, end_open: open },
     qualities: [cp_price, cp_from, cp_to]
 }
-def event ReturnRequest {
+def kind ReturnRequest {
     label: { en: "Return request", cs: "Reklamace" },
     involves: [Customer, Order],
-    period: { at: requested_date },
     qualities: [request_state, requested_date]
 }
 // The H-2 key (D-84). The requested variant of an exchange is no participant: `fk_rl_variant` has no relation
 // (model/er/relations.ttrm — a second line → item relation would make every line/item join ambiguous).
-def event ReturnLine {
+def kind ReturnLine {
     label: { en: "Return request line", cs: "Řádek reklamace" },
     involves: [ReturnRequest as request, Customer, Item],
     qualities: [return_quantity, return_unit_price, return_reason, requested_resolution, line_state, way]
 }
+
+// ---- events: the recipe world's transitions — instants, only where the stream has one ----
+// No `InvoicePaid`: the estate has no paid date (`14` §4). `OrderPlaced` names the customer too: it is the role's
+// defining event (CN-D6).
+def event OrderPlaced     { label: { en: "Order placed", cs: "Zadání objednávky" },  involves: [Order, Customer], period: { at: placed_date } }
+def event OrderDelivered  { label: { en: "Order delivered", cs: "Doručení objednávky" }, involves: [Order],      period: { at: delivered_date } }
+def event InvoiceIssued   { label: { en: "Invoice issued", cs: "Vystavení faktury" }, involves: [Invoice],       period: { at: issued } }
+def event ReturnRequested { label: { en: "Return requested", cs: "Podání reklamace" }, involves: [ReturnRequest], period: { at: requested_date } }
 
 def phase LargeOrder {
     of: Order,
