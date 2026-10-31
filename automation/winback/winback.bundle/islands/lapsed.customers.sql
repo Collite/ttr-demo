@@ -1,4 +1,4 @@
-SELECT "t6"."customer" AS "sk", "customer"."hdemo", "t6"."orders_before"
+SELECT "t6"."customer" AS "sk", "customer"."hdemo", "customer"."email", "t6"."orders_before"
 FROM (SELECT "t1"."customer", "t1"."orders_before"
         FROM (SELECT "customer", COUNT("order_number") AS "orders_before"
                 FROM "order"

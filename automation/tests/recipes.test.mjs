@@ -148,7 +148,24 @@ test('S2.2 T3 — monitor_inbound\'s two expects on `complete` are conditional o
 // ── the four `17` recipes ARE ttr-core's shared fixtures ──────────────────────────────────────────────────────────
 // Compared without comments, blank lines and indentation (P3 derives H-1 from Markdown). No difference is left: from grammar/v0.16.1 the fixtures carry
 // monitor_inbound's `when:` (S2.2 T3) and decide_return's `days(365)` (ttr-core P1's F3), as these recipes do.
-const FIXTURE_DELTAS = {};
+// The customer address column (`notify_customer { to: customer_email }`) is ahead of the [ttrp] pin's fixtures: ttr-core
+// mirrors it in its shared fixture, and these deltas go when [ttrp] moves to a release that carries it.
+const ADDRESS_WIRING = [/notify_customer( +)\{ customer: customer, template:/g, 'notify_customer$1{ customer: customer, to: customer_email, template:'];
+const FIXTURE_DELTAS = {
+  decide_return: [
+    ['r.customer, r.order_number, r.requested_date', 'r.customer, c.email AS customer_email, r.order_number, r.requested_date'],
+    [/^(FROM {3}er\.entity\.return_request_line l JOIN er\.entity\.return_request r ON r\.request_number = l\.request_number)$/m,
+      '$1\nLEFT JOIN er.entity.customer c ON c.sk = r.customer'],
+    ADDRESS_WIRING,
+  ],
+  monitor_inbound: [
+    ['l.way, r.customer, ob.id AS obligation_id, ob.due, ob.state AS obligation_state',
+      'l.way, r.customer, c.email AS customer_email,\nob.id AS obligation_id, ob.due, ob.state AS obligation_state'],
+    [/^(JOIN {3}er\.entity\.return_request r ON r\.request_number = l\.request_number)$/m,
+      '$1\nLEFT JOIN er.entity.customer c    ON c.sk = r.customer'],
+    ADDRESS_WIRING,
+  ],
+};
 const lines = (text) => code(text).split('\n').map((l) => l.trim()).filter((l) => l !== '').join('\n');
 
 for (const name of ['release_order', 'decide_return', 'monitor_inbound', 'settle']) {

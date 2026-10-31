@@ -1,6 +1,6 @@
 SELECT "t9"."sk", "t9"."income_band", CASE WHEN "t11"."band_id" IS NOT NULL THEN 1 ELSE 0 END AS "top_band"
-FROM (SELECT "t7"."sk", "t7"."hdemo", "t7"."orders_before", "t8"."income_band"
-        FROM (SELECT "t6"."customer" AS "sk", "customer"."hdemo", "t6"."orders_before"
+FROM (SELECT "t7"."sk", "t7"."hdemo", "t7"."email", "t7"."orders_before", "t8"."income_band"
+        FROM (SELECT "t6"."customer" AS "sk", "customer"."hdemo", "customer"."email", "t6"."orders_before"
                 FROM (SELECT "t1"."customer", "t1"."orders_before"
                         FROM (SELECT "customer", COUNT("order_number") AS "orders_before"
                                 FROM "order"

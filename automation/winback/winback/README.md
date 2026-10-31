@@ -15,8 +15,8 @@
 
 ## What it does
 
-- `offer.premium` → `emit`: `customer` = `sk`, `offer` = `"premium"`. would mail customer {customer} the {offer} win-back offer
-- `offer.standard` → `emit`: `customer` = `sk`, `offer` = `"standard"`. would mail customer {customer} the {offer} win-back offer
+- `offer.premium` → `emit`: `customer` = `sk`, `offer` = `"premium"`, `to` = `email`. would mail customer {customer} the {offer} win-back offer
+- `offer.standard` → `emit`: `customer` = `sk`, `offer` = `"standard"`, `to` = `email`. would mail customer {customer} the {offer} win-back offer
 - `offer.premium` → `record`: `customer` = `sk`, `offer` = `"premium"`. would record the win-back mail to customer {customer}
 - `offer.standard` → `record`: `customer` = `sk`, `offer` = `"standard"`. would record the win-back mail to customer {customer}
 

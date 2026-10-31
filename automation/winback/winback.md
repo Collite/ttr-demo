@@ -34,7 +34,7 @@ candidates lapsed(out customers) target erp {
                -> join(right: load(er.entity.customer), kind: inner, on: left.customer = right.sk)
                // ttr-core#252 drops the right equality key; carry its equal left customer as sk.
                // Revert after ttr-core#252 lands in the [ttrp] pin.
-               -> select(sk = customer, hdemo, orders_before)
+               -> select(sk = customer, hdemo, email, orders_before)
                -> customers
     }
 ```
@@ -84,8 +84,8 @@ n8n sends the mail; the platform computes the customer list and records the offe
 
 ```ttrp
 actions {
-        offer.premium  -> emit   { customer: sk, offer: "premium" }
-        offer.standard -> emit   { customer: sk, offer: "standard" }
+        offer.premium  -> emit   { customer: sk, to: email, offer: "premium" }
+        offer.standard -> emit   { customer: sk, to: email, offer: "standard" }
         offer.premium  -> record { customer: sk, offer: "premium" }
         offer.standard -> record { customer: sk, offer: "standard" }
     }

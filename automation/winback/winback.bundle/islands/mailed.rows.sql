@@ -1,6 +1,6 @@
 SELECT "sk", MAX("mailed_at") AS "last_mailed"
-FROM (SELECT "t7"."sk", "t7"."hdemo", "t7"."orders_before", "winback_mail"."quarter", "winback_mail"."offer", "winback_mail"."run", "winback_mail"."mailed_at"
-        FROM (SELECT "t6"."customer" AS "sk", "customer"."hdemo", "t6"."orders_before"
+FROM (SELECT "t7"."sk", "t7"."hdemo", "t7"."email", "t7"."orders_before", "winback_mail"."quarter", "winback_mail"."offer", "winback_mail"."run", "winback_mail"."mailed_at"
+        FROM (SELECT "t6"."customer" AS "sk", "customer"."hdemo", "customer"."email", "t6"."orders_before"
                 FROM (SELECT "t1"."customer", "t1"."orders_before"
                         FROM (SELECT "customer", COUNT("order_number") AS "orders_before"
                                 FROM "order"
