@@ -33,6 +33,11 @@ def term held_order_en {
     for: cn.HeldOrder
     forms: ["held order", "held orders", "order on hold", "orders on hold", "blocked order", "blocked orders"]
 }
+def term open_order_en {
+    description: "undelivered order — placed and not delivered yet (OpenOrder)"
+    for: cn.OpenOrder
+    forms: ["undelivered order", "undelivered orders"]
+}
 def term placed_order_en {
     description: "unchecked order — placed, not checked yet"
     for: cn.PlacedOrder
@@ -47,6 +52,21 @@ def term mispriced_line_en {
     description: "mispriced line"
     for: cn.MispricedLine
     forms: ["mispriced line", "mispriced lines", "price deviation", "price deviations"]
+}
+def term open_invoice_en {
+    description: "unpaid invoice — open"
+    for: cn.OpenInvoice
+    forms: ["unpaid invoice", "unpaid invoices"]
+}
+def term partly_paid_invoice_en {
+    description: "partly paid invoice"
+    for: cn.PartlyPaidInvoice
+    forms: ["partly paid invoice", "partly paid invoices", "partially paid invoice", "partially paid invoices"]
+}
+def term paid_invoice_en {
+    description: "paid invoice"
+    for: cn.PaidInvoice
+    forms: ["paid invoice", "paid invoices"]
 }
 def term overdue_invoice_en {
     description: "overdue invoice"
