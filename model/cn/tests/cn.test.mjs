@@ -1,6 +1,7 @@
 // CN-P6 S6.1 (= AU-hartland P5 S5.1) — the Hartland conceptual package: model/cn/*.ttrm, its bindings
 // (model/binding/cn.ttrm), the `channel_returns` ground of `Return`, `PlacedOrder` materialized, the words
-// (model/lexicon/{cs,en}/cn.ttrm).
+// (model/lexicon/{cs,en}/cn.ttrm). Re-modelled at CN-P8 S8.3 (design `14` §4, grammar 0.20): events are instants, the
+// rows that relate things are kinds, the channel sales and the invoice are subkinds, two phases are episodes.
 //
 // Two reports, one golden. `ttr cn hygiene` (Kotlin, `just cn-hygiene`) writes model/cn/tests/hygiene.md —
 // `just check-cn-hygiene` keeps it fresh — and the editor's report (@tatrman/semantics) must print the same up to
@@ -39,15 +40,21 @@ const sourcesOf = ({ def }) => (def.properties ?? []).find((p) => p.key === 'sou
 const authored = cnDefs.filter((d) => !sourcesOf(d));
 const named = (stereotype) => authored.filter(({ def }) => def.stereotype === stereotype || def.kind === stereotype).map(({ def }) => def.name).sort();
 
-// The S6.1 list (T2, T4) on the estate's names. `Inventory`, `WarehouseOutage`, `PriceList` and `CustomerPrice` are the
-// events the definitions read (DC-9, DC-2); `Party` was dropped (Q16-5).
-const KINDS = ['Channel', 'Invoice', 'Item', 'ReturnReason', 'Store', 'Warehouse'];
+// The S6.1 list (T2, T4) on the estate's names, re-modelled at CN-P8 S8.3 (`14` §4): the seven durative events became
+// relator kinds (`Order`, `OrderLine`, `ReturnRequest`, `ReturnLine`, `ListPrice`, `PriceAgreement`), the subkind
+// `Invoice` of the abstract `Document`, and the phase `OutOfService`; four transition events appeared. `Party` was
+// dropped (Q16-5).
+const KINDS = [
+  'Channel', 'Document', 'Item', 'ListPrice', 'Order', 'OrderLine', 'PriceAgreement', 'ReturnLine', 'ReturnReason',
+  'ReturnRequest', 'Store', 'Warehouse',
+];
+const SUBKINDS = ['Invoice', 'MarketplaceSale', 'StoreSale', 'WebSale'];
 const ROLES = ['Customer'];
-const EVENTS = ['CustomerPrice', 'Inventory', 'Invoicing', 'Order', 'OrderLine', 'PriceList', 'Return', 'ReturnLine', 'ReturnRequest', 'Sale', 'WarehouseOutage'];
+const EVENTS = ['Inventory', 'InvoiceIssued', 'OrderDelivered', 'OrderPlaced', 'Return', 'ReturnRequested', 'Sale'];
 const PHASES = [
-  'AbusiveReturner', 'BoughtHereLine', 'DebtorCustomer', 'HeldOrder', 'InStockAtCenter', 'LateReturnLine', 'MarketplaceSale',
-  'MispricedLine', 'OverdueInvoice', 'PendingOrder', 'PlacedOrder', 'ReceivedReturnLine', 'ShortLine', 'SmallValueLine',
-  'StoreSale', 'WebSale',
+  'AbusiveReturner', 'BoughtHereLine', 'DebtorCustomer', 'HeldOrder', 'InStockAtCenter', 'LateReturnLine', 'MispricedLine',
+  'OpenInvoice', 'OpenOrder', 'OutOfService', 'OverdueInvoice', 'PaidInvoice', 'PartlyPaidInvoice', 'PendingOrder',
+  'PlacedOrder', 'ReceivedReturnLine', 'ShortLine', 'SmallValueLine',
 ];
 
 test('C1 — the package parses clean: model/cn, its binding file and the two new er files', () => {
@@ -58,11 +65,35 @@ test('C1 — the package parses clean: model/cn, its binding file and the two ne
 
 test('C2 — the authored concepts are the S6.1 list, every concept defined once', () => {
   assert.deepEqual(named('kind'), KINDS);
+  assert.deepEqual(named('subkind'), SUBKINDS);
   assert.deepEqual(named('role'), ROLES);
   assert.deepEqual(named('event'), EVENTS);
   assert.deepEqual(named('phase'), PHASES);
   const all = cnDefs.map(({ def }) => def.name);
   assert.deepEqual(all.filter((n, i) => all.indexOf(n) !== i), [], 'one cn name space');
+});
+
+// CN-P8 S8.3 T1 — things in time (`14` §2): every event is an instant, nothing carries `extent:`, and no 0.20 cn lint
+// fires on the package (the partition of `Sale` over `channel` is complete, the episode's subject is reached, the
+// phase's bounding events involve its bearer).
+test('C2a — every event is an instant; no `extent:`, no cn/durative-event or any other things-in-time lint', async () => {
+  for (const { def } of authored.filter(({ def }) => def.stereotype === 'event')) {
+    const period = (def.properties ?? []).find((p) => p.key === 'period');
+    assert.ok(period, `${def.name} has a period`);
+    const keys = (period.value?.entries ?? []).map((e) => e.key);
+    assert.deepEqual(keys, ['at'], `${def.name}'s period is an instant: { at: … }`);
+  }
+  for (const f of ['model/cn/concepts.ttrm', 'model/cn/phases.ttrm', 'model/cn/qualities.ttrm']) {
+    assert.doesNotMatch(await readFile(path.join(hartlandRoot, f), 'utf-8'), /^\s*extent:/m, `${f} carries no extent:`);
+  }
+  const fired = [...project.diagnosticsByFile.values()].flatMap((codes) => [...codes]);
+  const thingsInTime = ['cn/durative-event', 'cn/extent-retired', 'cn/partition-incomplete', 'cn/partition-overlap',
+    'cn/episode-subject-missing', 'cn/phase-bounds-participant', 'cn/phase-source-conflict', 'cn/projection-source',
+    'cn/subkind-temporal-definition', 'cn/subkind-as-kind'];
+  assert.deepEqual(fired.filter((c) => thingsInTime.includes(c)), [], 'no things-in-time lint');
+  // CN-D6: a role's defining event is an event — `Order` is a kind now, so a customer is who places one.
+  const customer = authored.find(({ def }) => def.name === 'Customer').def;
+  assert.equal((customer.properties ?? []).find((p) => p.key === 'event')?.ref?.path, 'OrderPlaced');
 });
 
 test('C2b — a promoted concept names where it came from: doc://, recipe:// or question:// (cn contracts §6)', () => {
@@ -95,6 +126,16 @@ test('C4 — the landings the acceptance reads: Sale on `sales` (A-CN-100), reve
     'cn.Item': 'er.entity.item',
     'cn.Warehouse': 'er.entity.warehouse',
     'cn.PlacedOrder': 'er.entity.placed_order',
+    // CN-P8 S8.3: the relators on their rows, the episodes on theirs, the valued states through their relators
+    'cn.Order': 'er.entity.order',
+    'cn.OrderLine': 'er.entity.sales_line',
+    'cn.Invoice': 'er.entity.invoice',
+    'cn.ListPrice': 'er.entity.price_list',
+    'cn.PriceAgreement': 'er.entity.customer_price',
+    'cn.OutOfService': 'er.entity.warehouse_outage',
+    'cn.OpenOrder': 'er.entity.order',
+    'cn.channel_price': 'er.entity.price_list.price',
+    'cn.agreed_price': 'er.entity.customer_price.price',
   };
   for (const [ref, er] of Object.entries(expected)) {
     assert.ok(golden.includes(`| ${ref} |`), `${ref} is in the golden`);
@@ -178,10 +219,12 @@ test('C10 — every relation a cn participant path names states its join pairs b
 const terms = (lang) => defs((d, ast) => d.kind === 'term' && ast.modelDirective?.modelCode === 'lexicon' && ast.modelDirective?.locale === lang && String(d.target?.path ?? '').startsWith('cn.'));
 const forOf = ({ def }) => def.target.path;
 
-// The phases whose words the Golem would lose a filter to are held back (model/lexicon/cs/cn.ttrm says why): the three
-// channel phases (their words are `sales.channel`'s value labels, which the Golem honours), and `Return` — the bare
-// «vratka» is no term (lexicon/tests/store-family.test.mjs) and its landing is no conversational object.
-const WORDLESS = new Set(['cn.StoreSale', 'cn.WebSale', 'cn.MarketplaceSale']);
+// The concepts whose words the Golem would lose a filter to are held back (model/lexicon/cs/cn.ttrm says why): the three
+// channel subkinds (their words are `sales.channel`'s value labels, which the Golem honours), and `Return` — the bare
+// «vratka» is no term (lexicon/tests/store-family.test.mjs) and its landing is no conversational object. CN-P8 S8.3:
+// `OutOfService` — its words are the AU element's on `warehouse_outage` (cs/automation.ttrm), and a phase lifts from
+// nothing (L17-2), so a term would claim them twice (model/er/tests/er.test.mjs S0.2).
+const WORDLESS = new Set(['cn.StoreSale', 'cn.WebSale', 'cn.MarketplaceSale', 'cn.OutOfService']);
 const WITH_WORDS = [...PHASES.map((p) => `cn.${p}`).filter((p) => !WORDLESS.has(p)), 'cn.Customer', 'cn.revenue'];
 
 test('T6.1 — every phase but the held-back ones, Customer and revenue have a cs and an en term', () => {
@@ -204,10 +247,17 @@ test('T6.3 — the archive (v6) carries a concept entry for every concept and th
   assert.equal(lexicon.header.schemaVersion, 'ttr-lexicon-compiled/v6');
   const targets = Object.entries(lexicon.targets);
   const concepts = new Set(targets.filter(([, t]) => t.objectKind === 'concept').map(([ref]) => ref));
-  for (const name of [...KINDS, ...ROLES, ...EVENTS, ...PHASES]) assert.ok(concepts.has(`cn.${name}`), `cn.${name} has a concept entry`);
+  for (const name of [...KINDS, ...SUBKINDS, ...ROLES, ...EVENTS, ...PHASES]) assert.ok(concepts.has(`cn.${name}`), `cn.${name} has a concept entry`);
   const lifts = (ref) => (lexicon.targets[ref]?.liftsTo ?? []).map((l) => l.qname);
   assert.ok(lifts('er.entity.customer').includes('cn.Customer'), 'customer lifts to Customer');
   assert.ok(lifts('er.entity.sales.ext_sales_price').includes('cn.revenue'), 'the revenue column lifts to revenue');
   assert.ok(lifts('md.measure.revenue').includes('cn.revenue'), 'md.revenue lifts to revenue');
+  // CN-P8 S8.3 T5: the words moved with their concepts — the element words lift to the relators that ground there
+  for (const [element, concept] of [['er.entity.invoice', 'cn.Invoice'], ['er.entity.order', 'cn.Order'],
+    ['er.entity.return_request', 'cn.ReturnRequest'], ['er.entity.price_list', 'cn.ListPrice'],
+    ['er.entity.customer_price', 'cn.PriceAgreement'], ['er.entity.price_list.price', 'cn.channel_price'],
+    ['er.entity.customer_price.price', 'cn.agreed_price']]) {
+    assert.ok(lifts(element).includes(concept), `${element} lifts to ${concept}`);
+  }
   assert.ok(!targets.some(([, t]) => (t.liftsTo ?? []).some((l) => PHASES.includes(l.qname.slice(3)))), 'no lift lands on a phase (L17-2)');
 });

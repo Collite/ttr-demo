@@ -3,15 +3,16 @@
 # olymp's release checklist (apps/metadata), all through scripts/toolchain-lock.py. Why the pin is load-bearing:
 # the ⛔ PINNED comment block in .github/workflows/model-gate.yml. After moving a [veles] pin: `just check-veles-pin`.
 [ttr-core]
-ref = "grammar/v0.18.17"         # the gate's toolchain checkout (was inline in model-gate.yml)
+ref = "grammar/v0.20.3"          # the gate's toolchain checkout (was inline in model-gate.yml); CN-P8 S8.3:
+                                 # ttr-core#340, the editor's hygiene parity (cn.test C5)
 [ttrp]
 # Recipe builds/checks move independently of the model reader and serving image.
 # A commit pin requires a prerelease version; delete version when moving ref to a release tag.
 ref = "grammar/v0.18.14"          # accepted Core#316; declared packages resolve from the actual checkout
 
 [veles]
-image = "0.11.31"                # Coordinated server issue rollout; paired Olymp Hartland wave
-ttr-metadata = "0.18.16"         # `tatrman-ttr-metadata` in ttr-server's `gradle/libs.versions.toml` at `server-libs/v<image>`;
+image = "0.11.32"                # CN-P8 S8.3: grammar 0.20.2, rolled WITH this re-model (its loader refuses a durative event)
+ttr-metadata = "0.20.2"          # `tatrman-ttr-metadata` in ttr-server's `gradle/libs.versions.toml` at `server-libs/v<image>`;
                                  # the gate builds its Kotlin loader from ttr-core `grammar/v<this>`, stamped with it
 # true since md/hop HP-H (2026-10-24): the [veles] pin caught up with veles 0.11.15, whose ttr-metadata 0.18.3 ships
 # ttr-metadata-cli (from grammar/v0.18.0; ttr-core SO-core P0·S0.3 T6). true = the gate fails without the loader,
