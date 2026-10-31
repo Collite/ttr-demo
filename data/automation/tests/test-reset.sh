@@ -28,6 +28,7 @@ left=0; for r in $AU_TABLES $AU_VIEWS $AU_INTERNALS; do left=$((left + $(exists 
 expect "no extension table, view or internal is left" "$left" -eq 0
 expect "customer.c_center_sk kept, all NULL" "$(pgq "$S" "SELECT count(*) || ':' || count(c_center_sk) FROM customer" | cut -d: -f2)" -eq 0
 expect "date_dim.d_working_day kept, all NULL" "$(pgq "$S" "SELECT count(d_working_day) FROM date_dim")" -eq 0
+expect "customer.c_email kept, still derived for every customer" "$(pgq "$S" "SELECT count(*) - count(c_email) FROM customer")" -eq 0
 expect "fk_c_center dropped with the extension" "$(pgq "$S" "SELECT count(*) FROM pg_constraint WHERE conname = 'fk_c_center'")" -eq 0
 
 run_reset "$S"; rc=$?

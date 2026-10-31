@@ -23,7 +23,7 @@
 ## What it does
 
 - `way.reject_not_ours`, `way.reject_late`, `way.reject_abuse` → `set_state`: `line` = `line_id`, `to` = `rejected`. would set return line {line} to {to}
-- `way.reject_not_ours`, `way.reject_late`, `way.reject_abuse` → `notify_customer`: `customer` = `customer`, `template` = `"return-rejected"`. would send customer {customer} the {template} message
+- `way.reject_not_ours`, `way.reject_late`, `way.reject_abuse` → `notify_customer`: `customer` = `customer`, `template` = `"return-rejected"`, `to` = `customer_email`. would send customer {customer} the {template} message
 - `way.to_customer_care` → `ask`: `about` = `request_number`, `action` = `set_state`, `due` = `3 working_days`, `group_by` = `request_number`, `who` = `role.customer_care`. would ask {who} to approve {action} for {about}
 - `way.refund_no_return` → `set_state`: `line` = `line_id`, `to` = `settling`, `way` = `refund_no_return`. would set return line {line} to {to}
 - `way.refund_no_return` → `expect`: `due` = `working_days(:settlement)`, `kind` = `credit_note`, `line` = `line_id`. would expect the {kind} of return line {line} by {due}
@@ -32,7 +32,7 @@
 - `way.exchange` → `set_state`: `line` = `line_id`, `to` = `awaiting_goods`, `way` = `exchange`. would set return line {line} to {to}
 - `way.refund_after_return` → `set_state`: `line` = `line_id`, `to` = `awaiting_goods`, `way` = `refund_after_return`. would set return line {line} to {to}
 - `way.exchange`, `way.refund_after_return` → `expect`: `due` = `days(:inbound_reminder)`, `kind` = `inbound`, `line` = `line_id`. would expect the {kind} of return line {line} by {due}
-- `way.exchange`, `way.refund_after_return` → `notify_customer`: `customer` = `customer`, `template` = `"return-instructions"`. would send customer {customer} the {template} message
+- `way.exchange`, `way.refund_after_return` → `notify_customer`: `customer` = `customer`, `template` = `"return-instructions"`, `to` = `customer_email`. would send customer {customer} the {template} message
 
 ## Parameters
 

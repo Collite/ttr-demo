@@ -22,8 +22,8 @@ class WinbackSqlProbe {
             s.execute("INSERT INTO income_band VALUES (1,0),(2,100),(3,200),(4,300)");
             s.execute("CREATE TABLE household_demographics(sk INT, income_band INT)");
             s.execute("INSERT INTO household_demographics VALUES (11,1),(12,3),(13,4),(14,4),(15,4)");
-            s.execute("CREATE TABLE customer(sk INT, hdemo INT)");
-            s.execute("INSERT INTO customer VALUES (1,11),(2,12),(3,13),(4,14),(5,15)");
+            s.execute("CREATE TABLE customer(sk INT, hdemo INT, email TEXT)");
+            s.execute("INSERT INTO customer SELECT sk, 10 + sk, 'customer-' || sk || '@customers.hartland.example' FROM range(1, 6) r(sk)");
             s.execute("CREATE TABLE \"order\"(order_number INT, customer INT, placed_date TIMESTAMP)");
             s.execute("INSERT INTO \"order\" SELECT c*10+i,c,TIMESTAMP '2025-06-01' FROM range(1,6) c(c),range(1,5) i(i)");
             s.execute("INSERT INTO \"order\" VALUES (100,5,TIMESTAMP '2026-10-01')");
@@ -37,7 +37,15 @@ class WinbackSqlProbe {
                     for (var name : positional.getSecond()) ps.setObject(i++, bindings.get(name));
                     var actual = new TreeSet<Integer>();
                     try (var rows = ps.executeQuery()) {
-                        while (rows.next()) actual.add(rows.getInt("sk"));
+                        while (rows.next()) {
+                            int sk = rows.getInt("sk");
+                            actual.add(sk);
+                            // The route rows carry the mail action's address column (`emit { to: email }`).
+                            var email = rows.getString("email");
+                            if (!("customer-" + sk + "@customers.hartland.example").equals(email)) {
+                                throw new AssertionError(route + ": customer " + sk + " has address " + email);
+                            }
+                        }
                     }
                     var expected = route.equals("premium") ? Set.of(2, 3) : Set.of(1);
                     if (!actual.equals(expected)) throw new AssertionError(route + ": " + actual + " != " + expected);

@@ -34,7 +34,7 @@ and rebuild too: the new weeks bring newer inventory snapshots than the ones the
 
 | step | writes |
 |---|---|
-| `10-ddl.sql` | the 14 tables, `customer.c_center_sk` + `date_dim.d_working_day`, the internals |
+| `10-ddl.sql` | the 14 tables, `customer.c_center_sk` + `date_dim.d_working_day`, the generated `customer.c_email`, the internals |
 | `20-orders.sql` | `sales_line`, `sales_order` — all history (`released`) |
 | `21-pricing.sql` | `price_list`, `customer_price`; opens the demo day's orders (`placed`), priced from them |
 | `22-invoices.sql` | `invoice` |

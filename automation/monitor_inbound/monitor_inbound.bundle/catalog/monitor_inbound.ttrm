@@ -12,5 +12,5 @@ def recipe monitor_inbound {
     kinds: ["sql"],
     mode: "per-candidate",
     document: "handling-a-return-request.md",
-    fingerprints: { text: "sha256:b4287b3a0dc4b830321a6c065ffbd8cbf830780dadafe7cb6e734f216cd87ff2", values: "sha256:dba014c020bb1d09dabb29c7914b17cb6715a5be874a1f51bcd8e1e98d018c05", labels: "sha256:6a042ac45050557add09d9fbe5eedc905b05392592bd05d1c960b3b9b8410107" }
+    fingerprints: { text: "sha256:20d2f28d3b83ea8f943297fe2a1ae62898146f9b196c1e611e19071e53757c59", values: "sha256:dba014c020bb1d09dabb29c7914b17cb6715a5be874a1f51bcd8e1e98d018c05", labels: "sha256:6a042ac45050557add09d9fbe5eedc905b05392592bd05d1c960b3b9b8410107" }
 }

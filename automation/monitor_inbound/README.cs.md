@@ -9,6 +9,7 @@
 
 ## Co čte
 
+- Zákazník (`er.entity.customer`)
 - Kalendář (`er.entity.date_dim`)
 - `er.entity.monitor_inbound_verdict`
 - `er.entity.obligation`
@@ -25,7 +26,7 @@
 - `inbound.damaged` → `task`: `about` = `line_id`, `detail` = `receipts`, `who` = `role.customer_care`. zadal by {who} úkol k {about}
 - `inbound.expired` → `fulfil`: `kind` = `inbound`, `line` = `line_id`, `to` = `cancelled`. označil by {kind} k řádku reklamace {line} jako {to}
 - `inbound.expired` → `set_state`: `line` = `line_id`, `to` = `not_returned`. převedl by řádek reklamace {line} do stavu {to}
-- `inbound.remind` → `notify_customer`: `customer` = `customer`, `template` = `"return-reminder"`. poslal by zákazníkovi {customer} zprávu {template}
+- `inbound.remind` → `notify_customer`: `customer` = `customer`, `template` = `"return-reminder"`, `to` = `customer_email`. poslal by zákazníkovi {customer} zprávu {template}
 
 ## Parametry
 

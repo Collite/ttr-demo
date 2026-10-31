@@ -47,7 +47,7 @@ fp_base() {
   local db="$1" t cols sql=""
   for t in $BASE_CHANGED $BASE_READ; do
     cols=$(pgq "$db" "SELECT string_agg(quote_ident(column_name), ', ' ORDER BY ordinal_position) FROM information_schema.columns
-                      WHERE table_schema = 'public' AND table_name = '$t' AND column_name NOT IN ('c_center_sk', 'd_working_day')")
+                      WHERE table_schema = 'public' AND table_name = '$t' AND column_name NOT IN ('c_center_sk', 'd_working_day', 'c_email')")
     sql+="SELECT '$t' t, md5(coalesce(string_agg(x::text, '|' ORDER BY x::text), '')) h, count(*) n FROM (SELECT $cols FROM $t) x UNION ALL "
   done
   pgq "$db" "SELECT t || ' ' || h || ' ' || n FROM (${sql% UNION ALL }) z ORDER BY t"

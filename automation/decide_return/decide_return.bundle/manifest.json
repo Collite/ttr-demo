@@ -14,7 +14,7 @@
       "executor": "native",
       "invocation": "sql-text",
       "file": "islands/received.lines.sql",
-      "sha256": "sha256:b3721fcba7f4b0bb8d6eefa49832247db6524ec33d74966c2cfecd6e730d3839",
+      "sha256": "sha256:f87626417f643ba47e3c0d183a77eca8a864cb47241e3ecc768bf81c4adf9883",
       "connections": [
         "TTR_CONN_ERP"
       ],
@@ -22,7 +22,7 @@
         {
           "port": "lines",
           "file": "islands/received.lines.sql",
-          "sha256": "sha256:b3721fcba7f4b0bb8d6eefa49832247db6524ec33d74966c2cfecd6e730d3839",
+          "sha256": "sha256:f87626417f643ba47e3c0d183a77eca8a864cb47241e3ecc768bf81c4adf9883",
           "columns": [
             {
               "name": "line_id",
@@ -65,6 +65,10 @@
               "type": "int"
             },
             {
+              "name": "customer_email",
+              "type": "varchar"
+            },
+            {
               "name": "order_number",
               "type": "int"
             },
@@ -85,7 +89,7 @@
       "executor": "native",
       "invocation": "sql-text",
       "file": "islands/bought_here.rows.sql",
-      "sha256": "sha256:afcc07b9fd35f5081ef2f12a87ba8a6ebe487f590064537defc14acfcbcc6e68",
+      "sha256": "sha256:dac3064bf26438f5350f18627be813df644aca3cb71e8411f3a4157374a73831",
       "connections": [
         "TTR_CONN_ERP"
       ],
@@ -96,7 +100,7 @@
         {
           "port": "rows",
           "file": "islands/bought_here.rows.sql",
-          "sha256": "sha256:afcc07b9fd35f5081ef2f12a87ba8a6ebe487f590064537defc14acfcbcc6e68",
+          "sha256": "sha256:dac3064bf26438f5350f18627be813df644aca3cb71e8411f3a4157374a73831",
           "columns": [
             {
               "name": "line_id",
@@ -130,7 +134,7 @@
       "executor": "native",
       "invocation": "sql-text",
       "file": "islands/return_share.rows.sql",
-      "sha256": "sha256:3d772048b983263a91b208cba426b9bf692def22505e0cb31c63d864995a43d2",
+      "sha256": "sha256:c1068102bd912643f62f2b84a6749343c934baa5dd4c7cce034c91375edc3afb",
       "connections": [
         "TTR_CONN_ERP"
       ],
@@ -141,7 +145,7 @@
         {
           "port": "rows",
           "file": "islands/return_share.rows.sql",
-          "sha256": "sha256:3d772048b983263a91b208cba426b9bf692def22505e0cb31c63d864995a43d2",
+          "sha256": "sha256:c1068102bd912643f62f2b84a6749343c934baa5dd4c7cce034c91375edc3afb",
           "columns": [
             {
               "name": "line_id",
@@ -198,7 +202,7 @@
       "executor": "native",
       "invocation": "sql-text",
       "file": "islands/stock_at_center.rows.sql",
-      "sha256": "sha256:35b237452e69746cff2c23120debaf54563ae1bbaa8478aaca3821753435cc8a",
+      "sha256": "sha256:ae7a612d3c56513b3c56c96ee38f9528dc6042019c29349985fd6ec54dc0179c",
       "connections": [
         "TTR_CONN_ERP"
       ],
@@ -206,7 +210,7 @@
         {
           "port": "rows",
           "file": "islands/stock_at_center.rows.sql",
-          "sha256": "sha256:35b237452e69746cff2c23120debaf54563ae1bbaa8478aaca3821753435cc8a",
+          "sha256": "sha256:ae7a612d3c56513b3c56c96ee38f9528dc6042019c29349985fd6ec54dc0179c",
           "columns": [
             {
               "name": "line_id",
@@ -233,7 +237,7 @@
       "executor": "native",
       "invocation": "sql-text",
       "file": "islands/way.reject_not_ours.sql",
-      "sha256": "sha256:1ba47e4c4700f1c55a8845cc409a71ca5932276f30772a43b581b1a141d5de7d",
+      "sha256": "sha256:e37465f8996503d21dd8eae65e5c64c1897eec9a9fc0a27b2abfcaaef019fff8",
       "connections": [
         "TTR_CONN_ERP"
       ],
@@ -249,7 +253,7 @@
         {
           "port": "reject_not_ours",
           "file": "islands/way.reject_not_ours.sql",
-          "sha256": "sha256:1ba47e4c4700f1c55a8845cc409a71ca5932276f30772a43b581b1a141d5de7d",
+          "sha256": "sha256:e37465f8996503d21dd8eae65e5c64c1897eec9a9fc0a27b2abfcaaef019fff8",
           "columns": [
             {
               "name": "line_id",
@@ -290,6 +294,10 @@
             {
               "name": "customer",
               "type": "int"
+            },
+            {
+              "name": "customer_email",
+              "type": "varchar"
             },
             {
               "name": "order_number",
@@ -349,7 +357,7 @@
         {
           "port": "reject_late",
           "file": "islands/way.reject_late.sql",
-          "sha256": "sha256:2da3951c719e1a77efd61b7d87cadcc56214521f48d721dbb9dc15a24016f854",
+          "sha256": "sha256:e60e6561d3c433025af16a9ff84471580930df9e60ca8bb35f453ac5087f9c2d",
           "columns": [
             {
               "name": "line_id",
@@ -390,6 +398,10 @@
             {
               "name": "customer",
               "type": "int"
+            },
+            {
+              "name": "customer_email",
+              "type": "varchar"
             },
             {
               "name": "order_number",
@@ -450,7 +462,7 @@
         {
           "port": "reject_abuse",
           "file": "islands/way.reject_abuse.sql",
-          "sha256": "sha256:7c410dd6b973088fa18c1e3e596e466bf7f5f9627146f9495eee8cdaa60c21bb",
+          "sha256": "sha256:0657b95a7aaaed311695218bd09f58e86554087211ca70e2124ca600a0e7776d",
           "columns": [
             {
               "name": "line_id",
@@ -491,6 +503,10 @@
             {
               "name": "customer",
               "type": "int"
+            },
+            {
+              "name": "customer_email",
+              "type": "varchar"
             },
             {
               "name": "order_number",
@@ -550,7 +566,7 @@
         {
           "port": "to_customer_care",
           "file": "islands/way.to_customer_care.sql",
-          "sha256": "sha256:10c4d366f81b9f7444f3f538cb06f230bbde6ca14684b06d50dcc2e39ee838e0",
+          "sha256": "sha256:2b00377811693fb208b0f364972613748a3491ccafd1489af882db44b9a0e6a9",
           "columns": [
             {
               "name": "line_id",
@@ -591,6 +607,10 @@
             {
               "name": "customer",
               "type": "int"
+            },
+            {
+              "name": "customer_email",
+              "type": "varchar"
             },
             {
               "name": "order_number",
@@ -650,7 +670,7 @@
         {
           "port": "refund_no_return",
           "file": "islands/way.refund_no_return.sql",
-          "sha256": "sha256:ae2cfda8bfa0d6e8eb97fe9110d8302688366a3f62d61fc506789c361b12b648",
+          "sha256": "sha256:dce2f2104676adce2bc7a11ba0c2cc085c27add60cbf51e80fa6f6e496e819cc",
           "columns": [
             {
               "name": "line_id",
@@ -691,6 +711,10 @@
             {
               "name": "customer",
               "type": "int"
+            },
+            {
+              "name": "customer_email",
+              "type": "varchar"
             },
             {
               "name": "order_number",
@@ -750,7 +774,7 @@
         {
           "port": "replacement_no_return",
           "file": "islands/way.replacement_no_return.sql",
-          "sha256": "sha256:72f081d9f40e70b80d78b093ad233dcda3e6348baefd1e82430e7f26a3d86e13",
+          "sha256": "sha256:337b70a26c9f14207af99b4d9600a23a9d586baa032a2e4f5f14eac6c228eab8",
           "columns": [
             {
               "name": "line_id",
@@ -791,6 +815,10 @@
             {
               "name": "customer",
               "type": "int"
+            },
+            {
+              "name": "customer_email",
+              "type": "varchar"
             },
             {
               "name": "order_number",
@@ -850,7 +878,7 @@
         {
           "port": "exchange",
           "file": "islands/way.exchange.sql",
-          "sha256": "sha256:a85ec9dbc75a49c23f74d367206936e95722a886d918d0bf4638d104e12979a1",
+          "sha256": "sha256:1c80a32004baaa1b60b29028a2e23a15dfa65515fdc70fad23cab174be95f3f6",
           "columns": [
             {
               "name": "line_id",
@@ -891,6 +919,10 @@
             {
               "name": "customer",
               "type": "int"
+            },
+            {
+              "name": "customer_email",
+              "type": "varchar"
             },
             {
               "name": "order_number",
@@ -950,7 +982,7 @@
         {
           "port": "refund_after_return",
           "file": "islands/way.refund_after_return.sql",
-          "sha256": "sha256:53053ed14bffc6ee70ec0569478035d47fd908c9cf505747a892d86660a8c51b",
+          "sha256": "sha256:aa10aa627bbafe18b8ad3c05ebfd1024e303ea3b9ae5e29217d1041d3e94d389",
           "columns": [
             {
               "name": "line_id",
@@ -991,6 +1023,10 @@
             {
               "name": "customer",
               "type": "int"
+            },
+            {
+              "name": "customer_email",
+              "type": "varchar"
             },
             {
               "name": "order_number",
@@ -1239,6 +1275,7 @@
         "action": "notify_customer",
         "columns": {
           "customer": "customer",
+          "to": "customer_email",
           "template": "\"return-rejected\""
         }
       },
@@ -1341,6 +1378,7 @@
         "action": "notify_customer",
         "columns": {
           "customer": "customer",
+          "to": "customer_email",
           "template": "\"return-instructions\""
         }
       }
@@ -1398,7 +1436,7 @@
       "er.entity.sales_line"
     ],
     "fingerprints": {
-      "text": "sha256:f5d3e7a222bac1dc7c8ae248323af90100cbaef041396467a5b996b9f876f7be",
+      "text": "sha256:9495dd4ec723a541df367dc5d88b55277a88ce90401564fc1fc6e242929130c2",
       "values": "sha256:6c5da116527944c0c189fdfbd0c8bbdef9f549dd03079764e3f9c1c80bb1ec41",
       "labels": "sha256:03c34a36822f9956188705fc07a6c5537d7cd227d57c7930813c9b4edce13de1"
     },
@@ -1423,22 +1461,22 @@
     ]
   },
   "files": {
-    "README.md": "sha256:71749c38be6dbfce627b151e3cc12969fcf1418b24217c1ada32ff19b7576257",
-    "catalog/decide_return.ttrm": "sha256:dc416dded13dc43316011156e21f431800957c26a8e2b5c86046e4e436c6186f",
+    "README.md": "sha256:95c05c241f07a3523e699acdae83c9c36aa03d2aebb96f0f39b5264e84c9a5b5",
+    "catalog/decide_return.ttrm": "sha256:fb8a6d7ea620aeba7625e1dfc5740cf4944f25273b65513c9cdbe2aef039d9cd",
     "catalog/decide_return_verdict.ttrm": "sha256:c619774e8e6c518b3bba13fa1fd2dc4b04f4b5ed583d4ff5440f0273f5f99f64",
-    "islands/bought_here.rows.sql": "sha256:afcc07b9fd35f5081ef2f12a87ba8a6ebe487f590064537defc14acfcbcc6e68",
-    "islands/received.lines.sql": "sha256:b3721fcba7f4b0bb8d6eefa49832247db6524ec33d74966c2cfecd6e730d3839",
+    "islands/bought_here.rows.sql": "sha256:dac3064bf26438f5350f18627be813df644aca3cb71e8411f3a4157374a73831",
+    "islands/received.lines.sql": "sha256:f87626417f643ba47e3c0d183a77eca8a864cb47241e3ecc768bf81c4adf9883",
     "islands/request_value.rows.sql": "sha256:94a265268fb165b1fbef959e7026c2693f26a20b4164427db4f121dbbcd00e9b",
-    "islands/return_share.rows.sql": "sha256:3d772048b983263a91b208cba426b9bf692def22505e0cb31c63d864995a43d2",
-    "islands/stock_at_center.rows.sql": "sha256:35b237452e69746cff2c23120debaf54563ae1bbaa8478aaca3821753435cc8a",
-    "islands/way.exchange.sql": "sha256:a85ec9dbc75a49c23f74d367206936e95722a886d918d0bf4638d104e12979a1",
-    "islands/way.refund_after_return.sql": "sha256:53053ed14bffc6ee70ec0569478035d47fd908c9cf505747a892d86660a8c51b",
-    "islands/way.refund_no_return.sql": "sha256:ae2cfda8bfa0d6e8eb97fe9110d8302688366a3f62d61fc506789c361b12b648",
-    "islands/way.reject_abuse.sql": "sha256:7c410dd6b973088fa18c1e3e596e466bf7f5f9627146f9495eee8cdaa60c21bb",
-    "islands/way.reject_late.sql": "sha256:2da3951c719e1a77efd61b7d87cadcc56214521f48d721dbb9dc15a24016f854",
-    "islands/way.reject_not_ours.sql": "sha256:1ba47e4c4700f1c55a8845cc409a71ca5932276f30772a43b581b1a141d5de7d",
-    "islands/way.replacement_no_return.sql": "sha256:72f081d9f40e70b80d78b093ad233dcda3e6348baefd1e82430e7f26a3d86e13",
-    "islands/way.to_customer_care.sql": "sha256:10c4d366f81b9f7444f3f538cb06f230bbde6ca14684b06d50dcc2e39ee838e0",
+    "islands/return_share.rows.sql": "sha256:c1068102bd912643f62f2b84a6749343c934baa5dd4c7cce034c91375edc3afb",
+    "islands/stock_at_center.rows.sql": "sha256:ae7a612d3c56513b3c56c96ee38f9528dc6042019c29349985fd6ec54dc0179c",
+    "islands/way.exchange.sql": "sha256:1c80a32004baaa1b60b29028a2e23a15dfa65515fdc70fad23cab174be95f3f6",
+    "islands/way.refund_after_return.sql": "sha256:aa10aa627bbafe18b8ad3c05ebfd1024e303ea3b9ae5e29217d1041d3e94d389",
+    "islands/way.refund_no_return.sql": "sha256:dce2f2104676adce2bc7a11ba0c2cc085c27add60cbf51e80fa6f6e496e819cc",
+    "islands/way.reject_abuse.sql": "sha256:0657b95a7aaaed311695218bd09f58e86554087211ca70e2124ca600a0e7776d",
+    "islands/way.reject_late.sql": "sha256:e60e6561d3c433025af16a9ff84471580930df9e60ca8bb35f453ac5087f9c2d",
+    "islands/way.reject_not_ours.sql": "sha256:e37465f8996503d21dd8eae65e5c64c1897eec9a9fc0a27b2abfcaaef019fff8",
+    "islands/way.replacement_no_return.sql": "sha256:337b70a26c9f14207af99b4d9600a23a9d586baa032a2e4f5f14eac6c228eab8",
+    "islands/way.to_customer_care.sql": "sha256:2b00377811693fb208b0f364972613748a3491ccafd1489af882db44b9a0e6a9",
     "tests/exchange.cz.yaml": "sha256:328dc85aea20bcad7ead6e9967be7b0bb1abf2e4755429156cd1fe9158e029b3",
     "tests/exchange.yaml": "sha256:184671b13bf1f4bb285aeca7cf20722619f00ad3f549f0cffecf741966a9b0c6",
     "tests/refund-after-return.cz.yaml": "sha256:8d7e79c95b72600800df122f31885ee41073dfde00dbda13b4657d7230a67884",

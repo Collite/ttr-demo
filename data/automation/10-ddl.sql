@@ -161,6 +161,12 @@ CREATE TABLE IF NOT EXISTS winback_mail (
 -- ── the column adds (D-82, D-83): kept by a reset, only emptied — the model maps them ────────────────────────
 ALTER TABLE customer ADD COLUMN IF NOT EXISTS c_center_sk integer;      -- 24-centers.sql
 ALTER TABLE date_dim ADD COLUMN IF NOT EXISTS d_working_day boolean;    -- 25-calendar.sql
+-- The customer's mail address, which the customer mail actions (notify_customer, emit) send to. It is generated from
+-- the key under the reserved .example domain (RFC 2606), so a demo mail can never reach a real inbox. TPC-DS's own
+-- c_email_address is not used: its random domains include registered ones, and some rows are NULL or duplicates.
+-- A reset keeps it as it is, because it holds no build state.
+ALTER TABLE customer ADD COLUMN IF NOT EXISTS c_email varchar(64)
+  GENERATED ALWAYS AS ('customer-' || c_customer_sk || '@customers.hartland.example') STORED;
 
 -- ── internals (never modelled) ────────────────────────────────────────────────────────────────────────────────
 -- What the world looked like when it was built (per fact: last date, rows).

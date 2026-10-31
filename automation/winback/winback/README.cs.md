@@ -15,8 +15,8 @@
 
 ## Co dělá
 
-- `offer.premium` → `emit`: `customer` = `sk`, `offer` = `"premium"`. poslal by zákazníkovi {customer} win-back nabídku {offer}
-- `offer.standard` → `emit`: `customer` = `sk`, `offer` = `"standard"`. poslal by zákazníkovi {customer} win-back nabídku {offer}
+- `offer.premium` → `emit`: `customer` = `sk`, `offer` = `"premium"`, `to` = `email`. poslal by zákazníkovi {customer} win-back nabídku {offer}
+- `offer.standard` → `emit`: `customer` = `sk`, `offer` = `"standard"`, `to` = `email`. poslal by zákazníkovi {customer} win-back nabídku {offer}
 - `offer.premium` → `record`: `customer` = `sk`, `offer` = `"premium"`. zaznamenal by win-back e-mail zákazníkovi {customer}
 - `offer.standard` → `record`: `customer` = `sk`, `offer` = `"standard"`. zaznamenal by win-back e-mail zákazníkovi {customer}
 

@@ -9,6 +9,7 @@
 
 ## What it reads
 
+- Customer (`er.entity.customer`)
 - Calendar (`er.entity.date_dim`)
 - `er.entity.monitor_inbound_verdict`
 - `er.entity.obligation`
@@ -25,7 +26,7 @@
 - `inbound.damaged` → `task`: `about` = `line_id`, `detail` = `receipts`, `who` = `role.customer_care`. would give {who} a task about {about}
 - `inbound.expired` → `fulfil`: `kind` = `inbound`, `line` = `line_id`, `to` = `cancelled`. would mark the {kind} of return line {line} {to}
 - `inbound.expired` → `set_state`: `line` = `line_id`, `to` = `not_returned`. would set return line {line} to {to}
-- `inbound.remind` → `notify_customer`: `customer` = `customer`, `template` = `"return-reminder"`. would send customer {customer} the {template} message
+- `inbound.remind` → `notify_customer`: `customer` = `customer`, `template` = `"return-reminder"`, `to` = `customer_email`. would send customer {customer} the {template} message
 
 ## Parameters
 
