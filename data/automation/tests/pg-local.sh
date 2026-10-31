@@ -9,9 +9,12 @@
 # is gone after pg_local_stop. Never point CTX=local at a shared database.
 
 PGSERVER_VERSION="${PGSERVER_VERSION:-0.1.4}"   # Postgres 16.2
+# pgserver 0.1.4 ships wheels for CPython 3.9–3.11 only. Without a pin, uv picks the newest CPython it can get (3.14 on
+# the CI runner since late October 2026) and finds no wheel, so the suite cannot start.
+PG_LOCAL_PYTHON="${PG_LOCAL_PYTHON:-3.11}"
 
 pg_local_bin() {
-  uv run --quiet --with "pgserver==$PGSERVER_VERSION" python3 -I -c \
+  uv run --python "$PG_LOCAL_PYTHON" --quiet --with "pgserver==$PGSERVER_VERSION" python3 -I -c \
     'import pathlib, pgserver; print(pathlib.Path(pgserver.__file__).parent / "pginstall" / "bin")'
 }
 
