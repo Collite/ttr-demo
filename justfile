@@ -210,7 +210,7 @@ CTX := "hartland"
 # later date before a show and only the new weeks are added (data/extend/README.md).
 #
 #     just extend-data cz 2026-10-31          # the hartland cluster (CTX below)
-#     just extend-data us 2026-10-31 dsk      # another cluster — positional, not `ctx=dsk`
+#     just extend-data cz 2026-10-31 bp-dsk   # another cluster — positional, not `ctx=bp-dsk`
 #
 # Every cluster carries the same olymp `hartland-pg` CNPG (ns `data`), so the pod is `hartland-pg-1`.
 extend-data world until ctx=CTX:
@@ -218,8 +218,8 @@ extend-data world until ctx=CTX:
     set -euo pipefail
     case "{{world}}" in us|cz) ;; *) echo "world must be us or cz, got '{{world}}'" >&2; exit 2 ;; esac
     case "{{ctx}}" in
-      dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
-      *) echo "no hartland-pg pod known for context '{{ctx}}' (dsk, collite-o1, hartland)" >&2; exit 2 ;;
+      bp-dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
+      *) echo "no hartland-pg pod known for context '{{ctx}}' (bp-dsk, collite-o1, hartland)" >&2; exit 2 ;;
     esac
     data/extend/run-extend.sh "{{ctx}}" "hartland_{{world}}" "{{until}}" "$pod"
 
@@ -233,8 +233,8 @@ extend-reset world ctx=CTX:
     set -euo pipefail
     case "{{world}}" in us|cz) ;; *) echo "world must be us or cz, got '{{world}}'" >&2; exit 2 ;; esac
     case "{{ctx}}" in
-      dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
-      *) echo "no hartland-pg pod known for context '{{ctx}}' (dsk, collite-o1, hartland)" >&2; exit 2 ;;
+      bp-dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
+      *) echo "no hartland-pg pod known for context '{{ctx}}' (bp-dsk, collite-o1, hartland)" >&2; exit 2 ;;
     esac
     data/extend/run-reset.sh "{{ctx}}" "hartland_{{world}}" "$pod"
 
@@ -249,8 +249,8 @@ calendar-data world ctx=CTX:
     set -euo pipefail
     case "{{world}}" in us|cz) ;; *) echo "world must be us or cz, got '{{world}}'" >&2; exit 2 ;; esac
     case "{{ctx}}" in
-      dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
-      *) echo "no hartland-pg pod known for context '{{ctx}}' (dsk, collite-o1, hartland)" >&2; exit 2 ;;
+      bp-dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
+      *) echo "no hartland-pg pod known for context '{{ctx}}' (bp-dsk, collite-o1, hartland)" >&2; exit 2 ;;
     esac
     data/calendar/run-calendar.sh "{{ctx}}" "hartland_{{world}}" "{{world}}" "$pod"
 
@@ -268,8 +268,8 @@ labels-data world ctx=CTX:
     set -euo pipefail
     case "{{world}}" in us|cz) ;; *) echo "world must be us or cz, got '{{world}}'" >&2; exit 2 ;; esac
     case "{{ctx}}" in
-      dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
-      *) echo "no hartland-pg pod known for context '{{ctx}}' (dsk, collite-o1, hartland)" >&2; exit 2 ;;
+      bp-dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
+      *) echo "no hartland-pg pod known for context '{{ctx}}' (bp-dsk, collite-o1, hartland)" >&2; exit 2 ;;
     esac
     data/labels/run-labels.sh "{{ctx}}" "hartland_{{world}}" "$pod"
 
@@ -283,15 +283,15 @@ labels-test:
 # day is refused until `just automation-reset`. as-of `-` (or empty) = the Monday of the last extended week.
 #
 #     just automation-data cz                       # the hartland cluster, the default demo day
-#     just automation-data us 2026-10-26 dsk        # another day and cluster — positional, not `ctx=dsk`
-#     just automation-data us - dsk                 # the default day on another cluster
+#     just automation-data cz 2026-10-26 bp-dsk     # another day and cluster — positional, not `ctx=bp-dsk`
+#     just automation-data cz - bp-dsk              # the default day on another cluster (bp-dsk serves cz only)
 automation-data world as_of="-" ctx=CTX:
     #!/usr/bin/env bash
     set -euo pipefail
     case "{{world}}" in us|cz) ;; *) echo "world must be us or cz, got '{{world}}'" >&2; exit 2 ;; esac
     case "{{ctx}}" in
-      dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
-      *) echo "no hartland-pg pod known for context '{{ctx}}' (dsk, collite-o1, hartland)" >&2; exit 2 ;;
+      bp-dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
+      *) echo "no hartland-pg pod known for context '{{ctx}}' (bp-dsk, collite-o1, hartland)" >&2; exit 2 ;;
     esac
     as_of="{{as_of}}"; [ "$as_of" = "-" ] && as_of=""
     data/automation/run-automation.sh "{{ctx}}" "hartland_{{world}}" "$as_of" "$pod"
@@ -305,8 +305,8 @@ automation-reset world ctx=CTX:
     set -euo pipefail
     case "{{world}}" in us|cz) ;; *) echo "world must be us or cz, got '{{world}}'" >&2; exit 2 ;; esac
     case "{{ctx}}" in
-      dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
-      *) echo "no hartland-pg pod known for context '{{ctx}}' (dsk, collite-o1, hartland)" >&2; exit 2 ;;
+      bp-dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
+      *) echo "no hartland-pg pod known for context '{{ctx}}' (bp-dsk, collite-o1, hartland)" >&2; exit 2 ;;
     esac
     data/automation/run-reset.sh "{{ctx}}" "hartland_{{world}}" "$pod"
 
@@ -318,8 +318,8 @@ automation-recon world ctx=CTX:
     set -euo pipefail
     case "{{world}}" in us|cz) ;; *) echo "world must be us or cz, got '{{world}}'" >&2; exit 2 ;; esac
     case "{{ctx}}" in
-      dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
-      *) echo "no hartland-pg pod known for context '{{ctx}}' (dsk, collite-o1, hartland)" >&2; exit 2 ;;
+      bp-dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
+      *) echo "no hartland-pg pod known for context '{{ctx}}' (bp-dsk, collite-o1, hartland)" >&2; exit 2 ;;
     esac
     data/automation/run-recon.sh "{{ctx}}" "hartland_{{world}}" "{{world}}" "$pod"
 

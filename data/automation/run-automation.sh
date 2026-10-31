@@ -5,7 +5,8 @@
 #
 # ONE transaction, as the postgres superuser over the pod-local socket (the run-extend.sh path); the scripts
 # create the tables as the owner of the facts. Guarded by `_automation_meta`: a world already built at this
-# as_of is a no-op, a world built at another as_of is refused — reset first (run-reset.sh). Ends with ANALYZE
+# as_of is a no-op but for 05-columns.sql's idempotent column adds, a world built at another as_of is refused — reset
+# first (run-reset.sh). Ends with ANALYZE
 # and a summary.
 #
 # Usage: ./run-automation.sh <kube-context> <database> [as-of] [pod]
@@ -23,7 +24,7 @@ source "$DIR/lib.sh"
 # The build, in order. Every script records its step in `_automation_meta`; 45-verify replays the recipes over
 # the plants and fails the build on any disagreement; the views come after the tables they read, the keys after
 # the data (one validating scan each, not a trigger check per inserted row).
-STEPS="10-ddl 20-orders 21-pricing 22-invoices 23-outages 24-centers 25-calendar 26-stock 30-returns 31-receipts 32-settlement 40-plant 45-verify 50-expected 60-events"
+STEPS="05-columns 10-ddl 20-orders 21-pricing 22-invoices 23-outages 24-centers 25-calendar 26-stock 30-returns 31-receipts 32-settlement 40-plant 45-verify 50-expected 60-events"
 VIEWS="return_request document_flow"
 KEYS="80-keys"
 
@@ -73,7 +74,12 @@ export_files() {
 built=""; has _automation_meta && built=$(pgq "$DB" "SELECT as_of FROM _automation_meta WHERE step = 'build'")
 if [ -n "$built" ]; then
   if [ "$built" = "$AS_OF" ]; then
-    echo "== $DB: the automation extension is already built as of $AS_OF — nothing to do"
+    # The column adds still apply: idempotent, so a column added to 05-columns.sql after this world was built
+    # reaches it without a reset (a column a later step fills arrives empty — that one needs a rebuild).
+    before=$(pgq "$DB" "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name IN ('customer', 'date_dim')")
+    pg "$DB" -q -1 -f - < "$DIR/05-columns.sql"
+    after=$(pgq "$DB" "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name IN ('customer', 'date_dim')")
+    echo "== $DB: the automation extension is already built as of $AS_OF — nothing to do but the column adds ($((after - before)) added)"
     export_files; exit 0
   fi
   echo "refusing: $DB was built as of $built, not $AS_OF — reset first (run-reset.sh / just automation-reset)" >&2; exit 2
