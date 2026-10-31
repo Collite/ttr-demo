@@ -23,7 +23,7 @@
 ## Co dělá
 
 - `way.reject_not_ours`, `way.reject_late`, `way.reject_abuse` → `set_state`: `line` = `line_id`, `to` = `rejected`. převedl by řádek reklamace {line} do stavu {to}
-- `way.reject_not_ours`, `way.reject_late`, `way.reject_abuse` → `notify_customer`: `customer` = `customer`, `template` = `"return-rejected"`. poslal by zákazníkovi {customer} zprávu {template}
+- `way.reject_not_ours`, `way.reject_late`, `way.reject_abuse` → `notify_customer`: `customer` = `customer`, `template` = `"return-rejected"`, `to` = `customer_email`. poslal by zákazníkovi {customer} zprávu {template}
 - `way.to_customer_care` → `ask`: `about` = `request_number`, `action` = `set_state`, `due` = `3 working_days`, `group_by` = `request_number`, `who` = `role.customer_care`. požádal by {who} o schválení {action} pro {about}
 - `way.refund_no_return` → `set_state`: `line` = `line_id`, `to` = `settling`, `way` = `refund_no_return`. převedl by řádek reklamace {line} do stavu {to}
 - `way.refund_no_return` → `expect`: `due` = `working_days(:settlement)`, `kind` = `credit_note`, `line` = `line_id`. očekával by {kind} k řádku reklamace {line} do {due}
@@ -32,7 +32,7 @@
 - `way.exchange` → `set_state`: `line` = `line_id`, `to` = `awaiting_goods`, `way` = `exchange`. převedl by řádek reklamace {line} do stavu {to}
 - `way.refund_after_return` → `set_state`: `line` = `line_id`, `to` = `awaiting_goods`, `way` = `refund_after_return`. převedl by řádek reklamace {line} do stavu {to}
 - `way.exchange`, `way.refund_after_return` → `expect`: `due` = `days(:inbound_reminder)`, `kind` = `inbound`, `line` = `line_id`. očekával by {kind} k řádku reklamace {line} do {due}
-- `way.exchange`, `way.refund_after_return` → `notify_customer`: `customer` = `customer`, `template` = `"return-instructions"`. poslal by zákazníkovi {customer} zprávu {template}
+- `way.exchange`, `way.refund_after_return` → `notify_customer`: `customer` = `customer`, `template` = `"return-instructions"`, `to` = `customer_email`. poslal by zákazníkovi {customer} zprávu {template}
 
 ## Parametry
 

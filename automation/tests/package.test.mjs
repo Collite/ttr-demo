@@ -123,7 +123,7 @@ const ACTIONS = {
     { native: 'transition', n8n: 'door', camunda: 'door' }, 'none'],
   notify: [['who:role', 'detail:rows', 'template:text?'], undefined, undefined,
     { native: 'deliver', n8n: 'n8n-nodes-base.emailSend', camunda: 'send task', hebe: 'message' }, 'none'],
-  notify_customer: [['customer:customer.sk', 'template:text'], undefined, undefined,
+  notify_customer: [['customer:customer.sk', 'to:customer.email', 'template:text'], undefined, undefined,
     { native: 'deliver', n8n: 'n8n-nodes-base.emailSend' }, 'none'],
   ask: [['who:role', 'about:text', 'action:action', 'detail:rows?'], undefined, undefined,
     { native: 'task', hebe: 'task', camunda: 'user task', n8n: 'door' }, 'required'],
@@ -138,7 +138,7 @@ const ACTIONS = {
     'weekly_demand:reorder_proposal.weekly_demand', 'proposed_qty:reorder_proposal.proposed_qty',
     'proposal_id:reorder_proposal.proposal_id?', 'run:reorder_proposal.run?', 'state:reorder_proposal.state?'], undefined, undefined,
   { native: 'writer' }, 'none'],
-  emit: [['customer:customer.sk', 'offer:text'], undefined, undefined, { native: 'deliver', n8n: 'n8n-nodes-base.emailSend' }, 'none'],
+  emit: [['customer:customer.sk', 'to:customer.email', 'offer:text'], undefined, undefined, { native: 'deliver', n8n: 'n8n-nodes-base.emailSend' }, 'none'],
   record: [['customer:winback_mail.customer', 'offer:winback_mail.offer', 'quarter:winback_mail.quarter?',
     'run:winback_mail.run?', 'mailed_at:winback_mail.mailed_at?'], undefined, undefined, { native: 'writer' }, 'none'],
 };
@@ -162,6 +162,18 @@ test('S2.1 T2 — ask defaults to 2 working days (D-98); notify, notify_customer
   const actions = ofKind('action');
   assert.equal(render(entry(actions.get('ask'), 'due')), '2 working_days');
   for (const n of ['notify', 'notify_customer', 'emit']) assert.equal(render(entry(actions.get(n), 'deliverable')), 'true', n);
+});
+
+// The n8n export sends an emailSend action's mail to exactly one addressing column: a role (`who`), whose address
+// is configured per estate, or the row's own address (`to`, typed `customer.email`). An action without one would
+// export a mail with an empty recipient (review-189 R2).
+test('every n8n emailSend action has exactly one addressing column: a `who` role or a `to` address', () => {
+  for (const [name, a] of ofKind('action')) {
+    if (objectOf(entry(a, 'sinks')).n8n !== 'n8n-nodes-base.emailSend') continue;
+    const addressing = (a.columns ?? []).filter((c) => (c.name === 'who' && c.type?.name === 'role')
+      || (c.name === 'to' && c.type?.name === 'customer.email'));
+    assert.equal(addressing.length, 1, `action ${name}: one addressing column (who: role | to: customer.email)`);
+  }
 });
 
 test('S2.1 T2 — every action has a dry-run text in English and Czech (D-64)', () => {

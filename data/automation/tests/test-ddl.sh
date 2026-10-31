@@ -90,6 +90,8 @@ expect "no other foreign key on an extension table" "$(pgq "$S" "SELECT count(*)
 
 expect "customer.c_center_sk added (integer)" "$(pgq "$S" "SELECT data_type FROM information_schema.columns WHERE table_name = 'customer' AND column_name = 'c_center_sk'")" = integer
 expect "date_dim.d_working_day added (boolean)" "$(pgq "$S" "SELECT data_type FROM information_schema.columns WHERE table_name = 'date_dim' AND column_name = 'd_working_day'")" = boolean
+expect "customer.c_email added (generated, stored)" "$(pgq "$S" "SELECT is_generated FROM information_schema.columns WHERE table_name = 'customer' AND column_name = 'c_email'")" = ALWAYS
+expect "every customer has a unique reserved-domain address" "$(pgq "$S" "SELECT count(*) - count(DISTINCT c_email) + count(*) FILTER (WHERE c_email NOT LIKE 'customer-%@customers.hartland.example') FROM customer")" -eq 0
 expect "view return_request: the header + the derived state" "$(cols_of "$S" return_request)" = \
   "rr_request_number integer, rr_customer_sk integer, rr_order_number integer, rr_channel text, rr_requested_date date, rr_state text"
 expect "view document_flow: predecessor → successor" "$(cols_of "$S" document_flow)" = \

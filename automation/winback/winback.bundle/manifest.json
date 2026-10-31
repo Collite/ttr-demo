@@ -14,7 +14,7 @@
       "executor": "native",
       "invocation": "sql-text",
       "file": "islands/lapsed.customers.sql",
-      "sha256": "sha256:20a3ff63703b15ecd905be909ebc731d99ef79937e8e74410e7fcafb0e26a806",
+      "sha256": "sha256:006477ed66471dd74895a1ff5e64b88bd8701baa4f34b9f3a575cdd9246a9152",
       "connections": [
         "TTR_CONN_ERP"
       ],
@@ -28,7 +28,7 @@
         {
           "port": "customers",
           "file": "islands/lapsed.customers.sql",
-          "sha256": "sha256:20a3ff63703b15ecd905be909ebc731d99ef79937e8e74410e7fcafb0e26a806",
+          "sha256": "sha256:006477ed66471dd74895a1ff5e64b88bd8701baa4f34b9f3a575cdd9246a9152",
           "columns": [
             {
               "name": "sk",
@@ -37,6 +37,10 @@
             {
               "name": "hdemo",
               "type": "int"
+            },
+            {
+              "name": "email",
+              "type": "varchar"
             },
             {
               "name": "orders_before",
@@ -61,7 +65,7 @@
       "executor": "native",
       "invocation": "sql-text",
       "file": "islands/band.rows.sql",
-      "sha256": "sha256:7f518ca0be7564d12256e22af8b2950cf1589c6b737bb58adc72db963f034052",
+      "sha256": "sha256:a36b06824b9578b7a644b8d4930e522e693a6dc67dccebb7c8b72da56908f68e",
       "connections": [
         "TTR_CONN_ERP"
       ],
@@ -75,7 +79,7 @@
         {
           "port": "rows",
           "file": "islands/band.rows.sql",
-          "sha256": "sha256:7f518ca0be7564d12256e22af8b2950cf1589c6b737bb58adc72db963f034052",
+          "sha256": "sha256:a36b06824b9578b7a644b8d4930e522e693a6dc67dccebb7c8b72da56908f68e",
           "columns": [
             {
               "name": "sk",
@@ -108,7 +112,7 @@
       "executor": "native",
       "invocation": "sql-text",
       "file": "islands/mailed.rows.sql",
-      "sha256": "sha256:8586b470bd77b915c1f3d1179862781958e6c44e05db480eb3d6ff9b3a8e51d8",
+      "sha256": "sha256:803be7a5581ae5246842ec6eb1309b4ab80b0b2267edab29275127c8dda86849",
       "connections": [
         "TTR_CONN_ERP"
       ],
@@ -123,7 +127,7 @@
         {
           "port": "rows",
           "file": "islands/mailed.rows.sql",
-          "sha256": "sha256:8586b470bd77b915c1f3d1179862781958e6c44e05db480eb3d6ff9b3a8e51d8",
+          "sha256": "sha256:803be7a5581ae5246842ec6eb1309b4ab80b0b2267edab29275127c8dda86849",
           "columns": [
             {
               "name": "sk",
@@ -153,7 +157,7 @@
       "executor": "native",
       "invocation": "sql-text",
       "file": "islands/offer.premium.sql",
-      "sha256": "sha256:8b7db78621d92b9031c2ebcd0e7d9ea8b23a9c34e7ffad50a5a4d6c3e3f9f382",
+      "sha256": "sha256:5732a20ec392879060f77b33e5980e1511313199a5aaa48060387dbb7bc8cd2a",
       "connections": [
         "TTR_CONN_ERP"
       ],
@@ -169,7 +173,7 @@
         {
           "port": "premium",
           "file": "islands/offer.premium.sql",
-          "sha256": "sha256:8b7db78621d92b9031c2ebcd0e7d9ea8b23a9c34e7ffad50a5a4d6c3e3f9f382",
+          "sha256": "sha256:5732a20ec392879060f77b33e5980e1511313199a5aaa48060387dbb7bc8cd2a",
           "columns": [
             {
               "name": "sk",
@@ -178,6 +182,10 @@
             {
               "name": "hdemo",
               "type": "int"
+            },
+            {
+              "name": "email",
+              "type": "varchar"
             },
             {
               "name": "orders_before",
@@ -214,7 +222,7 @@
         {
           "port": "standard",
           "file": "islands/offer.standard.sql",
-          "sha256": "sha256:aa5fae628ceffe96225f011c6e5ee4747dd8e2a73dc550ac53445407594842f8",
+          "sha256": "sha256:1f9c575989fc639830f15d88cd7b943178dd8cdcbf58a98fae02d7819062727d",
           "columns": [
             {
               "name": "sk",
@@ -223,6 +231,10 @@
             {
               "name": "hdemo",
               "type": "int"
+            },
+            {
+              "name": "email",
+              "type": "varchar"
             },
             {
               "name": "orders_before",
@@ -382,6 +394,7 @@
         "action": "emit",
         "columns": {
           "customer": "sk",
+          "to": "email",
           "offer": "\"premium\""
         }
       },
@@ -392,6 +405,7 @@
         "action": "emit",
         "columns": {
           "customer": "sk",
+          "to": "email",
           "offer": "\"standard\""
         }
       },
@@ -468,7 +482,7 @@
       "er.entity.winback_mail"
     ],
     "fingerprints": {
-      "text": "sha256:94a8df72375dd999552dcdd8ecf7075c78a3439708615730a125ad1cce98754d",
+      "text": "sha256:96f412f3463ca2e7d0dc212549e83e6dfda76945305b2d9f4a78f9665424fced",
       "values": "sha256:d8352c31b971440aa43d107154959e46256b6f6d981375d8c9e0fd7c9716c86f",
       "labels": "sha256:bb99d3dfc6f7dccc74217a0b7e925c9a2af77e8d4b4bc4d7a567be4edd083e56"
     },
@@ -487,22 +501,22 @@
         "hartland",
         "hartland.automation"
       ],
-      "textBase": "sha256:fb62429828a4afe6ec2a02c89e114628b41d7c06ffd3565b48baf7ee1d09f3d9",
+      "textBase": "sha256:883ef06b7ee6b443da025b561578eb1e0a3aea225fec211e6900940a92793403",
       "actions": {
-        "emit": "sha256:0113a4daa5efb57003db800541fc5d487ffb2502e17c7c893b1100f83a196784",
+        "emit": "sha256:4c637d5b6cfc89e5f57f434ba2e85cb05f8dc423516b4a08660e237266a63c05",
         "record": "sha256:d6896b11c42c9eb1791f6bdbbdbeed7b5d2745ac41e7ff10cfd8fa5efb3415f7"
       }
     }
   },
   "files": {
-    "README.md": "sha256:9e43ff7f26bc9b190bc945f13e4cf81c5e52098e172679ca9c5d944c16de9dc3",
-    "catalog/winback.ttrm": "sha256:ad4a74b4369fd6b84918ae09b375fb29957fc9afc30a91f8eb8915e180244e19",
+    "README.md": "sha256:4bd9839b71bbeb77cc1d6e871527d062183a3003f51b22b3aaff6619093be440",
+    "catalog/winback.ttrm": "sha256:48cd6a9e7671d4d962939817c27aa36293e8e8fa6d50479e09ee60b0a3972518",
     "catalog/winback_verdict.ttrm": "sha256:fc3d78ebb1f947e0b06d3b121fb3b5f8ecb7ee8e1b0f8f475945c5aacea1330d",
-    "islands/band.rows.sql": "sha256:7f518ca0be7564d12256e22af8b2950cf1589c6b737bb58adc72db963f034052",
-    "islands/lapsed.customers.sql": "sha256:20a3ff63703b15ecd905be909ebc731d99ef79937e8e74410e7fcafb0e26a806",
-    "islands/mailed.rows.sql": "sha256:8586b470bd77b915c1f3d1179862781958e6c44e05db480eb3d6ff9b3a8e51d8",
-    "islands/offer.premium.sql": "sha256:8b7db78621d92b9031c2ebcd0e7d9ea8b23a9c34e7ffad50a5a4d6c3e3f9f382",
-    "islands/offer.standard.sql": "sha256:aa5fae628ceffe96225f011c6e5ee4747dd8e2a73dc550ac53445407594842f8",
+    "islands/band.rows.sql": "sha256:a36b06824b9578b7a644b8d4930e522e693a6dc67dccebb7c8b72da56908f68e",
+    "islands/lapsed.customers.sql": "sha256:006477ed66471dd74895a1ff5e64b88bd8701baa4f34b9f3a575cdd9246a9152",
+    "islands/mailed.rows.sql": "sha256:803be7a5581ae5246842ec6eb1309b4ab80b0b2267edab29275127c8dda86849",
+    "islands/offer.premium.sql": "sha256:5732a20ec392879060f77b33e5980e1511313199a5aaa48060387dbb7bc8cd2a",
+    "islands/offer.standard.sql": "sha256:1f9c575989fc639830f15d88cd7b943178dd8cdcbf58a98fae02d7819062727d",
     "tests/none.cz.yaml": "sha256:4a6377c45c61e3a06a32f3557d8fe2d3e0b51f64e3f9ab1b5e9913afce0b938a",
     "tests/none.yaml": "sha256:ad6850c6bab916a8671b68ee2faba2b4af923b908330ac169a22ac6606b4dc19",
     "tests/premium.cz.yaml": "sha256:9f2c27ee19c41d711bf692577177506d0bbf8797ee9481ad8cf0672425195bdb",

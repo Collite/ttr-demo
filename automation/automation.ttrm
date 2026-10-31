@@ -7,6 +7,8 @@
 //     `emit` and `record`, and the role `buyer` (S2.2 T4).
 // One deviation from `17` §1: `notify_customer.customer` is typed `customer.sk` — hartland's customer is the native
 // TPC-DS dimension, keyed `sk` (`17` §0 wrote `customer_sk`).
+// One addition: the customer mail actions (`notify_customer`, `emit`) carry the address column `to`
+// (`customer.email`). It is the row's address, which the n8n export sends to; a role-addressed action uses `who`.
 // The programs and the event schemas are in programs.ttrm; the identities, executors, grants, deployments and the
 // process in the world (model/worlds/demo.ttrm). A value change here is a re-approval of kind `values` (D-13).
 package hartland.automation
@@ -58,7 +60,7 @@ def action notify {
     dry_run:    { en: "would notify {who} with {detail.count} rows", cs: "upozornil by {who}, řádků: {detail.count}" }
 }
 def action notify_customer {
-    columns:    [def column customer { type: customer.sk }, def column template { type: text }]
+    columns:    [def column customer { type: customer.sk }, def column to { type: customer.email }, def column template { type: text }]
     sinks:      { native: deliver, n8n: "n8n-nodes-base.emailSend" }
     deliverable: true
     approval:   none
@@ -126,7 +128,7 @@ def action propose {
 }
 // H-5: quarter uses the UTC quarter of pinned as-of (YYYY-Qn); run and mailed_at use committed Open context.
 def action emit {
-    columns:    [def column customer { type: customer.sk }, def column offer { type: text }]
+    columns:    [def column customer { type: customer.sk }, def column to { type: customer.email }, def column offer { type: text }]
     sinks:      { native: deliver, n8n: "n8n-nodes-base.emailSend" }
     deliverable: true
     approval:   none

@@ -41,8 +41,9 @@ Consider every received return-request line.
 ```sql candidates received(out lines) target erp
         SELECT l.line_id, l.request_number, l.item, l.quantity, l.unit_price, l.quantity * l.unit_price AS line_value,
                l.reason, l.requested_resolution, l.requested_variant,
-               r.customer, r.order_number, r.requested_date
+               r.customer, c.email AS customer_email, r.order_number, r.requested_date
         FROM   er.entity.return_request_line l JOIN er.entity.return_request r ON r.request_number = l.request_number
+        LEFT JOIN er.entity.customer c ON c.sk = r.customer
         WHERE  l.state = 'received'
 ```
 
@@ -138,7 +139,7 @@ opens an inbound obligation.
         way.reject_not_ours, way.reject_late, way.reject_abuse
                                    -> set_state       { line: line_id, to: rejected }
         way.reject_not_ours, way.reject_late, way.reject_abuse
-                                   -> notify_customer { customer: customer, template: "return-rejected" }
+                                   -> notify_customer { customer: customer, to: customer_email, template: "return-rejected" }
         way.to_customer_care       -> ask              { who: role.customer_care, about: request_number, action: set_state,
                                                          group_by: request_number, due: 3 working_days }
         way.refund_no_return       -> set_state        { line: line_id, to: settling, way: refund_no_return }
@@ -150,7 +151,7 @@ opens an inbound obligation.
         way.exchange, way.refund_after_return
                                    -> expect           { line: line_id, kind: inbound, due: days(:inbound_reminder) }
         way.exchange, way.refund_after_return
-                                   -> notify_customer  { customer: customer, template: "return-instructions" }
+                                   -> notify_customer  { customer: customer, to: customer_email, template: "return-instructions" }
     }
 ```
 
@@ -179,9 +180,11 @@ key:        return_request_line.line_id
 Consider each line awaiting goods with an open inbound obligation, including overdue or reopened obligations.
 
 ```sql candidates awaiting(out lines) target erp
-        SELECT l.line_id, l.request_number, l.item, l.quantity, l.way, r.customer, ob.id AS obligation_id, ob.due, ob.state AS obligation_state
+        SELECT l.line_id, l.request_number, l.item, l.quantity, l.way, r.customer, c.email AS customer_email,
+               ob.id AS obligation_id, ob.due, ob.state AS obligation_state
         FROM   er.entity.return_request_line l
         JOIN   er.entity.return_request r ON r.request_number = l.request_number
+        LEFT JOIN er.entity.customer c    ON c.sk = r.customer
         JOIN   er.entity.obligation ob    ON ob.entity = 'return_request_line' AND ob.key = l.line_id AND ob.kind = 'inbound'
                                           AND ob.state IN ('open', 'overdue', 'reopened')
         WHERE  l.state = 'awaiting_goods'
@@ -250,7 +253,7 @@ not returned; a reminder notifies the customer.
         inbound.damaged   -> task            { who: role.customer_care, about: line_id, detail: receipts }
         inbound.expired   -> fulfil          { line: line_id, kind: inbound, to: cancelled }
         inbound.expired   -> set_state       { line: line_id, to: not_returned }
-        inbound.remind    -> notify_customer { customer: customer, template: "return-reminder" }
+        inbound.remind    -> notify_customer { customer: customer, to: customer_email, template: "return-reminder" }
     }
 ```
 
