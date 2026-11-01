@@ -26,7 +26,7 @@ def kind Warehouse    { label: { en: "Distribution center", cs: "Distribuční c
 def kind ReturnReason { label: { en: "Return reason", cs: "Důvod reklamace" },           grounds: md.ReturnReason }        // hop → er.entity.reason
 // A value kind (AM-27, L16-4): its members are the values of one attribute — store · web · marketplace.
 def kind Channel      { label: { en: "Channel", cs: "Kanál" },                           grounds: er.entity.sales.channel }
-// The documents: abstract, no rows of its own (an invoice is one from issue to archive — a subkind, not a phase).
+// The documents: abstract, no rows of its own (an invoice is one from issue to archive — a variant, not a phase).
 def kind Document     { label: { en: "Document", cs: "Doklad" }, abstract: true }
 
 // ---- roles ----
@@ -38,7 +38,7 @@ def role Customer {
 }
 
 // ---- events: the analytical ones (md cubelets behind them) — instants ----
-// The three channel cubelets are subkinds of one event (L16-5, phases.ttrm); `Sale` is the stacked `sales` entity
+// The three channel cubelets are variants of one event (L16-5, phases.ttrm); `Sale` is the stacked `sales` entity
 // over the channel union (md/hop HP-H, A-CN-100) — one grain for "revenue by channel".
 def event Sale {
     label: { en: "Sale", cs: "Prodej" },
@@ -76,7 +76,7 @@ def kind OrderLine {
     qualities: [line_quantity, unit_price, line_value, line_date]
 }
 // `14` §4: the act `Invoicing` became the document and its issue; its states are phases (phases.ttrm).
-def subkind Invoice {
+def variant Invoice {
     of: Document,
     label: { en: "Invoice", cs: "Faktura" },
     involves: [Customer, Order],

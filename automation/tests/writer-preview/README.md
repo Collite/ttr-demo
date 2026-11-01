@@ -11,7 +11,7 @@ just writer-preview /path/to/clean/ttr-server
 The checkout must already be at the exact locked commit; the script refuses wrong/dirty source.
 CI checks it out automatically. No candidate frontend override or Maven Local repository is used.
 The runner verifies services/automation's published runtime classpath against the separate
-`[automation-preview].grammar` pin (0.21.0), not every Server module. Recipe authoring uses the same 0.21.0.
+`[automation-preview].grammar` pin (0.21.1), not every Server module. Recipe authoring uses the same 0.21.1.
 The model/reader and deployed-image pins remain independent.
 
 Five named cases use actual committed Hartland bundles, the Server loader/verifier/bindings,

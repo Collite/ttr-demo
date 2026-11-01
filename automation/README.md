@@ -30,7 +30,7 @@ would report every one of those names unresolved (the lexicon build refuses to l
 under `../model/` names an automation object; `../model/` only carries the lifecycles (`states:`) the actions are
 checked against.
 
-Recipe authoring uses grammar **0.21**, released compiler **0.21.0**, the model gate's toolchain line too (version sweep, 2026-11-01). The strict serving-loader pin is **0.21.0** / metadata image **0.11.34**, in `toolchain.lock`. The extension the recipes
+Recipe authoring uses grammar **0.21**, released compiler **0.21.1**, the model gate's toolchain line too (version sweep, 2026-11-01; 0.21.1 for CN-P8 S8.6's `variant`). The strict serving-loader pin is **0.21.1** / metadata image **0.11.35**, in `toolchain.lock`. The extension the recipes
 run on is in `../model/` — the documents (`model/er/orders.ttrm`, `returns-flow.ttrm`, `proposals.ttrm`) and their
 words (`model/lexicon/{en,cs}/automation.ttrm`); see the "Automation extension" paragraph of `../model/README.md`.
 
@@ -53,9 +53,9 @@ recipe or golden seed changes. The bundles include the golden YAML seeds and the
 CI checks literate artifacts before rebuilding. A prose-only source edit, canonical hand edit, missing sidecar or
 changed explanation fails; rebuild the document and commit all derived artifacts together.
 
-The recipe toolchain uses released **grammar/v0.21.0** (since v0.18.14 it carries the accepted document/multi-recipe,
+The recipe toolchain uses released **grammar/v0.21.1** (since v0.18.14 it carries the accepted document/multi-recipe,
 writer-default evidence, concat and declared-package resolution fixes). The separate `[automation-preview].server-ref` pins the
-ttr-server#360 merge **ae6abde2** (server-libs/v0.11.34) for the preview CI job; it does not change a deployed image.
+ttr-server#367 merge **81e496d6** (server-libs/v0.11.35) for the preview CI job; it does not change a deployed image.
 The model/reader pins remain independent. H-1's `release_order.md` is authoritative; its canonical
 recipe preserves P2's code apart from whitespace/comments. The `.ttrd` records the actual source filename and
 spans. The existing `document: "releasing-a-placed-order.md"` identifier is retained for compatibility with the
@@ -115,7 +115,7 @@ Winback keeps documented workarounds for [#252](https://github.com/Collite/ttr-c
 The `writer-preview` workflow and `just writer-preview /path/to/clean/server` run the Hartland-owned spec
 against the exact accepted Server checkout named in the lock. The runner refuses a wrong commit or local
 changes, verifies **services/automation runtimeClasspath** against the separate preview grammar pin
-0.21.0 (translator/proto 0.13.0), and disables Maven Local. Query result tables are mocked; real bundle loading, approval coverage,
+0.21.1 (translator/proto 0.13.0), and disables Maven Local. Query result tables are mocked; real bundle loading, approval coverage,
 bindings, staging, native preview and writer assignment checks run. The CI checkout is deliberately named
 `bundle` to guard package resolution independently of its path. JUnit XML retains all five named cases.
 
