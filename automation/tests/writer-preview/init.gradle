@@ -24,7 +24,7 @@ gradle.projectsEvaluated {
                 .collect { it.id }.findAll { it instanceof ModuleComponentIdentifier && it.group == 'org.tatrman' }
             assert ids.any { it.module == 'ttrp-frontend' }
             ids.sort { it.module }.each { id ->
-                assert id.version == (id.module in ['ttr-translator', 'ttr-plan-proto'] ? '0.12.11' : version)
+                assert id.version == (id.module in ['ttr-translator', 'ttr-plan-proto'] ? '0.13.0' : version)
                 println id.displayName
             }
             println 'services/automation runtimeClasspath verified; Maven Local disabled; no candidate override.'
