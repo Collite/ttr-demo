@@ -63,6 +63,7 @@ def world demo {
     def deployment release_n8n            { program: release_on_placement, target: n8n,    run_as: identity.automation_decider, granularity: parts }
     def deployment release_py             { program: release_on_placement, target: py,     run_as: identity.automation_decider }
     def deployment release_bpmn           { program: release_on_placement, target: bpmn,   run_as: identity.automation_decider }
+    def deployment release_debug          { program: morning_release,      target: native, run_as: identity.automation_decider, debug: true, dry_run: true }
 
     // H-2, orchestrator-free: six native deployments (on-event + batch per recipe)
     def deployment decide_native_event    { program: decide_on_request,   target: native, run_as: identity.automation_decider }
@@ -71,6 +72,9 @@ def world demo {
     def deployment inbound_native_batch   { program: inbound_daily,       target: native, run_as: identity.automation_decider, trigger: schedule "07:00 Europe/Prague" }
     def deployment settle_native_event    { program: settle_on_document,  target: native, run_as: identity.automation_decider }
     def deployment settle_native_batch    { program: settle_daily,        target: native, run_as: identity.automation_decider, trigger: schedule "07:30 Europe/Prague" }
+    def deployment decide_debug           { program: decide_catch_up,     target: native, run_as: identity.automation_decider, debug: true, dry_run: true }
+    def deployment inbound_debug          { program: inbound_daily,       target: native, run_as: identity.automation_decider, debug: true, dry_run: true }
+    def deployment settle_debug           { program: settle_daily,        target: native, run_as: identity.automation_decider, debug: true, dry_run: true }
 
     // H-2, orchestrated: one n8n execution per line, the engine owns the waiting (D-39, D-86)
     def process return_line_flow {
