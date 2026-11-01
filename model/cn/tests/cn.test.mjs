@@ -1,7 +1,8 @@
 // CN-P6 S6.1 (= AU-hartland P5 S5.1) — the Hartland conceptual package: model/cn/*.ttrm, its bindings
 // (model/binding/cn.ttrm), the `channel_returns` ground of `Return`, `PlacedOrder` materialized, the words
 // (model/lexicon/{cs,en}/cn.ttrm). Re-modelled at CN-P8 S8.3 (design `14` §4, grammar 0.20): events are instants, the
-// rows that relate things are kinds, the channel sales and the invoice are subkinds, two phases are episodes.
+// rows that relate things are kinds, the channel sales and the invoice are variants, two phases are episodes. CN-P8
+// S8.6 (grammar 0.21.1, CN-D32): `def variant` is the house spelling of `def subkind` — one stereotype, `subkind`.
 //
 // Two reports, one golden. `ttr cn hygiene` (Kotlin, `just cn-hygiene`) writes model/cn/tests/hygiene.md —
 // `just check-cn-hygiene` keeps it fresh — and the editor's report (@tatrman/semantics) must print the same up to
@@ -41,7 +42,7 @@ const authored = cnDefs.filter((d) => !sourcesOf(d));
 const named = (stereotype) => authored.filter(({ def }) => def.stereotype === stereotype || def.kind === stereotype).map(({ def }) => def.name).sort();
 
 // The S6.1 list (T2, T4) on the estate's names, re-modelled at CN-P8 S8.3 (`14` §4): the seven durative events became
-// relator kinds (`Order`, `OrderLine`, `ReturnRequest`, `ReturnLine`, `ListPrice`, `PriceAgreement`), the subkind
+// relator kinds (`Order`, `OrderLine`, `ReturnRequest`, `ReturnLine`, `ListPrice`, `PriceAgreement`), the variant
 // `Invoice` of the abstract `Document`, and the phase `OutOfService`; four transition events appeared. `Party` was
 // dropped (Q16-5).
 const KINDS = [
@@ -71,6 +72,15 @@ test('C2 — the authored concepts are the S6.1 list, every concept defined once
   assert.deepEqual(named('phase'), PHASES);
   const all = cnDefs.map(({ def }) => def.name);
   assert.deepEqual(all.filter((n, i) => all.indexOf(n) !== i), [], 'one cn name space');
+});
+
+// CN-P8 S8.6 (CN-D32): Hartland writes the house spelling. The parser records the word on every subkind def; `subkind`
+// still parses, so a def written that way would load silently — this is what keeps the estate on `variant`.
+test('C2b — every subkind is written `def variant`', () => {
+  const spelled = (word) => authored.filter(({ def }) => def.stereotype === 'subkind' && def.spelling === word)
+    .map(({ def }) => def.name).sort();
+  assert.deepEqual(spelled('variant'), SUBKINDS);
+  assert.deepEqual(spelled('subkind'), []);
 });
 
 // CN-P8 S8.3 T1 — things in time (`14` §2): every event is an instant, nothing carries `extent:`, and no 0.20 cn lint
@@ -220,7 +230,7 @@ const terms = (lang) => defs((d, ast) => d.kind === 'term' && ast.modelDirective
 const forOf = ({ def }) => def.target.path;
 
 // The concepts whose words the Golem would lose a filter to are held back (model/lexicon/cs/cn.ttrm says why): the three
-// channel subkinds (their words are `sales.channel`'s value labels, which the Golem honours), and `Return` — the bare
+// channel variants (their words are `sales.channel`'s value labels, which the Golem honours), and `Return` — the bare
 // «vratka» is no term (lexicon/tests/store-family.test.mjs) and its landing is no conversational object. CN-P8 S8.3:
 // `OutOfService` — its words are the AU element's on `warehouse_outage` (cs/automation.ttrm), and a phase lifts from
 // nothing (L17-2), so a term would claim them twice (model/er/tests/er.test.mjs S0.2).

@@ -136,6 +136,12 @@ jobs:
       # bundles are recompiled; only toolchain stamps and fingerprints move, D-137), [veles] names metadata 0.11.34 on
       # ttr-metadata 0.21.0, which bp-dsk runs since olymp#254, and [automation-preview] the ttr-server#360 merge.
       #
+      # grammar/v0.21.1 (2026-11-01, CN-P8 S8.6): `def variant` is the house spelling of `def subkind` (ttr-core#349,
+      # CN-D32), and model/cn now writes it — a 0.21.0 reader refuses the word, so every pin moves in this change and the
+      # readers went first: [veles] metadata 0.11.35 on ttr-metadata 0.21.1 (bp-dsk since olymp#258), [ttrp] 0.21.1 (it
+      # resolves the whole project), [automation-preview] the ttr-server#367 merge. One stereotype below the parser, so
+      # the hygiene report and resolved-packages.json are unchanged; the lexicon and model.tar.zst move with the text.
+      #
       # The pin lives in toolchain.lock ([ttr-core].ref) since 2026-10-21 (SO-demo P0, ⚑SO-P-4), beside the veles image
       # hartland deploys and the ttr-metadata version it was built with ([veles].image, [veles].ttr-metadata) — one file
       # read by this gate, regenerate.yml and olymp's release checklist. The history above is the lock's; the rule is
