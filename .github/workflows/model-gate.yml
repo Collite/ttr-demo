@@ -131,6 +131,11 @@ jobs:
       # C5 fails on v0.20.2). The Kotlin compilers are unchanged, so generated/ is v0.20.2's byte for byte. The lexicon
       # archive schema is still `ttr-lexicon-compiled/v6`.
       #
+      # grammar/v0.21.0 (2026-11-01, version sweep VS T3): MW canonical carriers (ttr-core#338), additive over the 0.20.3
+      # model — no model text changes. Every lock pin moves to the one line: [ttrp] leaves 0.18.14 (the six recipe
+      # bundles are recompiled; only toolchain stamps and fingerprints move, D-137), [veles] names metadata 0.11.34 on
+      # ttr-metadata 0.21.0, which bp-dsk runs since olymp#254, and [automation-preview] the ttr-server#360 merge.
+      #
       # The pin lives in toolchain.lock ([ttr-core].ref) since 2026-10-21 (SO-demo P0, ⚑SO-P-4), beside the veles image
       # hartland deploys and the ttr-metadata version it was built with ([veles].image, [veles].ttr-metadata) — one file
       # read by this gate, regenerate.yml and olymp's release checklist. The history above is the lock's; the rule is
