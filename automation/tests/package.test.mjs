@@ -318,16 +318,20 @@ const DEPLOYMENTS = {
   release_n8n: ['release_on_placement', 'n8n', 'identity.automation_decider', undefined],
   release_py: ['release_on_placement', 'py', 'identity.automation_decider', undefined],
   release_bpmn: ['release_on_placement', 'bpmn', 'identity.automation_decider', undefined],
+  release_debug: ['morning_release', 'native', 'identity.automation_decider', undefined],
   decide_native_event: ['decide_on_request', 'native', 'identity.automation_decider', undefined],
   decide_native_batch: ['decide_catch_up', 'native', 'identity.automation_decider', 'schedule "06:30 Europe/Prague"'],
   inbound_native_event: ['inbound_on_receipt', 'native', 'identity.automation_decider', undefined],
   inbound_native_batch: ['inbound_daily', 'native', 'identity.automation_decider', 'schedule "07:00 Europe/Prague"'],
   settle_native_event: ['settle_on_document', 'native', 'identity.automation_decider', undefined],
   settle_native_batch: ['settle_daily', 'native', 'identity.automation_decider', 'schedule "07:30 Europe/Prague"'],
+  decide_debug: ['decide_catch_up', 'native', 'identity.automation_decider', undefined],
+  inbound_debug: ['inbound_daily', 'native', 'identity.automation_decider', undefined],
+  settle_debug: ['settle_daily', 'native', 'identity.automation_decider', undefined],
   returns_n8n: ['process return_line_flow', 'n8n', 'identity.automation_decider', undefined],
 };
 
-test('S2.1 T4 — the deployments: the five H-1, the six native H-2, the n8n process; ops await Server P4 (17 §2, S2.2 T5)', () => {
+test('S2.1 T4 — the deployments: the five H-1, the six native H-2, the n8n process, four native debug; ops await Server P4 (17 §2, S2.2 T5)', () => {
   const got = Object.fromEntries(worlds[0].w.deployments.map((d) => [d.name, [
     entry(d, 'process') ? `process ${render(entry(d, 'process'))}` : render(entry(d, 'program')),
     d.target?.path, render(entry(d, 'run_as')), render(entry(d, 'trigger')),
