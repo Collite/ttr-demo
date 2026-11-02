@@ -65,7 +65,7 @@
       "executor": "native",
       "invocation": "sql-text",
       "file": "islands/shortfall.rows.sql",
-      "sha256": "sha256:33bf7ad666611282282a965431763f87285c10bce23b6747ef396ad61cc1436f",
+      "sha256": "sha256:a23aeea3e91e5d51d6089f56780d982ac6206e4f96ad1eaf98ab67c65aa7c864",
       "connections": [
         "TTR_CONN_ERP"
       ],
@@ -76,7 +76,7 @@
         {
           "port": "rows",
           "file": "islands/shortfall.rows.sql",
-          "sha256": "sha256:33bf7ad666611282282a965431763f87285c10bce23b6747ef396ad61cc1436f",
+          "sha256": "sha256:a23aeea3e91e5d51d6089f56780d982ac6206e4f96ad1eaf98ab67c65aa7c864",
           "columns": [
             {
               "name": "order_number",
@@ -216,7 +216,7 @@
       "executor": "native",
       "invocation": "sql-text",
       "file": "islands/verdict.hold_sales.sql",
-      "sha256": "sha256:6f2e6c32d0f4b992d76b62189d02f39cf5ac13f6513dc960a85b3c98740cade1",
+      "sha256": "sha256:ab57c2940c5d6d8fe16562c3b0ec94d8ce9cb0a47af02e2b6b3b8c03d57ffdd9",
       "connections": [
         "TTR_CONN_ERP"
       ],
@@ -229,7 +229,7 @@
         {
           "port": "hold_sales",
           "file": "islands/verdict.hold_sales.sql",
-          "sha256": "sha256:6f2e6c32d0f4b992d76b62189d02f39cf5ac13f6513dc960a85b3c98740cade1",
+          "sha256": "sha256:ab57c2940c5d6d8fe16562c3b0ec94d8ce9cb0a47af02e2b6b3b8c03d57ffdd9",
           "columns": [
             {
               "name": "order_number",
@@ -290,7 +290,7 @@
         {
           "port": "hold_ar",
           "file": "islands/verdict.hold_ar.sql",
-          "sha256": "sha256:672ef62fc6db7f80406932ca709148c63e2148daf023f5909732cbe637ec8c73",
+          "sha256": "sha256:b7c90e5877ce98b01b710be44ea044bd1228a1ea2bd430a48178a0e60c6ad273",
           "columns": [
             {
               "name": "order_number",
@@ -351,7 +351,7 @@
         {
           "port": "release_confirmed",
           "file": "islands/verdict.release_confirmed.sql",
-          "sha256": "sha256:d78804520394d11aa67c546e504cb65b80c44969521a7d2c5368c8c7f20c8e82",
+          "sha256": "sha256:e3694604ae0ec8c686ed504e18d615db650b7ae25e4fbacddac2e8b0f6518520",
           "columns": [
             {
               "name": "order_number",
@@ -413,7 +413,7 @@
         {
           "port": "release",
           "file": "islands/verdict.release.sql",
-          "sha256": "sha256:1367b24244239242e24d0d310b143b1a2db379f4774f5bbf36faf6c458bc0307",
+          "sha256": "sha256:8ed524e3ffe3dcfe2b6a21faf9babce4153f60b9feb4066ded64cc872d16f4c8",
           "columns": [
             {
               "name": "order_number",
@@ -475,7 +475,7 @@
         {
           "port": "hold_sales.shortfall",
           "file": "islands/verdict.hold_sales.shortfall.sql",
-          "sha256": "sha256:cbc4b468f8e3ebde52638e20c545f27f38faba19507a4174d49fc3b110c31343",
+          "sha256": "sha256:62e70d7a9910299cbc026933c4cb80bccf2eb49941a7b3e47e004c9521731d88",
           "columns": [
             {
               "name": "order_number",
@@ -524,7 +524,7 @@
         {
           "port": "hold_sales.price_differences",
           "file": "islands/verdict.hold_sales.price_differences.sql",
-          "sha256": "sha256:4399144de22dd38ec0649984e072a1e6d85d8b20f56a83f79db21297cbfbf31c",
+          "sha256": "sha256:62b39b3723304d8006c078b249fd7261b2022d0ceb318da6e15559c50ff77241",
           "columns": [
             {
               "name": "order_number",
@@ -565,7 +565,7 @@
         {
           "port": "hold_ar.overdue",
           "file": "islands/verdict.hold_ar.overdue.sql",
-          "sha256": "sha256:7e99929eee2b0647d40d57ef97aab74de92117dc3bcf46af1af506ae45b5aade",
+          "sha256": "sha256:84429e71e2b9411b1552ab16e05dc07cdb005e7a2d51b5f04020dcd3366ce803",
           "columns": [
             {
               "name": "order_number",
@@ -819,7 +819,7 @@
       "er.entity.warehouse_outage"
     ],
     "fingerprints": {
-      "text": "sha256:b8e7981518acaba84ae3d55e0a6f350abe04025f6ef702386186f5c56f82b29c",
+      "text": "sha256:e0acc590f84d824ab502b9ea9bbceecbd8fab32ebfe2a997cd09a59f42a77959",
       "values": "sha256:54e165c4463646ed8b9ae490dc1a830b34e76dda883caa0f3df407699c7ae888",
       "labels": "sha256:9a98e2023f2b1668fdef7710c6a182e9e78880b8c1c2ad751dc1d2160fe2a42d"
     },
@@ -837,19 +837,19 @@
   },
   "files": {
     "README.md": "sha256:b6967a7e619cbb1370d7b84df6fe31eab71a8b72e9b0e61ddf0bc62f577e7c45",
-    "catalog/release_order.ttrm": "sha256:df2d51235df94c4bdbe063f8428ce7686f423786239cd88f14eff4e3755fd5a7",
+    "catalog/release_order.ttrm": "sha256:9c823a4dcca4c79b677928d5aa705d5837537fbad789e25c2a671c0009bb1b51",
     "catalog/release_order_verdict.ttrm": "sha256:1172675861546a966ea9a1daca8c805386898e3dec5bd81790dd6739123f8909",
     "islands/overdue.rows.sql": "sha256:3730c48e4975b3a5052a7e1a246a7c02f3c783c51505461e037842f503e6755a",
     "islands/placed_orders.orders.sql": "sha256:87fc1d71dba0be2a03e674da6d79188432e2ec439625472e0c33201c7e640ce0",
     "islands/price_differences.rows.sql": "sha256:8242affb2c600e197f69b99c2a3b565bf8ee11040e0a337a5d404ce549bb19ad",
-    "islands/shortfall.rows.sql": "sha256:33bf7ad666611282282a965431763f87285c10bce23b6747ef396ad61cc1436f",
-    "islands/verdict.hold_ar.overdue.sql": "sha256:7e99929eee2b0647d40d57ef97aab74de92117dc3bcf46af1af506ae45b5aade",
-    "islands/verdict.hold_ar.sql": "sha256:672ef62fc6db7f80406932ca709148c63e2148daf023f5909732cbe637ec8c73",
-    "islands/verdict.hold_sales.price_differences.sql": "sha256:4399144de22dd38ec0649984e072a1e6d85d8b20f56a83f79db21297cbfbf31c",
-    "islands/verdict.hold_sales.shortfall.sql": "sha256:cbc4b468f8e3ebde52638e20c545f27f38faba19507a4174d49fc3b110c31343",
-    "islands/verdict.hold_sales.sql": "sha256:6f2e6c32d0f4b992d76b62189d02f39cf5ac13f6513dc960a85b3c98740cade1",
-    "islands/verdict.release.sql": "sha256:1367b24244239242e24d0d310b143b1a2db379f4774f5bbf36faf6c458bc0307",
-    "islands/verdict.release_confirmed.sql": "sha256:d78804520394d11aa67c546e504cb65b80c44969521a7d2c5368c8c7f20c8e82",
+    "islands/shortfall.rows.sql": "sha256:a23aeea3e91e5d51d6089f56780d982ac6206e4f96ad1eaf98ab67c65aa7c864",
+    "islands/verdict.hold_ar.overdue.sql": "sha256:84429e71e2b9411b1552ab16e05dc07cdb005e7a2d51b5f04020dcd3366ce803",
+    "islands/verdict.hold_ar.sql": "sha256:b7c90e5877ce98b01b710be44ea044bd1228a1ea2bd430a48178a0e60c6ad273",
+    "islands/verdict.hold_sales.price_differences.sql": "sha256:62b39b3723304d8006c078b249fd7261b2022d0ceb318da6e15559c50ff77241",
+    "islands/verdict.hold_sales.shortfall.sql": "sha256:62e70d7a9910299cbc026933c4cb80bccf2eb49941a7b3e47e004c9521731d88",
+    "islands/verdict.hold_sales.sql": "sha256:ab57c2940c5d6d8fe16562c3b0ec94d8ce9cb0a47af02e2b6b3b8c03d57ffdd9",
+    "islands/verdict.release.sql": "sha256:8ed524e3ffe3dcfe2b6a21faf9babce4153f60b9feb4066ded64cc872d16f4c8",
+    "islands/verdict.release_confirmed.sql": "sha256:e3694604ae0ec8c686ed504e18d615db650b7ae25e4fbacddac2e8b0f6518520",
     "tests/hold-ar.cz.yaml": "sha256:9df65111021aa9dc47fef2d358a4a9fc52bc1b29d8305a09aae3a34db8942784",
     "tests/hold-ar.yaml": "sha256:c872809d0ff4a43c0825ba740ba66d1928870e3e703a499105485d8441011387",
     "tests/hold-sales.cz.yaml": "sha256:db9c2e3e408a53398e4c4e1ae3920b163b7b5fad0518a5791e412f8f5bac7bfe",
