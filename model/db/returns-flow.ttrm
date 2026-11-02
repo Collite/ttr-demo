@@ -38,9 +38,9 @@ def table return_request_line {
         def column rl_unit_price           { type: { type: decimal, length: 12, precision: 2 } },
         def column rl_reason               { type: varchar },                                   // damaged · did_not_arrive · wrong_size · other
         def column rl_requested_resolution { type: varchar },                                   // refund · exchange · replacement
-        def column rl_requested_variant_sk { type: int },                                       // NULL unless an exchange names a variant
+        def column rl_requested_variant_sk { type: int, optional: true },                                       // NULL unless an exchange names a variant
         def column rl_state                { type: varchar },
-        def column rl_way                  { type: varchar },                                   // NULL until decided — the decide_return route taken
+        def column rl_way                  { type: varchar, optional: true },                                   // NULL until decided — the decide_return route taken
         def column rl_customer_sk          { type: int }
     ]
 }

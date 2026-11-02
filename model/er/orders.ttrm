@@ -34,7 +34,7 @@ def entity order {
         def attribute channel              { type: text, description: "Sales channel of the order: 'web' or 'marketplace'." },
         def attribute customer             { type: int, description: "Ordering customer — FK to the 'sk' attribute of the Customer entity." },
         def attribute placed_date          { type: date, description: "The day the order was placed." },
-        def attribute delivered_date       { type: date, description: "The day the order was delivered; empty until then." },
+        def attribute delivered_date       { type: date, optional: true, description: "The day the order was delivered; empty until then." },
         def attribute fulfilling_warehouse { type: int, description: "Distribution center that ships the order — FK to the 'sk' attribute of the Distribution Center (warehouse) entity." },
         def attribute value                { type: { type: decimal, length: 12, precision: 2 }, description: "Order value — the sum of its lines' extended sales prices." },
         def attribute state {
@@ -52,7 +52,7 @@ def entity order {
             }
         },
         def attribute held_for {
-            type: text,
+            type: text, optional: true,
             description: "Who a held order waits for: 'Sales', 'AR' or 'both'; empty unless the order is held.",
             valueLabels: {
                 "Sales": { en: "Sales department",       cs: "Obchodní oddělení" },
@@ -93,7 +93,7 @@ def entity price_list {
         def attribute channel    { type: text, isKey: true, description: "Sales channel the price applies to: 'web' or 'marketplace'." },
         def attribute valid_from { type: date, isKey: true, description: "First day the price is valid." },
         def attribute price      { type: { type: decimal, length: 12, precision: 2 }, description: "List price per unit." },
-        def attribute valid_to   { type: date, description: "Last day the price is valid; empty while it is still valid." }
+        def attribute valid_to   { type: date, optional: true, description: "Last day the price is valid; empty while it is still valid." }
     ]
 }
 
@@ -107,7 +107,7 @@ def entity customer_price {
         def attribute customer   { type: int, isKey: true, description: "Customer the price is agreed with — FK to the 'sk' attribute of the Customer entity." },
         def attribute valid_from { type: date, isKey: true, description: "First day the price is valid." },
         def attribute price      { type: { type: decimal, length: 12, precision: 2 }, description: "The customer's price per unit." },
-        def attribute valid_to   { type: date, description: "Last day the price is valid; empty while it is still valid." }
+        def attribute valid_to   { type: date, optional: true, description: "Last day the price is valid; empty while it is still valid." }
     ]
 }
 
