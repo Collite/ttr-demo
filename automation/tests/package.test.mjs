@@ -220,9 +220,13 @@ test('S2.1 T2 — the four approvals (17 §1)', () => {
 // program → [recipe, port, mode, as_of]
 const PROGRAMS = {
   morning_release: ['release_order', 'none', 'batch', 'run'],
+  morning_release_cz: ['release_order', 'none', 'batch', 'run'],
   release_on_placement: ['release_order', 'key', 'on_event', 'event'],
+  release_on_placement_cz: ['release_order', 'key', 'on_event', 'event'],
   decide_on_request: ['decide_return', 'event', 'on_event', 'event'],
+  decide_on_request_cz: ['decide_return', 'event', 'on_event', 'event'],
   decide_catch_up: ['decide_return', 'none', 'batch', 'run'],
+  decide_catch_up_cz: ['decide_return', 'none', 'batch', 'run'],
   inbound_on_receipt: ['monitor_inbound', 'event', 'on_event', 'event'],
   inbound_daily: ['monitor_inbound', 'none', 'batch', 'run'],
   settle_on_document: ['settle', 'event', 'on_event', 'event'],
@@ -245,7 +249,7 @@ test('S2.1 T3 — every program names one of the eight recipes; the on-event one
   for (const [name, p] of ofKind('program')) assert.ok(RECIPES.includes(render(entry(p, 'recipe'))), `${name}: ${render(entry(p, 'recipe'))}`);
   const events = Object.fromEntries([...ofKind('program')].filter(([, p]) => entry(p, 'event')).map(([n, p]) => [n, render(entry(p, 'event'))]));
   assert.deepEqual(events, {
-    decide_on_request: 'schema.line_received', inbound_on_receipt: 'schema.receipt_posted', settle_on_document: 'schema.settlement_posted',
+    decide_on_request: 'schema.line_received', decide_on_request_cz: 'schema.line_received', inbound_on_receipt: 'schema.receipt_posted', settle_on_document: 'schema.settlement_posted',
   });
   const schemas = [...ofKind('schema')].map(([n, s]) => `${n}(${s.columns.map((c) => `${c.name}:${c.type.name}`).join(', ')})`).sort();
   assert.deepEqual(schemas, [
@@ -319,6 +323,7 @@ const DEPLOYMENTS = {
   release_py: ['release_on_placement', 'py', 'identity.automation_decider', undefined],
   release_bpmn: ['release_on_placement', 'bpmn', 'identity.automation_decider', undefined],
   release_debug: ['morning_release', 'native', 'identity.automation_decider', undefined],
+  release_debug_cz: ['morning_release_cz', 'native', 'identity.automation_decider', undefined],
   decide_native_event: ['decide_on_request', 'native', 'identity.automation_decider', undefined],
   decide_native_batch: ['decide_catch_up', 'native', 'identity.automation_decider', 'schedule "06:30 Europe/Prague"'],
   inbound_native_event: ['inbound_on_receipt', 'native', 'identity.automation_decider', undefined],
@@ -326,12 +331,13 @@ const DEPLOYMENTS = {
   settle_native_event: ['settle_on_document', 'native', 'identity.automation_decider', undefined],
   settle_native_batch: ['settle_daily', 'native', 'identity.automation_decider', 'schedule "07:30 Europe/Prague"'],
   decide_debug: ['decide_catch_up', 'native', 'identity.automation_decider', undefined],
+  decide_debug_cz: ['decide_catch_up_cz', 'native', 'identity.automation_decider', undefined],
   inbound_debug: ['inbound_daily', 'native', 'identity.automation_decider', undefined],
   settle_debug: ['settle_daily', 'native', 'identity.automation_decider', undefined],
   returns_n8n: ['process return_line_flow', 'n8n', 'identity.automation_decider', undefined],
 };
 
-test('S2.1 T4 — the deployments: the five H-1, the six native H-2, the n8n process, four native debug; ops await Server P4 (17 §2, S2.2 T5)', () => {
+test('S2.1 T4 — the deployments: the five H-1, the six native H-2, the n8n process, six native debug (two CZ); ops await Server P4 (17 §2, S2.2 T5)', () => {
   const got = Object.fromEntries(worlds[0].w.deployments.map((d) => [d.name, [
     entry(d, 'process') ? `process ${render(entry(d, 'process'))}` : render(entry(d, 'program')),
     d.target?.path, render(entry(d, 'run_as')), render(entry(d, 'trigger')),
