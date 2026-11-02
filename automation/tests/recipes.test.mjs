@@ -152,11 +152,28 @@ test('S2.2 T3 — monitor_inbound\'s two expects on `complete` are conditional o
 // mirrors it in its shared fixture, and these deltas go when [ttrp] moves to a release that carries it.
 const ADDRESS_WIRING = [/notify_customer( +)\{ customer: customer, template:/g, 'notify_customer$1{ customer: customer, to: customer_email, template:'];
 const FIXTURE_DELTAS = {
+  // D-153 — goes when [ttrp] carries the scoped fixtures
+  release_order: [
+    ['stock = load(er.entity.inventory) -> latest(by: as_of_date, per: item, warehouse)',
+      'stock = lines -> join(right: load(er.entity.inventory), kind: left, on: left.item = right.item and left.warehouse = right.warehouse)\n-> latest(by: as_of_date, per: order_number, line_no)'],
+    ['lines -> join(right: stock, kind: left, on: left.item = right.item and left.warehouse = right.warehouse)\n-> join(right: out_,  kind: left, on: left.warehouse = right.warehouse)',
+      'stock -> join(right: out_,  kind: left, on: left.warehouse = right.warehouse)'],
+    ['coalesce(stock.quantity_on_hand, 0)', 'coalesce(quantity_on_hand, 0)'],
+  ],
   decide_return: [
     ['r.customer, r.order_number, r.requested_date', 'r.customer, c.email AS customer_email, r.order_number, r.requested_date'],
     [/^(FROM {3}er\.entity\.return_request_line l JOIN er\.entity\.return_request r ON r\.request_number = l\.request_number)$/m,
       '$1\nLEFT JOIN er.entity.customer c ON c.sk = r.customer'],
     ADDRESS_WIRING,
+    // D-153 — goes when [ttrp] carries the scoped fixtures
+    ['latest = load(er.entity.inventory) -> latest(by: as_of_date, per: item, warehouse)',
+      'stock = load(er.entity.inventory)'],
+    ['-> join(right: latest, kind: left, on: left.item = right.item and customer.center = right.warehouse)',
+      '-> join(right: stock, kind: left, on: left.item = right.item and customer.center = right.warehouse)\n-> latest(by: as_of_date, per: line_id)'],
+    ['coalesce(latest.quantity_on_hand, 0)', 'coalesce(stock.quantity_on_hand, 0)'],
+    ['-> join(right: latest, kind: left, on: left.requested_variant = right.item and customer.center = right.warehouse)',
+      '-> join(right: stock, kind: left, on: left.requested_variant = right.item and customer.center = right.warehouse)\n-> latest(by: as_of_date, per: line_id)'],
+    ['coalesce(latest.quantity_on_hand, 0)', 'coalesce(stock.quantity_on_hand, 0)'],
   ],
   monitor_inbound: [
     ['l.way, r.customer, ob.id AS obligation_id, ob.due, ob.state AS obligation_state',
