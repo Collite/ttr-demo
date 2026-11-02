@@ -57,7 +57,7 @@
       "executor": "native",
       "invocation": "sql-text",
       "file": "islands/on_hand.rows.sql",
-      "sha256": "sha256:befa54923ccb3c5f6b09c96f5910ff11979a91f6377b14c864e2ba2e8168a9a3",
+      "sha256": "sha256:fca84addbce75953a1247f363f29b2ede9160ab28527ba327c6b5dfe85361240",
       "connections": [
         "TTR_CONN_ERP"
       ],
@@ -69,7 +69,7 @@
         {
           "port": "rows",
           "file": "islands/on_hand.rows.sql",
-          "sha256": "sha256:befa54923ccb3c5f6b09c96f5910ff11979a91f6377b14c864e2ba2e8168a9a3",
+          "sha256": "sha256:fca84addbce75953a1247f363f29b2ede9160ab28527ba327c6b5dfe85361240",
           "columns": [
             {
               "name": "item",
@@ -149,7 +149,7 @@
       "executor": "native",
       "invocation": "sql-text",
       "file": "islands/cover.propose.sql",
-      "sha256": "sha256:be766968d9541d106d590ac527318e084cee48ea99ddff3ee676474a908c8f76",
+      "sha256": "sha256:f6aa57d09cbff58f82ed9b1fbf52d605f0eb232c5ef6e0c630fe4eac1f78723e",
       "connections": [
         "TTR_CONN_ERP"
       ],
@@ -164,7 +164,7 @@
         {
           "port": "propose",
           "file": "islands/cover.propose.sql",
-          "sha256": "sha256:be766968d9541d106d590ac527318e084cee48ea99ddff3ee676474a908c8f76",
+          "sha256": "sha256:f6aa57d09cbff58f82ed9b1fbf52d605f0eb232c5ef6e0c630fe4eac1f78723e",
           "columns": [
             {
               "name": "item",
@@ -384,7 +384,7 @@
       "er.entity.sales_line"
     ],
     "fingerprints": {
-      "text": "sha256:c6b2bedb4adc375d5bc1be95e4784e635d3ced0bba02e8f7d752f2f7fcd577bf",
+      "text": "sha256:bfd2e29e6cdf1c09f3c331409a56453bd32a386778a5596d605d27ea73af2ebd",
       "values": "sha256:ad397986c43308fe3aad5ec1b8dae7e87d89f7a1a98b28cc2030c71f5405ec6b",
       "labels": "sha256:8a4532d72448aaa6eb42af030ddf9ac4c2c193bed28fab2e1dbf38fda59daa6b"
     },
@@ -399,7 +399,7 @@
         "hartland",
         "hartland.automation"
       ],
-      "textBase": "sha256:6c04512fbb77dadf661b7fedab3e5dd65cc64f14d518eac5169d0f7ed18bc923",
+      "textBase": "sha256:7a8d0ec8d9d8fb6979ecf823302cdfd93b4dab2c0d9a48dcbac5a4efc6ab1fa3",
       "actions": {
         "ask": "sha256:f05ad90823e7e445a4d93338f5949a878e802fb23e309ec8789b2355fb690ef3",
         "propose": "sha256:b53002a2fefe5221e061f790ee070266c582957551d3bbe08b00ee94d72e4b64"
@@ -408,10 +408,10 @@
   },
   "files": {
     "README.md": "sha256:735ee5088e56e5be13e5466714ca175d2d4168fcb91397c80ff552d6e0c6c12b",
-    "catalog/reorder_proposals.ttrm": "sha256:9dfd22e580a86bd5c3817f085175b232f450437d07482aef13ea4d2fa549fe33",
+    "catalog/reorder_proposals.ttrm": "sha256:d67f3e18e08bd5b3a213107de42e9dbceca462dc536da03b41a2b213989790dc",
     "catalog/reorder_proposals_verdict.ttrm": "sha256:c67933e68fc626c91ae7c58c30923a406620c3f26dab50a8cdb7945792f55fb2",
-    "islands/cover.propose.sql": "sha256:be766968d9541d106d590ac527318e084cee48ea99ddff3ee676474a908c8f76",
-    "islands/on_hand.rows.sql": "sha256:befa54923ccb3c5f6b09c96f5910ff11979a91f6377b14c864e2ba2e8168a9a3",
+    "islands/cover.propose.sql": "sha256:f6aa57d09cbff58f82ed9b1fbf52d605f0eb232c5ef6e0c630fe4eac1f78723e",
+    "islands/on_hand.rows.sql": "sha256:fca84addbce75953a1247f363f29b2ede9160ab28527ba327c6b5dfe85361240",
     "islands/selling.pairs.sql": "sha256:3bd54cdd11aa79d1d384a66268e805727beb0977073b3d344d9bc7859be421da",
     "islands/weekly_demand.rows.sql": "sha256:b401fd14df7c3903d5e6147c00d802891a5ee6818dd3f0fdc7b87966cfc3de99",
     "tests/propose.cz.yaml": "sha256:682d911716fc894c8c728a108a97c76fb7b95576eb2cf22e46b63691295d05b6",

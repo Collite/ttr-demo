@@ -16,9 +16,11 @@ candidates selling(out pairs) target erp {
     }
 
 context on_hand(in pairs, out rows) target erp {
-        stock = load(er.entity.inventory) -> latest(by: as_of_date, per: item, warehouse)
-        pairs -> join(right: stock, kind: left, on: left.item = right.item and left.warehouse = right.warehouse)
-              -> calc(on_hand = coalesce(stock.quantity_on_hand, 0))
+        // D-153: latest over the candidates' rows, not the fact
+        stock = pairs -> join(right: load(er.entity.inventory), kind: left, on: left.item = right.item and left.warehouse = right.warehouse)
+                      -> latest(by: as_of_date, per: item, warehouse)
+        stock
+              -> calc(on_hand = coalesce(quantity_on_hand, 0))
               -> select(item, warehouse, on_hand)
               -> rows
     }

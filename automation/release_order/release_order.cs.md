@@ -32,11 +32,12 @@ Objednávka projde, pokud vyhoví všem třem kontrolám:
 ```ttrp
 context shortfall(in orders, out rows) target erp {
         lines = orders -> join(right: load(er.entity.sales_line), kind: inner, on: relation rel_order_line)
-        stock = load(er.entity.inventory) -> latest(by: as_of_date, per: item, warehouse)
+        // D-153: latest over the candidates' rows, not the fact
+        stock = lines -> join(right: load(er.entity.inventory), kind: left, on: left.item = right.item and left.warehouse = right.warehouse)
+                      -> latest(by: as_of_date, per: order_number, line_no)
         out_  = load(er.entity.warehouse_outage) -> filter(from_date <= :as_of and to_date >= :as_of)
-        lines -> join(right: stock, kind: left, on: left.item = right.item and left.warehouse = right.warehouse)
-              -> join(right: out_,  kind: left, on: left.warehouse = right.warehouse)
-              -> calc(on_hand = coalesce(stock.quantity_on_hand, 0), outage = (out_.warehouse is not null))
+        stock -> join(right: out_,  kind: left, on: left.warehouse = right.warehouse)
+              -> calc(on_hand = coalesce(quantity_on_hand, 0), outage = (out_.warehouse is not null))
               -> filter(outage or on_hand < quantity)
               -> select(order_number, line_no, item, quantity, on_hand, outage, short = quantity - on_hand)
               -> rows
