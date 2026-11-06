@@ -290,7 +290,7 @@ automation-data world as_of="-" ctx=CTX:
     set -euo pipefail
     case "{{world}}" in us|cz) ;; *) echo "world must be us or cz, got '{{world}}'" >&2; exit 2 ;; esac
     case "{{ctx}}" in
-      dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
+      bp-dsk|collite-o1|hartland) pod=hartland-pg-1 ;;
       *) echo "no hartland-pg pod known for context '{{ctx}}' (dsk, collite-o1, hartland)" >&2; exit 2 ;;
     esac
     as_of="{{as_of}}"; [ "$as_of" = "-" ] && as_of=""

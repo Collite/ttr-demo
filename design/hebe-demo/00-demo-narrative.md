@@ -1,5 +1,11 @@
 # Hebe demo — the narrative (draft v0)
 
+> ⟂ **SUPERSEDED as the story input, 2026-11-04 (HE-D-13/14 proposed):** the demo's stories are now
+> `project/kantheon/features/hebe/design/06-demo-stories-redesign.md` §4 — Markéta (Czech, HE-D-4), **one phone, one
+> bot, no stranger and no second Telegram account** (B-4.4, HE-D-13), the automation recipes (H-1, X-2, the generic
+> "any BPMN" beat; H-2/H-3 later) as the spine, mail as Beat 10 when HE-P3 lands. HE-P4 T1 ports that sheet into the
+> Czech beat sheets here. This file stays as the July trace (Maya, EN, six beats incl. the dropped stranger strike).
+
 > **The story input for the HB effort** (the Hebe demo on the Hartland world) — third of the
 > Hartland demo family: the **Kantheon demo** showed the constellation answering and
 > investigating; the **Studio demo** shows deterministic modeling/planning; **this demo shows
