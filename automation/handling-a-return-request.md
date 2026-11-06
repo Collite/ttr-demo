@@ -92,12 +92,16 @@ Check stock in the customer's distribution center for both the original item and
 
 ```ttrp
     context stock_at_center(in lines, out rows) target erp {
-        latest = load(er.entity.inventory) -> latest(by: as_of_date, per: item, warehouse)
+        stock = load(er.entity.inventory)
         lines -> join(right: load(er.entity.customer), kind: inner, on: relation rel_line_customer)      // lines.customer → customer (1..1)
-              -> join(right: latest, kind: left, on: left.item = right.item and customer.center = right.warehouse)
-              -> calc(item_on_hand = coalesce(latest.quantity_on_hand, 0))
-              -> join(right: latest, kind: left, on: left.requested_variant = right.item and customer.center = right.warehouse)
-              -> calc(variant_on_hand = coalesce(latest.quantity_on_hand, 0))
+              -> join(right: stock, kind: left, on: left.item = right.item and customer.center = right.warehouse)
+              // D-153: latest over the candidates' rows, not the fact
+              -> latest(by: as_of_date, per: line_id)
+              -> calc(item_on_hand = coalesce(stock.quantity_on_hand, 0))
+              -> join(right: stock, kind: left, on: left.requested_variant = right.item and customer.center = right.warehouse)
+              // D-153: latest over the candidates' rows, not the fact
+              -> latest(by: as_of_date, per: line_id)
+              -> calc(variant_on_hand = coalesce(stock.quantity_on_hand, 0))
               -> select(line_id, item_on_hand, variant_on_hand)
               -> rows
     }

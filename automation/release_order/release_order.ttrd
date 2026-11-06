@@ -1,20 +1,20 @@
 {
     "document": "release_order.md",
-    "documentSha": "99390ca3f1831a83d2ef0f316ecc00acd96da2395944808fd9a060aeab23644d",
+    "documentSha": "6329871b3b0b1a95f367276e04e083132050b1358df11262d8ae8e67da3cf16b",
     "nodes": {
         "overdue": {
             "block": 5,
             "generatedSpan": [
-                2512,
-                2783
+                2585,
+                2856
             ],
             "paragraph": [
-                3193,
-                3261
+                3266,
+                3334
             ],
             "span": [
-                3263,
-                3534
+                3336,
+                3607
             ]
         },
         "placed_orders": {
@@ -35,23 +35,23 @@
         "price_differences": {
             "block": 4,
             "generatedSpan": [
-                1339,
-                2510
+                1412,
+                2583
             ],
             "paragraph": [
-                1746,
-                2015
+                1819,
+                2088
             ],
             "span": [
-                2017,
-                3188
+                2090,
+                3261
             ]
         },
         "shortfall": {
             "block": 3,
             "generatedSpan": [
                 489,
-                1337
+                1410
             ],
             "paragraph": [
                 718,
@@ -59,22 +59,22 @@
             ],
             "span": [
                 881,
-                1741
+                1814
             ]
         },
         "verdict": {
             "block": 6,
             "generatedSpan": [
-                2785,
-                4341
+                2858,
+                4414
             ],
             "paragraph": [
-                3536,
-                3867
+                3609,
+                3940
             ],
             "span": [
-                3869,
-                5437
+                3942,
+                5510
             ]
         }
     },
@@ -116,8 +116,8 @@
                 "price_differences"
             ],
             "span": [
-                1746,
-                2015
+                1819,
+                2088
             ]
         },
         {
@@ -125,8 +125,8 @@
                 "overdue"
             ],
             "span": [
-                3193,
-                3261
+                3266,
+                3334
             ]
         },
         {
@@ -134,22 +134,22 @@
                 "verdict"
             ],
             "span": [
-                3536,
-                3867
+                3609,
+                3940
             ]
         },
         {
             "nodes": [],
             "span": [
-                5439,
-                5657
+                5512,
+                5730
             ]
         },
         {
             "nodes": [],
             "span": [
-                6354,
-                6578
+                6427,
+                6651
             ]
         }
     ]

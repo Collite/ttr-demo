@@ -68,7 +68,7 @@ def entity return_request_line {
                 "replacement": { en: "Replacement", cs: "Náhrada" }
             }
         },
-        def attribute requested_variant    { type: int, description: "The product asked for in an exchange — FK to the 'sk' attribute of the Product (item) entity; empty otherwise." },
+        def attribute requested_variant    { type: int, optional: true, description: "The product asked for in an exchange — FK to the 'sk' attribute of the Product (item) entity; empty otherwise." },
         def attribute state {
             type: text,
             description: "Handling state of the line: 'received', 'rejected', 'settling', 'awaiting_goods', 'goods_received', 'not_returned' or 'closed'.",
@@ -88,7 +88,7 @@ def entity return_request_line {
             }
         },
         def attribute way {
-            type: text,
+            type: text, optional: true,
             description: "How the line is being settled, once decided: 'refund_no_return', 'replacement_no_return', 'exchange' or 'refund_after_return'; empty until decided or when rejected.",
             valueLabels: {
                 "refund_no_return":      { en: "Refund without return",      cs: "Vrácení peněz bez vratky" },

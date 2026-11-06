@@ -11,8 +11,15 @@ model lexicon locale cs
 // bearer's word («pozastavené objednávky» against «objednávky»), so it wins the span (the longest covered span).
 //
 // No term repeats a word an element already carries, but «zákazník» (below): a word on an element lifts to the concepts
-// grounded there (the archive's `liftsTo`), so «reklamace» reads `ReturnRequest`, «faktura» `Invoicing`, «tržby»
-// `revenue` already, and a second term would only claim the word twice. «zákazník» is declared because S6.1 puts the
+// grounded there (the archive's `liftsTo`), so «reklamace» reads `ReturnRequest`, «faktura» `Invoice`, «objednávka»
+// `Order`, «ceník» `ListPrice`, «individuální cena» `PriceAgreement`, «tržby» `revenue` already, and a second term
+// would only claim the word twice (CN-P8 S8.3: the words moved with their concepts, by the lift — an element word also
+// lifts to the transition events on its row, `OrderPlaced` on `order`; the frame builder filters by stereotype,
+// A-CN-7).
+//
+// `OutOfService` has no term: its words («výpadek skladu») are the AU element's, on `warehouse_outage`, whose rows are
+// its episodes (cs/automation.ttrm), and a phase lifts from nothing (L17-2) — a term would claim them twice (the AU
+// guard, model/er/tests/er.test.mjs S0.2). «zákazník» is declared because S6.1 puts the
 // bare word's DEFAULT sense on it: the role, never one of its phases.
 //
 // Held back, deliberately:
@@ -62,6 +69,12 @@ def term held_order_cs {
 }
 // Not «zadaná objednávka» (the phase's label): «objednávky zadané ve 3. čtvrtletí» are orders PLACED in a period, of
 // any state (the corpus's d1), and a state phase would answer a different question.
+// CN-P8 S8.3: the lifecycle bounded by the order's two events. ⚑ Czech wording for Bora.
+def term open_order_cs {
+    description: "nedoručená objednávka — placed and not delivered yet (OpenOrder)"
+    for: cn.OpenOrder
+    forms: ["nedoručená objednávka", "nedoručené objednávky", "nedoručených objednávek", "nedoručenou objednávku"]
+}
 def term placed_order_cs {
     description: "nezkontrolovaná objednávka — placed, not checked yet"
     for: cn.PlacedOrder
@@ -82,6 +95,23 @@ def term mispriced_line_cs {
         "cenová odchylka", "cenové odchylky", "cenových odchylek", "cenovou odchylkou", "cenovou odchylku",
         "řádek s odchylkou ceny", "řádky s odchylkou ceny", "řádků s odchylkou ceny"
     ]
+}
+// CN-P8 S8.3: the invoice's states (`14` §2). ⚑ Czech wording for Bora. The longer span wins, so «neuhrazenou
+// fakturu po splatnosti» (release_order.cs.md) stays the overdue invoice.
+def term open_invoice_cs {
+    description: "neuhrazená faktura — open"
+    for: cn.OpenInvoice
+    forms: ["neuhrazená faktura", "neuhrazené faktury", "neuhrazených faktur", "neuhrazenou fakturu"]
+}
+def term partly_paid_invoice_cs {
+    description: "částečně uhrazená faktura — something paid, not all of it"
+    for: cn.PartlyPaidInvoice
+    forms: ["částečně uhrazená faktura", "částečně uhrazené faktury", "částečně uhrazených faktur", "částečně uhrazenou fakturu"]
+}
+def term paid_invoice_cs {
+    description: "uhrazená faktura — paid"
+    for: cn.PaidInvoice
+    forms: ["uhrazená faktura", "uhrazené faktury", "uhrazených faktur", "uhrazenou fakturu"]
 }
 def term overdue_invoice_cs {
     description: "faktura po splatnosti — open and past its due date"

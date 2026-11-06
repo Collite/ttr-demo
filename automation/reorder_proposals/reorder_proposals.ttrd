@@ -1,27 +1,27 @@
 {
     "document": "reorder_proposals.md",
-    "documentSha": "27954f87f81447f69b14c3daab7e37bb02649f686a7c1bc74f6f32c106cd5718",
+    "documentSha": "a932a6d7845418c58f62930a951b26ddc198759b6409f7044dce99ac3af7ae19",
     "nodes": {
         "cover": {
             "block": 5,
             "generatedSpan": [
-                1354,
-                2064
+                1435,
+                2145
             ],
             "paragraph": [
-                2465,
-                2683
+                2546,
+                2764
             ],
             "span": [
-                2685,
-                3407
+                2766,
+                3488
             ]
         },
         "on_hand": {
             "block": 3,
             "generatedSpan": [
                 509,
-                907
+                988
             ],
             "paragraph": [
                 1390,
@@ -29,7 +29,7 @@
             ],
             "span": [
                 1515,
-                1925
+                2006
             ]
         },
         "selling": {
@@ -50,16 +50,16 @@
         "weekly_demand": {
             "block": 4,
             "generatedSpan": [
-                909,
-                1352
+                990,
+                1433
             ],
             "paragraph": [
-                1927,
-                2006
+                2008,
+                2087
             ],
             "span": [
-                2008,
-                2463
+                2089,
+                2544
             ]
         }
     },
@@ -101,8 +101,8 @@
                 "weekly_demand"
             ],
             "span": [
-                1927,
-                2006
+                2008,
+                2087
             ]
         },
         {
@@ -110,15 +110,15 @@
                 "cover"
             ],
             "span": [
-                2465,
-                2683
+                2546,
+                2764
             ]
         },
         {
             "nodes": [],
             "span": [
-                3409,
-                3683
+                3490,
+                3764
             ]
         }
     ]

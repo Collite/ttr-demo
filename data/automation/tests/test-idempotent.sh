@@ -24,6 +24,16 @@ run_automation "$S" "$as_of"; rc=$?
 expect "run 3 (as_of named explicitly, the same day) exits 0" "$rc" -eq 0
 expect "run 3 changes no row" "$(fp_build "$S")" = "$first"
 
+# A world built before a column add existed (here: c_email dropped) gains it on the next same-day run — 05-columns.sql
+# applies on a built world too — and nothing else moves.
+pgq "$S" "ALTER TABLE customer DROP COLUMN c_email" >/dev/null
+expect "the scratch world lost c_email" "$(pgq "$S" "SELECT count(*) FROM information_schema.columns WHERE table_name = 'customer' AND column_name = 'c_email'")" -eq 0
+run_automation "$S"; rc=$?
+expect "run 3b (a column added since the build) exits 0" "$rc" -eq 0
+expect "run 3b says it was already built, and added the one column" "$(grep -c 'already built.*(1 added)' "$(log_of build "$S")")" -ge 1
+expect "run 3b gives every customer its address back" "$(pgq "$S" "SELECT count(*) - count(c_email) FROM customer")" -eq 0
+expect "run 3b changes no other row" "$(fp_build "$S")" = "$first"
+
 other=$(pgq "$S" "SELECT (DATE '$as_of' - 7)::text")
 run_automation "$S" "$other"; rc=$?
 expect "run 4 at another as_of ($other) is refused" "$rc" -ne 0

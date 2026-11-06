@@ -31,11 +31,11 @@ def table sales_order {
         def column so_channel        { type: varchar },                                       // web · marketplace
         def column so_customer_sk    { type: int },
         def column so_placed_date    { type: date },
-        def column so_delivered_date { type: date },                                          // NULL until delivered
+        def column so_delivered_date { type: date, optional: true },                                          // NULL until delivered
         def column so_warehouse_sk   { type: int },                                           // the fulfilling distribution center
         def column so_value          { type: { type: decimal, length: 12, precision: 2 } },
         def column so_state          { type: varchar },
-        def column so_held_for       { type: varchar },                                       // NULL unless held
+        def column so_held_for       { type: varchar, optional: true },                                       // NULL unless held
         def column so_placed_by      { type: varchar }
     ]
 }
@@ -65,7 +65,7 @@ def table price_list {
         def column pl_channel    { type: varchar, isKey: true },
         def column pl_valid_from { type: date, isKey: true },
         def column pl_price      { type: { type: decimal, length: 12, precision: 2 } },
-        def column pl_valid_to   { type: date }
+        def column pl_valid_to   { type: date, optional: true }
     ]
 }
 
@@ -77,7 +77,7 @@ def table customer_price {
         def column cp_customer_sk { type: int, isKey: true },
         def column cp_valid_from  { type: date, isKey: true },
         def column cp_price       { type: { type: decimal, length: 12, precision: 2 } },
-        def column cp_valid_to    { type: date }
+        def column cp_valid_to    { type: date, optional: true }
     ]
 }
 
@@ -116,8 +116,8 @@ def table reorder_proposal {
         def column rp_run           { type: varchar },                                         // the automation run that proposed it
         def column rp_item_sk       { type: int },
         def column rp_warehouse_sk  { type: int },
-        def column rp_on_hand       { type: int },
-        def column rp_weekly_demand { type: { type: decimal, length: 12, precision: 2 } },
+        def column rp_on_hand       { type: int, optional: true },
+        def column rp_weekly_demand { type: { type: decimal, length: 12, precision: 2 }, optional: true },
         def column rp_proposed_qty  { type: int },
         def column rp_state         { type: varchar }
     ]

@@ -1,4 +1,4 @@
--- AU-hartland P1 · S1.1 — the extension's tables (contracts §1), the two column adds, the internals.
+-- AU-hartland P1 · S1.1 — the extension's tables (contracts §1) and the internals (the column adds: 05-columns.sql).
 -- Piped by run-automation.sh into one transaction after automation.conf; the foreign keys come at the end of
 -- the build (80-keys.sql), once the data is in.
 --
@@ -158,15 +158,8 @@ CREATE TABLE IF NOT EXISTS winback_mail (
   PRIMARY KEY (wm_customer_sk, wm_quarter)
 );
 
--- ── the column adds (D-82, D-83): kept by a reset, only emptied — the model maps them ────────────────────────
-ALTER TABLE customer ADD COLUMN IF NOT EXISTS c_center_sk integer;      -- 24-centers.sql
-ALTER TABLE date_dim ADD COLUMN IF NOT EXISTS d_working_day boolean;    -- 25-calendar.sql
--- The customer's mail address, which the customer mail actions (notify_customer, emit) send to. It is generated from
--- the key under the reserved .example domain (RFC 2606), so a demo mail can never reach a real inbox. TPC-DS's own
--- c_email_address is not used: its random domains include registered ones, and some rows are NULL or duplicates.
--- A reset keeps it as it is, because it holds no build state.
-ALTER TABLE customer ADD COLUMN IF NOT EXISTS c_email varchar(64)
-  GENERATED ALWAYS AS ('customer-' || c_customer_sk || '@customers.hartland.example') STORED;
+-- The column adds to base tables (customer.c_center_sk, date_dim.d_working_day, customer.c_email) are in 05-columns.sql,
+-- which also runs on an already-built world.
 
 -- ── internals (never modelled) ────────────────────────────────────────────────────────────────────────────────
 -- What the world looked like when it was built (per fact: last date, rows).

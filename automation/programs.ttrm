@@ -13,6 +13,13 @@ def program release_on_placement   { recipe: release_order,  port: key,   mode: 
 
 def program decide_on_request      { recipe: decide_return,  port: event, event: schema.line_received,  mode: on_event, as_of: event }
 def program decide_catch_up        { recipe: decide_return,  port: none,  mode: batch,    as_of: run,   schedule: "06:30 Europe/Prague" }
+
+// CZ money parameters (×25) — until overrides live on the deployment (D-26 amendment, Core backlog)
+def program morning_release_cz            { recipe: release_order,  port: none,  mode: batch,    as_of: run,   deliver: { digest: { by: who, per: day } }, schedule: "06:00 Europe/Prague", overrides: { confirmation_threshold: 1250000 } }
+def program release_on_placement_cz       { recipe: release_order,  port: key,   mode: on_event, as_of: event, deliver: immediate, overrides: { confirmation_threshold: 1250000 } }
+def program decide_on_request_cz          { recipe: decide_return,  port: event, event: schema.line_received,  mode: on_event, as_of: event, overrides: { small_value: 375, care_threshold: 12500 } }
+def program decide_catch_up_cz            { recipe: decide_return,  port: none,  mode: batch,    as_of: run,   schedule: "06:30 Europe/Prague", overrides: { small_value: 375, care_threshold: 12500 } }
+
 def program inbound_on_receipt     { recipe: monitor_inbound, port: event, event: schema.receipt_posted, mode: on_event, as_of: event }
 def program inbound_daily          { recipe: monitor_inbound, port: none, mode: batch,    as_of: run,   schedule: "07:00 Europe/Prague" }
 def program settle_on_document     { recipe: settle,          port: event, event: schema.settlement_posted, mode: on_event, as_of: event }

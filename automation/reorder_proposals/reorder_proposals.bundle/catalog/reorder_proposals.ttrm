@@ -12,5 +12,5 @@ def recipe reorder_proposals {
     kinds: ["sql"],
     mode: "per-candidate",
     document: "reorder-proposals.md",
-    fingerprints: { text: "sha256:c6b2bedb4adc375d5bc1be95e4784e635d3ced0bba02e8f7d752f2f7fcd577bf", values: "sha256:ad397986c43308fe3aad5ec1b8dae7e87d89f7a1a98b28cc2030c71f5405ec6b", labels: "sha256:8a4532d72448aaa6eb42af030ddf9ac4c2c193bed28fab2e1dbf38fda59daa6b" }
+    fingerprints: { text: "sha256:d9854e1256ba49e9992819bbca8eabda65a5c7e36f8ce57adb2d50ecf59b6365", values: "sha256:ad397986c43308fe3aad5ec1b8dae7e87d89f7a1a98b28cc2030c71f5405ec6b", labels: "sha256:8a4532d72448aaa6eb42af030ddf9ac4c2c193bed28fab2e1dbf38fda59daa6b" }
 }

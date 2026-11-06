@@ -37,24 +37,33 @@ def quality unit_price    { of: OrderLine, grounds: er.entity.sales_line.unit_pr
 def quality line_value    { of: OrderLine, grounds: er.entity.sales_line.ext_sales_price }
 def quality line_date     { of: OrderLine, grounds: er.entity.sales_line.sold_date }
 
-// ---- Invoicing ----
-def quality amount         { of: Invoicing, grounds: er.entity.invoice.amount }
-def quality paid           { of: Invoicing, grounds: er.entity.invoice.paid }
-def quality invoice_status { of: Invoicing, grounds: er.entity.invoice.status }  // open · paid
-def quality issued         { of: Invoicing, grounds: er.entity.invoice.issued }
-def quality due            { of: Invoicing, grounds: er.entity.invoice.due }
+// ---- Invoice ----
+def quality amount         { of: Invoice, grounds: er.entity.invoice.amount }
+def quality paid           { of: Invoice, grounds: er.entity.invoice.paid }
+def quality invoice_status { of: Invoice, grounds: er.entity.invoice.status }  // open · paid
+def quality issued         { of: Invoice, grounds: er.entity.invoice.issued }
+def quality due            { of: Invoice, grounds: er.entity.invoice.due }
 
-// ---- WarehouseOutage, PriceList, CustomerPrice ----
-def quality outage_from   { of: WarehouseOutage, grounds: er.entity.warehouse_outage.from_date }
-def quality outage_to     { of: WarehouseOutage, grounds: er.entity.warehouse_outage.to_date }
-def quality outage_reason { of: WarehouseOutage, grounds: er.entity.warehouse_outage.reason }
-def quality pl_price      { of: PriceList,       grounds: er.entity.price_list.price }
-def quality pl_channel    { of: PriceList,       grounds: er.entity.price_list.channel }
-def quality pl_from       { of: PriceList,       grounds: er.entity.price_list.valid_from }
-def quality pl_to         { of: PriceList,       grounds: er.entity.price_list.valid_to }
-def quality cp_price      { of: CustomerPrice,   grounds: er.entity.customer_price.price }
-def quality cp_from       { of: CustomerPrice,   grounds: er.entity.customer_price.valid_from }
-def quality cp_to         { of: CustomerPrice,   grounds: er.entity.customer_price.valid_to }
+// ---- OutOfService (the episode's own qualities), ListPrice, PriceAgreement ----
+// The `pl_` / `cp_` prefixes stay: one cn name space, and one grounding per quality (CN-D12), so the two relators
+// cannot share a `price`.
+def quality outage_from   { of: OutOfService,   grounds: er.entity.warehouse_outage.from_date }
+def quality outage_to     { of: OutOfService,   grounds: er.entity.warehouse_outage.to_date }
+def quality outage_reason { of: OutOfService,   grounds: er.entity.warehouse_outage.reason }
+def quality pl_price      { of: ListPrice,      grounds: er.entity.price_list.price }
+def quality pl_channel    { of: ListPrice,      value_space: Channel, grounds: er.entity.price_list.channel }   // the row's Channel (AM-27)
+def quality pl_from       { of: ListPrice,      grounds: er.entity.price_list.valid_from }
+def quality pl_to         { of: ListPrice,      grounds: er.entity.price_list.valid_to }
+def quality cp_price      { of: PriceAgreement, grounds: er.entity.customer_price.price }
+def quality cp_from       { of: PriceAgreement, grounds: er.entity.customer_price.valid_from }
+def quality cp_to         { of: PriceAgreement, grounds: er.entity.customer_price.valid_to }
+
+// B, the valued state of the bearer (`14` §3, AM-49) — a projection of the relator's rows: the price of an item in a
+// channel, of an item for a customer, as of an instant. They ground THROUGH the relator; nothing is written for them
+// in model/binding/cn.ttrm.
+// `channel_price`, not `list_price`: the TPC-DS cost column's name stays out of the model (phase2-done DONE 6).
+def quality channel_price { of: Item,     label: { en: "List price", cs: "Ceníková cena" },       valued_state: true, per: Channel, from: ListPrice.pl_price }
+def quality agreed_price  { of: Customer, label: { en: "Individual price", cs: "Individuální cena" }, valued_state: true, per: Item,    from: PriceAgreement.cp_price }
 
 // ---- ReturnRequest, ReturnLine ----
 def quality request_state        { of: ReturnRequest, grounds: er.entity.return_request.state }   // received · decided · closed
@@ -73,7 +82,7 @@ def quality center { of: Customer, label: { en: "Customer's distribution center"
 
 // ---- defined ----
 def quality open_amount {
-    of: Invoicing,
+    of: Invoice,
     label: { en: "Open amount", cs: "Neuhrazená částka" },
     definition: """amount - paid"""
 }
@@ -92,16 +101,20 @@ def quality short {
 def quality outage {
     of: OrderLine,
     label: { en: "Center out", cs: "Výpadek centra" },
-    definition: """exists WarehouseOutage involving this.warehouse where period contains :as_of"""
+    definition: """exists OutOfService involving this.warehouse where period contains :as_of"""
 }
 // DC-2 as a lookup: the customer's individual price beats the channel's list price, each valid on the day the order
-// was placed (AU H-1's `applicable`).
+// was placed (AU H-1's `applicable`). The override is this definition, never a metamodel construct (`14` §3). Read
+// through the two valued states (DC-13, ⚑CN-P12); the A-form over the relators renders the same rows:
+//     coalesce(
+//         max(PriceAgreement involving this.item, this.order.customer where period contains this.order.placed_date).cp_price,
+//         max(ListPrice involving this.item where pl_channel = this.order.channel and period contains this.order.placed_date).pl_price)
 def quality applicable_price {
     of: OrderLine,
-    label: { en: "List price", cs: "Ceníková cena" },
+    label: { en: "Applicable price", cs: "Platná cena" },
     definition: """coalesce(
-        max(CustomerPrice involving this.item, this.order.customer where period contains this.order.period.start).cp_price,
-        max(PriceList involving this.item where pl_channel = this.order.channel and period contains this.order.period.start).pl_price)"""
+        this.order.customer.agreed_price(item: this.item, at: this.order.placed_date),
+        this.item.channel_price(channel: this.order.channel, at: this.order.placed_date))"""
 }
 // A return line's value as AU H-2 counts it: quantity × the unit price the customer paid.
 def quality line_amount {
@@ -114,6 +127,6 @@ def quality line_amount {
 def quality return_share {
     of: Customer,
     label: { en: "Return share", cs: "Podíl vratek" },
-    definition: """sum(ReturnLine involving this where within(request.period.at, last: days(365)) and line_state <> 'rejected').line_amount
-        / sum(OrderLine involving this where within(period.at, last: days(365))).line_value"""
+    definition: """sum(ReturnLine involving this where within(request.requested_date, last: days(365)) and line_state <> 'rejected').line_amount
+        / sum(OrderLine involving this where within(line_date, last: days(365))).line_value"""
 }
