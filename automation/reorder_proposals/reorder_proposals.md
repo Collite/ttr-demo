@@ -71,12 +71,12 @@ decision cover(in pairs, in on_hand, in weekly_demand) {
     }
 ```
 
-Preview the proposal table before any write (C-6). Each proposal also asks the buyer to approve its hand-off to purchasing, within two working days; on approval the process engine calls the purchasing process with the proposal’s stock and demand.
+Preview the proposal table before any write (C-6). Each proposal also asks the buyer to approve its hand-off to purchasing, within two working days; on approval the process engine calls the purchasing process for that proposal.
 
 ```ttrp
 actions {
         cover.propose -> propose { item: item, warehouse: warehouse, on_hand: on_hand, weekly_demand: round(weekly_demand * 100) * 0.01,
                                    proposed_qty: cast(proposed_qty as int) }
-        cover.propose -> handoff { process: "purchasing", rows: on_hand, weekly_demand }   // approval on the action (by the buyer); was ask … action: start
+        cover.propose -> handoff { process: "purchasing" }   // approval on the action (by the buyer); was ask … action: start
     }
 ```

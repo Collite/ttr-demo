@@ -140,7 +140,7 @@ const ACTIONS = {
   expect: [['line:return_request_line.line_id', 'kind:text', 'due:date'], undefined, undefined, { native: 'obligation' }, 'none'],
   fulfil: [['line:return_request_line.line_id', 'kind:text', 'to:text'], 'obligation.state -> {to} from []', undefined,
     { native: 'obligation' }, 'none'],
-  handoff: [['process:text', 'rows:rows'], undefined, undefined, { process_engine: 'call activity' }, 'required'],
+  handoff: [['process:text', 'rows:rows?'], undefined, undefined, { process_engine: 'call activity' }, 'required'],
   propose: [['item:reorder_proposal.item', 'warehouse:reorder_proposal.warehouse', 'on_hand:reorder_proposal.on_hand',
     'weekly_demand:reorder_proposal.weekly_demand', 'proposed_qty:reorder_proposal.proposed_qty',
     'proposal_id:reorder_proposal.proposal_id?', 'run:reorder_proposal.run?', 'state:reorder_proposal.state?'], undefined, undefined,

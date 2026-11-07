@@ -71,12 +71,12 @@ decision cover(in pairs, in on_hand, in weekly_demand) {
     }
 ```
 
-Před jakýmkoli zápisem zobrazíme tabulku návrhů (C-6). Každý návrh také žádá nákupčího o schválení předání do nákupu, do dvou pracovních dnů; po schválení procesní engine zavolá nákupní proces se zásobou a poptávkou návrhu.
+Před jakýmkoli zápisem zobrazíme tabulku návrhů (C-6). Každý návrh také žádá nákupčího o schválení předání do nákupu, do dvou pracovních dnů; po schválení procesní engine zavolá nákupní proces pro daný návrh.
 
 ```ttrp
 actions {
         cover.propose -> propose { item: item, warehouse: warehouse, on_hand: on_hand, weekly_demand: round(weekly_demand * 100) * 0.01,
                                    proposed_qty: cast(proposed_qty as int) }
-        cover.propose -> handoff { process: "purchasing", rows: on_hand, weekly_demand }   // approval on the action (by the buyer); was ask … action: start
+        cover.propose -> handoff { process: "purchasing" }   // approval on the action (by the buyer); was ask … action: start
     }
 ```

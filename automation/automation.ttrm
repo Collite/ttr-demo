@@ -117,14 +117,15 @@ def action fulfil {
     dry_run:    { en: "would mark the {kind} of return line {line} {to}", cs: "označil by {kind} k řádku reklamace {line} jako {to}" }
 }
 // was: start (the outbound face, D-142). H-3's purchasing hand-off: the buyer approves it, then the engine calls the
-// purchasing process (a BPMN call activity) with the rows (P3E's rule for an `ask … action: start`).
+// purchasing process (a BPMN call activity) for the candidate (P3E's rule for an `ask … action: start`). `rows` is
+// optional: a rows argument must name its route's `detail:` contexts, and H-3's `propose` route has none.
 def action handoff {
-    columns:    [def column process { type: text }, def column rows { type: rows }]
+    columns:    [def column process { type: text }, def column rows { type: rows, optional: true }]
     sinks:      { process_engine: "call activity" }
     approval:   required
     by:         role.buyer
     due:        2 working_days
-    dry_run:    { en: "would ask {by} to hand {rows.count} rows to {process}", cs: "požádal by {by} o předání {rows.count} řádků procesu {process}" }
+    dry_run:    { en: "would ask {by} to hand the proposal to {process}", cs: "požádal by {by} o předání návrhu procesu {process}" }
 }
 // H-3: all eight required attributes are mapped; explicit defaults supply omitted metadata.
 // bigint_id_v1 is retry-stable per pinned run/wiring/candidate; the buyer holds the batch (D-66).

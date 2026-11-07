@@ -323,8 +323,7 @@
         ],
         "action": "handoff",
         "columns": {
-          "process": "\"purchasing\"",
-          "rows": "on_hand, weekly_demand"
+          "process": "\"purchasing\""
         }
       }
     ],
@@ -381,9 +380,9 @@
       "er.entity.sales_line"
     ],
     "fingerprints": {
-      "text": "sha256:d2bd9b2a1a051885a4b7af6a49c5e2a5f42e6b6899c0b2546ceb50acaa569f7c",
+      "text": "sha256:1753079dc4e390bed704584a2c4e49954683e8120f15658a5b6f002e902db239",
       "values": "sha256:ad397986c43308fe3aad5ec1b8dae7e87d89f7a1a98b28cc2030c71f5405ec6b",
-      "labels": "sha256:213b120de3a17304a4755f776f33441e85a69cf19c9aa7ad2dfba12ca5130132"
+      "labels": "sha256:02d7e84077c33eec778804757a6e6618a3bc27b980b326f714625af53de179ff"
     },
     "protocol": "always",
     "tests": [
@@ -396,9 +395,9 @@
         "hartland",
         "hartland.automation"
       ],
-      "textBase": "sha256:e04a41d9e2af20eea57de9b6a8a4bcb29f18548edc2107012e9a7b1787bd3a70",
+      "textBase": "sha256:40a10880012abe91195a6f32da763bab7da9670ca1c898f42b893def4b7b8732",
       "actions": {
-        "handoff": "sha256:90e89898cefb80c63080d77cd7146539fe424a0306b4aa532d2978be47da4a1f",
+        "handoff": "sha256:0966f6a01495eaf2f5bb8f74d2d61783c1e4471f8626c3fcf8f627d7bafbff61",
         "propose": "sha256:d117ad92d73b35de8e31140e301e875cbafcb6d1fecdda40b46a3aeb03a800bd"
       }
     },
@@ -413,8 +412,8 @@
     }
   },
   "files": {
-    "README.md": "sha256:f534ae83d89a63ffb822dff9ac60fa392ccc8a7e152ea2592c43538d3c52501a",
-    "catalog/reorder_proposals.ttrm": "sha256:545e686446b99e7a375a1cb2a8379d682c0bcb0680e0169a591f0fd6880d196b",
+    "README.md": "sha256:019ad9dfb00e0817f3adf91359067950a042f4a1eaa9b598dd22e39bf5357651",
+    "catalog/reorder_proposals.ttrm": "sha256:771db6975fd8b61222f6048ef2a76d6213e9cad3ce6446a546a4830963273024",
     "catalog/reorder_proposals_verdict.ttrm": "sha256:694e05e2ab732fb0c592c36b5a81c37f61a0612b0a58f92043adcf449daadc90",
     "islands/cover.propose.sql": "sha256:f6aa57d09cbff58f82ed9b1fbf52d605f0eb232c5ef6e0c630fe4eac1f78723e",
     "islands/on_hand.rows.sql": "sha256:fca84addbce75953a1247f363f29b2ede9160ab28527ba327c6b5dfe85361240",
