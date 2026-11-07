@@ -8,7 +8,7 @@ ref = "grammar/v0.21.1"          # the gate's toolchain checkout (was inline in 
 [ttrp]
 # Recipe builds/checks move independently of the model reader and serving image.
 # A commit pin requires a prerelease version; delete version when moving ref to a release tag.
-ref = "grammar/v0.21.1"          # S8.6: the recipe compiler resolves the whole project, `variant` included
+ref = "grammar/v0.22.3"          # AU P3E: the engine cut (CG-2) + `truncated` on `_verdict_detail` (ttr-core#382)
 
 [veles]
 image = "0.11.35"                # S8.6: grammar/metadata 0.21.1 (server-libs/v0.11.35), on bp-dsk since olymp#258 — readers first
