@@ -20,7 +20,7 @@
 ## What it does
 
 - `verdict.release` → `release`: `order` = `order_number`. would release order {order}
-- `verdict.release_confirmed` → `ask`: `about` = `order_number`, `action` = `release`, `due` = `2 working_days`, `on_due` = `hold { order: order_number, department: "Sales" }`, `who` = `role.sales_manager`. would ask {who} to approve {action} for {about}
+- `verdict.release_confirmed` → `release_confirmed`: `order` = `order_number`, `value` = `value`. would ask {by} to confirm the release of {order} ({value})
 - `verdict.hold_sales` → `hold`: `department` = `"Sales"`, `order` = `order_number`. would hold order {order} for {department}
 - `verdict.hold_sales` → `notify`: `detail` = `shortfall, price_differences`, `who` = `role.sales`. would notify {who} with {detail.count} rows
 - `verdict.hold_ar` → `hold`: `department` = `"AR"`, `order` = `order_number`. would hold order {order} for {department}

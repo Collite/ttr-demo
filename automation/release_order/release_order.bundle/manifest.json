@@ -1,11 +1,11 @@
 {
   "schemaVersion": 3,
   "ttrpVersion": 2,
-  "toolchain": "org.tatrman:ttrp:0.21.1",
+  "toolchain": "org.tatrman:ttrp:0.22.3",
   "program": "release_order.ttrp",
   "world": {
     "qname": "hartland.worlds.demo",
-    "fingerprint": "sha256:f59088d435b7ed48c8ace678db90eb239ee351bf4907e893b53a9dbe663f3df6"
+    "fingerprint": "sha256:35e2b2ec6ef7d4471e6f4efa68adf7e4c9ef5acb05216a461bb21c74925ad3ce"
   },
   "islands": [
     {
@@ -715,13 +715,10 @@
         "routes": [
           "verdict.release_confirmed"
         ],
-        "action": "ask",
+        "action": "release_confirmed",
         "columns": {
-          "who": "role.sales_manager",
-          "about": "order_number",
-          "action": "release",
-          "due": "2 working_days",
-          "on_due": "hold { order: order_number, department: \"Sales\" }"
+          "order": "order_number",
+          "value": "value"
         }
       },
       {
@@ -819,9 +816,9 @@
       "er.entity.warehouse_outage"
     ],
     "fingerprints": {
-      "text": "sha256:e0acc590f84d824ab502b9ea9bbceecbd8fab32ebfe2a997cd09a59f42a77959",
+      "text": "sha256:318018e4466d47f4fbb751e97adfbf0304d73e9c4acc9cdcdb0d6029f88e8f1f",
       "values": "sha256:54e165c4463646ed8b9ae490dc1a830b34e76dda883caa0f3df407699c7ae888",
-      "labels": "sha256:9a98e2023f2b1668fdef7710c6a182e9e78880b8c1c2ad751dc1d2160fe2a42d"
+      "labels": "sha256:e50efc73b76c99c7640fa2a095ae79af6df9a7ff5ca37212be64058c330d1aad"
     },
     "protocol": "always",
     "tests": [
@@ -833,12 +830,33 @@
       "tests/release-confirmed.yaml",
       "tests/release.cz.yaml",
       "tests/release.yaml"
-    ]
+    ],
+    "actions": {
+      "release_confirmed": {
+        "by": "role.sales_manager",
+        "due": {
+          "amount": 2,
+          "unit": "working_days"
+        }
+      }
+    },
+    "deployments": {
+      "release_event": {
+        "startableBy": [
+          "role.sales_manager"
+        ]
+      }
+    },
+    "executors": {
+      "engine": {
+        "egressUrl": "http://process-engine-egress.process-engine.svc/automation"
+      }
+    }
   },
   "files": {
-    "README.md": "sha256:b6967a7e619cbb1370d7b84df6fe31eab71a8b72e9b0e61ddf0bc62f577e7c45",
-    "catalog/release_order.ttrm": "sha256:9c823a4dcca4c79b677928d5aa705d5837537fbad789e25c2a671c0009bb1b51",
-    "catalog/release_order_verdict.ttrm": "sha256:1172675861546a966ea9a1daca8c805386898e3dec5bd81790dd6739123f8909",
+    "README.md": "sha256:197a9cd735d1a5a23b753e3095f5b53adf018206bf7275f563086923a83c490b",
+    "catalog/release_order.ttrm": "sha256:38e92ee456478b312a54dcae3a68af355da054b13cc08616e99d5a5234464763",
+    "catalog/release_order_verdict.ttrm": "sha256:ba556b898d5ae21beb7cb439c796168657d1a1f153f7214c2615f860b38ff99e",
     "islands/overdue.rows.sql": "sha256:3730c48e4975b3a5052a7e1a246a7c02f3c783c51505461e037842f503e6755a",
     "islands/placed_orders.orders.sql": "sha256:87fc1d71dba0be2a03e674da6d79188432e2ec439625472e0c33201c7e640ce0",
     "islands/price_differences.rows.sql": "sha256:8242affb2c600e197f69b99c2a3b565bf8ee11040e0a337a5d404ce549bb19ad",

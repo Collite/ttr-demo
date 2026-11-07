@@ -1,6 +1,6 @@
 {
     "document": "reorder_proposals.md",
-    "documentSha": "a932a6d7845418c58f62930a951b26ddc198759b6409f7044dce99ac3af7ae19",
+    "documentSha": "5b4a32515889708257a8ffd7e20fecad72461091fc8ef54e4b45a73bc6bb13ac",
     "nodes": {
         "cover": {
             "block": 5,
@@ -118,7 +118,7 @@
             "nodes": [],
             "span": [
                 3490,
-                3764
+                3717
             ]
         }
     ]

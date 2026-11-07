@@ -1,11 +1,11 @@
 {
   "schemaVersion": 3,
   "ttrpVersion": 2,
-  "toolchain": "org.tatrman:ttrp:0.21.1",
+  "toolchain": "org.tatrman:ttrp:0.22.3",
   "program": "decide_return.ttrp",
   "world": {
     "qname": "hartland.worlds.demo",
-    "fingerprint": "sha256:f59088d435b7ed48c8ace678db90eb239ee351bf4907e893b53a9dbe663f3df6"
+    "fingerprint": "sha256:35e2b2ec6ef7d4471e6f4efa68adf7e4c9ef5acb05216a461bb21c74925ad3ce"
   },
   "islands": [
     {
@@ -1283,13 +1283,12 @@
         "routes": [
           "way.to_customer_care"
         ],
-        "action": "ask",
+        "action": "decide_way",
         "columns": {
-          "who": "role.customer_care",
-          "about": "request_number",
-          "action": "set_state",
-          "group_by": "request_number",
-          "due": "3 working_days"
+          "line": "line_id",
+          "request": "request_number",
+          "to": "settling",
+          "way": "\"care\""
         }
       },
       {
@@ -1436,9 +1435,9 @@
       "er.entity.sales_line"
     ],
     "fingerprints": {
-      "text": "sha256:3d6b660528d0dd1e2ada9a568e7d814e14e720a28f2e8879448ea8af6feb643f",
+      "text": "sha256:976106cdea3047dd01005ffec5bedb6c625d62b7e52b52322ca15261f8aa5ece",
       "values": "sha256:6c5da116527944c0c189fdfbd0c8bbdef9f549dd03079764e3f9c1c80bb1ec41",
-      "labels": "sha256:03c34a36822f9956188705fc07a6c5537d7cd227d57c7930813c9b4edce13de1"
+      "labels": "sha256:af9dc66e80283fc1c8e12f763073d768eb968acbf141ba88fba91088c901c327"
     },
     "protocol": "always",
     "tests": [
@@ -1458,12 +1457,26 @@
       "tests/replacement-no-return.yaml",
       "tests/to-customer-care.cz.yaml",
       "tests/to-customer-care.yaml"
-    ]
+    ],
+    "actions": {
+      "decide_way": {
+        "by": "role.customer_care",
+        "due": {
+          "amount": 3,
+          "unit": "working_days"
+        }
+      }
+    },
+    "executors": {
+      "engine": {
+        "egressUrl": "http://process-engine-egress.process-engine.svc/automation"
+      }
+    }
   },
   "files": {
-    "README.md": "sha256:95c05c241f07a3523e699acdae83c9c36aa03d2aebb96f0f39b5264e84c9a5b5",
-    "catalog/decide_return.ttrm": "sha256:c04526cbb1515d3cce957507fe86087f4f6dc31c525330eeb78ee96e15f0a00e",
-    "catalog/decide_return_verdict.ttrm": "sha256:c619774e8e6c518b3bba13fa1fd2dc4b04f4b5ed583d4ff5440f0273f5f99f64",
+    "README.md": "sha256:0bd14982b650db03c343999700aeb2c0dfd6b49aa6728be24984975d7cd2f65f",
+    "catalog/decide_return.ttrm": "sha256:699fa2eb06078bb415b7dfb373ac2e33d19cdf8a4b28377a528fb4aa9409dc52",
+    "catalog/decide_return_verdict.ttrm": "sha256:c54e795cf8bf858ec69ab1469c61355fbcc0b929c04dd79216e7de1c80cb844c",
     "islands/bought_here.rows.sql": "sha256:dac3064bf26438f5350f18627be813df644aca3cb71e8411f3a4157374a73831",
     "islands/received.lines.sql": "sha256:f87626417f643ba47e3c0d183a77eca8a864cb47241e3ecc768bf81c4adf9883",
     "islands/request_value.rows.sql": "sha256:94a265268fb165b1fbef959e7026c2693f26a20b4164427db4f121dbbcd00e9b",

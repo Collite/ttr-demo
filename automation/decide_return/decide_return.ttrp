@@ -91,8 +91,7 @@ actions {
                                    -> set_state       { line: line_id, to: rejected }
         way.reject_not_ours, way.reject_late, way.reject_abuse
                                    -> notify_customer { customer: customer, to: customer_email, template: "return-rejected" }
-        way.to_customer_care       -> ask              { who: role.customer_care, about: request_number, action: set_state,
-                                                         group_by: request_number, due: 3 working_days }
+        way.to_customer_care       -> decide_way       { line: line_id, request: request_number, to: settling, way: "care" }   // approval on the action; one task per line in v1 (⚑20-2)
         way.refund_no_return       -> set_state        { line: line_id, to: settling, way: refund_no_return }
         way.refund_no_return       -> expect           { line: line_id, kind: credit_note, due: working_days(:settlement) }
         way.replacement_no_return  -> set_state        { line: line_id, to: settling, way: replacement_no_return }

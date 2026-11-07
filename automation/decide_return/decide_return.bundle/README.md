@@ -24,7 +24,7 @@
 
 - `way.reject_not_ours`, `way.reject_late`, `way.reject_abuse` → `set_state`: `line` = `line_id`, `to` = `rejected`. would set return line {line} to {to}
 - `way.reject_not_ours`, `way.reject_late`, `way.reject_abuse` → `notify_customer`: `customer` = `customer`, `template` = `"return-rejected"`, `to` = `customer_email`. would send customer {customer} the {template} message
-- `way.to_customer_care` → `ask`: `about` = `request_number`, `action` = `set_state`, `due` = `3 working_days`, `group_by` = `request_number`, `who` = `role.customer_care`. would ask {who} to approve {action} for {about}
+- `way.to_customer_care` → `decide_way`: `line` = `line_id`, `request` = `request_number`, `to` = `settling`, `way` = `"care"`. would ask {by} to decide the way of return line {line} (request {request})
 - `way.refund_no_return` → `set_state`: `line` = `line_id`, `to` = `settling`, `way` = `refund_no_return`. would set return line {line} to {to}
 - `way.refund_no_return` → `expect`: `due` = `working_days(:settlement)`, `kind` = `credit_note`, `line` = `line_id`. would expect the {kind} of return line {line} by {due}
 - `way.replacement_no_return` → `set_state`: `line` = `line_id`, `to` = `settling`, `way` = `replacement_no_return`. would set return line {line} to {to}

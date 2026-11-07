@@ -13,10 +13,10 @@ model world
 // and the deployment that sets them picks the world. The CZ recipes differ from the US ones only in prose.
 // The service principal's credential is a different variable, TTR_CONN_AUTOMATION_DECIDER (D-132).
 //
-// Written in ttr-core grammar 0.16 (AU-hartland P2): the automation members nest in `def world demo` (R1), executor
-// types are ids (`extends: n8n_l1` — R3), `until:` takes a list (R6). The automation half is AU design `17` §2 — the
-// toolchain's fixture (ttr-core `packages/kotlin/ttr-parser/src/test/resources/automation/demo-world.ttrm`) verbatim
-// — plus the two ops deployments (S2.2 T5). Not written, because 0.16 has no property for them and nothing reads
+// Written in ttr-core grammar 0.22 (AU-hartland P3E): the automation members nest in `def world demo` (R1), executor
+// types are ids (`extends: process_engine`, `n8n_l1` — R3). The automation half is AU design `20` §2, as the
+// toolchain's engine fixture spells it (ttr-core `ttrp-frontend/src/test/resources/recipes/hartland-engine/`), with
+// bp-dsk's real engine URLs. Not written, because 0.16 has no property for them and nothing reads
 // them: `schemas: [dbo]` (the model's `[schemas.dbo]` handle in modeler.toml names the ERP schema) and `rls: true`
 // (the ERP's row-level rules are LR G2's, enforced at the door).
 //
@@ -49,46 +49,41 @@ def world demo {
     // automation service roots the directory and releases it at close + grace (D-73).
     def storage stage { type: local_dir, staging: true }
 
-    // ---- the automation half — 17 §2 (D-107) ----
+    // ---- the automation half — AU design `20` §2 (D-107; re-typed for the engine at P3E, grammar 0.22) ----
+    // One program on one target under one identity per deployment (D-90, D-158). Flow, timers, waits and human tasks
+    // are BPMN (`20` rules 2–5): no `def process`, no `trigger:`, no `target: native`. The six native debug
+    // deployments went too (D-167).
     def identity automation_decider { principal: "svc-hartland-automation", credential: TTR_CONN_AUTOMATION_DECIDER }   // no policy narrows it; D-132
-    def executor n8n   { extends: n8n_l1,   url: "https://n8n.hartland.example",  connection: n8n_hartland }
-    def executor bpmn  { extends: camunda_8 }                                                     // file only (D-41)
-    def executor py    { extends: python_client }
+    def identity process_engine     { principal: "process-engine",          credential: TTR_CONN_PROCESS_ENGINE }       // the engine's own client (D-150)
+    def identity maya               { principal: "persona-maya",            credential: TTR_CONN_PERSONA_MAYA }         // F1d persona (D-158)
 
-    def grant { who: role.ops,           program: *,                    as: identity.automation_decider }
-    def grant { who: role.sales_manager, program: release_on_placement, as: identity.automation_decider }   // "release 4711" from Hebe: a service run she instructs
-    def grant { who: role.process_owner, program: *,                    as: identity.automation_decider }   // debug runs "as the recipe runs" (D-93)
+    // bp-dsk's engine (olymp clusters/bp-dsk/apps/process-engine): REST in-cluster, and the egress proxy its HTTP
+    // connector calls the automation service through (D-145, D-158).
+    def executor engine { extends: process_engine, url: "http://process-engine.process-engine.svc/engine-rest",
+                          egress_url: "http://process-engine-egress.process-engine.svc/automation", connection: engine_bp_dsk }
+    def executor n8n    { extends: n8n_l1,   url: "https://n8n.hartland.example",  connection: n8n_hartland }
+    def executor py     { extends: python_client }
+    // removed: def executor bpmn { extends: camunda_8 } (file only) — the engine target deploys (D-145)
 
-    def deployment release_native_morning { program: morning_release,      target: native, run_as: identity.automation_decider, trigger: schedule "06:00 Europe/Prague" }
-    def deployment release_native_event   { program: release_on_placement, target: native, run_as: identity.automation_decider }
-    def deployment release_n8n            { program: release_on_placement, target: n8n,    run_as: identity.automation_decider, granularity: parts }
-    def deployment release_py             { program: release_on_placement, target: py,     run_as: identity.automation_decider }
-    def deployment release_bpmn           { program: release_on_placement, target: bpmn,   run_as: identity.automation_decider }
-    def deployment release_debug          { program: morning_release,      target: native, run_as: identity.automation_decider, debug: true, dry_run: true }
-    def deployment release_debug_cz       { program: morning_release_cz,   target: native, run_as: identity.automation_decider, debug: true, dry_run: true }
+    def grant { who: identity.process_engine, program: *,                    as: identity.automation_decider }   // F1a (D-158)
+    def grant { who: role.ops,                program: *,                    as: identity.automation_decider }
+    def grant { who: role.sales_manager,      program: release_on_placement, as: identity.maya }                  // "release 4711" from Hebe runs as Maya's persona (⚑20-4)
+    def grant { who: role.process_owner,      program: *,                    as: identity.automation_decider }   // debug runs "as the recipe runs" (D-93)
 
-    // H-2, orchestrator-free: six native deployments (on-event + batch per recipe)
-    def deployment decide_native_event    { program: decide_on_request,   target: native, run_as: identity.automation_decider }
-    def deployment decide_native_batch    { program: decide_catch_up,     target: native, run_as: identity.automation_decider, trigger: schedule "06:30 Europe/Prague" }
-    def deployment inbound_native_event   { program: inbound_on_receipt,  target: native, run_as: identity.automation_decider }
-    def deployment inbound_native_batch   { program: inbound_daily,       target: native, run_as: identity.automation_decider, trigger: schedule "07:00 Europe/Prague" }
-    def deployment settle_native_event    { program: settle_on_document,  target: native, run_as: identity.automation_decider }
-    def deployment settle_native_batch    { program: settle_daily,        target: native, run_as: identity.automation_decider, trigger: schedule "07:30 Europe/Prague" }
-    def deployment decide_debug           { program: decide_catch_up,     target: native, run_as: identity.automation_decider, debug: true, dry_run: true }
-    def deployment decide_debug_cz        { program: decide_catch_up_cz,    target: native, run_as: identity.automation_decider, debug: true, dry_run: true }
-    def deployment inbound_debug          { program: inbound_daily,       target: native, run_as: identity.automation_decider, debug: true, dry_run: true }
-    def deployment settle_debug           { program: settle_daily,        target: native, run_as: identity.automation_decider, debug: true, dry_run: true }
+    // H-1 — one program per deployment; the timer / message start lives in the BPMN
+    def deployment release_morning  { program: morning_release,      target: engine, run_as: identity.automation_decider }
+    def deployment release_event    { program: release_on_placement, target: engine, run_as: identity.automation_decider, startable_by: role.sales_manager }
+    def deployment release_n8n      { program: release_on_placement, target: n8n,    run_as: identity.automation_decider, granularity: parts }
+    def deployment release_py       { program: release_on_placement, target: py,     run_as: identity.automation_decider }
 
-    // H-2, orchestrated: one n8n execution per line, the engine owns the waiting (D-39, D-86)
-    def process return_line_flow {
-        instance: return_request_line.line_id
-        steps: [
-            def step decide   { program: decide_on_request,  port: key },
-            def step inbound  { program: inbound_on_receipt, port: key, after: { obligation: inbound, until: [fulfilled, due, absent] } },
-            def step settle   { program: settle_on_document, port: key, after: { obligation: [credit_note, payment, replacement], until: [fulfilled, due, absent] } }
-        ]
-    }
-    def deployment returns_n8n { process: return_line_flow, target: n8n, run_as: identity.automation_decider }
+    // H-2 — three on_event deployments the authored `returns.bpmn` calls, three batch deployments the catch-up timer calls
+    def deployment decide_event     { program: decide_on_request,  target: engine, run_as: identity.automation_decider }
+    def deployment inbound_event    { program: inbound_on_receipt, target: engine, run_as: identity.automation_decider }
+    def deployment settle_event     { program: settle_on_document, target: engine, run_as: identity.automation_decider }
+    def deployment decide_batch     { program: decide_catch_up,    target: engine, run_as: identity.automation_decider }
+    def deployment inbound_batch    { program: inbound_daily,      target: engine, run_as: identity.automation_decider }
+    def deployment settle_batch     { program: settle_daily,       target: engine, run_as: identity.automation_decider }
+    // removed: def process return_line_flow + deployment returns_n8n — the flow is hartland/processes/returns.bpmn (`20` rule 5)
 
     // Ops deployments resume in Server P4 when automation.ops is served. The authoring stubs
     // stay out of the served model; no_run_since also needs row-dependent time arithmetic.

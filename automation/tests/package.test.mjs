@@ -65,8 +65,12 @@ test('S2.1 — model/ + automation/ parse, resolve and lint with nothing outside
 test('S2.1 — the automation validator (with the toolchain\'s stdlib) finds nothing but the pre-catalog recipe names', () => {
   const diags = validateAutomationProject(docsOf(project), { stdlib });
   const defaultNotices = diags.filter((d) => d.code === 'ttr/automation-unknown-property');
+  // The reader pin's TS validator ([ttr-core] 0.21) predates CG-2's `by:` (D-144/D-161) and `startable_by:` (D-161); it
+  // warns, the pinned compiler ([ttrp] 0.22) reads them. They go when the readers' pin stage moves [ttr-core].
   assert.deepEqual(defaultNotices.map((d) => d.message).sort(), [
+    "action 'decide_way': unknown property `by:`", "action 'handoff': unknown property `by:`",
     "action 'propose': unknown property `writer_defaults:`", "action 'record': unknown property `writer_defaults:`",
+    "action 'release_confirmed': unknown property `by:`", "deployment 'release_event': unknown property `startable_by:`",
   ]);
   const findings = diags.filter((d) => d.code !== PRECATALOG && !defaultNotices.includes(d)).map((d) => `${d.severity} ${d.code}: ${d.message}`);
   assert.deepEqual(findings, []);
@@ -115,35 +119,39 @@ test('S2.1 T2 — every parameter carries a label in English and Czech (D-64)', 
   }
 });
 
-// action → [columns, transition, set, sinks, approval]
+// action → [columns, transition, set, sinks, approval] — `20` §1 (engine actions carry no native sink)
 const ACTIONS = {
   release: [['order:order.order_number'], 'order.state -> released from [placed, held]', undefined,
-    { native: 'transition', n8n: 'door', camunda: 'door' }, 'none'],
+    { native: 'transition', n8n: 'door', process_engine: 'door' }, 'none'],
+  release_confirmed: [['order:order.order_number', 'value:order.value'], 'order.state -> released from [placed, held]', undefined,
+    { native: 'transition', n8n: 'door', process_engine: 'door' }, 'required'],
   hold: [['order:order.order_number', 'department:text'], 'order.state -> held from [placed]', 'order.held_for = department',
-    { native: 'transition', n8n: 'door', camunda: 'door' }, 'none'],
+    { native: 'transition', n8n: 'door', process_engine: 'door' }, 'none'],
   notify: [['who:role', 'detail:rows', 'template:text?'], undefined, undefined,
-    { native: 'deliver', n8n: 'n8n-nodes-base.emailSend', camunda: 'send task', hebe: 'message' }, 'none'],
+    { process_engine: 'send task', n8n: 'n8n-nodes-base.emailSend', hebe: 'message' }, 'none'],
   notify_customer: [['customer:customer.sk', 'to:customer.email', 'template:text'], undefined, undefined,
-    { native: 'deliver', n8n: 'n8n-nodes-base.emailSend' }, 'none'],
-  ask: [['who:role', 'about:text', 'action:action', 'detail:rows?'], undefined, undefined,
-    { native: 'task', hebe: 'task', camunda: 'user task', n8n: 'door' }, 'required'],
-  task: [['who:role', 'about:text', 'detail:rows?'], undefined, undefined, { native: 'task', hebe: 'task', n8n: 'door' }, 'none'],
+    { process_engine: 'send task', n8n: 'n8n-nodes-base.emailSend' }, 'none'],
+  review: [['who:role', 'about:text', 'detail:rows?'], undefined, undefined,
+    { process_engine: 'user task', hebe: 'task', n8n: 'door' }, 'none'],
   set_state: [['line:return_request_line.line_id', 'to:text', 'way:text?'], 'return_request_line.state -> {to} from []',
-    'return_request_line.way = way', { native: 'transition', n8n: 'door', camunda: 'door' }, 'none'],
+    'return_request_line.way = way', { native: 'transition', n8n: 'door', process_engine: 'door' }, 'none'],
+  decide_way: [['line:return_request_line.line_id', 'request:return_request.request_number', 'to:text', 'way:text'],
+    'return_request_line.state -> {to} from []', 'return_request_line.way = way', { native: 'transition', process_engine: 'door' }, 'required'],
   expect: [['line:return_request_line.line_id', 'kind:text', 'due:date'], undefined, undefined, { native: 'obligation' }, 'none'],
   fulfil: [['line:return_request_line.line_id', 'kind:text', 'to:text'], 'obligation.state -> {to} from []', undefined,
     { native: 'obligation' }, 'none'],
-  start: [['process:text', 'rows:rows'], undefined, undefined, { native: 'start', n8n: 'n8n-nodes-base.httpRequest' }, 'none'],
+  handoff: [['process:text', 'rows:rows?'], undefined, undefined, { process_engine: 'call activity' }, 'required'],
   propose: [['item:reorder_proposal.item', 'warehouse:reorder_proposal.warehouse', 'on_hand:reorder_proposal.on_hand',
     'weekly_demand:reorder_proposal.weekly_demand', 'proposed_qty:reorder_proposal.proposed_qty',
     'proposal_id:reorder_proposal.proposal_id?', 'run:reorder_proposal.run?', 'state:reorder_proposal.state?'], undefined, undefined,
   { native: 'writer' }, 'none'],
-  emit: [['customer:customer.sk', 'to:customer.email', 'offer:text'], undefined, undefined, { native: 'deliver', n8n: 'n8n-nodes-base.emailSend' }, 'none'],
+  emit: [['customer:customer.sk', 'to:customer.email', 'offer:text'], undefined, undefined,
+    { process_engine: 'send task', n8n: 'n8n-nodes-base.emailSend' }, 'none'],
   record: [['customer:winback_mail.customer', 'offer:winback_mail.offer', 'quarter:winback_mail.quarter?',
     'run:winback_mail.run?', 'mailed_at:winback_mail.mailed_at?'], undefined, undefined, { native: 'writer' }, 'none'],
 };
 
-test('S2.1 T2 — the actions: columns, transition, set, sinks, approval (17 §1; propose/emit/record S2.2 T4)', () => {
+test('S2.1 T2 — the actions: columns, transition, set, sinks, approval (20 §1; propose/emit/record S2.2 T4, handoff P3E)', () => {
   const columnsOf = (a) => (a.columns ?? []).map((c) => {
     const optional = (c.properties ?? c.entries ?? []).some?.((e) => e.key === 'optional') || c.optional === true;
     return `${c.name}:${c.type?.name}${optional ? '?' : ''}`;
@@ -158,10 +166,17 @@ test('S2.1 T2 — the actions: columns, transition, set, sinks, approval (17 §1
   assert.deepEqual(got, ACTIONS);
 });
 
-test('S2.1 T2 — ask defaults to 2 working days (D-98); notify, notify_customer and emit are deliverable', () => {
+// `20` rule 2: "needs approval" is on the action — the approving role and the user task's due date; nothing is
+// deliverable any more (D-142: delivery is a send task).
+test('S2.1 T2 — every approval-required action names its role and due date (20 rule 2); nothing is deliverable (D-142)', () => {
   const actions = ofKind('action');
-  assert.equal(render(entry(actions.get('ask'), 'due')), '2 working_days');
-  for (const n of ['notify', 'notify_customer', 'emit']) assert.equal(render(entry(actions.get(n), 'deliverable')), 'true', n);
+  const required = Object.fromEntries([...actions].filter(([, a]) => render(entry(a, 'approval')) === 'required')
+    .map(([n, a]) => [n, `${render(entry(a, 'by'))} ${render(entry(a, 'due'))}`]));
+  assert.deepEqual(required, {
+    release_confirmed: 'role.sales_manager 2 working_days', decide_way: 'role.customer_care 3 working_days',
+    handoff: 'role.buyer 2 working_days',
+  });
+  for (const [n, a] of actions) assert.equal(entry(a, 'deliverable'), undefined, n);
 });
 
 // The n8n export sends an emailSend action's mail to exactly one addressing column: a role (`who`), whose address
@@ -185,8 +200,9 @@ test('S2.1 T2 — every action has a dry-run text in English and Czech (D-64)', 
 
 // The sink kinds an action may name (ttr-core contracts §2): `native` is one of the Server's; another target names its
 // own node / task — a string (`"n8n-nodes-base.emailSend"`) or a word (`door`, Hebe's `message` / `task`).
-const NATIVE_SINKS = new Set(['transition', 'writer', 'deliver', 'task', 'obligation', 'start', 'emit']);
-const TARGETS = new Set(['native', 'n8n', 'camunda', 'hebe']);
+// `20` §1: the writer's three; `deliver`, `task`, `start` are cut (D-142) — an engine action has no native sink.
+const NATIVE_SINKS = new Set(['transition', 'writer', 'obligation']);
+const TARGETS = new Set(['native', 'n8n', 'process_engine', 'hebe']);
 test('S2.1 T1 — every action\'s sinks name only the sink kinds the ttr-core contract allows', () => {
   for (const [name, a] of ofKind('action')) {
     const sinks = entry(a, 'sinks');
@@ -216,20 +232,20 @@ test('S2.1 T2 — the four approvals (17 §1)', () => {
   });
 });
 
-// ── 17 §1: the programs ─────────────────────────────────────────────────────────────────────────────────────────
+// ── 20 §1: the programs ─────────────────────────────────────────────────────────────────────────────────────────
 // program → [recipe, port, mode, as_of]
 const PROGRAMS = {
   morning_release: ['release_order', 'none', 'batch', 'run'],
   morning_release_cz: ['release_order', 'none', 'batch', 'run'],
   release_on_placement: ['release_order', 'key', 'on_event', 'event'],
   release_on_placement_cz: ['release_order', 'key', 'on_event', 'event'],
-  decide_on_request: ['decide_return', 'event', 'on_event', 'event'],
-  decide_on_request_cz: ['decide_return', 'event', 'on_event', 'event'],
+  decide_on_request: ['decide_return', 'key', 'on_event', 'event'],
+  decide_on_request_cz: ['decide_return', 'key', 'on_event', 'event'],
   decide_catch_up: ['decide_return', 'none', 'batch', 'run'],
   decide_catch_up_cz: ['decide_return', 'none', 'batch', 'run'],
-  inbound_on_receipt: ['monitor_inbound', 'event', 'on_event', 'event'],
+  inbound_on_receipt: ['monitor_inbound', 'key', 'on_event', 'event'],
   inbound_daily: ['monitor_inbound', 'none', 'batch', 'run'],
-  settle_on_document: ['settle', 'event', 'on_event', 'event'],
+  settle_on_document: ['settle', 'key', 'on_event', 'event'],
   settle_daily: ['settle', 'none', 'batch', 'run'],
   reorder_weekly: ['reorder_proposals', 'none', 'batch', 'run'],
   winback_monthly: ['winback', 'none', 'batch', 'run'],
@@ -240,22 +256,18 @@ const PROGRAMS = {
 export const RECIPES = ['release_order', 'decide_return', 'monitor_inbound', 'settle', 'reorder_proposals', 'winback',
   'no_run_since', 'obligation_due_passed'];
 
-test('S2.1 T3 — the programs bind the recipes with the port, mode and as-of of 17 §1', () => {
+test('S2.1 T3 — the programs bind the recipes with the port, mode and as-of of 20 §1', () => {
   const got = Object.fromEntries([...ofKind('program')].map(([n, p]) => [n, ['recipe', 'port', 'mode', 'as_of'].map((k) => render(entry(p, k)))]));
   assert.deepEqual(got, PROGRAMS);
 });
 
-test('S2.1 T3 — every program names one of the eight recipes; the on-event ones name their event schema', () => {
-  for (const [name, p] of ofKind('program')) assert.ok(RECIPES.includes(render(entry(p, 'recipe'))), `${name}: ${render(entry(p, 'recipe'))}`);
-  const events = Object.fromEntries([...ofKind('program')].filter(([, p]) => entry(p, 'event')).map(([n, p]) => [n, render(entry(p, 'event'))]));
-  assert.deepEqual(events, {
-    decide_on_request: 'schema.line_received', decide_on_request_cz: 'schema.line_received', inbound_on_receipt: 'schema.receipt_posted', settle_on_document: 'schema.settlement_posted',
-  });
-  const schemas = [...ofKind('schema')].map(([n, s]) => `${n}(${s.columns.map((c) => `${c.name}:${c.type.name}`).join(', ')})`).sort();
-  assert.deepEqual(schemas, [
-    'line_received(line_id:return_request_line.line_id)', 'receipt_posted(line_id:return_request_line.line_id)',
-    'settlement_posted(line_id:return_request_line.line_id)',
-  ]);
+// `20` rule 4: a program keeps its mode and loses its trigger — no deliver, schedule, event port or event schema.
+test('S2.1 T3 — every program names one of the eight recipes; none carries deliver, schedule or event (20 rule 4)', () => {
+  for (const [name, p] of ofKind('program')) {
+    assert.ok(RECIPES.includes(render(entry(p, 'recipe'))), `${name}: ${render(entry(p, 'recipe'))}`);
+    for (const k of ['deliver', 'schedule', 'event']) assert.equal(entry(p, k), undefined, `${name}: ${k}`);
+  }
+  assert.deepEqual([...ofKind('schema')], []);
 });
 
 test('S2.1 T3 — the ops programs write the protocol only for a routed run (D-80)', () => {
@@ -263,7 +275,7 @@ test('S2.1 T3 — the ops programs write the protocol only for a routed run (D-8
   for (const n of ['no_run_since_hourly', 'obligation_due_passed_hourly']) assert.equal(render(entry(programs.get(n), 'protocol')), 'on_route', n);
 });
 
-// ── 17 §2 + contracts §3: the world ─────────────────────────────────────────────────────────────────────────────
+// ── 20 §2 + contracts §3: the world ─────────────────────────────────────────────────────────────────────────────
 const worlds = own(project).filter(([, ast]) => ast.modelDirective?.modelCode === 'world')
   .flatMap(([uri, ast]) => (ast.definitions ?? []).filter((d) => d.kind === 'world').map((w) => ({ uri, ast, w, qname: `${ast.packageDecl?.name}.${w.name}` })));
 
@@ -299,62 +311,52 @@ test('S2.1 T4 — `writable:` on erp_db and automation_db is exactly contracts �
   });
 });
 
-test('S2.1 T4 — the decider identity and its credential (D-90, D-132); the three executors (exporters contracts §1)', () => {
+test('S2.1 T4 — the identities (D-132, D-150, D-158); the three executors, the engine with its egress (20 §2, D-145)', () => {
   const { w } = worlds[0];
-  assert.deepEqual(w.identities.map((i) => [i.name, render(entry(i, 'principal')), render(entry(i, 'credential'))]),
-    [['automation_decider', 'svc-hartland-automation', 'TTR_CONN_AUTOMATION_DECIDER']]);
-  assert.deepEqual(Object.fromEntries(w.executors.map((e) => [e.name, e.extends])), { n8n: 'n8n_l1', bpmn: 'camunda_8', py: 'python_client' });
+  assert.deepEqual(w.identities.map((i) => [i.name, render(entry(i, 'principal')), render(entry(i, 'credential'))]), [
+    ['automation_decider', 'svc-hartland-automation', 'TTR_CONN_AUTOMATION_DECIDER'],
+    ['process_engine', 'process-engine', 'TTR_CONN_PROCESS_ENGINE'],
+    ['maya', 'persona-maya', 'TTR_CONN_PERSONA_MAYA'],
+  ]);
+  assert.deepEqual(Object.fromEntries(w.executors.map((e) => [e.name, e.extends])), { engine: 'process_engine', n8n: 'n8n_l1', py: 'python_client' });
   assert.equal(render(w.executors.find((e) => e.name === 'n8n').manifest.connection), 'n8n_hartland');
+  const engine = w.executors.find((e) => e.name === 'engine').manifest;
+  assert.deepEqual(['url', 'egress_url', 'connection'].map((k) => render(engine[k])), [
+    'http://process-engine.process-engine.svc/engine-rest', 'http://process-engine-egress.process-engine.svc/automation', 'engine_bp_dsk',
+  ]);
 });
 
-test('S2.1 T4 — the three grants (D-91), as triples', () => {
+test('S2.1 T4 — the four grants (D-91, D-158), as triples', () => {
   assert.deepEqual(worlds[0].w.grants.map((g) => ['who', 'program', 'as'].map((k) => render(entry(g, k))).join(' / ')), [
+    'identity.process_engine / * / identity.automation_decider',
     'role.ops / * / identity.automation_decider',
-    'role.sales_manager / release_on_placement / identity.automation_decider',
+    'role.sales_manager / release_on_placement / identity.maya',
     'role.process_owner / * / identity.automation_decider',
   ]);
 });
 
-// deployment → [program | process, target, run_as, trigger]
+// deployment → [program, target, run_as] — `20` §2: one program on one target; no trigger, no process, no native (D-167: no debug)
 const DEPLOYMENTS = {
-  release_native_morning: ['morning_release', 'native', 'identity.automation_decider', 'schedule "06:00 Europe/Prague"'],
-  release_native_event: ['release_on_placement', 'native', 'identity.automation_decider', undefined],
-  release_n8n: ['release_on_placement', 'n8n', 'identity.automation_decider', undefined],
-  release_py: ['release_on_placement', 'py', 'identity.automation_decider', undefined],
-  release_bpmn: ['release_on_placement', 'bpmn', 'identity.automation_decider', undefined],
-  release_debug: ['morning_release', 'native', 'identity.automation_decider', undefined],
-  release_debug_cz: ['morning_release_cz', 'native', 'identity.automation_decider', undefined],
-  decide_native_event: ['decide_on_request', 'native', 'identity.automation_decider', undefined],
-  decide_native_batch: ['decide_catch_up', 'native', 'identity.automation_decider', 'schedule "06:30 Europe/Prague"'],
-  inbound_native_event: ['inbound_on_receipt', 'native', 'identity.automation_decider', undefined],
-  inbound_native_batch: ['inbound_daily', 'native', 'identity.automation_decider', 'schedule "07:00 Europe/Prague"'],
-  settle_native_event: ['settle_on_document', 'native', 'identity.automation_decider', undefined],
-  settle_native_batch: ['settle_daily', 'native', 'identity.automation_decider', 'schedule "07:30 Europe/Prague"'],
-  decide_debug: ['decide_catch_up', 'native', 'identity.automation_decider', undefined],
-  decide_debug_cz: ['decide_catch_up_cz', 'native', 'identity.automation_decider', undefined],
-  inbound_debug: ['inbound_daily', 'native', 'identity.automation_decider', undefined],
-  settle_debug: ['settle_daily', 'native', 'identity.automation_decider', undefined],
-  returns_n8n: ['process return_line_flow', 'n8n', 'identity.automation_decider', undefined],
+  release_morning: ['morning_release', 'engine', 'identity.automation_decider'],
+  release_event: ['release_on_placement', 'engine', 'identity.automation_decider'],
+  release_n8n: ['release_on_placement', 'n8n', 'identity.automation_decider'],
+  release_py: ['release_on_placement', 'py', 'identity.automation_decider'],
+  decide_event: ['decide_on_request', 'engine', 'identity.automation_decider'],
+  inbound_event: ['inbound_on_receipt', 'engine', 'identity.automation_decider'],
+  settle_event: ['settle_on_document', 'engine', 'identity.automation_decider'],
+  decide_batch: ['decide_catch_up', 'engine', 'identity.automation_decider'],
+  inbound_batch: ['inbound_daily', 'engine', 'identity.automation_decider'],
+  settle_batch: ['settle_daily', 'engine', 'identity.automation_decider'],
 };
 
-test('S2.1 T4 — the deployments: the five H-1, the six native H-2, the n8n process, six native debug (two CZ); ops await Server P4 (17 §2, S2.2 T5)', () => {
-  const got = Object.fromEntries(worlds[0].w.deployments.map((d) => [d.name, [
-    entry(d, 'process') ? `process ${render(entry(d, 'process'))}` : render(entry(d, 'program')),
-    d.target?.path, render(entry(d, 'run_as')), render(entry(d, 'trigger')),
-  ]]));
+test('S2.1 T4 — the deployments: four H-1, six H-2 on the engine; no process, trigger or debug (20 §2, D-167); ops await Server P4', () => {
+  const { w } = worlds[0];
+  const got = Object.fromEntries(w.deployments.map((d) => [d.name, [render(entry(d, 'program')), d.target?.path, render(entry(d, 'run_as'))]]));
   assert.deepEqual(got, DEPLOYMENTS);
-  assert.equal(render(entry(worlds[0].w.deployments.find((d) => d.name === 'release_n8n'), 'granularity')), 'parts');
-});
-
-test('S2.1 T4 — `return_line_flow`: one n8n execution per line, waiting on the obligations (D-39, D-86)', () => {
-  const [p] = worlds[0].w.processes;
-  assert.equal(p.name, 'return_line_flow');
-  assert.equal(render(entry(p, 'instance')), 'return_request_line.line_id');
-  assert.deepEqual(p.steps.map((s) => [s.name, render(entry(s, 'program')), render(entry(s, 'port')), render(entry(s, 'after'))]), [
-    ['decide', 'decide_on_request', 'key', undefined],
-    ['inbound', 'inbound_on_receipt', 'key', '{ obligation: inbound, until: [fulfilled, due, absent] }'],
-    ['settle', 'settle_on_document', 'key', '{ obligation: [credit_note, payment, replacement], until: [fulfilled, due, absent] }'],
-  ]);
+  for (const d of w.deployments) for (const k of ['trigger', 'process', 'debug']) assert.equal(entry(d, k), undefined, `${d.name}: ${k}`);
+  assert.equal(render(entry(w.deployments.find((d) => d.name === 'release_n8n'), 'granularity')), 'parts');
+  assert.equal(render(entry(w.deployments.find((d) => d.name === 'release_event'), 'startable_by')), 'role.sales_manager');
+  assert.deepEqual(w.processes ?? [], []);
 });
 
 // ── D-67: the lifecycles on the attributes ──────────────────────────────────────────────────────────────────────
