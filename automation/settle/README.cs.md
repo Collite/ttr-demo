@@ -25,8 +25,8 @@
 - `settlement.credit_note_issued` → `expect`: `due` = `working_days(:settlement)`, `kind` = `payment`, `line` = `line_id`. očekával by {kind} k řádku reklamace {line} do {due}
 - `settlement.money_received` → `fulfil`: `kind` = `payment`, `line` = `line_id`, `to` = `fulfilled`. označil by {kind} k řádku reklamace {line} jako {to}
 - `settlement.goods_shipped` → `fulfil`: `kind` = `replacement`, `line` = `line_id`, `to` = `fulfilled`. označil by {kind} k řádku reklamace {line} jako {to}
-- `settlement.money_overdue` → `task`: `about` = `line_id`, `detail` = `open_obligations`, `who` = `role.finance`. zadal by {who} úkol k {about}
-- `settlement.goods_overdue` → `task`: `about` = `line_id`, `detail` = `open_obligations`, `who` = `role.logistics`. zadal by {who} úkol k {about}
+- `settlement.money_overdue` → `review`: `about` = `line_id`, `detail` = `open_obligations`, `who` = `role.finance`. zadal by {who} kontrolu k {about}
+- `settlement.goods_overdue` → `review`: `about` = `line_id`, `detail` = `open_obligations`, `who` = `role.logistics`. zadal by {who} kontrolu k {about}
 - `settlement.closed` → `set_state`: `line` = `line_id`, `to` = `closed`. převedl by řádek reklamace {line} do stavu {to}
 
 ## Parametry

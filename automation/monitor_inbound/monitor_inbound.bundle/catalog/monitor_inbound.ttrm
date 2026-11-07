@@ -12,5 +12,6 @@ def recipe monitor_inbound {
     kinds: ["sql"],
     mode: "per-candidate",
     document: "handling-a-return-request.md",
-    fingerprints: { text: "sha256:20d2f28d3b83ea8f943297fe2a1ae62898146f9b196c1e611e19071e53757c59", values: "sha256:dba014c020bb1d09dabb29c7914b17cb6715a5be874a1f51bcd8e1e98d018c05", labels: "sha256:6a042ac45050557add09d9fbe5eedc905b05392592bd05d1c960b3b9b8410107" }
+    executors: { engine: { egress_url: "http://process-engine-egress.process-engine.svc/automation" } },
+    fingerprints: { text: "sha256:da8971f5c08447c711bf997814080f49e980a3a9e975a76b4f4d566603216829", values: "sha256:dba014c020bb1d09dabb29c7914b17cb6715a5be874a1f51bcd8e1e98d018c05", labels: "sha256:3f90ec1ef2942b77043edc1bbe60f1d4728e94c3f35351ebfbd8b836bf29919a" }
 }

@@ -25,8 +25,8 @@
 - `settlement.credit_note_issued` → `expect`: `due` = `working_days(:settlement)`, `kind` = `payment`, `line` = `line_id`. would expect the {kind} of return line {line} by {due}
 - `settlement.money_received` → `fulfil`: `kind` = `payment`, `line` = `line_id`, `to` = `fulfilled`. would mark the {kind} of return line {line} {to}
 - `settlement.goods_shipped` → `fulfil`: `kind` = `replacement`, `line` = `line_id`, `to` = `fulfilled`. would mark the {kind} of return line {line} {to}
-- `settlement.money_overdue` → `task`: `about` = `line_id`, `detail` = `open_obligations`, `who` = `role.finance`. would give {who} a task about {about}
-- `settlement.goods_overdue` → `task`: `about` = `line_id`, `detail` = `open_obligations`, `who` = `role.logistics`. would give {who} a task about {about}
+- `settlement.money_overdue` → `review`: `about` = `line_id`, `detail` = `open_obligations`, `who` = `role.finance`. would give {who} a review of {about}
+- `settlement.goods_overdue` → `review`: `about` = `line_id`, `detail` = `open_obligations`, `who` = `role.logistics`. would give {who} a review of {about}
 - `settlement.closed` → `set_state`: `line` = `line_id`, `to` = `closed`. would set return line {line} to {to}
 
 ## Parameters

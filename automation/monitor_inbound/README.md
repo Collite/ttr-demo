@@ -23,7 +23,7 @@
 - `inbound.complete` → `set_state`: `line` = `line_id`, `to` = `goods_received`. would set return line {line} to {to}
 - `inbound.complete` → `expect`: `due` = `working_days(:settlement)`, `kind` = `credit_note`, `line` = `line_id`; when `way = "refund_after_return"`. would expect the {kind} of return line {line} by {due}
 - `inbound.complete` → `expect`: `due` = `working_days(:settlement)`, `kind` = `replacement`, `line` = `line_id`; when `way = "exchange"`. would expect the {kind} of return line {line} by {due}
-- `inbound.damaged` → `task`: `about` = `line_id`, `detail` = `receipts`, `who` = `role.customer_care`. would give {who} a task about {about}
+- `inbound.damaged` → `review`: `about` = `line_id`, `detail` = `receipts`, `who` = `role.customer_care`. would give {who} a review of {about}
 - `inbound.expired` → `fulfil`: `kind` = `inbound`, `line` = `line_id`, `to` = `cancelled`. would mark the {kind} of return line {line} {to}
 - `inbound.expired` → `set_state`: `line` = `line_id`, `to` = `not_returned`. would set return line {line} to {to}
 - `inbound.remind` → `notify_customer`: `customer` = `customer`, `template` = `"return-reminder"`, `to` = `customer_email`. would send customer {customer} the {template} message

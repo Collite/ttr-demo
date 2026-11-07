@@ -1,11 +1,11 @@
 {
   "schemaVersion": 3,
   "ttrpVersion": 2,
-  "toolchain": "org.tatrman:ttrp:0.21.1",
+  "toolchain": "org.tatrman:ttrp:0.22.3",
   "program": "monitor_inbound.ttrp",
   "world": {
     "qname": "hartland.worlds.demo",
-    "fingerprint": "sha256:f59088d435b7ed48c8ace678db90eb239ee351bf4907e893b53a9dbe663f3df6"
+    "fingerprint": "sha256:35e2b2ec6ef7d4471e6f4efa68adf7e4c9ef5acb05216a461bb21c74925ad3ce"
   },
   "islands": [
     {
@@ -915,7 +915,7 @@
         "routes": [
           "inbound.damaged"
         ],
-        "action": "task",
+        "action": "review",
         "columns": {
           "who": "role.customer_care",
           "about": "line_id",
@@ -1009,9 +1009,9 @@
       "er.entity.return_request_line"
     ],
     "fingerprints": {
-      "text": "sha256:20d2f28d3b83ea8f943297fe2a1ae62898146f9b196c1e611e19071e53757c59",
+      "text": "sha256:da8971f5c08447c711bf997814080f49e980a3a9e975a76b4f4d566603216829",
       "values": "sha256:dba014c020bb1d09dabb29c7914b17cb6715a5be874a1f51bcd8e1e98d018c05",
-      "labels": "sha256:6a042ac45050557add09d9fbe5eedc905b05392592bd05d1c960b3b9b8410107"
+      "labels": "sha256:3f90ec1ef2942b77043edc1bbe60f1d4728e94c3f35351ebfbd8b836bf29919a"
     },
     "protocol": "always",
     "parts": [
@@ -1339,12 +1339,17 @@
       "tests/none.yaml",
       "tests/remind.cz.yaml",
       "tests/remind.yaml"
-    ]
+    ],
+    "executors": {
+      "engine": {
+        "egressUrl": "http://process-engine-egress.process-engine.svc/automation"
+      }
+    }
   },
   "files": {
-    "README.md": "sha256:8fbe077460667b2df4e6b3dc51bc63609a81a69bc8af9633997679204ae5c918",
-    "catalog/monitor_inbound.ttrm": "sha256:7b36eb689da12dfeef6632962e5c1b44b46066048c0af1ff0949138fdb9d164c",
-    "catalog/monitor_inbound_verdict.ttrm": "sha256:4aea78f9e2ad3b800c724f6237acdf2828b0509d91e13d818ba209db7676c80e",
+    "README.md": "sha256:15bf20c04ca4b3aee1f385ee781d2f586478f70bb692c2554243df2d354202ce",
+    "catalog/monitor_inbound.ttrm": "sha256:9912c034ede1f9b639454f4106209433bf9dcf1eedf650233bbba532bdd32ae6",
+    "catalog/monitor_inbound_verdict.ttrm": "sha256:0dc5db33314bec90851b8687194dbefbcb3735b79f59d5e2f79f5625c4bf7bea",
     "islands/age.rows.duckdb.sql": "sha256:8c3d2a1ba46e4480a9e5de71d540fe8e89eded3d7aa206e815bbe41439c0d81a",
     "islands/awaiting.lines.duckdb.sql": "sha256:0ccedc3583fb5fa55f1a37e0e72af2f28a129d24f6bf4c6ebde7f70761a11f60",
     "islands/inbound.complete.duckdb.sql": "sha256:b8d9d14e5176bf3376405633cadd58d3e0ce07a0d6674409cc533e2d70d210fd",

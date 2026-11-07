@@ -12,5 +12,6 @@ def recipe settle {
     kinds: ["sql"],
     mode: "per-candidate",
     document: "handling-a-return-request.md",
-    fingerprints: { text: "sha256:1a9391af10dd9f384944b61aae5f26221e05003a5694d6cf04972c20d1998874", values: "sha256:26cd4bbbdef5ad8c69ea41324530ab1e48a37ff0a1a73819a49ce3c729d82016", labels: "sha256:cba0786c0e3994bf1e3aa3d8163a840321d43f8abb9ff0e5c184b341e989b79d" }
+    executors: { engine: { egress_url: "http://process-engine-egress.process-engine.svc/automation" } },
+    fingerprints: { text: "sha256:a9ab9c3d1112d6ed0e722c4f9f24a6d588e33f764fcfd75a2a0f1ad0d841ce0b", values: "sha256:26cd4bbbdef5ad8c69ea41324530ab1e48a37ff0a1a73819a49ce3c729d82016", labels: "sha256:e2f330b51947026ae548f2f338fb62ae4a49941e95ee127b7db332787c18dd26" }
 }

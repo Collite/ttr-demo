@@ -12,7 +12,7 @@
 ## Co dělá
 
 - `cover.propose` → `propose`: `item` = `item`, `on_hand` = `on_hand`, `proposed_qty` = `cast(proposed_qty as integer)`, `warehouse` = `warehouse`, `weekly_demand` = `round(weekly_demand * 100) * 0.01`. navrhl by doobjednat {proposed_qty} ks položky {item} pro centrum {warehouse}
-- `cover.propose` → `ask`: `about` = `warehouse`, `action` = `start { process: "purchasing" }`, `due` = `2 working_days`, `group_by` = `warehouse`, `who` = `role.buyer`. požádal by {who} o schválení {action} pro {about}
+- `cover.propose` → `handoff`: `process` = `"purchasing"`, `rows` = `on_hand, weekly_demand`. požádal by {by} o předání {rows.count} řádků procesu {process}
 
 ## Parametry
 

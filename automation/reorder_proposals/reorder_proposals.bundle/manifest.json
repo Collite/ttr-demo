@@ -1,11 +1,11 @@
 {
   "schemaVersion": 3,
   "ttrpVersion": 2,
-  "toolchain": "org.tatrman:ttrp:0.21.1",
+  "toolchain": "org.tatrman:ttrp:0.22.3",
   "program": "reorder_proposals.ttrp",
   "world": {
     "qname": "hartland.worlds.demo",
-    "fingerprint": "sha256:f59088d435b7ed48c8ace678db90eb239ee351bf4907e893b53a9dbe663f3df6"
+    "fingerprint": "sha256:35e2b2ec6ef7d4471e6f4efa68adf7e4c9ef5acb05216a461bb21c74925ad3ce"
   },
   "islands": [
     {
@@ -321,13 +321,10 @@
         "routes": [
           "cover.propose"
         ],
-        "action": "ask",
+        "action": "handoff",
         "columns": {
-          "who": "role.buyer",
-          "about": "warehouse",
-          "action": "start { process: \"purchasing\" }",
-          "group_by": "warehouse",
-          "due": "2 working_days"
+          "process": "\"purchasing\"",
+          "rows": "on_hand, weekly_demand"
         }
       }
     ],
@@ -384,9 +381,9 @@
       "er.entity.sales_line"
     ],
     "fingerprints": {
-      "text": "sha256:d9854e1256ba49e9992819bbca8eabda65a5c7e36f8ce57adb2d50ecf59b6365",
+      "text": "sha256:d2bd9b2a1a051885a4b7af6a49c5e2a5f42e6b6899c0b2546ceb50acaa569f7c",
       "values": "sha256:ad397986c43308fe3aad5ec1b8dae7e87d89f7a1a98b28cc2030c71f5405ec6b",
-      "labels": "sha256:8a4532d72448aaa6eb42af030ddf9ac4c2c193bed28fab2e1dbf38fda59daa6b"
+      "labels": "sha256:213b120de3a17304a4755f776f33441e85a69cf19c9aa7ad2dfba12ca5130132"
     },
     "protocol": "always",
     "tests": [
@@ -399,17 +396,26 @@
         "hartland",
         "hartland.automation"
       ],
-      "textBase": "sha256:7a8d0ec8d9d8fb6979ecf823302cdfd93b4dab2c0d9a48dcbac5a4efc6ab1fa3",
+      "textBase": "sha256:e04a41d9e2af20eea57de9b6a8a4bcb29f18548edc2107012e9a7b1787bd3a70",
       "actions": {
-        "ask": "sha256:f05ad90823e7e445a4d93338f5949a878e802fb23e309ec8789b2355fb690ef3",
+        "handoff": "sha256:90e89898cefb80c63080d77cd7146539fe424a0306b4aa532d2978be47da4a1f",
         "propose": "sha256:d117ad92d73b35de8e31140e301e875cbafcb6d1fecdda40b46a3aeb03a800bd"
+      }
+    },
+    "actions": {
+      "handoff": {
+        "by": "role.buyer",
+        "due": {
+          "amount": 2,
+          "unit": "working_days"
+        }
       }
     }
   },
   "files": {
-    "README.md": "sha256:735ee5088e56e5be13e5466714ca175d2d4168fcb91397c80ff552d6e0c6c12b",
-    "catalog/reorder_proposals.ttrm": "sha256:369dc12a88ae048acd675e8896eaa2a6cbf7a8e023288e2614b33d591ac154d6",
-    "catalog/reorder_proposals_verdict.ttrm": "sha256:c67933e68fc626c91ae7c58c30923a406620c3f26dab50a8cdb7945792f55fb2",
+    "README.md": "sha256:f534ae83d89a63ffb822dff9ac60fa392ccc8a7e152ea2592c43538d3c52501a",
+    "catalog/reorder_proposals.ttrm": "sha256:545e686446b99e7a375a1cb2a8379d682c0bcb0680e0169a591f0fd6880d196b",
+    "catalog/reorder_proposals_verdict.ttrm": "sha256:694e05e2ab732fb0c592c36b5a81c37f61a0612b0a58f92043adcf449daadc90",
     "islands/cover.propose.sql": "sha256:f6aa57d09cbff58f82ed9b1fbf52d605f0eb232c5ef6e0c630fe4eac1f78723e",
     "islands/on_hand.rows.sql": "sha256:fca84addbce75953a1247f363f29b2ede9160ab28527ba327c6b5dfe85361240",
     "islands/selling.pairs.sql": "sha256:3bd54cdd11aa79d1d384a66268e805727beb0977073b3d344d9bc7859be421da",

@@ -145,11 +145,11 @@ test('S2.2 T3 — monitor_inbound\'s two expects on `complete` are conditional o
   assert.match(sources.monitor_inbound, /kind: replacement,\s+due: working_days\(:settlement\) \}\s+when: way = "exchange"/);
 });
 
-// ── the four `17` recipes ARE ttr-core's shared fixtures ──────────────────────────────────────────────────────────
-// Compared without comments, blank lines and indentation (P3 derives H-1 from Markdown). No difference is left: from grammar/v0.16.1 the fixtures carry
-// monitor_inbound's `when:` (S2.2 T3) and decide_return's `days(365)` (ttr-core P1's F3), as these recipes do.
-// The customer address column (`notify_customer { to: customer_email }`) is ahead of the [ttrp] pin's fixtures: ttr-core
-// mirrors it in its shared fixture, and these deltas go when [ttrp] moves to a release that carries it.
+// ── the four heroes ARE ttr-core's engine fixtures (`20`, AU-hartland P3E) ──────────────────────────────────────
+// Compared without comments, blank lines and indentation (P3 derives H-1 from Markdown). The oracle is Core's
+// `recipes/hartland-engine/` (CG-2): `20` §3–§4's action blocks over the shared hero bodies. Two deltas remain:
+// D-153's scoped `latest()` bodies, and the customer address column (`notify_customer { to: customer_email }`).
+// Both go when Core's engine fixtures carry them.
 const ADDRESS_WIRING = [/notify_customer( +)\{ customer: customer, template:/g, 'notify_customer$1{ customer: customer, to: customer_email, template:'];
 const FIXTURE_DELTAS = {
   // D-153 — goes when [ttrp] carries the scoped fixtures
@@ -161,9 +161,6 @@ const FIXTURE_DELTAS = {
     ['coalesce(stock.quantity_on_hand, 0)', 'coalesce(quantity_on_hand, 0)'],
   ],
   decide_return: [
-    ['r.customer, r.order_number, r.requested_date', 'r.customer, c.email AS customer_email, r.order_number, r.requested_date'],
-    [/^(FROM {3}er\.entity\.return_request_line l JOIN er\.entity\.return_request r ON r\.request_number = l\.request_number)$/m,
-      '$1\nLEFT JOIN er.entity.customer c ON c.sk = r.customer'],
     ADDRESS_WIRING,
     // D-153 — goes when [ttrp] carries the scoped fixtures
     ['latest = load(er.entity.inventory) -> latest(by: as_of_date, per: item, warehouse)',
@@ -176,18 +173,14 @@ const FIXTURE_DELTAS = {
     ['coalesce(latest.quantity_on_hand, 0)', 'coalesce(stock.quantity_on_hand, 0)'],
   ],
   monitor_inbound: [
-    ['l.way, r.customer, ob.id AS obligation_id, ob.due, ob.state AS obligation_state',
-      'l.way, r.customer, c.email AS customer_email,\nob.id AS obligation_id, ob.due, ob.state AS obligation_state'],
-    [/^(JOIN {3}er\.entity\.return_request r ON r\.request_number = l\.request_number)$/m,
-      '$1\nLEFT JOIN er.entity.customer c    ON c.sk = r.customer'],
     ADDRESS_WIRING,
   ],
 };
 const lines = (text) => code(text).split('\n').map((l) => l.trim()).filter((l) => l !== '').join('\n');
 
 for (const name of ['release_order', 'decide_return', 'monitor_inbound', 'settle']) {
-  const fixture = path.join(FIXTURES, `${name}.ttrp`);
-  test(`S2.2 T2/T3 — ${name} is ttr-core's shared fixture (comments aside)`, { skip: cliMissing }, async () => {
+  const fixture = path.join(FIXTURES, 'hartland-engine', `${name}.ttrp`);
+  test(`S2.2 T2/T3 — ${name} is ttr-core's engine fixture (20; comments aside)`, { skip: cliMissing }, async () => {
     let want = lines(await readFile(fixture, 'utf-8'));
     for (const [re, to] of FIXTURE_DELTAS[name] ?? []) want = want.replace(re, to);
     assert.equal(lines(sources[name]), want);
