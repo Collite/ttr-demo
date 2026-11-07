@@ -134,7 +134,7 @@ Each received line takes exactly one route.
 ```
 
 The customer is told the decision and, when goods must come back, receives the return instructions.
-Customer care receives one confirmation task per request, including requests with multiple lines.
+Customer care approves the way of each line itself, within three working days: one task per line, also when a request has several lines.
 Refunds and replacements without return start settlement immediately. An exchange or refund after return
 opens an inbound obligation.
 
@@ -244,7 +244,7 @@ or already reminded but not yet expired, has no verdict row.
 
 A complete return fulfils the inbound obligation and marks the goods received. For `refund_after_return`,
 expect a credit note; for `exchange`, expect a replacement. Both use the settlement working-day limit.
-An incomplete or damaged return creates a customer-care task; an expired return is cancelled and marked
+An incomplete or damaged return goes to customer care for review; an expired return is cancelled and marked
 not returned; a reminder notifies the customer.
 
 ```ttrp

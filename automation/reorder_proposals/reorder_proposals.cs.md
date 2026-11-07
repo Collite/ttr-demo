@@ -71,7 +71,7 @@ decision cover(in pairs, in on_hand, in weekly_demand) {
     }
 ```
 
-Před jakýmkoli zápisem zobrazíme tabulku návrhů (C-6). Návrhy čekají na schválení a seskupují se podle centra. Nákupčí centra dostane jeden úkol za skupinu se lhůtou dvou pracovních dnů; schválení zahájí nákupní proces dané skupiny. Nákupní systém zastupuje n8n.
+Před jakýmkoli zápisem zobrazíme tabulku návrhů (C-6). Každý návrh také žádá nákupčího o schválení předání do nákupu, do dvou pracovních dnů; po schválení procesní engine zavolá nákupní proces se zásobou a poptávkou návrhu.
 
 ```ttrp
 actions {

@@ -71,7 +71,7 @@ decision cover(in pairs, in on_hand, in weekly_demand) {
     }
 ```
 
-Preview the proposal table before any write (C-6). Proposals are held pending approval and grouped by center. The center’s buyer receives one task for the group, due in two working days; approval starts the purchasing process for that group. n8n plays the purchasing system.
+Preview the proposal table before any write (C-6). Each proposal also asks the buyer to approve its hand-off to purchasing, within two working days; on approval the process engine calls the purchasing process with the proposal’s stock and demand.
 
 ```ttrp
 actions {

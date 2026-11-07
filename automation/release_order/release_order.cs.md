@@ -97,7 +97,7 @@ decision verdict(in orders, in shortfall, in price_differences, in overdue) {
     }
 ```
 
-Uvolnění objednávky nad 50 000 vyžaduje potvrzení vedoucího prodeje. Parametr `confirmation_threshold` (Limit pro potvrzení) určuje tuto hranici. Pokud potvrzení nepřijde do dvou pracovních dnů, objednávku pozastavíme pro obchodní oddělení.
+Uvolnění objednávky nad 50 000 vyžaduje potvrzení vedoucího prodeje. Parametr `confirmation_threshold` (Limit pro potvrzení) určuje tuto hranici. Potvrzení schvaluje vedoucí prodeje do dvou pracovních dnů; pokud nepřijde včas, proces objednávky ji pozastaví pro obchodní oddělení.
 
 ```ttrp
 actions {
@@ -110,4 +110,4 @@ actions {
     }
 ```
 
-Pozastavené objednávky kontrolujeme každé ráno až do uvolnění nebo zrušení. Obchodní oddělení a správa pohledávek dostávají každé ráno jednu zprávu se všemi svými pozastavenými objednávkami. Jednotlivou objednávku lze na vyžádání zkontrolovat i při jejím pořízení.
+Pozastavené objednávky kontroluje ranní běh až do uvolnění nebo zrušení. Obchodní oddělení a správa pohledávek dostávají každé ráno jednu zprávu se všemi svými pozastavenými objednávkami: proces rozešle upozornění běhu seskupená podle rolí. Jednotlivou objednávku lze na vyžádání zkontrolovat i při jejím pořízení.

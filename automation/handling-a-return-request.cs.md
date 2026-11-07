@@ -132,7 +132,7 @@ Nejprve uplatníme důvody zamítnutí, poté předání péči o zákazníky a 
     }
 ```
 
-Zákazník obdrží rozhodnutí a při požadovaném vrácení zboží také pokyny. Péče o zákazníky dostane jeden úkol k potvrzení za celou žádost, i když má více položek. Vrácení peněz a náhrada bez vrácení zboží zahájí vypořádání ihned. Výměna nebo vrácení peněz po vrácení zboží otevře závazek příjmu zboží.
+Zákazník obdrží rozhodnutí a při požadovaném vrácení zboží také pokyny. Péče o zákazníky schvaluje způsob vyřízení každé položky sama, do tří pracovních dnů: jeden úkol na položku, i když má žádost více položek. Vrácení peněz a náhrada bez vrácení zboží zahájí vypořádání ihned. Výměna nebo vrácení peněz po vrácení zboží otevře závazek příjmu zboží.
 
 ```ttrp
     actions {
@@ -237,7 +237,7 @@ Vrácené zboží má přednost před lhůtami pro upomínku a uzavření. Polo�
     }
 ```
 
-Úplné vrácení splní závazek příjmu a nastaví stav přijetí zboží. Pro `refund_after_return` očekáváme dobropis, pro `exchange` náhradu. V obou případech platí lhůta vypořádání v pracovních dnech. Neúplná či poškozená vratka vytvoří úkol pro péči o zákazníky; po uplynutí lhůty položku zrušíme a označíme jako nevrácenou; upomínka vyrozumí zákazníka.
+Úplné vrácení splní závazek příjmu a nastaví stav přijetí zboží. Pro `refund_after_return` očekáváme dobropis, pro `exchange` náhradu. V obou případech platí lhůta vypořádání v pracovních dnech. Neúplnou či poškozenou vratku předáme péči o zákazníky ke kontrole; po uplynutí lhůty položku zrušíme a označíme jako nevrácenou; upomínka vyrozumí zákazníka.
 
 ```ttrp
     actions {

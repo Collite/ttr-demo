@@ -103,8 +103,8 @@ decision verdict(in orders, in shortfall, in price_differences, in overdue) {
 ```
 
 Releasing an order above 50 000 needs a confirmation by the sales manager. The parameter
-`confirmation_threshold` names this limit; a confirmation that is not received within two working days holds
-the order for Sales.
+`confirmation_threshold` names this limit. The confirmation is the sales manager's to approve within two working days;
+if it does not come in time, the order's process holds the order for Sales.
 
 ```ttrp
 actions {
@@ -117,6 +117,6 @@ actions {
     }
 ```
 
-Held orders are re-checked every morning until they are released or cancelled. Sales and AR receive one
-message per morning with all their held orders; a single order can also be checked on request, when the
-order is placed.
+Held orders are re-checked by the morning run until they are released or cancelled. Sales and AR receive one
+message per morning with all their held orders: the process sends the run's notifications grouped by role. A
+single order can also be checked on request, when the order is placed.

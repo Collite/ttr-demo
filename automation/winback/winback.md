@@ -80,7 +80,7 @@ decision offer(in customers, in band, in mailed) {
     }
 ```
 
-n8n sends the mail; the platform computes the customer list and records the offer. The exported workflow uses `emit` for Send Email and `record` for the write-back. The program runs monthly.
+The process sends the mail (`emit` is a send task; the n8n export uses Send Email); the platform computes the customer list and records the offer (`record`, the write-back). The process starts the program monthly.
 
 ```ttrp
 actions {
