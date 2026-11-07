@@ -38,10 +38,11 @@ def world demo {
         writable: [order.state, order.held_for, return_request_line.state, return_request_line.way, reorder_proposal, winback_mail]
     }
 
-    // The ledger's (D-76): the toolchain's automation entities and every recipe's generated verdict tables.
+    // The ledger's (D-76): the toolchain's automation entities and every recipe's generated verdict tables,
+    // `_current` included — the writer keeps it itself, a key-scoped delete + insert per batch (D-105, R217-D).
     def storage automation_db {
         type: postgres, via: automation,
-        writable: [obligation, state_history, "*_verdict", "*_verdict_detail", approvals]
+        writable: [obligation, state_history, "*_verdict", "*_verdict_detail", "*_verdict_current", approvals]
     }
 
     // Island outputs of a run land here as Arrow IPC, `runs/{id}/{island}.{port}.arrow` (10 B-6); the
