@@ -77,7 +77,6 @@ Preview the proposal table before any write (C-6). Proposals are held pending ap
 actions {
         cover.propose -> propose { item: item, warehouse: warehouse, on_hand: on_hand, weekly_demand: round(weekly_demand * 100) * 0.01,
                                    proposed_qty: cast(proposed_qty as int) }
-        cover.propose -> ask     { who: role.buyer, about: warehouse, action: start { process: "purchasing" },
-                                   group_by: warehouse, due: 2 working_days }
+        cover.propose -> handoff { process: "purchasing", rows: on_hand, weekly_demand }   // approval on the action (by the buyer); was ask … action: start
     }
 ```

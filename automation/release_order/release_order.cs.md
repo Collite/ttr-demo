@@ -101,13 +101,12 @@ Uvolnění objednávky nad 50 000 vyžaduje potvrzení vedoucího prodeje. Param
 
 ```ttrp
 actions {
-        verdict.release           -> release { order: order_number }
-        verdict.release_confirmed -> ask     { who: role.sales_manager, about: order_number, action: release,
-                                               due: 2 working_days, on_due: hold { order: order_number, department: "Sales" } }
-        verdict.hold_sales        -> hold    { order: order_number, department: "Sales" }
-        verdict.hold_sales        -> notify  { who: role.sales, detail: shortfall, price_differences }
-        verdict.hold_ar           -> hold    { order: order_number, department: "AR" }
-        verdict.hold_ar           -> notify  { who: role.ar, detail: overdue }
+        verdict.release           -> release           { order: order_number }
+        verdict.release_confirmed -> release_confirmed { order: order_number, value: value }     // approval on the action (`20` rule 2)
+        verdict.hold_sales        -> hold              { order: order_number, department: "Sales" }
+        verdict.hold_sales        -> notify            { who: role.sales, detail: shortfall, price_differences }
+        verdict.hold_ar           -> hold              { order: order_number, department: "AR" }
+        verdict.hold_ar           -> notify            { who: role.ar, detail: overdue }
     }
 ```
 
