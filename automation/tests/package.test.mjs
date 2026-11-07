@@ -295,7 +295,7 @@ test('S2.1 T4 â€” `writable:` on erp_db and automation_db is exactly contracts Â
   const writable = Object.fromEntries(worlds[0].w.storages.filter((s) => s.manifest?.writable).map((s) => [s.name, render(s.manifest.writable)]));
   assert.deepEqual(writable, {
     erp_db: '[order.state, order.held_for, return_request_line.state, return_request_line.way, reorder_proposal, winback_mail]',
-    automation_db: '[obligation, state_history, *_verdict, *_verdict_detail, approvals]',
+    automation_db: '[obligation, state_history, *_verdict, *_verdict_detail, *_verdict_current, approvals]',
   });
 });
 
