@@ -71,6 +71,7 @@ test('S2.1 — the automation validator (with the toolchain\'s stdlib) finds not
     "action 'decide_way': unknown property `by:`", "action 'handoff': unknown property `by:`",
     "action 'propose': unknown property `writer_defaults:`", "action 'record': unknown property `writer_defaults:`",
     "action 'release_confirmed': unknown property `by:`", "deployment 'release_event': unknown property `startable_by:`",
+    "deployment 'release_event_cz': unknown property `startable_by:`",
   ]);
   const findings = diags.filter((d) => d.code !== PRECATALOG && !defaultNotices.includes(d)).map((d) => `${d.severity} ${d.code}: ${d.message}`);
   assert.deepEqual(findings, []);
@@ -341,11 +342,12 @@ test('S2.1 T4 — the identities (D-132, D-150, D-158); the three executors, the
   ]);
 });
 
-test('S2.1 T4 — the four grants (D-91, D-158), as triples', () => {
+test('S2.1 T4 — the five grants (D-91, D-158; the CZ twin, D-174), as triples', () => {
   assert.deepEqual(worlds[0].w.grants.map((g) => ['who', 'program', 'as'].map((k) => render(entry(g, k))).join(' / ')), [
     'identity.process_engine / * / identity.automation_decider',
     'role.ops / * / identity.automation_decider',
     'role.sales_manager / release_on_placement / identity.maya',
+    'role.sales_manager / release_on_placement_cz / identity.maya',
     'role.process_owner / * / identity.automation_decider',
   ]);
 });
@@ -362,9 +364,14 @@ const DEPLOYMENTS = {
   decide_batch: ['decide_catch_up', 'engine', 'identity.automation_decider'],
   inbound_batch: ['inbound_daily', 'engine', 'identity.automation_decider'],
   settle_batch: ['settle_daily', 'engine', 'identity.automation_decider'],
+  // D-174: one engine deployment per CZ program twin (P3Z), named `<US deployment>_cz`
+  release_morning_cz: ['morning_release_cz', 'engine', 'identity.automation_decider'],
+  release_event_cz: ['release_on_placement_cz', 'engine', 'identity.automation_decider'],
+  decide_event_cz: ['decide_on_request_cz', 'engine', 'identity.automation_decider'],
+  decide_batch_cz: ['decide_catch_up_cz', 'engine', 'identity.automation_decider'],
 };
 
-test('S2.1 T4 — the deployments: four H-1, six H-2 on the engine; no process, trigger or debug (20 §2, D-167); ops await Server P4', () => {
+test('S2.1 T4 — the deployments: four H-1, six H-2, four CZ on the engine; no process, trigger or debug (20 §2, D-167, D-174); ops await Server P4', () => {
   const { w } = worlds[0];
   const got = Object.fromEntries(w.deployments.map((d) => [d.name, [render(entry(d, 'program')), d.target?.path, render(entry(d, 'run_as'))]]));
   assert.deepEqual(got, DEPLOYMENTS);
@@ -372,6 +379,27 @@ test('S2.1 T4 — the deployments: four H-1, six H-2 on the engine; no process, 
   assert.equal(render(entry(w.deployments.find((d) => d.name === 'release_n8n'), 'granularity')), 'parts');
   assert.equal(render(entry(w.deployments.find((d) => d.name === 'release_event'), 'startable_by')), 'role.sales_manager');
   assert.deepEqual(w.processes ?? [], []);
+});
+
+// D-174: every CZ program twin has exactly one engine deployment, `<name>_cz`, the same shape as the engine deployment of
+// its US program (every property but the name and the program), and every grant naming the US program names the twin too.
+test('D-174 — each CZ program twin has one engine deployment shaped like its US twin\'s, and the same grants', () => {
+  const { w } = worlds[0];
+  const props = (d) => Object.fromEntries(d.entries.filter((e) => e.key !== 'program').map((e) => [e.key, render(e.value)]));
+  const engine = w.deployments.filter((d) => d.target?.path === 'engine');
+  const twins = [...ofKind('program').keys()].filter((n) => n.endsWith('_cz'));
+  assert.equal(twins.length, 4);
+  for (const twin of twins) {
+    const us = twin.slice(0, -3);
+    const mine = engine.filter((d) => render(entry(d, 'program')) === twin);
+    const theirs = engine.filter((d) => render(entry(d, 'program')) === us);
+    assert.equal(mine.length, 1, `${twin}: one engine deployment`);
+    assert.equal(theirs.length, 1, `${us}: one engine deployment`);
+    assert.equal(mine[0].name, `${theirs[0].name}_cz`);
+    assert.deepEqual(props(mine[0]), props(theirs[0]), `${mine[0].name}: the shape of ${theirs[0].name}`);
+    const grantsOf = (p) => w.grants.filter((g) => render(entry(g, 'program')) === p).map((g) => `${render(entry(g, 'who'))} / ${render(entry(g, 'as'))}`);
+    assert.deepEqual(grantsOf(twin), grantsOf(us), `${twin}: the grants of ${us}`);
+  }
 });
 
 // ── D-67: the lifecycles on the attributes ──────────────────────────────────────────────────────────────────────

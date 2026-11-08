@@ -845,6 +845,11 @@
         "startableBy": [
           "role.sales_manager"
         ]
+      },
+      "release_event_cz": {
+        "startableBy": [
+          "role.sales_manager"
+        ]
       }
     },
     "executors": {
@@ -855,7 +860,7 @@
   },
   "files": {
     "README.md": "sha256:e602d0012beff2bd141d737367efd72e6b9527c2a78cab368b78281a78743f43",
-    "catalog/release_order.ttrm": "sha256:27ba8293d949784b2a4eb662920a8feef38f499f9ad0fa82d079d2040dbf6482",
+    "catalog/release_order.ttrm": "sha256:b408e5ccc7cb025618f678cb44b13924aadd6c2f7bc9ab704cf442d7356e2e33",
     "catalog/release_order_verdict.ttrm": "sha256:ba556b898d5ae21beb7cb439c796168657d1a1f153f7214c2615f860b38ff99e",
     "islands/overdue.rows.sql": "sha256:3730c48e4975b3a5052a7e1a246a7c02f3c783c51505461e037842f503e6755a",
     "islands/placed_orders.orders.sql": "sha256:87fc1d71dba0be2a03e674da6d79188432e2ec439625472e0c33201c7e640ce0",
