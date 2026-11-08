@@ -1,11 +1,11 @@
 {
   "schemaVersion": 3,
   "ttrpVersion": 2,
-  "toolchain": "org.tatrman:ttrp:0.21.1",
+  "toolchain": "org.tatrman:ttrp:0.22.3",
   "program": "winback.ttrp",
   "world": {
     "qname": "hartland.worlds.demo",
-    "fingerprint": "sha256:f59088d435b7ed48c8ace678db90eb239ee351bf4907e893b53a9dbe663f3df6"
+    "fingerprint": "sha256:35e2b2ec6ef7d4471e6f4efa68adf7e4c9ef5acb05216a461bb21c74925ad3ce"
   },
   "islands": [
     {
@@ -482,7 +482,7 @@
       "er.entity.winback_mail"
     ],
     "fingerprints": {
-      "text": "sha256:96f412f3463ca2e7d0dc212549e83e6dfda76945305b2d9f4a78f9665424fced",
+      "text": "sha256:e1e4fcf376ecd8e3e2833da5829f70d05fba2d0b253a43f5eda632101351fe22",
       "values": "sha256:d8352c31b971440aa43d107154959e46256b6f6d981375d8c9e0fd7c9716c86f",
       "labels": "sha256:bb99d3dfc6f7dccc74217a0b7e925c9a2af77e8d4b4bc4d7a567be4edd083e56"
     },
@@ -503,15 +503,15 @@
       ],
       "textBase": "sha256:883ef06b7ee6b443da025b561578eb1e0a3aea225fec211e6900940a92793403",
       "actions": {
-        "emit": "sha256:4c637d5b6cfc89e5f57f434ba2e85cb05f8dc423516b4a08660e237266a63c05",
+        "emit": "sha256:d55ba8bb6c9762f9fc2dd65c71706d6bdb56ff19aa69de68ec0f2e4bfbbbfeec",
         "record": "sha256:d6896b11c42c9eb1791f6bdbbdbeed7b5d2745ac41e7ff10cfd8fa5efb3415f7"
       }
     }
   },
   "files": {
     "README.md": "sha256:4bd9839b71bbeb77cc1d6e871527d062183a3003f51b22b3aaff6619093be440",
-    "catalog/winback.ttrm": "sha256:48cd6a9e7671d4d962939817c27aa36293e8e8fa6d50479e09ee60b0a3972518",
-    "catalog/winback_verdict.ttrm": "sha256:fc3d78ebb1f947e0b06d3b121fb3b5f8ecb7ee8e1b0f8f475945c5aacea1330d",
+    "catalog/winback.ttrm": "sha256:9b3aae413a2c3da4eaa3c77b2313349bb9ce15242a5c253b5ab0970f707bbf81",
+    "catalog/winback_verdict.ttrm": "sha256:1d5a8f837a390563945e1a448ba98bad1411efcb5f6715d95929a2bbd5758dd8",
     "islands/band.rows.sql": "sha256:a36b06824b9578b7a644b8d4930e522e693a6dc67dccebb7c8b72da56908f68e",
     "islands/lapsed.customers.sql": "sha256:006477ed66471dd74895a1ff5e64b88bd8701baa4f34b9f3a575cdd9246a9152",
     "islands/mailed.rows.sql": "sha256:803be7a5581ae5246842ec6eb1309b4ab80b0b2267edab29275127c8dda86849",

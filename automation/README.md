@@ -8,9 +8,9 @@ service beside `../model/` (ttr-server contracts §1.1):
 
 | path | what |
 |---|---|
-| `automation.ttrm` | `model automation`, package `hartland.automation`: the parameters, actions, roles and approvals (`17` §1) |
-| `programs.ttrm` | the programs and the event schemas (`17` §1) |
-| `worlds/demo.ttrm` | the world `hartland.worlds.demo`: engines, storages with `writable:`, and its automation half — the identity, executors, grants, deployments and the `return_line_flow` process (`17` §2) |
+| `automation.ttrm` | `model automation`, package `hartland.automation`: the parameters, actions, roles and approvals (`20` §1) |
+| `programs.ttrm` | the programs (mode, port, as_of) (`20` §1) |
+| `worlds/demo.ttrm` | the world `hartland.worlds.demo`: engines, storages with `writable:`, and its automation half — the identities, executors, grants and the deployments (one program each, `20` §2) |
 | `release_order/release_order.md` | H-1 literate source |
 | `handling-a-return-request.md` | H-2 source: Deciding → `decide_return`, Inbound → `monitor_inbound`, Outbound → `settle` |
 | `reorder_proposals/reorder_proposals.md`, `winback/winback.md` | H-3/H-5 literate sources |
@@ -30,7 +30,7 @@ would report every one of those names unresolved (the lexicon build refuses to l
 under `../model/` names an automation object; `../model/` only carries the lifecycles (`states:`) the actions are
 checked against.
 
-Recipe authoring uses grammar **0.21**, released compiler **0.21.1**, the model gate's toolchain line too (version sweep, 2026-11-01; 0.21.1 for CN-P8 S8.6's `variant`). The strict serving-loader pin is **0.21.1** / metadata image **0.11.35**, in `toolchain.lock`. The extension the recipes
+Recipe authoring uses grammar **0.22**, released compiler **0.22.3** (AU-hartland P3E, 2026-11-07: the engine cut of AU design `20`, CG-2's `by:`/`due:`/`startable_by:`/`egress_url:`, and `truncated` on `_verdict_detail`). The model gate's toolchain line stays **0.21.1** (CN-P8 S8.6's `variant`): it reads `model/` only, and its TS validator warns on the CG-2 properties it predates. The strict serving-loader pin is **0.21.1** / metadata image **0.11.35**, in `toolchain.lock`; the readers move to 0.22 in their own pin stage, after this content. The extension the recipes
 run on is in `../model/` — the documents (`model/er/orders.ttrm`, `returns-flow.ttrm`, `proposals.ttrm`) and their
 words (`model/lexicon/{en,cs}/automation.ttrm`); see the "Automation extension" paragraph of `../model/README.md`.
 
@@ -53,8 +53,8 @@ recipe or golden seed changes. The bundles include the golden YAML seeds and the
 CI checks literate artifacts before rebuilding. A prose-only source edit, canonical hand edit, missing sidecar or
 changed explanation fails; rebuild the document and commit all derived artifacts together.
 
-The recipe toolchain uses released **grammar/v0.21.1** (since v0.18.14 it carries the accepted document/multi-recipe,
-writer-default evidence, concat and declared-package resolution fixes). The separate `[automation-preview].server-ref` pins the
+The recipe toolchain uses released **grammar/v0.22.3** (since v0.18.14 it carries the accepted document/multi-recipe,
+writer-default evidence, concat and declared-package resolution fixes; from 0.22 the engine cut, D-142). The separate `[automation-preview].server-ref` pins the
 ttr-server#367 merge **81e496d6** (server-libs/v0.11.35) for the preview CI job; it does not change a deployed image.
 The model/reader pins remain independent. H-1's `release_order.md` is authoritative; its canonical
 recipe preserves P2's code apart from whitespace/comments. The `.ttrd` records the actual source filename and
@@ -117,7 +117,9 @@ against the exact accepted Server checkout named in the lock. The runner refuses
 changes, verifies **services/automation runtimeClasspath** against the separate preview grammar pin
 0.21.1 (translator/proto 0.13.0), and disables Maven Local. Query result tables are mocked; real bundle loading, approval coverage,
 bindings, staging, native preview and writer assignment checks run. The CI checkout is deliberately named
-`bundle` to guard package resolution independently of its path. JUnit XML retains all five named cases.
+`bundle` to guard package resolution independently of its path. JUnit XML retains all five named cases. Since P3E the full H3
+preview case is disabled and H5 runs over the writer projection: their engine actions (`handoff`, `emit`) have no native sink,
+which the pinned 0.21 Server refuses in a full preview. Both come back when AU-server D3 moves `[automation-preview]` to 0.22.
 
 The gate covers H3's complete **writer projection**, including negative retry-stable bigint ID, run/state,
 all required attributes and two-place stored demand. Full H3 must produce that same proposal plus the buyer

@@ -24,7 +24,7 @@
 
 - `way.reject_not_ours`, `way.reject_late`, `way.reject_abuse` → `set_state`: `line` = `line_id`, `to` = `rejected`. převedl by řádek reklamace {line} do stavu {to}
 - `way.reject_not_ours`, `way.reject_late`, `way.reject_abuse` → `notify_customer`: `customer` = `customer`, `template` = `"return-rejected"`, `to` = `customer_email`. poslal by zákazníkovi {customer} zprávu {template}
-- `way.to_customer_care` → `ask`: `about` = `request_number`, `action` = `set_state`, `due` = `3 working_days`, `group_by` = `request_number`, `who` = `role.customer_care`. požádal by {who} o schválení {action} pro {about}
+- `way.to_customer_care` → `decide_way`: `line` = `line_id`, `request` = `request_number`, `to` = `settling`, `way` = `"care"`. požádal by zákaznickou péči o rozhodnutí o řádku reklamace {line} (reklamace {request})
 - `way.refund_no_return` → `set_state`: `line` = `line_id`, `to` = `settling`, `way` = `refund_no_return`. převedl by řádek reklamace {line} do stavu {to}
 - `way.refund_no_return` → `expect`: `due` = `working_days(:settlement)`, `kind` = `credit_note`, `line` = `line_id`. očekával by {kind} k řádku reklamace {line} do {due}
 - `way.replacement_no_return` → `set_state`: `line` = `line_id`, `to` = `settling`, `way` = `replacement_no_return`. převedl by řádek reklamace {line} do stavu {to}

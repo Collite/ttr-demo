@@ -1,11 +1,11 @@
 {
   "schemaVersion": 3,
   "ttrpVersion": 2,
-  "toolchain": "org.tatrman:ttrp:0.21.1",
+  "toolchain": "org.tatrman:ttrp:0.22.3",
   "program": "settle.ttrp",
   "world": {
     "qname": "hartland.worlds.demo",
-    "fingerprint": "sha256:f59088d435b7ed48c8ace678db90eb239ee351bf4907e893b53a9dbe663f3df6"
+    "fingerprint": "sha256:35e2b2ec6ef7d4471e6f4efa68adf7e4c9ef5acb05216a461bb21c74925ad3ce"
   },
   "islands": [
     {
@@ -1026,7 +1026,7 @@
         "routes": [
           "settlement.money_overdue"
         ],
-        "action": "task",
+        "action": "review",
         "columns": {
           "who": "role.finance",
           "about": "line_id",
@@ -1037,7 +1037,7 @@
         "routes": [
           "settlement.goods_overdue"
         ],
-        "action": "task",
+        "action": "review",
         "columns": {
           "who": "role.logistics",
           "about": "line_id",
@@ -1109,9 +1109,9 @@
       "er.entity.return_request_line"
     ],
     "fingerprints": {
-      "text": "sha256:1a9391af10dd9f384944b61aae5f26221e05003a5694d6cf04972c20d1998874",
+      "text": "sha256:a9ab9c3d1112d6ed0e722c4f9f24a6d588e33f764fcfd75a2a0f1ad0d841ce0b",
       "values": "sha256:26cd4bbbdef5ad8c69ea41324530ab1e48a37ff0a1a73819a49ce3c729d82016",
-      "labels": "sha256:cba0786c0e3994bf1e3aa3d8163a840321d43f8abb9ff0e5c184b341e989b79d"
+      "labels": "sha256:e2f330b51947026ae548f2f338fb62ae4a49941e95ee127b7db332787c18dd26"
     },
     "protocol": "always",
     "parts": [
@@ -1594,12 +1594,17 @@
       "tests/money-overdue.yaml",
       "tests/money-received.cz.yaml",
       "tests/money-received.yaml"
-    ]
+    ],
+    "executors": {
+      "engine": {
+        "egressUrl": "http://process-engine-egress.process-engine.svc/automation"
+      }
+    }
   },
   "files": {
-    "README.md": "sha256:c463bb4d40dbf4488c90fec0f6f0c6fc442cc4df68489c06f43044b8dbb321c5",
-    "catalog/settle.ttrm": "sha256:422049ffaf9fff149b570802883cf5e4af1df027abff1d5fe6713172c1b93756",
-    "catalog/settle_verdict.ttrm": "sha256:7eecb53a20f8fe0829148f13179f38fe0b9a012cb45e5e87f8ab2cc30729eb9e",
+    "README.md": "sha256:a7a4b3146e7961be0e2625ec7c9083de08048b38a8b4b54fcac7a87a71d3cb48",
+    "catalog/settle.ttrm": "sha256:3399a38d3e847487cd54a386e5f03e36c8ff134c82642f58f6aa924e1a098b39",
+    "catalog/settle_verdict.ttrm": "sha256:8bef7895d5acc30dff3004b158b6bdc71a4495a3dc683117f9534b56c618eb5e",
     "islands/documents.rows.sql": "sha256:41c398ad0086c9fdd9760afc170abb8eff98e96237cfa621de7cb03433f1a20e",
     "islands/open_obligations.rows.duckdb.sql": "sha256:34131d2fa0ff9ca3c0a31e4485a13fb0fdbd26cfb8e271efa777f1fadde2e75a",
     "islands/overdue_days.rows.duckdb.sql": "sha256:89014e75313b3c26de8de4c41100b48252f34b5ca0936a7a4fd634c24c4bbd07",

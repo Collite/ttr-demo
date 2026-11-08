@@ -80,7 +80,7 @@ decision offer(in customers, in band, in mailed) {
     }
 ```
 
-E-mail odešle n8n; platforma vypočte seznam zákazníků a zaznamená nabídku. Exportovaný postup používá `emit` pro Send Email a `record` pro zpětný zápis. Program běží měsíčně.
+E-mail odešle proces (`emit` je úloha odeslání; export do n8n používá Send Email); platforma vypočte seznam zákazníků a zaznamená nabídku (`record`, zpětný zápis). Proces spouští program měsíčně.
 
 ```ttrp
 actions {

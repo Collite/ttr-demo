@@ -71,13 +71,12 @@ decision cover(in pairs, in on_hand, in weekly_demand) {
     }
 ```
 
-Před jakýmkoli zápisem zobrazíme tabulku návrhů (C-6). Návrhy čekají na schválení a seskupují se podle centra. Nákupčí centra dostane jeden úkol za skupinu se lhůtou dvou pracovních dnů; schválení zahájí nákupní proces dané skupiny. Nákupní systém zastupuje n8n.
+Před jakýmkoli zápisem zobrazíme tabulku návrhů (C-6). Každý návrh také žádá nákupčího o schválení předání do nákupu, do dvou pracovních dnů; po schválení procesní engine zavolá nákupní proces pro daný návrh.
 
 ```ttrp
 actions {
         cover.propose -> propose { item: item, warehouse: warehouse, on_hand: on_hand, weekly_demand: round(weekly_demand * 100) * 0.01,
                                    proposed_qty: cast(proposed_qty as int) }
-        cover.propose -> ask     { who: role.buyer, about: warehouse, action: start { process: "purchasing" },
-                                   group_by: warehouse, due: 2 working_days }
+        cover.propose -> handoff { process: "purchasing" }   // approval on the action (by the buyer); was ask … action: start
     }
 ```

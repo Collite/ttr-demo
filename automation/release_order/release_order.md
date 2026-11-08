@@ -103,21 +103,20 @@ decision verdict(in orders, in shortfall, in price_differences, in overdue) {
 ```
 
 Releasing an order above 50 000 needs a confirmation by the sales manager. The parameter
-`confirmation_threshold` names this limit; a confirmation that is not received within two working days holds
-the order for Sales.
+`confirmation_threshold` names this limit. The confirmation is the sales manager's to approve within two working days;
+if it does not come in time, the order's process holds the order for Sales.
 
 ```ttrp
 actions {
-        verdict.release           -> release { order: order_number }
-        verdict.release_confirmed -> ask     { who: role.sales_manager, about: order_number, action: release,
-                                               due: 2 working_days, on_due: hold { order: order_number, department: "Sales" } }
-        verdict.hold_sales        -> hold    { order: order_number, department: "Sales" }
-        verdict.hold_sales        -> notify  { who: role.sales, detail: shortfall, price_differences }
-        verdict.hold_ar           -> hold    { order: order_number, department: "AR" }
-        verdict.hold_ar           -> notify  { who: role.ar, detail: overdue }
+        verdict.release           -> release           { order: order_number }
+        verdict.release_confirmed -> release_confirmed { order: order_number, value: value }     // approval on the action (`20` rule 2)
+        verdict.hold_sales        -> hold              { order: order_number, department: "Sales" }
+        verdict.hold_sales        -> notify            { who: role.sales, detail: shortfall, price_differences }
+        verdict.hold_ar           -> hold              { order: order_number, department: "AR" }
+        verdict.hold_ar           -> notify            { who: role.ar, detail: overdue }
     }
 ```
 
-Held orders are re-checked every morning until they are released or cancelled. Sales and AR receive one
-message per morning with all their held orders; a single order can also be checked on request, when the
-order is placed.
+Held orders are re-checked by the morning run until they are released or cancelled. Sales and AR receive one
+message per morning with all their held orders: the process sends the run's notifications grouped by role. A
+single order can also be checked on request, when the order is placed.

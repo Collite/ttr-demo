@@ -134,7 +134,7 @@ Each received line takes exactly one route.
 ```
 
 The customer is told the decision and, when goods must come back, receives the return instructions.
-Customer care receives one confirmation task per request, including requests with multiple lines.
+Customer care approves the way of each line itself, within three working days: one task per line, also when a request has several lines.
 Refunds and replacements without return start settlement immediately. An exchange or refund after return
 opens an inbound obligation.
 
@@ -144,8 +144,7 @@ opens an inbound obligation.
                                    -> set_state       { line: line_id, to: rejected }
         way.reject_not_ours, way.reject_late, way.reject_abuse
                                    -> notify_customer { customer: customer, to: customer_email, template: "return-rejected" }
-        way.to_customer_care       -> ask              { who: role.customer_care, about: request_number, action: set_state,
-                                                         group_by: request_number, due: 3 working_days }
+        way.to_customer_care       -> decide_way       { line: line_id, request: request_number, to: settling, way: "care" }   // approval on the action; one task per line in v1 (⚑20-2)
         way.refund_no_return       -> set_state        { line: line_id, to: settling, way: refund_no_return }
         way.refund_no_return       -> expect           { line: line_id, kind: credit_note, due: working_days(:settlement) }
         way.replacement_no_return  -> set_state        { line: line_id, to: settling, way: replacement_no_return }
@@ -245,16 +244,16 @@ or already reminded but not yet expired, has no verdict row.
 
 A complete return fulfils the inbound obligation and marks the goods received. For `refund_after_return`,
 expect a credit note; for `exchange`, expect a replacement. Both use the settlement working-day limit.
-An incomplete or damaged return creates a customer-care task; an expired return is cancelled and marked
+An incomplete or damaged return goes to customer care for review; an expired return is cancelled and marked
 not returned; a reminder notifies the customer.
 
 ```ttrp
     actions {
-        inbound.complete  -> fulfil          { line: line_id, kind: inbound, to: fulfilled }       // ⇒ signal(fulfilled) to the waiting engine
+        inbound.complete  -> fulfil          { line: line_id, kind: inbound, to: fulfilled }       // the loop in returns.bpmn notices (D-147)
         inbound.complete  -> set_state       { line: line_id, to: goods_received }
         inbound.complete  -> expect          { line: line_id, kind: credit_note,  due: working_days(:settlement) }  when: way = "refund_after_return"
         inbound.complete  -> expect          { line: line_id, kind: replacement,  due: working_days(:settlement) }  when: way = "exchange"
-        inbound.damaged   -> task            { who: role.customer_care, about: line_id, detail: receipts }
+        inbound.damaged   -> review          { who: role.customer_care, about: line_id, detail: receipts }
         inbound.expired   -> fulfil          { line: line_id, kind: inbound, to: cancelled }
         inbound.expired   -> set_state       { line: line_id, to: not_returned }
         inbound.remind    -> notify_customer { customer: customer, to: customer_email, template: "return-reminder" }
@@ -354,8 +353,8 @@ Send overdue refunds to finance and overdue replacements to logistics; close a s
         settlement.credit_note_issued -> expect    { line: line_id, kind: payment,      due: working_days(:settlement) }
         settlement.money_received     -> fulfil    { line: line_id, kind: payment,      to: fulfilled }
         settlement.goods_shipped      -> fulfil    { line: line_id, kind: replacement,  to: fulfilled }
-        settlement.money_overdue      -> task      { who: role.finance,   about: line_id, detail: open_obligations }
-        settlement.goods_overdue      -> task      { who: role.logistics, about: line_id, detail: open_obligations }
+        settlement.money_overdue      -> review    { who: role.finance,   about: line_id, detail: open_obligations }
+        settlement.goods_overdue      -> review    { who: role.logistics, about: line_id, detail: open_obligations }
         settlement.closed             -> set_state { line: line_id, to: closed }
     }
 ```
