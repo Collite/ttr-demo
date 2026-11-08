@@ -117,7 +117,9 @@ against the exact accepted Server checkout named in the lock. The runner refuses
 changes, verifies **services/automation runtimeClasspath** against the separate preview grammar pin
 0.21.1 (translator/proto 0.13.0), and disables Maven Local. Query result tables are mocked; real bundle loading, approval coverage,
 bindings, staging, native preview and writer assignment checks run. The CI checkout is deliberately named
-`bundle` to guard package resolution independently of its path. JUnit XML retains all five named cases.
+`bundle` to guard package resolution independently of its path. JUnit XML retains all five named cases. Since P3E the full H3
+preview case is disabled and H5 runs over the writer projection: their engine actions (`handoff`, `emit`) have no native sink,
+which the pinned 0.21 Server refuses in a full preview. Both come back when AU-server D3 moves `[automation-preview]` to 0.22.
 
 The gate covers H3's complete **writer projection**, including negative retry-stable bigint ID, run/state,
 all required attributes and two-place stored demand. Full H3 must produce that same proposal plus the buyer
