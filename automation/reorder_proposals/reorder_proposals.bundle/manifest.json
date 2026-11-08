@@ -382,7 +382,7 @@
     "fingerprints": {
       "text": "sha256:1753079dc4e390bed704584a2c4e49954683e8120f15658a5b6f002e902db239",
       "values": "sha256:ad397986c43308fe3aad5ec1b8dae7e87d89f7a1a98b28cc2030c71f5405ec6b",
-      "labels": "sha256:02d7e84077c33eec778804757a6e6618a3bc27b980b326f714625af53de179ff"
+      "labels": "sha256:b837012a18ccc4ba703917d1216eee8953dad5260a4d6cb40d24636a5a5d5139"
     },
     "protocol": "always",
     "tests": [
@@ -412,8 +412,8 @@
     }
   },
   "files": {
-    "README.md": "sha256:019ad9dfb00e0817f3adf91359067950a042f4a1eaa9b598dd22e39bf5357651",
-    "catalog/reorder_proposals.ttrm": "sha256:771db6975fd8b61222f6048ef2a76d6213e9cad3ce6446a546a4830963273024",
+    "README.md": "sha256:d41f3e12dd314a4055095abebb0c14fcbe52e6ae0784cc39052360a6a1987d1a",
+    "catalog/reorder_proposals.ttrm": "sha256:e126bd98c3f0eb2786422a5d943085067a4ea2f6939850ed136dcbbb2beb89b8",
     "catalog/reorder_proposals_verdict.ttrm": "sha256:694e05e2ab732fb0c592c36b5a81c37f61a0612b0a58f92043adcf449daadc90",
     "islands/cover.propose.sql": "sha256:f6aa57d09cbff58f82ed9b1fbf52d605f0eb232c5ef6e0c630fe4eac1f78723e",
     "islands/on_hand.rows.sql": "sha256:fca84addbce75953a1247f363f29b2ede9160ab28527ba327c6b5dfe85361240",

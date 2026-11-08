@@ -12,7 +12,7 @@
 ## What it does
 
 - `cover.propose` → `propose`: `item` = `item`, `on_hand` = `on_hand`, `proposed_qty` = `cast(proposed_qty as integer)`, `warehouse` = `warehouse`, `weekly_demand` = `round(weekly_demand * 100) * 0.01`. would propose reordering {proposed_qty} of item {item} for center {warehouse}
-- `cover.propose` → `handoff`: `process` = `"purchasing"`. would ask {by} to hand the proposal to {process}
+- `cover.propose` → `handoff`: `process` = `"purchasing"`. would ask the buyer to hand the proposal to {process}
 
 ## Parameters
 

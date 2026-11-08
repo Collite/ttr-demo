@@ -198,6 +198,21 @@ test('S2.1 T2 — every action has a dry-run text in English and Czech (D-64)', 
   }
 });
 
+// The Server renders every action row's dry-run text on every run, not only in a dry run, and resolves each `{x}` /
+// `{x.y}` against the row's arguments, which are the action's columns only. Any other name (`{by}`, an action property)
+// throws "unknown dry-run text argument" and fails the run (review-233 F1).
+test('every dry-run placeholder names one of its action\'s columns, in every language', () => {
+  for (const [name, a] of ofKind('action')) {
+    const columns = new Set((a.columns ?? []).map((c) => c.name));
+    for (const [lang, text] of Object.entries(objectOf(entry(a, 'dry_run')))) {
+      for (const [, placeholder] of String(text).matchAll(/\{([^{}]*)\}/g)) {
+        const head = placeholder.split('.')[0].trim();
+        assert.ok(columns.has(head), `action ${name}: dry_run.${lang} {${placeholder}} is not one of its columns [${[...columns]}]`);
+      }
+    }
+  }
+});
+
 // The sink kinds an action may name (ttr-core contracts §2): `native` is one of the Server's; another target names its
 // own node / task — a string (`"n8n-nodes-base.emailSend"`) or a word (`door`, Hebe's `message` / `task`).
 // `20` §1: the writer's three; `deliver`, `task`, `start` are cut (D-142) — an engine action has no native sink.

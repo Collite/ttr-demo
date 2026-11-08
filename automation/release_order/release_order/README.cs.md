@@ -20,7 +20,7 @@
 ## Co dělá
 
 - `verdict.release` → `release`: `order` = `order_number`. uvolnil by objednávku {order}
-- `verdict.release_confirmed` → `release_confirmed`: `order` = `order_number`, `value` = `value`. požádal by {by} o potvrzení uvolnění objednávky {order} ({value})
+- `verdict.release_confirmed` → `release_confirmed`: `order` = `order_number`, `value` = `value`. požádal by vedoucího prodeje o potvrzení uvolnění objednávky {order} ({value})
 - `verdict.hold_sales` → `hold`: `department` = `"Sales"`, `order` = `order_number`. pozastavil by objednávku {order} pro oddělení {department}
 - `verdict.hold_sales` → `notify`: `detail` = `shortfall, price_differences`, `who` = `role.sales`. upozornil by {who}, řádků: {detail.count}
 - `verdict.hold_ar` → `hold`: `department` = `"AR"`, `order` = `order_number`. pozastavil by objednávku {order} pro oddělení {department}

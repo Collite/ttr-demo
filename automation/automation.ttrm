@@ -56,7 +56,7 @@ def action release_confirmed {                                   // was: ask { w
     approval:   required
     by:         role.sales_manager                                // → a user task for hartland-sales-managers (D-161)
     due:        2 working_days                                    // → the user task's due date; the fallback is BPMN (`20` rule 2)
-    dry_run:    { en: "would ask {by} to confirm the release of {order} ({value})", cs: "požádal by {by} o potvrzení uvolnění objednávky {order} ({value})" }
+    dry_run:    { en: "would ask the sales manager to confirm the release of {order} ({value})", cs: "požádal by vedoucího prodeje o potvrzení uvolnění objednávky {order} ({value})" }
 }
 def action hold {
     columns:    [def column order { type: order.order_number }, def column department { type: text }]
@@ -101,7 +101,7 @@ def action decide_way {                                           // was: ask { 
     approval:   required
     by:         role.customer_care                                // one user task per line in v1 (⚑20-2)
     due:        3 working_days
-    dry_run:    { en: "would ask {by} to decide the way of return line {line} (request {request})", cs: "požádal by {by} o rozhodnutí o řádku reklamace {line} (reklamace {request})" }
+    dry_run:    { en: "would ask customer care to decide the way of return line {line} (request {request})", cs: "požádal by zákaznickou péči o rozhodnutí o řádku reklamace {line} (reklamace {request})" }
 }
 def action expect {
     columns:    [def column line { type: return_request_line.line_id }, def column kind { type: text }, def column due { type: date }]
@@ -125,7 +125,7 @@ def action handoff {
     approval:   required
     by:         role.buyer
     due:        2 working_days
-    dry_run:    { en: "would ask {by} to hand the proposal to {process}", cs: "požádal by {by} o předání návrhu procesu {process}" }
+    dry_run:    { en: "would ask the buyer to hand the proposal to {process}", cs: "požádal by nákupčího o předání návrhu procesu {process}" }
 }
 // H-3: all eight required attributes are mapped; explicit defaults supply omitted metadata.
 // bigint_id_v1 is retry-stable per pinned run/wiring/candidate; the buyer holds the batch (D-66).

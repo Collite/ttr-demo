@@ -1437,7 +1437,7 @@
     "fingerprints": {
       "text": "sha256:976106cdea3047dd01005ffec5bedb6c625d62b7e52b52322ca15261f8aa5ece",
       "values": "sha256:6c5da116527944c0c189fdfbd0c8bbdef9f549dd03079764e3f9c1c80bb1ec41",
-      "labels": "sha256:af9dc66e80283fc1c8e12f763073d768eb968acbf141ba88fba91088c901c327"
+      "labels": "sha256:b0398bfb0a886907f5212f9906750c334c096b1d59bd1eb72b53c5bfe74e195a"
     },
     "protocol": "always",
     "tests": [
@@ -1474,8 +1474,8 @@
     }
   },
   "files": {
-    "README.md": "sha256:0bd14982b650db03c343999700aeb2c0dfd6b49aa6728be24984975d7cd2f65f",
-    "catalog/decide_return.ttrm": "sha256:699fa2eb06078bb415b7dfb373ac2e33d19cdf8a4b28377a528fb4aa9409dc52",
+    "README.md": "sha256:5347a1e29326161cdb16b78a487ec127615cec3c1c73187f2abb7a3ce888bf85",
+    "catalog/decide_return.ttrm": "sha256:997f07d2d38dd14bffdb4a2c7730349e14b5ea5c4777e38efdd72a7222c17253",
     "catalog/decide_return_verdict.ttrm": "sha256:c54e795cf8bf858ec69ab1469c61355fbcc0b929c04dd79216e7de1c80cb844c",
     "islands/bought_here.rows.sql": "sha256:dac3064bf26438f5350f18627be813df644aca3cb71e8411f3a4157374a73831",
     "islands/received.lines.sql": "sha256:f87626417f643ba47e3c0d183a77eca8a864cb47241e3ecc768bf81c4adf9883",

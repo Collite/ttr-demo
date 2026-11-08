@@ -16,8 +16,8 @@ model world
 // Written in ttr-core grammar 0.22 (AU-hartland P3E): the automation members nest in `def world demo` (R1), executor
 // types are ids (`extends: process_engine`, `n8n_l1` — R3). The automation half is AU design `20` §2, as the
 // toolchain's engine fixture spells it (ttr-core `ttrp-frontend/src/test/resources/recipes/hartland-engine/`), with
-// bp-dsk's real engine URLs. Not written, because 0.16 has no property for them and nothing reads
-// them: `schemas: [dbo]` (the model's `[schemas.dbo]` handle in modeler.toml names the ERP schema) and `rls: true`
+// bp-dsk's real engine URLs. Not written, because the grammar has no property for them and nothing
+// reads them: `schemas: [dbo]` (the model's `[schemas.dbo]` handle in modeler.toml names the ERP schema) and `rls: true`
 // (the ERP's row-level rules are LR G2's, enforced at the door).
 //
 // WHY THIS FILE IS IN `automation/`, not `model/` (where AU-hartland P0 put it): its members name the programs and

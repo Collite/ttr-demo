@@ -8,9 +8,9 @@ service beside `../model/` (ttr-server contracts §1.1):
 
 | path | what |
 |---|---|
-| `automation.ttrm` | `model automation`, package `hartland.automation`: the parameters, actions, roles and approvals (`17` §1) |
-| `programs.ttrm` | the programs and the event schemas (`17` §1) |
-| `worlds/demo.ttrm` | the world `hartland.worlds.demo`: engines, storages with `writable:`, and its automation half — the identity, executors, grants, deployments and the `return_line_flow` process (`17` §2) |
+| `automation.ttrm` | `model automation`, package `hartland.automation`: the parameters, actions, roles and approvals (`20` §1) |
+| `programs.ttrm` | the programs (mode, port, as_of) (`20` §1) |
+| `worlds/demo.ttrm` | the world `hartland.worlds.demo`: engines, storages with `writable:`, and its automation half — the identities, executors, grants and the deployments (one program each, `20` §2) |
 | `release_order/release_order.md` | H-1 literate source |
 | `handling-a-return-request.md` | H-2 source: Deciding → `decide_return`, Inbound → `monitor_inbound`, Outbound → `settle` |
 | `reorder_proposals/reorder_proposals.md`, `winback/winback.md` | H-3/H-5 literate sources |
