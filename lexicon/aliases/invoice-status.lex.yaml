@@ -1,0 +1,41 @@
+# hartland's word for an UNPAID invoice — a value of `invoice.status` (2026-11-09, Bora: the Hartland demo).
+#
+# «nezaplacená» names the stored value `open` (model/er/orders.ttrm: `status` holds open · paid). It is declared on
+# the member, not as a phrase on the conceptual phase `cn.OpenInvoice` (model/lexicon/cs/cn.ttrm), because the two
+# do different things in a turn:
+#
+#   er.entity.invoice.status.open   — a member: the resolver binds it as `er.entity.invoice.status#open` and the query
+#                                     door restricts by it (status = 'open'), the way the channel words restrict `sales`
+#                                     (channels.lex.yaml). Highlighted in the first bubble AND applied to the answer.
+#   cn.OpenInvoice                  — a concept: highlighted, but the Golem reads no concept binding, so the answer
+#                                     would not be restricted.
+#
+# The adjective alone, then, never «nezaplacené faktury» as a phrase: the longest covered span wins, and a phrase term
+# would take the span from the member and lose the filter. «nezaplacené faktury» reads as this member + the invoice
+# entity's own word.
+#
+# The forms are the cases a question uses, declared: a mention is looked up by its dictionary form only when it is one
+# word AND the NLP front is up (`LemmaLookup`), so the estate states what it means (the warehouses.ttrm reasoning).
+# «nezaplaceno» mirrors the value label „Neuhrazeno“. Not declared: "unpaid" — it is the EN value label already
+# (a METADATA row; repeating it is RG-LEXC-002), and the bare «neuhrazená» family, which stays the concept's phrase.
+#
+# Every form is `method: EXACT`, as the channel words: no typo budget around a short adjective.
+#
+# Guarded by lexicon/tests/invoice-status.test.mjs.
+schema: ttr-lexicon/v1
+defaults:
+  lang: cs
+  match:
+    - { norm: canonical, exact: 1.00, typos: { distance: 1, penalty: 0.05 } }
+    - { norm: folded,    exact: 0.90 }
+entries:
+  # ── unpaid = status 'open' ──────────────────────────────────────────────────────────
+  - terms:
+      - { text: "nezaplacená", method: EXACT }
+      - { text: "nezaplacené", method: EXACT }
+      - { text: "nezaplacených", method: EXACT }
+      - { text: "nezaplacenou", method: EXACT }
+      - { text: "nezaplaceným", method: EXACT }
+      - { text: "nezaplacenými", method: EXACT }
+      - { text: "nezaplaceno", method: EXACT }
+    target: er.entity.invoice.status.open

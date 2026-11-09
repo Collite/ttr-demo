@@ -113,10 +113,17 @@ def term paid_invoice_cs {
     for: cn.PaidInvoice
     forms: ["uhrazená faktura", "uhrazené faktury", "uhrazených faktur", "uhrazenou fakturu"]
 }
+// The bare «po splatnosti» (2026-11-09, the Hartland demo): «Které faktury jsou po splatnosti?» separates the noun from
+// the phrase, so only the bare form is highlighted there. Highlight only — the Golem reads no concept binding, so the
+// answer is not restricted to overdue invoices (overdue = open and due < :as_of, no stored value to filter by). The
+// longer spans still win: «zákazníci po splatnosti» stays `DebtorCustomer`, «faktury po splatnosti» this term whole.
 def term overdue_invoice_cs {
     description: "faktura po splatnosti — open and past its due date"
     for: cn.OverdueInvoice
-    forms: ["faktura po splatnosti", "faktury po splatnosti", "faktur po splatnosti", "fakturu po splatnosti", "fakturami po splatnosti"]
+    forms: [
+        "faktura po splatnosti", "faktury po splatnosti", "faktur po splatnosti", "fakturu po splatnosti",
+        "fakturami po splatnosti", "po splatnosti"
+    ]
 }
 def term debtor_customer_cs {
     description: "zákazník po splatnosti, dlužník — a customer with an overdue invoice"
