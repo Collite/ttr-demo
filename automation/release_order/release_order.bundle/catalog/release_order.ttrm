@@ -13,7 +13,7 @@ def recipe release_order {
     mode: "per-candidate",
     document: "releasing-a-placed-order.md",
     actions: { release_confirmed: { by: role.sales_manager, due: 2 working_days } },
-    deployments: { release_event: { startable_by: [role.sales_manager] } },
+    deployments: { release_event: { startable_by: [role.sales_manager] }, release_event_cz: { startable_by: [role.sales_manager] } },
     executors: { engine: { egress_url: "http://process-engine-egress.process-engine.svc/automation" } },
     fingerprints: { text: "sha256:318018e4466d47f4fbb751e97adfbf0304d73e9c4acc9cdcdb0d6029f88e8f1f", values: "sha256:54e165c4463646ed8b9ae490dc1a830b34e76dda883caa0f3df407699c7ae888", labels: "sha256:f4b3496f4bff1eb1bfeeb8388a3a72f9775f8c5d14769e1d4e6088347fa4a30c" }
 }
