@@ -56,6 +56,7 @@ def world demo {
     def identity automation_decider { principal: "svc-hartland-automation", credential: TTR_CONN_AUTOMATION_DECIDER }   // no policy narrows it; D-132
     def identity process_engine     { principal: "process-engine",          credential: TTR_CONN_PROCESS_ENGINE }       // the engine's own client (D-150)
     def identity maya               { principal: "persona-maya",            credential: TTR_CONN_PERSONA_MAYA }         // F1d persona (D-158)
+    def identity marketa            { principal: "persona-marketa",         credential: TTR_CONN_PERSONA_MARKETA }      // CZ persona (R236-A, D-174)
 
     // bp-dsk's engine (olymp clusters/bp-dsk/apps/process-engine): REST in-cluster, and the egress proxy its HTTP
     // connector calls the automation service through (D-145, D-158).
@@ -68,7 +69,7 @@ def world demo {
     def grant { who: identity.process_engine, program: *,                    as: identity.automation_decider }   // F1a (D-158)
     def grant { who: role.ops,                program: *,                    as: identity.automation_decider }
     def grant { who: role.sales_manager,      program: release_on_placement, as: identity.maya }                  // "release 4711" from Hebe runs as Maya's persona (⚑20-4)
-    def grant { who: role.sales_manager,      program: release_on_placement_cz, as: identity.maya }               // the same for the CZ twin (D-174)
+    def grant { who: role.sales_manager,      program: release_on_placement_cz, as: identity.marketa }            // the CZ twin runs as the CZ persona, Markéta (D-174, R236-A)
     def grant { who: role.process_owner,      program: *,                    as: identity.automation_decider }   // debug runs "as the recipe runs" (D-93)
 
     // H-1 — one program per deployment; the timer / message start lives in the BPMN

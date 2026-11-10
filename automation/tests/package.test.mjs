@@ -327,12 +327,13 @@ test('S2.1 T4 — `writable:` on erp_db and automation_db is exactly contracts �
   });
 });
 
-test('S2.1 T4 — the identities (D-132, D-150, D-158); the three executors, the engine with its egress (20 §2, D-145)', () => {
+test('S2.1 T4 — the identities (D-132, D-150, D-158; the CZ persona, R236-A); the three executors, the engine with its egress (20 §2, D-145)', () => {
   const { w } = worlds[0];
   assert.deepEqual(w.identities.map((i) => [i.name, render(entry(i, 'principal')), render(entry(i, 'credential'))]), [
     ['automation_decider', 'svc-hartland-automation', 'TTR_CONN_AUTOMATION_DECIDER'],
     ['process_engine', 'process-engine', 'TTR_CONN_PROCESS_ENGINE'],
     ['maya', 'persona-maya', 'TTR_CONN_PERSONA_MAYA'],
+    ['marketa', 'persona-marketa', 'TTR_CONN_PERSONA_MARKETA'],
   ]);
   assert.deepEqual(Object.fromEntries(w.executors.map((e) => [e.name, e.extends])), { engine: 'process_engine', n8n: 'n8n_l1', py: 'python_client' });
   assert.equal(render(w.executors.find((e) => e.name === 'n8n').manifest.connection), 'n8n_hartland');
@@ -347,7 +348,7 @@ test('S2.1 T4 — the five grants (D-91, D-158; the CZ twin, D-174), as triples'
     'identity.process_engine / * / identity.automation_decider',
     'role.ops / * / identity.automation_decider',
     'role.sales_manager / release_on_placement / identity.maya',
-    'role.sales_manager / release_on_placement_cz / identity.maya',
+    'role.sales_manager / release_on_placement_cz / identity.marketa',
     'role.process_owner / * / identity.automation_decider',
   ]);
 });
@@ -371,7 +372,7 @@ const DEPLOYMENTS = {
   decide_batch_cz: ['decide_catch_up_cz', 'engine', 'identity.automation_decider'],
 };
 
-test('S2.1 T4 — the deployments: four H-1, six H-2, four CZ on the engine; no process, trigger or debug (20 §2, D-167, D-174); ops await Server P4', () => {
+test('S2.1 T4 — the deployments: four H-1 (two on the engine), six H-2 and four CZ on the engine; no process, trigger or debug (20 §2, D-167, D-174); ops await Server P4', () => {
   const { w } = worlds[0];
   const got = Object.fromEntries(w.deployments.map((d) => [d.name, [render(entry(d, 'program')), d.target?.path, render(entry(d, 'run_as'))]]));
   assert.deepEqual(got, DEPLOYMENTS);
@@ -382,8 +383,10 @@ test('S2.1 T4 — the deployments: four H-1, six H-2, four CZ on the engine; no 
 });
 
 // D-174: every CZ program twin has exactly one engine deployment, `<name>_cz`, the same shape as the engine deployment of
-// its US program (every property but the name and the program), and every grant naming the US program names the twin too.
-test('D-174 — each CZ program twin has one engine deployment shaped like its US twin\'s, and the same grants', () => {
+// its US program (every property but the name and the program), and every grant naming the US program names the twin too,
+// with the world's own persona (R236-A): a US persona maps through PERSONA_CZ, every other identity stays as it is.
+const PERSONA_CZ = { 'identity.maya': 'identity.marketa' };
+test('D-174 — each CZ program twin has one engine deployment shaped like its US twin\'s, and the same grants with the CZ persona', () => {
   const { w } = worlds[0];
   const props = (d) => Object.fromEntries(d.entries.filter((e) => e.key !== 'program').map((e) => [e.key, render(e.value)]));
   const engine = w.deployments.filter((d) => d.target?.path === 'engine');
@@ -397,8 +400,9 @@ test('D-174 — each CZ program twin has one engine deployment shaped like its U
     assert.equal(theirs.length, 1, `${us}: one engine deployment`);
     assert.equal(mine[0].name, `${theirs[0].name}_cz`);
     assert.deepEqual(props(mine[0]), props(theirs[0]), `${mine[0].name}: the shape of ${theirs[0].name}`);
-    const grantsOf = (p) => w.grants.filter((g) => render(entry(g, 'program')) === p).map((g) => `${render(entry(g, 'who'))} / ${render(entry(g, 'as'))}`);
-    assert.deepEqual(grantsOf(twin), grantsOf(us), `${twin}: the grants of ${us}`);
+    const grantsOf = (p, as = (a) => a) => w.grants.filter((g) => render(entry(g, 'program')) === p)
+      .map((g) => `${render(entry(g, 'who'))} / ${as(render(entry(g, 'as')))}`);
+    assert.deepEqual(grantsOf(twin), grantsOf(us, (a) => PERSONA_CZ[a] ?? a), `${twin}: the grants of ${us}, with the CZ persona`);
   }
 });
 
