@@ -1,21 +1,20 @@
 # hartland's word for an UNPAID invoice — a value of `invoice.status` (2026-11-09, Bora: the Hartland demo).
 #
-# «nezaplacená» names the stored value `open` (model/er/orders.ttrm: `status` holds open · paid). It is declared on
-# the member, not as a phrase on the conceptual phase `cn.OpenInvoice` (model/lexicon/cs/cn.ttrm), because the two
-# do different things in a turn:
+# «nezaplacená» names the stored value `open` (model/er/orders.ttrm: `status` holds open · paid). A member: the
+# resolver binds it as `er.entity.invoice.status#open` and the query door restricts by it (status = 'open').
 #
-#   er.entity.invoice.status.open   — a member: the resolver binds it as `er.entity.invoice.status#open` and the query
-#                                     door restricts by it (status = 'open'), the way the channel words restrict `sales`
-#                                     (channels.lex.yaml). Highlighted in the first bubble AND applied to the answer.
-#   cn.OpenInvoice                  — a concept: highlighted, but the Golem reads no concept binding, so the answer
-#                                     would not be restricted.
+# ⚠ It reaches a question only where the adjective is a mention of its OWN — the predicate («faktury, které jsou
+# nezaplacené»), or standing alone. In front of its noun («nezaplacené faktury») it never does (2026-11-10, hartland,
+# turn 81e9548d — G1_UNBOUND on the whole phrase): the resolver folds an `amod` adjective into its noun's anchor phrase
+# unless the adjective is itself an anchor, and a MEMBER row deliberately never is (ttr-server
+# LexiconArchiveRegistrySource: member words must not fragment noun phrases). The phrase is looked up as one span, and
+# the single words inside it are never asked. So «nezaplacená faktura» and its cases are a PHRASE on the conceptual
+# phase `cn.OpenInvoice` (model/lexicon/cs/cn.ttrm, beside «neuhrazená faktura»): highlighted, the invoice entity
+# bound, and the composer reads the phase (live, «neuhrazené faktury»: `status = 'open'`).
 #
-# The adjective alone, then, never «nezaplacené faktury» as a phrase: the longest covered span wins, and a phrase term
-# would take the span from the member and lose the filter. «nezaplacené faktury» reads as this member + the invoice
-# entity's own word.
-#
-# The forms are the cases a question uses, declared: a mention is looked up by its dictionary form only when it is one
-# word AND the NLP front is up (`LemmaLookup`), so the estate states what it means (the warehouses.ttrm reasoning).
+# The forms are written out, never left to the dictionary form, for two reasons. MorphoDiTa lemmatises a negated word
+# to its POSITIVE lemma («nezaplacené» → `zaplacený`, the negation only in the tag), so a lemma reading would land on
+# the opposite value. And the resolver's `LemmaLookup` never asks a row of a file with a `defaults: match:` profile.
 # «nezaplaceno» mirrors the value label „Neuhrazeno“. Not declared: "unpaid" — it is the EN value label already
 # (a METADATA row; repeating it is RG-LEXC-002), and the bare «neuhrazená» family, which stays the concept's phrase.
 #

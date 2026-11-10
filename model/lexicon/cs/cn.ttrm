@@ -98,10 +98,20 @@ def term mispriced_line_cs {
 }
 // CN-P8 S8.3: the invoice's states (`14` §2). ⚑ Czech wording for Bora. The longer span wins, so «neuhrazenou
 // fakturu po splatnosti» (release_order.cs.md) stays the overdue invoice.
+// «nezaplacená faktura» (2026-11-10, the Hartland demo) is the same phase in the everyday word. It has to be a PHRASE
+// here: the resolver folds an adjective (`amod`) into its noun's anchor phrase unless the adjective is itself an
+// anchor, and a MEMBER row never is (ttr-server LexiconArchiveRegistrySource) — so «nezaplacené faktury» is looked up
+// as one span, and the member words of lexicon/aliases/invoice-status.lex.yaml cannot reach it. The instrumental,
+// dative and locative plurals are the ones a customer question uses («zákazníci s nezaplacenými fakturami»).
 def term open_invoice_cs {
-    description: "neuhrazená faktura — open"
+    description: "neuhrazená / nezaplacená faktura — open"
     for: cn.OpenInvoice
-    forms: ["neuhrazená faktura", "neuhrazené faktury", "neuhrazených faktur", "neuhrazenou fakturu"]
+    forms: [
+        "neuhrazená faktura", "neuhrazené faktury", "neuhrazených faktur", "neuhrazenou fakturu",
+        "neuhrazenými fakturami", "neuhrazeným fakturám", "neuhrazených fakturách", "neuhrazenou fakturou",
+        "nezaplacená faktura", "nezaplacené faktury", "nezaplacených faktur", "nezaplacenou fakturu",
+        "nezaplacenými fakturami", "nezaplaceným fakturám", "nezaplacených fakturách", "nezaplacenou fakturou"
+    ]
 }
 def term partly_paid_invoice_cs {
     description: "částečně uhrazená faktura — something paid, not all of it"

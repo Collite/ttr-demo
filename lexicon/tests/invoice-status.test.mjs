@@ -2,9 +2,11 @@
 // terms in the first answer bubble; the first is also the filter status = 'open'.
 //
 //   1. «nezaplacená» and its cases are declared MEMBER rows on `invoice.status`'s value `open`
-//      (lexicon/aliases/invoice-status.lex.yaml) — the restriction the query door applies.
-//   2. No phrase «nezaplacené faktury»: the longest covered span wins, so a phrase on the concept would take the span
-//      from the member and the answer would lose the filter (the Golem reads no concept binding).
+//      (lexicon/aliases/invoice-status.lex.yaml) — they reach a question only where the adjective is its own mention
+//      (the predicate: «faktury, které jsou nezaplacené»).
+//   2. In front of its noun the adjective is folded into the noun's anchor phrase (a member is never an anchor), so
+//      «nezaplacené faktury» is ONE span — and it must be a phrase of `cn.OpenInvoice`, in every case a question uses.
+//      Live on hartland 2026-11-10 (turn 81e9548d) it was not: G1_UNBOUND, and the turn was refused.
 //   3. The bare «po splatnosti» is a form of `cn.OverdueInvoice` (model/lexicon/cs/cn.ttrm) — a highlight only — and
 //      the longer customer phrase still reaches `DebtorCustomer` as a whole.
 
@@ -27,9 +29,28 @@ test('«nezaplacená» and its cases are declared EXACT members of invoice.statu
   }
 });
 
-test('no phrase takes «nezaplacené faktury» from the member', () => {
-  const hits = wholePhraseHits('Které nezaplacené faktury má zákazník?', isCs);
-  assert.deepEqual(hits.map((e) => `${e.termNormalized} → ${e.targetRef}`), []);
+test('«nezaplacené faktury» is ONE span, and it is a phrase of the open invoice in every case a question uses', () => {
+  const PHRASES = [
+    'nezaplacená faktura', 'nezaplacené faktury', 'nezaplacených faktur', 'nezaplacenou fakturu',
+    'nezaplacenými fakturami', 'nezaplaceným fakturám', 'nezaplacených fakturách', 'nezaplacenou fakturou',
+  ];
+  for (const phrase of PHRASES) {
+    assert.deepEqual(rowsFor(phrase).map((e) => `${e.targetRef} ${e.targetClass}`), ['cn.OpenInvoice MODEL_OBJECT'], phrase);
+  }
+  // Bora's demo question (hartland turn 81e9548d) and the customer phrasing reach the phrase whole.
+  for (const [question, phrase] of [
+    ['Kteří zákazníci mají za minulý měsíc nezaplacené faktury?', 'nezaplacené faktury'],
+    ['Zákazníci s nezaplacenými fakturami', 'nezaplacenými fakturami'],
+  ]) {
+    const hits = wholePhraseHits(question, isCs).map((e) => `${e.termNormalized} → ${e.targetRef}`);
+    assert.deepEqual(hits, [`${phrase} → cn.OpenInvoice`], question);
+  }
+});
+
+test('«neuhrazená» keeps its phrases, in the same cases', () => {
+  for (const phrase of ['neuhrazené faktury', 'neuhrazenými fakturami', 'neuhrazených fakturách']) {
+    assert.deepEqual(rowsFor(phrase).map((e) => e.targetRef), ['cn.OpenInvoice'], phrase);
+  }
 });
 
 test('the bare «po splatnosti» is the overdue invoice; the longer phrases keep their own readings', () => {
