@@ -11,11 +11,26 @@
 # Exit: 0 every check PASS · 1 any FAIL · 3 no FAIL, but a check is SKIP or MANUAL (T8 needs 0, twice, the second run
 # after `kubectl --context hartland -n kantheon rollout restart deploy/hebe`).
 #
-# Reads only. kubectl only GETs (`get`, and `get --raw` through the API server's service and pod proxies, because
+# Full P1 reads only. The engine profile additionally runs the existing doctor and disposable authenticated/isolation
+# probe pods (no persistent deployment/configuration change). Full P1 kubectl only GETs (`get`, and `get --raw`, because
 # port-forward and exec are not used here). The sign-in checks drive the real browser flow through the public edge as marketa and maya
 # (edge_login.py); they write nothing. The durability check keeps one small state file ($HEBE_VERIFY_STATE) so a run
 # after a restart can see that the receipt chain survived.
 set -uo pipefail
+
+PROFILE=full
+if [ "$#" -ne 0 ]; then
+  if [ "$#" -eq 2 ] && [ "$1" = --profile ] && [ "$2" = engine ]; then PROFILE=engine
+  else echo 'usage: verify.sh [--profile engine]' >&2; exit 2; fi
+fi
+if [ "$PROFILE" = engine ]; then
+  # Deliberate profile selection fixes the certification estate, rather than inheriting a demo override.
+  CONTEXT=bp-dsk HOST=hebe.192-168-1-38.nip.io IRIS_HOST=iris.192-168-1-38.nip.io
+  NS=kantheon SVC=hebe PORT=8765 INSTANCE=marketa BOUND_USER=marketa
+  export HEBE_VERIFY_KEYCLOAK=https://keycloak.192-168-1-38.nip.io/realms/kantheon
+  [ -f "${HEBE_VERIFY_CA_FILE:-}" ] || { echo 'engine profile requires HEBE_VERIFY_CA_FILE (public cluster CA)' >&2; exit 2; }
+  export CURL_CA_BUNDLE="$HEBE_VERIFY_CA_FILE"
+fi
 
 CONTEXT="${CONTEXT:-hartland}"
 NS="${NS:-kantheon}"
@@ -30,7 +45,8 @@ ROUTINE="${ROUTINE:-monday-brief}"        # the routine whose last scheduled run
 IMAGE_REPO="${IMAGE_REPO:-ghcr.io/collite/hebe}"
 REGISTRY="${REGISTRY:-capabilities-mcp:7501}"
 STATE="${HEBE_VERIFY_STATE:-${HOME}/.config/hebe-verify/${INSTANCE}.json}"
-HERE="$(cd "$(dirname "$0")" && pwd)"
+[ "$PROFILE" = engine ] && STATE="${HEBE_VERIFY_STATE:-${HOME}/.config/hebe-verify}/${CONTEXT}/${PROFILE}/${INSTANCE}.json"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 PASS=0 FAIL=0 OPEN=0 NA=0
 pass()   { PASS=$((PASS + 1)); printf 'PASS    %-24s %s\n' "$1" "$2"; }
@@ -77,6 +93,13 @@ except Exception:
 check_pod() {
   local deploy ready want image
   deploy="$(kc -n "$NS" get deploy "$SVC" -o json 2>/dev/null)" || { fail pod "no deployment $NS/$SVC on context $CONTEXT"; return; }
+  if [ "$PROFILE" = engine ]; then
+    local pods out
+    pods="$(kc -n "$NS" get pods -l "$(selector_of <<<"$deploy")" -o json)"
+    out="$(printf '%s\n%s\n' "$deploy" "$pods" | python3 -I "$HERE/engine/profile.py" image)"
+    if [ "$?" -eq 0 ]; then pass pod "$out"; else fail pod "$out"; fi
+    return
+  fi
   ready="$(jq_py "d['status'].get('readyReplicas', 0)" <<<"$deploy")"
   want="$(jq_py "d['spec']['replicas']" <<<"$deploy")"
   image="$(jq_py "d['spec']['template']['spec']['containers'][0]['image']" <<<"$deploy")"
@@ -222,6 +245,12 @@ check_brief() {
 # verify.sh stays read-only, so this one is the operator's: from a throwaway pod in another namespace, a forged
 # header with no edge token must be refused (Hebe verifies the edge's token itself) or never arrive (the NetworkPolicy).
 check_isolation() {
+  if [ "$PROFILE" = engine ]; then
+    local out
+    out="$(python3 -I "$HERE/engine/isolation.py")"
+    if [ "$?" -eq 0 ]; then pass isolation "$out"; else fail isolation "$out"; fi
+    return
+  fi
   local how="kubectl --context $CONTEXT -n default run iso-probe --rm -i --restart=Never --image=curlimages/curl -- curl -sS -m5 -o /dev/null -w '%{http_code}' -H 'x-forwarded-user: $BOUND_USER' http://$SVC.$NS:$PORT/api/status"
   case "${HEBE_VERIFY_ISOLATION:-}" in
     refused) pass isolation "a direct call with a forged header was refused (401, or no connection)" ;;
@@ -232,6 +261,14 @@ check_isolation() {
 
 # ── 6. the phone (manual, HB-⚑3 / B-4) ────────────────────────────────────────────────────────────────────────────
 check_phone() {
+  if [ "$PROFILE" = engine ]; then
+    local out
+    out="$(kc -n "$NS" get configmap hebe-config -o json | python3 -I "$HERE/engine/profile.py" config)"
+    if [ "$?" -ne 0 ]; then fail telegram "$out"; return; fi
+    na telegram 'bp-dsk engine profile: Telegram disabled; web only'
+    na unmapped-chat 'bp-dsk engine profile: Telegram disabled; web only'
+    return
+  fi
   case "${HEBE_VERIFY_TELEGRAM:-}" in
     ok) pass telegram "round trip confirmed by the operator" ;;
     "") manual telegram "message the bot from the presenter's phone; Hebe answers; then HEBE_VERIFY_TELEGRAM=ok" ;;
@@ -259,7 +296,16 @@ check_registry
 check_console_redirect
 check_console_logins
 check_durability
-check_brief
+if [ "$PROFILE" = full ]; then check_brief
+else
+  doctor="$(kc -n "$NS" exec "$(hebe_pod)" -c hebe -- java -cp '/app/resources:/app/classes:/app/libs/*' org.tatrman.kantheon.hebe.cli.MainKt doctor --json 2>/dev/null)"
+  out="$(python3 -I "$HERE/engine/profile.py" doctor <<<"$doctor")"
+  if [ "$?" -eq 0 ]; then pass engine-doctor "$out"; else fail engine-doctor "$out"; fi
+  if [ "$(ready_check engine ok)" = True ]; then pass engine-ready 'full readiness engine tasks readable'
+  else fail engine-ready 'missing or failed engine check'; fi
+  out="$(python3 -I "$HERE/engine/tasks.py")"
+  if [ "$?" -eq 0 ]; then pass engine-open-tasks "$out"; else fail engine-open-tasks "$out"; fi
+fi
 check_isolation
 check_phone
 echo "$PASS pass · $FAIL fail · $OPEN open$([ "$NA" -gt 0 ] && echo " · $NA n/a")"
