@@ -21,5 +21,5 @@ strict-load = true
 
 # Test runtime only: real loader/verifier/preview, independent of the deployed image.
 [automation-preview]
-server-ref = "81e496d6e57aa56256e4ef80e97177f919205d34" # S8.6: ttr-server#367 merge (server-libs/v0.11.35)
-grammar = "0.21.1" # published Server runtime; recipe authoring uses the same 0.21.1
+server-ref = "f28120e12f8f25540394018e99b5920fc670c47d" # AU-server D3: ttr-server#388 (grammar 0.22.3) + its fix-forward #390 merge
+grammar = "0.22.3" # published Server runtime; recipe authoring uses the same 0.22.3 (the [ttrp] pin)

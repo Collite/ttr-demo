@@ -55,7 +55,8 @@ changed explanation fails; rebuild the document and commit all derived artifacts
 
 The recipe toolchain uses released **grammar/v0.22.3** (since v0.18.14 it carries the accepted document/multi-recipe,
 writer-default evidence, concat and declared-package resolution fixes; from 0.22 the engine cut, D-142). The separate `[automation-preview].server-ref` pins the
-ttr-server#367 merge **81e496d6** (server-libs/v0.11.35) for the preview CI job; it does not change a deployed image.
+ttr-server#390 merge **f28120e1** (AU-server D3, ttr-server#388, grammar 0.22.3, with its master fix-forward) for the
+preview CI job; it does not change a deployed image.
 The model/reader pins remain independent. H-1's `release_order.md` is authoritative; its canonical
 recipe preserves P2's code apart from whitespace/comments. The `.ttrd` records the actual source filename and
 spans. The existing `document: "releasing-a-placed-order.md"` identifier is retained for compatibility with the
@@ -115,11 +116,12 @@ Winback keeps documented workarounds for [#252](https://github.com/Collite/ttr-c
 The `writer-preview` workflow and `just writer-preview /path/to/clean/server` run the Hartland-owned spec
 against the exact accepted Server checkout named in the lock. The runner refuses a wrong commit or local
 changes, verifies **services/automation runtimeClasspath** against the separate preview grammar pin
-0.21.1 (translator/proto 0.13.0), and disables Maven Local. Query result tables are mocked; real bundle loading, approval coverage,
+0.22.3 (translator/proto 0.14.1), and disables Maven Local. Query result tables are mocked; real bundle loading, approval coverage,
 bindings, staging, native preview and writer assignment checks run. The CI checkout is deliberately named
 `bundle` to guard package resolution independently of its path. JUnit XML retains all five named cases. Since P3E the full H3
 preview case is disabled and H5 runs over the writer projection: their engine actions (`handoff`, `emit`) have no native sink,
-which the pinned 0.21 Server refuses in a full preview. Both come back when AU-server D3 moves `[automation-preview]` to 0.22.
+and the Server's native preview refuses them by design, also on 0.22.3 (D-178). Both come back with AU-server S3.1, which
+decides how a preview treats engine-sink actions.
 
 The gate covers H3's complete **writer projection**, including negative retry-stable bigint ID, run/state,
 all required attributes and two-place stored demand. Full H3 must produce that same proposal plus the buyer
