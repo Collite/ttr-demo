@@ -6,9 +6,10 @@ the scheduled Monday brief and phone; neither is certified by an engine-profile 
 
 ## Prerequisites and deployment
 
-S2.3c/c1 exited at Olymp `b5da44d`: Hebe `0.11.10`, source
-`ad971d35c025ea94812dda54afa637bf235540a2`, app/init digest
-`sha256:0a4316a147f7fcdc3c35a7200daa29cf9166dc2441280b15e02c090b867b89d6`.
+After S2.3c/c1, HE-D-18's S2.3e/f origin repair exited at Olymp `5b8d84a`:
+Hebe `0.11.11`, source `e3f4e4e4d74c35aafd676ab1d44c3518326de7ee`, app/init digest
+`sha256:d7b3e6c29caa32c140f6305ef5a8cd77f3e694a1e5697dcee83c9c2d40b35727`.
+The rig verifies this already deployed release; it changes no estate pin.
 Engine CIB seven Run4 2.2.0; REST Service port 80 at
 `http://process-engine.process-engine.svc/engine-rest`. Public issuer:
 `https://keycloak.192-168-1-38.nip.io/realms/kantheon`.
