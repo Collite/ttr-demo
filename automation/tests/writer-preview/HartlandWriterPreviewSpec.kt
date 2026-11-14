@@ -156,31 +156,25 @@ class HartlandWriterPreviewSpec :
             bundle.recipes.values.forEach { it.coverage.refusal shouldBe null }
         }
 
-        // P3E (grammar 0.22, AU `20`): H3's buyer approval is the engine action `handoff` (no native sink). The Server's
-        // native preview refuses an engine-sink action by design (⚑AU-D3-1, D-178: a native deployment has no engine sink),
-        // also at the D3 pin. Disabled until AU-server S3.1 decides how a preview treats engine-sink actions; then rewrite it
-        // to `handoff` (approval: required, by: role.buyer, due: 2 working_days, sink process_engine "call activity").
-        "full H3 previews the proposal and deferred buyer ask with a working-day duration".config(enabled = false) {
+        // P3E (grammar 0.22, AU `20`): H3's buyer approval is the engine action `handoff` (no native sink: approval
+        // required, by role.buyer, due 2 working_days, process_engine "call activity"). Since AU-server S3.1 (⚑AU-D3-1) the
+        // native preview lists an engine action as the engine's — `sink: engine`, its arguments and `would`, no batch rows.
+        "full H3 previews the proposal and the buyer handoff as the engine's action" {
             val plan = preview("reorder_proposals", Instant.parse("2026-04-01T00:00:00Z"))
             val projection = preview("reorder_proposals", Instant.parse("2026-04-01T00:00:00Z"), writerOnly = true)
             plan.rows shouldBe projection.rows
-            plan.actions.map { it.action } shouldBe listOf("propose", "ask")
+            plan.actions.map { it.action } shouldBe listOf("propose", "handoff")
             plan.actions.first() shouldBe projection.actions.single()
-            val ask = plan.actions.single { it.action == "ask" }
-            ask.arguments["action"] shouldBe
-                buildJsonObject {
-                    put("action", "start")
-                    put("arguments", buildJsonObject { put("process", "purchasing") })
-                    put("deferred", true)
-                }
-            ask.arguments["due"] shouldBe
+            val handoff = plan.actions.single { it.action == "handoff" }
+            handoff.sink shouldBe "engine"
+            handoff.batchRows shouldBe emptyList()
+            handoff.arguments["process"] shouldBe JsonPrimitive("purchasing")
+            handoff.arguments["due"] shouldBe
                 buildJsonObject {
                     put("amount", 2)
                     put("unit", "working_days")
                 }
-            ask.arguments["group_by"] shouldBe JsonPrimitive(3)
-            ask.would shouldBe "would ask role.buyer to approve start { process: \"purchasing\" } for 3"
-            ask.batchRows shouldBe emptyList()
+            handoff.would shouldBe "would ask the buyer to hand the proposal to purchasing"
             plan.rows.none { it.entity == "automation.task" || it.entity == "automation.obligation" } shouldBe true
         }
 
@@ -220,8 +214,9 @@ class HartlandWriterPreviewSpec :
                 "2026-12-31T23:30:00Z" to "2026-Q4",
                 "2027-01-01T01:00:00Z" to "2027-Q1",
             )) {
-                // The writer projection: `emit` is an engine action, which the native preview refuses (⚑AU-D3-1; see H3).
-                val plan = preview("winback", Instant.parse(asOf), writerOnly = true)
+                // Since AU-server S3.1 (⚑AU-D3-1) the engine action `emit` previews as the engine's: no batch rows of its own.
+                val plan = preview("winback", Instant.parse(asOf))
+                plan.actions.filter { it.sink == "engine" }.forEach { it.batchRows shouldBe emptyList() }
                 val rows = plan.rows.filter { it.entity == "er.entity.winback_mail" }
                 rows.size shouldBe 2
                 rows.map {
