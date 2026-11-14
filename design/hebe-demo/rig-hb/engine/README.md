@@ -6,9 +6,10 @@ the scheduled Monday brief and phone; neither is certified by an engine-profile 
 
 ## Prerequisites and deployment
 
-After S2.3c/c1, HE-D-18's S2.3e/f origin repair exited at Olymp `5b8d84a`:
-Hebe `0.11.11`, source `e3f4e4e4d74c35aafd676ab1d44c3518326de7ee`, app/init digest
-`sha256:d7b3e6c29caa32c140f6305ef5a8cd77f3e694a1e5697dcee83c9c2d40b35727`.
+After S2.3c/c1 and HE-D-18's origin repair, HE-D-19's S2.3g/h process-choice recovery
+exited at Olymp `3c31bf90`: Hebe `0.11.12`, source
+`de6758b72a206fcc1b04dbf7bc508c754c48a051`, app/init digest
+`sha256:7bd7d7d2b10b3ff77ceefd39321b9d53dcd35d2b4323dd70ee8ba0a3fdcef126`.
 The rig verifies this already deployed release; it changes no estate pin.
 Engine CIB seven Run4 2.2.0; REST Service port 80 at
 `http://process-engine.process-engine.svc/engine-rest`. Public issuer:
@@ -76,8 +77,9 @@ The complete live rig must pass twice, before and after the walk/restart/outage.
 Use the real console as Markéta, `https://hebe.192-168-1-38.nip.io/`. Save identifiers
 and redacted outcomes in the PR description. Do not fabricate PASS from API-only reads.
 
-1. Send `spusť kontrolu uvolnění pro 4711`. Require an explicit confirmation; send
-   `ano`. Require one waiting/card response, ten detail rows and `+ 2 more`. Open its
+1. Send `spusť kontrolu uvolnění pro 4711`. If the approved recovery choice appears,
+   select the fixture by its displayed number. Require a fresh named confirmation;
+   send a separate `ano`. Require one waiting/card response, ten detail rows and `+ 2 more`. Open its
    actual task and instance links in Tasklist/Cockpit. Send `schválit 4711`; verify
    history COMPLETED and one answer receipt, no second card/submission.
 2. Start through the same confirmation flow. Claim the task in Tasklist as `bora`;
@@ -95,7 +97,8 @@ Live URL templates from the released configuration:
 `{web}/#/seven/auth/processes/instance/{instance}`, where
 `web=https://process.192-168-1-38.nip.io/webapp`.
 Across these three instances require exactly three `engine.start`, two `engine.answer`
-receipts, verified chain and a second green rig. No ready PR before the whole live DONE.
+receipts, verified entire chain and a second green rig. Retain the three earlier
+failed `process_start` proposal receipts; count them separately from engine actions. No ready PR before the whole live DONE.
 Any producer/pin/contract need is a scope stop for the planner, not a repair here.
 
 Cleanup is separate and only after retaining the reviewed history evidence:
