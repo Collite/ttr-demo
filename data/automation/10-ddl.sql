@@ -1,6 +1,7 @@
 -- AU-hartland P1 · S1.1 — the extension's tables (contracts §1) and the internals (the column adds: 05-columns.sql).
 -- Piped by run-automation.sh into one transaction after automation.conf; the foreign keys come at the end of
--- the build (80-keys.sql), once the data is in.
+-- the build (80-keys.sql), once the data is in. The world writer gets column-scoped grants at creation
+-- (AU door O1), so reset + rebuild restores them; worlds without that role are unchanged.
 --
 -- Everything is created AS THE OWNER OF THE FACTS (the role owning web_sales — `hartland` on every cluster),
 -- as views/channel_sales.sql runs: the owner may alter `customer` and `date_dim`, and its default privileges
@@ -217,6 +218,18 @@ BEGIN
                              'replacement_shipment', 'reorder_proposal', 'winback_mail'] LOOP
       EXECUTE format('GRANT SELECT ON public.%I TO %I', t, current_database() || '_readonly');
     END LOOP;
+  END IF;
+END $$;
+
+-- The world's writer role (AU door, olymp O1): read the two decided tables, update only the decided columns.
+DO $$
+DECLARE w text := current_database() || '_writer';
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = w) THEN
+    EXECUTE format('GRANT USAGE ON SCHEMA public TO %I', w);
+    EXECUTE format('GRANT SELECT ON public.sales_order, public.return_request_line TO %I', w);
+    EXECUTE format('GRANT UPDATE (so_state, so_held_for) ON public.sales_order TO %I', w);
+    EXECUTE format('GRANT UPDATE (rl_state, rl_way) ON public.return_request_line TO %I', w);
   END IF;
 END $$;
 
