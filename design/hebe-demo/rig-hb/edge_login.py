@@ -21,6 +21,7 @@ import http.cookiejar
 import json
 import os
 import re
+import ssl
 import sys
 import urllib.error
 import urllib.parse
@@ -51,6 +52,10 @@ class _Forge(urllib.request.BaseHandler):
 def sign_in(host: str, user: str, password: str, path: str, forge: str | None, body_limit: int = 300) -> dict:
     jar = http.cookiejar.CookieJar()
     handlers: list[urllib.request.BaseHandler] = [urllib.request.HTTPCookieProcessor(jar)]
+    if ca := os.environ.get("HEBE_VERIFY_CA_FILE"):
+        context = ssl.create_default_context()
+        context.load_verify_locations(cafile=ca)
+        handlers.append(urllib.request.HTTPSHandler(context=context))
     if forge:
         handlers.append(_Forge(forge))
     opener = urllib.request.build_opener(*handlers)

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- HE-P2 S2.3d: component certification fixture adapted to bp-dsk role authorization.
+     Fixed details are a JUEL string expression; no script engine or connector. -->
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  id="hebe-p2-cert" targetNamespace="http://tatrman.org/hebe">
+  <bpmn:process id="hebe_p2_cert" name="Kontrola uvolnění objednávky — certifikace Hebe" isExecutable="true"
+                camunda:candidateStarterGroups="hartland-sales-managers" camunda:isStartableInTasklist="true"
+                camunda:historyTimeToLive="P30D">
+    <bpmn:startEvent id="start" camunda:asyncAfter="true"/>
+    <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="approve"/>
+    <bpmn:userTask id="approve" name="Schválit uvolnění objednávky" camunda:candidateGroups="hartland-sales-managers">
+      <bpmn:documentation>Objednávka čeká na schválení.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="outcome" label="Rozhodnutí" type="enum">
+            <camunda:value id="approve" name="Schválit"/>
+            <camunda:value id="reject" name="Zamítnout"/>
+          </camunda:formField>
+          <camunda:formField id="note" label="Poznámka" type="string"/>
+        </camunda:formData>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="ttr_about">${execution.processBusinessKey}</camunda:inputParameter>
+          <camunda:inputParameter name="ttr_because">Zákazník překročil úvěrový limit.</camunda:inputParameter>
+          <camunda:inputParameter name="ttr_detail">${'[{"položka":"Kontrolní položka 01","hodnota":"100"},{"položka":"Kontrolní položka 02","hodnota":"200"},{"položka":"Kontrolní položka 03","hodnota":"300"},{"položka":"Kontrolní položka 04","hodnota":"400"},{"položka":"Kontrolní položka 05","hodnota":"500"},{"položka":"Kontrolní položka 06","hodnota":"600"},{"položka":"Kontrolní položka 07","hodnota":"700"},{"položka":"Kontrolní položka 08","hodnota":"800"},{"položka":"Kontrolní položka 09","hodnota":"900"},{"položka":"Kontrolní položka 10","hodnota":"1000"},{"položka":"Kontrolní položka 11","hodnota":"1100"},{"položka":"Kontrolní položka 12","hodnota":"1200"}]'}</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="f2" sourceRef="approve" targetRef="end"/>
+    <bpmn:endEvent id="end"/>
+  </bpmn:process>
+</bpmn:definitions>
