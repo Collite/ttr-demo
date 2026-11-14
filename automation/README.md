@@ -118,14 +118,13 @@ against the exact accepted Server checkout named in the lock. The runner refuses
 changes, verifies **services/automation runtimeClasspath** against the separate preview grammar pin
 0.22.3 (translator/proto 0.14.1), and disables Maven Local. Query result tables are mocked; real bundle loading, approval coverage,
 bindings, staging, native preview and writer assignment checks run. The CI checkout is deliberately named
-`bundle` to guard package resolution independently of its path. JUnit XML retains all five named cases. Since P3E the full H3
-preview case is disabled and H5 runs over the writer projection: their engine actions (`handoff`, `emit`) have no native sink,
-and the Server's native preview refuses them by design, also on 0.22.3 (D-178). Both come back with AU-server S3.1, which
-decides how a preview treats engine-sink actions.
+`bundle` to guard package resolution independently of its path. JUnit XML retains all five named cases. H3's and H5's engine
+actions (`handoff`, `emit`) have no native sink; since AU-server S3.1 (ttr-server#397, ⚑AU-D3-1) the native preview lists them
+as the engine's — `sink: engine`, arguments and `would` text, no batch rows — so the full H3 and H5 cases run (D-178 (b)).
 
 The gate covers H3's complete **writer projection**, including negative retry-stable bigint ID, run/state,
-all required attributes and two-place stored demand. Full H3 must produce that same proposal plus the buyer
-ask with deferred `start`/`purchasing`, `2 working_days`, warehouse grouping and would-text; replay is stable
+all required attributes and two-place stored demand. Full H3 must produce that same proposal plus the engine's buyer
+`handoff` (`process: purchasing`, `due: 2 working_days`, its would-text, no batch rows); replay is stable
 and empty full H3 emits no actions or rows. These values are descriptive preview evidence. Callee resolution,
 task creation/dispatch and calendar deadlines remain separate P3 work. Physical key conflicts must be refused
 transactionally by P2; derived IDs are not globally collision-free. Full H5 tests both routes, UTC quarter/year boundaries, Prague/US edge

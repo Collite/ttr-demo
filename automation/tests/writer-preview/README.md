@@ -21,9 +21,9 @@ H5's eleven UTC boundary and edge instants, pinned Open context, replayed action
 (except written_at), idempotent completion, and empty full H3 and H5 selections.
 
 Since `545527b` (P3E), H3's buyer approval (`handoff`) and H5's mail (`emit`) are engine actions with no native
-sink. The Server's native preview refuses them by design, on 0.21.1 and on 0.22.3 alike (D-178). So the full H3 case
-is disabled, and the H5 case runs over the writer projection (`record` only). Both return to full previews with
-AU-server S3.1, which decides how a preview treats engine-sink actions.
+sink. Grammar 0.21.1 predates engine actions; on 0.22.3 the Server's native preview refused them (D-178) until
+AU-server S3.1 (ttr-server#397, ⚑AU-D3-1). Since S3.1 the preview lists an engine action as the engine's — `sink:
+engine`, its arguments and `would` text, no batch rows — so both the full H3 and the full H5 case run again.
 This is descriptive preview evidence; it does not resolve/dispatch callees, create tasks or allocate calendar deadlines.
 
 JUnit XML is in the Server checkout's `services/automation/build/test-results/test/` and retained
