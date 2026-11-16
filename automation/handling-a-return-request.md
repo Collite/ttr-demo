@@ -81,11 +81,20 @@ per customer before joining it to the line, so multiple request lines do not mul
 ```
 
 Compare the whole request's value with the care threshold. Read that total from the model so checking a
-single line gives the same result as checking all lines of the request.
+single line gives the same result as checking all lines of the request. Return it only for the lines in this
+batch: each line carries the sum of every line of its request. The sum is computed over the whole table and then
+joined to the batch, so the batch bounds the rows returned, not the read (ttrp 0.22.3 rates a batch-restricted sum
+over `return_request_line` set-level, D-216).
 
-```sql context request_value(out rows) target erp
-        SELECT l.request_number, SUM(l.quantity * l.unit_price) AS request_value
-        FROM   er.entity.return_request_line l GROUP BY l.request_number
+```sql context request_value(in lines, out rows) target erp
+        WITH totals AS (
+            SELECT l.request_number, SUM(l.quantity * l.unit_price) AS request_value
+            FROM   er.entity.return_request_line l
+            GROUP  BY l.request_number
+        )
+        SELECT q.line_id, t.request_value
+        FROM   lines q
+        LEFT JOIN totals t ON t.request_number = q.request_number
 ```
 
 Check stock in the customer's distribution center for both the original item and the requested variant.
@@ -115,7 +124,7 @@ Each received line takes exactly one route.
         v = lines -> join(right: bought_here,     kind: left, on: left.line_id = right.line_id)
                   -> join(right: return_share,    kind: left, on: left.line_id = right.line_id)
                   -> join(right: stock_at_center, kind: left, on: left.line_id = right.line_id)
-                  -> join(right: request_value,   kind: left, on: left.request_number = right.request_number)
+                  -> join(right: request_value,   kind: left, on: left.line_id = right.line_id)
         v -> switch {
             mode: exclusive
             reject_not_ours:       delivered_date is null or item_on_order = 0           because: "not bought here"

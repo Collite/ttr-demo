@@ -147,9 +147,9 @@ test('S2.2 T3 — monitor_inbound\'s two expects on `complete` are conditional o
 
 // ── the four heroes ARE ttr-core's engine fixtures (`20`, AU-hartland P3E) ──────────────────────────────────────
 // Compared without comments, blank lines and indentation (P3 derives H-1 from Markdown). The oracle is Core's
-// `recipes/hartland-engine/` (CG-2): `20` §3–§4's action blocks over the shared hero bodies. Two deltas remain:
-// D-153's scoped `latest()` bodies, and the customer address column (`notify_customer { to: customer_email }`).
-// Both go when Core's engine fixtures carry them.
+// `recipes/hartland-engine/` (CG-2): `20` §3–§4's action blocks over the shared hero bodies. Three deltas remain:
+// D-153's scoped `latest()` bodies, the customer address column (`notify_customer { to: customer_email }`), and
+// D-211's batch-bounded `request_value`. All go when Core's engine fixtures carry them.
 const ADDRESS_WIRING = [/notify_customer( +)\{ customer: customer, template:/g, 'notify_customer$1{ customer: customer, to: customer_email, template:'];
 const FIXTURE_DELTAS = {
   // D-153 — goes when [ttrp] carries the scoped fixtures
@@ -171,6 +171,21 @@ const FIXTURE_DELTAS = {
     ['-> join(right: latest, kind: left, on: left.requested_variant = right.item and customer.center = right.warehouse)',
       '-> join(right: stock, kind: left, on: left.requested_variant = right.item and customer.center = right.warehouse)\n-> latest(by: as_of_date, per: line_id)'],
     ['coalesce(latest.quantity_on_hand, 0)', 'coalesce(stock.quantity_on_hand, 0)'],
+    // D-211 — request_value reads the batch's requests, not the table; goes when Core's fixture carries it
+    ['context request_value(out rows) target erp """sql\n'
+      + 'SELECT l.request_number, SUM(l.quantity * l.unit_price) AS request_value\n'
+      + 'FROM   er.entity.return_request_line l GROUP BY l.request_number',
+    'context request_value(in lines, out rows) target erp """sql\n'
+      + 'WITH totals AS (\n'
+      + 'SELECT l.request_number, SUM(l.quantity * l.unit_price) AS request_value\n'
+      + 'FROM   er.entity.return_request_line l\n'
+      + 'GROUP  BY l.request_number\n'
+      + ')\n'
+      + 'SELECT q.line_id, t.request_value\n'
+      + 'FROM   lines q\n'
+      + 'LEFT JOIN totals t ON t.request_number = q.request_number'],
+    ['-> join(right: request_value,   kind: left, on: left.request_number = right.request_number)',
+      '-> join(right: request_value,   kind: left, on: left.line_id = right.line_id)'],
   ],
   monitor_inbound: [
     ADDRESS_WIRING,
@@ -199,11 +214,14 @@ test('S2.2 T1 — zero diagnostics from the RecipeChecker (`ttrp check`)', { ski
 // Every recipe is per-candidate, ops/no_run_since too. The task list expected `set-level, batch` for it, but its one
 // context groups each deployment's runs by the deployment, the key, so its verdict depends on that deployment alone
 // (06 A-5). Its program runs it hourly in batch either way.
-test('S2.2 T1 — the mode verdicts: the seven checkable recipes per-candidate, no context set-level', { skip: cliMissing }, () => {
+test('S2.2 T1 — the mode verdicts: the seven checkable recipes per-candidate, no context set-level or lookup', { skip: cliMissing }, () => {
   for (const [name, r] of Object.entries(explained)) {
     assert.match(r.out, /^checker · mode per-candidate · /m, `${name}: the mode verdict`);
     const contexts = [...r.out.matchAll(/^ {2}context (\w+) .*\b(lookup|per-candidate|set-level)\b/gm)];
-    for (const m of contexts) assert.notEqual(m[2], 'set-level', `${name}: context ${m[1]}`);
+    for (const m of contexts) {
+      assert.notEqual(m[2], 'set-level', `${name}: context ${m[1]}`);
+      assert.notEqual(m[2], 'lookup', `${name}: context ${m[1]} has no \`in\` frame (D-211)`);
+    }
   }
 });
 

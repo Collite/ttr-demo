@@ -81,11 +81,17 @@ Porovnáme hodnotu zákazníkových vratek s hodnotou jeho nákupů za poslední
         LEFT JOIN bought   b ON b.customer = q.customer
 ```
 
-Porovnáme hodnotu celé žádosti s limitem pro péči o zákazníky. Součet čteme z modelu, aby kontrola jedné položky dala stejný výsledek jako kontrola všech položek žádosti.
+Porovnáme hodnotu celé žádosti s limitem pro péči o zákazníky. Součet čteme z modelu, aby kontrola jedné položky dala stejný výsledek jako kontrola všech položek žádosti. Vracíme ho jen pro položky z této dávky: každá nese součet všech položek své žádosti. Součet počítáme nad celou tabulkou a teprve pak ho připojíme k dávce, takže dávka omezuje vrácené řádky, ne čtení (ttrp 0.22.3 hodnotí součet nad `return_request_line` omezený na dávku jako set-level, D-216).
 
-```sql context request_value(out rows) target erp
-        SELECT l.request_number, SUM(l.quantity * l.unit_price) AS request_value
-        FROM   er.entity.return_request_line l GROUP BY l.request_number
+```sql context request_value(in lines, out rows) target erp
+        WITH totals AS (
+            SELECT l.request_number, SUM(l.quantity * l.unit_price) AS request_value
+            FROM   er.entity.return_request_line l
+            GROUP  BY l.request_number
+        )
+        SELECT q.line_id, t.request_value
+        FROM   lines q
+        LEFT JOIN totals t ON t.request_number = q.request_number
 ```
 
 Ověříme zásobu původního zboží i požadované varianty v distribučním centru zákazníka.
@@ -114,7 +120,7 @@ Nejprve uplatníme důvody zamítnutí, poté předání péči o zákazníky a 
         v = lines -> join(right: bought_here,     kind: left, on: left.line_id = right.line_id)
                   -> join(right: return_share,    kind: left, on: left.line_id = right.line_id)
                   -> join(right: stock_at_center, kind: left, on: left.line_id = right.line_id)
-                  -> join(right: request_value,   kind: left, on: left.request_number = right.request_number)
+                  -> join(right: request_value,   kind: left, on: left.line_id = right.line_id)
         v -> switch {
             mode: exclusive
             reject_not_ours:       delivered_date is null or item_on_order = 0           because: "not bought here"

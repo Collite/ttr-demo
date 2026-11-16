@@ -24,6 +24,14 @@ service beside `../model/` (ttr-server contracts §1.1):
 | `<recipe>/tests/*.yaml` | US and `.cz.yaml` golden cases with explicit world (contracts §7; seeds until pinned from a debug run) |
 | `tests/` | the package's suites (`just verify-model` runs them) |
 
+**Every context takes the batch as `in` and selects `FROM` it.** A read without `in` is unbounded, and the Server
+refuses it at the read ceiling on any real table (D-211: H-2's `request_value` grouped all of `return_request_line`).
+Prefer joining the table to the batch and grouping by the key, as `receipts` and `reminded` do: that bounds the read too.
+When the aggregate reads the key entity's own table (`request_value` sums `return_request_line`), the checker counts
+those rows as candidates and rates the join set-level (TTRP-REC-010), as it does an `IN`/`EXISTS` on the batch.
+In that case aggregate in a CTE that does not name the batch and join it to the batch's rows, as `return_share` and
+`request_value` do. That bounds the rows returned, not the read (D-216).
+
 **Why the world is here, not in `../model/`.** Its automation half names the programs and roles of this folder
 and the toolchain's automation entities (`obligation`, …). metadata and the lexicon build read `../model/` alone, and
 would report every one of those names unresolved (the lexicon build refuses to load such a model). So nothing
