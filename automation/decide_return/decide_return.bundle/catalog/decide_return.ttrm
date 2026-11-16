@@ -14,5 +14,5 @@ def recipe decide_return {
     document: "handling-a-return-request.md",
     actions: { decide_way: { by: role.customer_care, due: 3 working_days } },
     executors: { engine: { egress_url: "http://process-engine-egress.process-engine.svc/automation" } },
-    fingerprints: { text: "sha256:976106cdea3047dd01005ffec5bedb6c625d62b7e52b52322ca15261f8aa5ece", values: "sha256:6c5da116527944c0c189fdfbd0c8bbdef9f549dd03079764e3f9c1c80bb1ec41", labels: "sha256:b0398bfb0a886907f5212f9906750c334c096b1d59bd1eb72b53c5bfe74e195a" }
+    fingerprints: { text: "sha256:d3b09e1de98fcdd4f13cb21ea38a7a9c4210c72b6919767eddfc3f3a2a495213", values: "sha256:6c5da116527944c0c189fdfbd0c8bbdef9f549dd03079764e3f9c1c80bb1ec41", labels: "sha256:b0398bfb0a886907f5212f9906750c334c096b1d59bd1eb72b53c5bfe74e195a" }
 }
