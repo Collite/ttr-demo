@@ -81,8 +81,10 @@ per customer before joining it to the line, so multiple request lines do not mul
 ```
 
 Compare the whole request's value with the care threshold. Read that total from the model so checking a
-single line gives the same result as checking all lines of the request. Read it only for the requests in this
-batch: each of them still sums every one of its lines, and no other request is read.
+single line gives the same result as checking all lines of the request. Return it only for the lines in this
+batch: each line carries the sum of every line of its request. The sum is computed over the whole table and then
+joined to the batch, so the batch bounds the rows returned, not the read (ttrp 0.22.3 rates a batch-restricted sum
+over `return_request_line` set-level, D-216).
 
 ```sql context request_value(in lines, out rows) target erp
         WITH totals AS (

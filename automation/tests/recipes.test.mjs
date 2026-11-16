@@ -214,11 +214,14 @@ test('S2.2 T1 — zero diagnostics from the RecipeChecker (`ttrp check`)', { ski
 // Every recipe is per-candidate, ops/no_run_since too. The task list expected `set-level, batch` for it, but its one
 // context groups each deployment's runs by the deployment, the key, so its verdict depends on that deployment alone
 // (06 A-5). Its program runs it hourly in batch either way.
-test('S2.2 T1 — the mode verdicts: the seven checkable recipes per-candidate, no context set-level', { skip: cliMissing }, () => {
+test('S2.2 T1 — the mode verdicts: the seven checkable recipes per-candidate, no context set-level or lookup', { skip: cliMissing }, () => {
   for (const [name, r] of Object.entries(explained)) {
     assert.match(r.out, /^checker · mode per-candidate · /m, `${name}: the mode verdict`);
     const contexts = [...r.out.matchAll(/^ {2}context (\w+) .*\b(lookup|per-candidate|set-level)\b/gm)];
-    for (const m of contexts) assert.notEqual(m[2], 'set-level', `${name}: context ${m[1]}`);
+    for (const m of contexts) {
+      assert.notEqual(m[2], 'set-level', `${name}: context ${m[1]}`);
+      assert.notEqual(m[2], 'lookup', `${name}: context ${m[1]} has no \`in\` frame (D-211)`);
+    }
   }
 });
 

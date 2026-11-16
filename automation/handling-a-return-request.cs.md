@@ -81,7 +81,7 @@ Porovnáme hodnotu zákazníkových vratek s hodnotou jeho nákupů za poslední
         LEFT JOIN bought   b ON b.customer = q.customer
 ```
 
-Porovnáme hodnotu celé žádosti s limitem pro péči o zákazníky. Součet čteme z modelu, aby kontrola jedné položky dala stejný výsledek jako kontrola všech položek žádosti. Čteme ho jen pro žádosti z této dávky: každá z nich dál sečte všechny své položky a žádnou jinou žádost nečteme.
+Porovnáme hodnotu celé žádosti s limitem pro péči o zákazníky. Součet čteme z modelu, aby kontrola jedné položky dala stejný výsledek jako kontrola všech položek žádosti. Vracíme ho jen pro položky z této dávky: každá nese součet všech položek své žádosti. Součet počítáme nad celou tabulkou a teprve pak ho připojíme k dávce, takže dávka omezuje vrácené řádky, ne čtení (ttrp 0.22.3 hodnotí součet nad `return_request_line` omezený na dávku jako set-level, D-216).
 
 ```sql context request_value(in lines, out rows) target erp
         WITH totals AS (
