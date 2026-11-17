@@ -16,6 +16,7 @@ def load(name):
 
 
 customer, rows = load('customer'), load('rows')
+live = load('live')
 
 
 class Customer(unittest.TestCase):
@@ -114,6 +115,21 @@ class RowTable(unittest.TestCase):
                         {**good, 'typo': ('PASS', 'unknown')}]:
             with self.assertRaises(ValueError):
                 rows.table(invalid)
+
+    def test_live_adapter_keeps_customer_secret_in_stdin_payload(self):
+        import base64
+        import json
+        import subprocess
+        def read(*args):
+            data = {'password': base64.b64encode(b'private-password').decode()} if 'mail-customer-password' in args else {
+                'tls.crt': base64.b64encode(b'public-ca').decode()}
+            return subprocess.CompletedProcess(args, 0, json.dumps({'data': data}), '')
+        with patch.object(live.probe, 'kubectl', side_effect=read), patch.object(live.probe, 'run', return_value={}) as run:
+            live.run('substrate')
+            code, payload = run.call_args.args
+            self.assertEqual(payload['password'], 'private-password')
+            self.assertNotIn('private-password', code)
+            self.assertEqual(run.call_args.kwargs, {'namespace': 'kantheon', 'stage': 's36-mail'})
 
 
 if __name__ == '__main__':

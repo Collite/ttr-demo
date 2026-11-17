@@ -20,15 +20,15 @@ set -uo pipefail
 
 PROFILE=full
 if [ "$#" -ne 0 ]; then
-  if [ "$#" -eq 2 ] && [ "$1" = --profile ] && [ "$2" = engine ]; then PROFILE=engine
-  else echo 'usage: verify.sh [--profile engine]' >&2; exit 2; fi
+  if [ "$#" -eq 2 ] && [ "$1" = --profile ] && { [ "$2" = engine ] || [ "$2" = mail ]; }; then PROFILE="$2"
+  else echo 'usage: verify.sh [--profile engine|mail]' >&2; exit 2; fi
 fi
-if [ "$PROFILE" = engine ]; then
+if [ "$PROFILE" != full ]; then
   # Deliberate profile selection fixes the certification estate, rather than inheriting a demo override.
   CONTEXT=bp-dsk HOST=hebe.192-168-1-38.nip.io IRIS_HOST=iris.192-168-1-38.nip.io
   NS=kantheon SVC=hebe PORT=8765 INSTANCE=marketa BOUND_USER=marketa
   export HEBE_VERIFY_KEYCLOAK=https://keycloak.192-168-1-38.nip.io/realms/kantheon
-  [ -f "${HEBE_VERIFY_CA_FILE:-}" ] || { echo 'engine profile requires HEBE_VERIFY_CA_FILE (public cluster CA)' >&2; exit 2; }
+  [ -f "${HEBE_VERIFY_CA_FILE:-}" ] || { echo "$PROFILE profile requires HEBE_VERIFY_CA_FILE (public cluster CA)" >&2; exit 2; }
   export CURL_CA_BUNDLE="$HEBE_VERIFY_CA_FILE"
 fi
 
@@ -45,7 +45,7 @@ ROUTINE="${ROUTINE:-monday-brief}"        # the routine whose last scheduled run
 IMAGE_REPO="${IMAGE_REPO:-ghcr.io/collite/hebe}"
 REGISTRY="${REGISTRY:-capabilities-mcp:7501}"
 STATE="${HEBE_VERIFY_STATE:-${HOME}/.config/hebe-verify/${INSTANCE}.json}"
-[ "$PROFILE" = engine ] && STATE="${HEBE_VERIFY_STATE:-${HOME}/.config/hebe-verify}/${CONTEXT}/${PROFILE}/${INSTANCE}.json"
+[ "$PROFILE" != full ] && STATE="${HEBE_VERIFY_STATE:-${HOME}/.config/hebe-verify}/${CONTEXT}/${PROFILE}/${INSTANCE}.json"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 PASS=0 FAIL=0 OPEN=0 NA=0
@@ -93,7 +93,7 @@ except Exception:
 check_pod() {
   local deploy ready want image
   deploy="$(kc -n "$NS" get deploy "$SVC" -o json 2>/dev/null)" || { fail pod "no deployment $NS/$SVC on context $CONTEXT"; return; }
-  if [ "$PROFILE" = engine ]; then
+  if [ "$PROFILE" != full ]; then
     local pods out
     pods="$(kc -n "$NS" get pods -l "$(selector_of <<<"$deploy")" -o json)"
     out="$(printf '%s\n%s\n' "$deploy" "$pods" | python3 -I "$HERE/engine/profile.py" image)"
@@ -245,7 +245,7 @@ check_brief() {
 # verify.sh stays read-only, so this one is the operator's: from a throwaway pod in another namespace, a forged
 # header with no edge token must be refused (Hebe verifies the edge's token itself) or never arrive (the NetworkPolicy).
 check_isolation() {
-  if [ "$PROFILE" = engine ]; then
+  if [ "$PROFILE" != full ]; then
     local out
     out="$(python3 -I "$HERE/engine/isolation.py")"
     if [ "$?" -eq 0 ]; then pass isolation "$out"; else fail isolation "$out"; fi
@@ -261,7 +261,7 @@ check_isolation() {
 
 # ── 6. the phone (manual, HB-⚑3 / B-4) ────────────────────────────────────────────────────────────────────────────
 check_phone() {
-  if [ "$PROFILE" = engine ]; then
+  if [ "$PROFILE" != full ]; then
     local out
     out="$(kc -n "$NS" get configmap hebe-config -o json | python3 -I "$HERE/engine/profile.py" config)"
     if [ "$?" -ne 0 ]; then fail telegram "$out"; return; fi
@@ -280,6 +280,22 @@ check_phone() {
     "") manual unmapped-chat "message the bot from a second account; nothing reaches Hebe; then HEBE_VERIFY_STRANGER=dropped|refused|not-performed" ;;
     *) fail unmapped-chat "the operator reported: $HEBE_VERIFY_STRANGER" ;;
   esac
+}
+
+# Mail keeps every engine check and adds customer-only observations. OPEN is not PASS.
+check_mail() {
+  local out verdict name detail count=0
+  out="$(HEBE_VERIFY_MAIL_READY="$READY_JSON" HEBE_VERIFY_MAIL_DOCTOR="$doctor" python3 -I "$HERE/mail/verify.py")"
+  while IFS=$'\t' read -r verdict name detail; do
+    case "$verdict" in
+      PASS) pass "$name" "$detail" ;;
+      FAIL) fail "$name" "$detail" ;;
+      OPEN) skip "$name" "$detail" ;;
+      *) fail mail-profile "invalid observation row" ;;
+    esac
+    count=$((count + 1))
+  done <<<"$out"
+  [ "$count" -eq 9 ] || fail mail-profile "incomplete row table ($count/9)"
 }
 
 # Sourced (test_verify_helpers.py): the helpers above, no checks.
@@ -308,6 +324,7 @@ else
 fi
 check_isolation
 check_phone
+[ "$PROFILE" = mail ] && check_mail
 echo "$PASS pass · $FAIL fail · $OPEN open$([ "$NA" -gt 0 ] && echo " · $NA n/a")"
 [ "$FAIL" -gt 0 ] && exit 1
 [ "$OPEN" -gt 0 ] && exit 3
