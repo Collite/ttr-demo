@@ -14,6 +14,7 @@ import rows
 import qualification
 import walk_record
 import fixture
+import post_walk
 
 
 def assess(ready, status, doctor, substrate, qualified=None, human=None, stranger=None):
@@ -66,6 +67,9 @@ def main():
         human = walk_record.validate(record, run, current)
         stranger = fixture.verify(state, run, current)
         result = assess(ready, json.loads(response['body']), doctor, live.run('substrate'), qualified, human, stranger)
+        threads = post_walk.verify(record, human)
+        result = [(name, *threads) if name == 'mail-threads' else (name, verdict, detail)
+                  for name, verdict, detail in result]
         for name, verdict, detail in result:
             print(verdict + '\t' + name + '\t' + detail.replace('\t', ' ').replace('\n', ' '))
         return rows.exit_code(result)

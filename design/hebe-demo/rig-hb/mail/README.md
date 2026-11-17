@@ -58,6 +58,17 @@ deployment/run fails. Two final runs can reference the same completed walk while
 rechecking live rows and admission. Results/references go in the PR description;
 no walk proof file is added to project/.
 
+The post-walk thread row also re-reads `mail_threads` and `engine_tasks` in a
+`BEGIN READ ONLY` transaction on the existing bp-dsk Postgres primary. It requires
+the recorded roots/kinds/task/proposal references to remain closed and consistent.
+Authenticated console receipts must match four certification starts and the
+performed answers. The existing Markéta OBO seed/verified-CA probe pattern checks
+each controlled instance through the contracted engine history and active-task
+GETs: all four must be COMPLETED with zero active tasks. A Tasklist claim alone
+does not prove cleanup. Record the forwarded fixture's `cleanupTaskId` and, if its
+cleanup used Hebe rather than Tasklist, `cleanupReceiptId`. These observations
+repeat on both final profile runs; unavailable observations remain OPEN.
+
 Use the existing public CA as described in `../engine/README.md`. The persona
 password is supplied privately as `HEBE_VERIFY_PASSWORD`, never on the command
 line. Keep outputs under the worktree's `build/he-s36/`. The helper reads the
