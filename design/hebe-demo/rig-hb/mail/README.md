@@ -70,15 +70,21 @@ Agent-owned helper commands, from this code worktree:
 
 ```sh
 just hebe-mail substrate
-just hebe-mail send --run he-s36-<unique-id> --recipient marketa@hartland.example \
-  --fixture design/hebe-demo/rig-hb/mail/complaint-4711.txt
+just hebe-mail-fixture --run he-s36-<unique-id>
 just hebe-mail read --run he-s36-<unique-id> --message-id '<returned-message-id>'
 ```
 
-The `send` result contains only the Message-ID, subject and recipient; retain it
-in ignored working output and the PR. A separate send of the same fixture to
-`hebe-marketa@hartland.example` is T3's stranger test. Each send has a unique
-Message-ID; do not blindly retry a send whose result was lost. Customer reads use
+The fixture command checks the current admission baseline and console access,
+then sends the complaint once to Markéta and once to Hebe. It checkpoints before
+each send in `build/he-s36/mail-state.json`; an uncertain send stops for inspection
+and is never blindly repeated. The same run/deployment can resume completed sends.
+It records two empty customer polls at least twenty seconds apart and the exact
+body-free `mail.dropped` receipt. Subsequent profiles load this checkpoint (override
+with `HEBE_VERIFY_MAIL_STATE`), repeat the customer read and receipt lookup, and
+require the current run/deployment to match. Human steps still remain OPEN.
+
+Send results contain only the Message-ID, subject and recipient; retain their
+references in the PR. Each send has a unique Message-ID. Customer reads use
 read-only INBOX selection and `BODY.PEEK` headers; they never set Seen, expunge or
 delete mail. R1/R2 issue MAIL envelopes only, never DATA. Authentication or protocol
 errors fail rather than masquerading as an empty mailbox or a refused sender.

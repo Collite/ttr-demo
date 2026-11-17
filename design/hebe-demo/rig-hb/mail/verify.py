@@ -13,6 +13,7 @@ import live
 import rows
 import qualification
 import walk_record
+import fixture
 
 
 def assess(ready, status, doctor, substrate, qualified=None, human=None, stranger=None):
@@ -58,10 +59,13 @@ def main():
         qualified = qualification.verify()
         baseline = json.loads(qualification.BASELINE.read_text())
         current = walk_record.deployment(baseline, qualified[2])
+        state = fixture.load()
+        run = os.environ.get('HEBE_VERIFY_MAIL_RUN') or (state or {}).get('runId')
         path = os.environ.get('HEBE_VERIFY_MAIL_WALK_FILE')
         record = json.loads(Path(path).read_text()) if path else None
-        human = walk_record.validate(record, os.environ.get('HEBE_VERIFY_MAIL_RUN'), current)
-        result = assess(ready, json.loads(response['body']), doctor, live.run('substrate'), qualified, human)
+        human = walk_record.validate(record, run, current)
+        stranger = fixture.verify(state, run, current)
+        result = assess(ready, json.loads(response['body']), doctor, live.run('substrate'), qualified, human, stranger)
         for name, verdict, detail in result:
             print(verdict + '\t' + name + '\t' + detail.replace('\t', ' ').replace('\n', ' '))
         return rows.exit_code(result)

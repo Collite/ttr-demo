@@ -432,6 +432,10 @@ hebe-engine-deploy *args:
 hebe-mail *args:
     python3 -I design/hebe-demo/rig-hb/mail/live.py {{args}}
 
+# S3.6 T3 only: two checkpointed customer sends, drop receipt and two polls.
+hebe-mail-fixture *args:
+    python3 -I design/hebe-demo/rig-hb/mail/fixture.py {{args}}
+
 # Markéta's routine fixtures (HE-P1 · S1.3, data/hebe/README.md): install or update all three, idempotent by name.
 #
 #     just hebe-routines                       # over a port-forward to svc/hebe
@@ -446,7 +450,7 @@ hebe-telegram-chat-id secret="hebe-marketa-telegram-token":
     scripts/telegram-chat-id.sh {{secret}}
 
 hebe-verify-test:
-    python3 -B -m unittest design/hebe-demo/rig-hb/test_edge_login.py design/hebe-demo/rig-hb/test_verify_helpers.py design/hebe-demo/rig-hb/test_brief_check.py design/hebe-demo/rig-hb/engine/test_fixture.py design/hebe-demo/rig-hb/engine/test_profile.py design/hebe-demo/rig-hb/engine/test_deploy.py design/hebe-demo/rig-hb/mail/test_customer.py design/hebe-demo/rig-hb/mail/test_profile.py design/hebe-demo/rig-hb/mail/test_evidence.py
+    python3 -B -m unittest design/hebe-demo/rig-hb/test_edge_login.py design/hebe-demo/rig-hb/test_verify_helpers.py design/hebe-demo/rig-hb/test_brief_check.py design/hebe-demo/rig-hb/engine/test_fixture.py design/hebe-demo/rig-hb/engine/test_profile.py design/hebe-demo/rig-hb/engine/test_deploy.py design/hebe-demo/rig-hb/mail/test_customer.py design/hebe-demo/rig-hb/mail/test_profile.py design/hebe-demo/rig-hb/mail/test_evidence.py design/hebe-demo/rig-hb/mail/test_fixture.py
 
 # ── the Superset dashboards (BI-4, contracts C-23) ───────────────────────────────────────────────
 # dashboards/README.md. Bundles per dashboard and world; olymp's superset-dashboards Application
