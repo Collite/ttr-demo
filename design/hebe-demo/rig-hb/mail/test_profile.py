@@ -25,6 +25,7 @@ class MailProfile(unittest.TestCase):
 
     def test_live_checks_fail_closed_and_unperformed_rows_remain_open(self):
         ready = {'checks': [{'name': name, 'ok': True, 'detail': 'ok'} for name in ['channels', 'delivery', 'mail']]}
+        ready['checks'][0]['detail'] = 'email=Up, web=Up'
         status = {'channels': [{'name': 'email', 'health': 'Up'}]}
         doctor = {'checks': [{'name': 'mail', 'status': 'pass', 'message': 'SMTP and IMAP accept sign-in'}]}
         substrate = {'R1': {'code': 530, 'dataSent': False}, 'R2': {'code': 503, 'dataSent': False}}
@@ -34,6 +35,8 @@ class MailProfile(unittest.TestCase):
         for broken in [({}, status, doctor, substrate), (ready, {}, doctor, substrate),
                        (ready, status, {}, substrate), (ready, status, doctor, {})]:
             self.assertIn('FAIL', [r[1] for r in verify.assess(*broken)])
+        ready['checks'][0]['detail'] = 'up'
+        self.assertEqual(verify.assess(ready, status, doctor, substrate)[0][1], 'FAIL')
 
 
 if __name__ == '__main__':

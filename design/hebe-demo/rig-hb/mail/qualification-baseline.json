@@ -1,0 +1,236 @@
+{
+  "sources": {
+    "james": {
+      "revision": "78e74274f05ee49f2afbbcd6324e61731afd517a",
+      "pr": "https://github.com/Collite/olymp/pull/305"
+    },
+    "webmailRealm": {
+      "revision": "c69d6fa0419d3b04063e8b9286608f7896badda5",
+      "pr": "https://github.com/Collite/olymp/pull/307"
+    },
+    "jwtUnitSource": "52945a776a8a4894c801368ee21f8827bd897b83"
+  },
+  "cases": {
+    "missing-audience-initial-imap": {
+      "source": "https://github.com/Collite/olymp/pull/305",
+      "kind": "production-config local qualification21/21; live19/19 where explicitly recorded",
+      "case": "missing-audience-initial-imap"
+    },
+    "missing-audience-continuation-imap": {
+      "source": "https://github.com/Collite/olymp/pull/305",
+      "kind": "production-config local qualification21/21; live19/19 where explicitly recorded",
+      "case": "missing-audience-continuation-imap"
+    },
+    "missing-audience-smtp": {
+      "source": "https://github.com/Collite/olymp/pull/305",
+      "kind": "production-config local qualification21/21; live19/19 where explicitly recorded",
+      "case": "missing-audience-smtp"
+    },
+    "wrong-audience-imap": {
+      "source": "https://github.com/Collite/olymp/pull/305",
+      "kind": "production-config local qualification21/21: d_wrong_audience; not a new live run",
+      "case": "wrong-audience-imap"
+    },
+    "wrong-audience-smtp": {
+      "source": "https://github.com/Collite/olymp/pull/305",
+      "kind": "production-config local qualification21/21: d_wrong_audience; not a new live run",
+      "case": "wrong-audience-smtp"
+    },
+    "engine-only-imap": {
+      "source": "https://github.com/Collite/olymp/pull/305",
+      "kind": "production-config local qualification21/21; live19/19 where explicitly recorded",
+      "case": "engine-only-imap"
+    },
+    "engine-only-smtp": {
+      "source": "https://github.com/Collite/olymp/pull/305",
+      "kind": "production-config local qualification21/21; live19/19 where explicitly recorded",
+      "case": "engine-only-smtp"
+    },
+    "malformed-imap": {
+      "source": "https://github.com/Collite/olymp/pull/305",
+      "kind": "production-config local qualification21/21; live19/19 where explicitly recorded",
+      "case": "malformed-imap"
+    },
+    "malformed-smtp": {
+      "source": "https://github.com/Collite/olymp/pull/305",
+      "kind": "production-config local qualification21/21; live19/19 where explicitly recorded",
+      "case": "malformed-smtp"
+    },
+    "expired-imap": {
+      "source": "https://github.com/Collite/olymp/pull/305",
+      "kind": "production-config local qualification21/21; live19/19 where explicitly recorded",
+      "case": "expired-imap"
+    },
+    "expired-smtp": {
+      "source": "https://github.com/Collite/olymp/pull/305",
+      "kind": "production-config local qualification21/21; live19/19 where explicitly recorded",
+      "case": "expired-smtp"
+    },
+    "foreign-signature": {
+      "source": "https://github.com/Collite/olymp/pull/304",
+      "kind": "local JWT module unit qualification (71 PASS), not a live foreign-issuer SASL run",
+      "case": "JwtTokenVerifierTest.verifyAndExtractLoginShouldReturnEmptyOnMismatchingSigningKey / shouldReturnFalseOnMismatchingSigningKey",
+      "verifierPath": "https://github.com/apache/james-project/blob/52945a776a8a4894c801368ee21f8827bd897b83/server/protocols/jwt/src/main/java/org/apache/james/jwt/OidcJwtTokenVerifier.java#L83-L91"
+    }
+  },
+  "jamesImage": "ghcr.io/collite/james-mail@sha256:a66462c3e472876d6be54769fa5b7219e049ca676cfc9c6ff454ef1f343fe8d0",
+  "webmailImage": "roundcube/roundcubemail@sha256:d23169b8bbb99b5e75adcd502b627d6f29e60833a7053a12e4ff133468c2e5b4",
+  "jamesFiles": {
+    "smtpserver.xml": "e54c4cb5a5ce1819818af5e7f2fffdbc6b4819164a9195e480ad09b87feca30f",
+    "imapserver.xml": "335151655f1f5f52f45411f70f968cbff2d2986c318e3b08f938a4227fc85510",
+    "pop3server.xml": "8098a747efb3e5453b306925cfe48202087e38c3cf6f917a15d5a9643f1ccb37",
+    "lmtpserver.xml": "527a74bf9e4ce34b9a3ce3a323d499dfc4ae98259c7525eb75c1fba9c3f702aa",
+    "managesieveserver.xml": "99e98080cd1436400b6a6331bded172e249505caf137da08c0f376c71d00d7bc",
+    "domainlist.xml": "5b1299859dce8d8ed7e747f4c73a0eaef480554eb2a99955c3cfd95131b7ba20",
+    "mailetcontainer.xml": "a2c4f09d81548d5d57d73890e3cc39fabc87102afe3e7d10bd849512e8df958c",
+    "webadmin.properties": "a74347ae7cb36a8fedae027e6e2fca696e2a15a560151b5f0683a517ee2d19c7"
+  },
+  "webmailConfigSha256": "34d3b89dcce65411341c3b3c4bd742333efad14bbd4e22f40bc80b95e4d185ee",
+  "caSha256": "69a0fb7e7989456cf2eed7a5a372ce95e038fa54617626f4995d6bfdd65b0220",
+  "webmailRuntime": {
+    "oauth_provider": "generic",
+    "oauth_client_id": "webmail",
+    "oauth_issuer": "https://keycloak.192-168-1-38.nip.io/realms/kantheon",
+    "oauth_auth_uri": "https://keycloak.192-168-1-38.nip.io/realms/kantheon/protocol/openid-connect/auth",
+    "oauth_token_uri": "http://auth-keycloak-keycloakx-http.auth.svc.cluster.local/realms/kantheon/protocol/openid-connect/token",
+    "oauth_jwks_uri": "http://auth-keycloak-keycloakx-http.auth.svc.cluster.local/realms/kantheon/protocol/openid-connect/certs",
+    "oauth_identity_uri": "http://auth-keycloak-keycloakx-http.auth.svc.cluster.local/realms/kantheon/protocol/openid-connect/userinfo",
+    "oauth_scope": "openid email profile mail",
+    "oauth_identity_fields": [
+      "email"
+    ],
+    "oauth_auth_type": "XOAUTH2",
+    "oauth_pkce": "S256",
+    "oauth_verify_peer": true,
+    "imap_host": "tls://mail.middleware.svc:143",
+    "smtp_host": "tls://mail.middleware.svc:587",
+    "imap_auth_type": "XOAUTH2",
+    "smtp_auth_type": "XOAUTH2",
+    "imap_conn_options": {
+      "ssl": {
+        "verify_peer": true,
+        "verify_peer_name": true,
+        "cafile": "/etc/webmail-ca/ca.crt"
+      }
+    },
+    "smtp_conn_options": {
+      "ssl": {
+        "verify_peer": true,
+        "verify_peer_name": true,
+        "cafile": "/etc/webmail-ca/ca.crt"
+      }
+    }
+  },
+  "clients": {
+    "hebe": {
+      "flags": {
+        "publicClient": false,
+        "standardFlowEnabled": false,
+        "directAccessGrantsEnabled": true,
+        "serviceAccountsEnabled": true,
+        "fullScopeAllowed": true
+      },
+      "default": [
+        "acr",
+        "basic",
+        "email",
+        "profile",
+        "roles",
+        "web-origins"
+      ],
+      "optional": [
+        "address",
+        "mail",
+        "microprofile-jwt",
+        "offline_access",
+        "organization",
+        "phone"
+      ],
+      "mappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "groups",
+            "full.path": "false",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "process-engine-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "process-engine-rest",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ],
+      "redirectUris": []
+    },
+    "webmail": {
+      "flags": {
+        "publicClient": false,
+        "standardFlowEnabled": true,
+        "directAccessGrantsEnabled": false,
+        "serviceAccountsEnabled": false,
+        "fullScopeAllowed": false
+      },
+      "default": [
+        "acr",
+        "basic",
+        "email",
+        "profile",
+        "roles",
+        "web-origins"
+      ],
+      "optional": [
+        "mail"
+      ],
+      "mappers": [],
+      "redirectUris": [
+        "https://webmail.192-168-1-38.nip.io/index.php/login/oauth"
+      ]
+    }
+  },
+  "mailScope": {
+    "name": "mail",
+    "protocol": "openid-connect",
+    "attributes": {
+      "include.in.token.scope": "true",
+      "display.on.consent.screen": "false"
+    },
+    "protocolMappers": [
+      {
+        "name": "mail-audience",
+        "protocol": "openid-connect",
+        "protocolMapper": "oidc-audience-mapper",
+        "config": {
+          "included.custom.audience": "mail",
+          "access.token.claim": "true",
+          "id.token.claim": "false"
+        }
+      }
+    ]
+  },
+  "issuer": "https://keycloak.192-168-1-38.nip.io/realms/kantheon",
+  "keycloakImageID": "quay.io/keycloak/keycloak@sha256:b80a48090594367bd8cf6fe2019466ac4ea49de4d0830fb2a43256eda37b18f5",
+  "normalizationProvenance": {
+    "kind": "authored accepted realm + deterministic Keycloak26.5.1 expansion, not an invented historic effective fingerprint",
+    "runtimeWitness": {
+      "pod": "auth-keycloak-keycloakx-0",
+      "createdAt": "2026-10-29T11:56:45Z",
+      "containerStartedAt": "2026-11-07T07:13:28Z",
+      "restarts": 1,
+      "inference": "The current immutable issuer process predates the accepted Nov15 live S3.1/S3.2 checks. Local21 used a separately identified disposable issuer image; no equality with that fixture image is claimed."
+    },
+    "serviceAccountScope": "https://github.com/keycloak/keycloak/blob/26.5.1/services/src/main/java/org/keycloak/services/managers/ClientManager.java#L155-L200",
+    "groupMapper": "https://github.com/keycloak/keycloak/blob/26.5.1/services/src/main/java/org/keycloak/protocol/oidc/mappers/GroupMembershipMapper.java#L97-L104"
+  }
+}

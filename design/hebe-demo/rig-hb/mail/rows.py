@@ -24,3 +24,13 @@ def exit_code(rows):
     if any(status == 'FAIL' for _, status, _ in rows):
         return 1
     return 3 if any(status == 'OPEN' for _, status, _ in rows) else 0
+
+
+def pre_walk(rows):
+    """T2's explicitly partial gate; this is never a complete-profile PASS."""
+    names = [name for name, _, _ in rows]
+    if len(names) != len(ROWS) or set(names) != set(ROWS):
+        return False
+    allowed_open = {'R3-person', 'mail-stranger', 'mail-threads'}
+    return all(status == 'PASS' or (status == 'OPEN' and name in allowed_open)
+               for name, status, _ in rows)

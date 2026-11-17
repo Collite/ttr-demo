@@ -27,6 +27,11 @@ and corresponding receipts. Never send a second start while awaiting the first.
 | T6 | Use actual **Reply** on that proposal, type `ano`, send once. | Agent verifies one instance and its `ttr_note` containing Markéta's instruction and Jana's text, plus `ttr_source=mail:<Message-ID>`. Record instance/start receipt IDs and proposal subject. Finish its controlled task so no active fixture remains. |
 | T6 | Forward the original complaint again without any text of your own. | The three-way question appears: 1 summary, 2 start, 3 nothing. Use actual **Reply**, type `3`, send. Record the subject and closing result; no new instance. |
 
+The agent prepares and fills the working JSON record; the person performs the UI
+actions. Record each card/proposal root Message-ID (webmail View source/headers),
+its subject, task/instance/receipt references and the action time. Multiple cards
+can share `[4711]` subjects, so a matching subject alone never establishes a thread.
+
 For every card/proposal outcome, record that it stayed with the intended original
 thread and did not attach to a different task's thread. Use the mail client's actual
 Reply action; a fresh compose with a matching subject does not carry reply headers.
