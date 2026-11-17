@@ -4,8 +4,8 @@ import re
 import sys
 import tomllib
 
-IMAGE = 'ghcr.io/collite/hebe:0.11.13'
-DIGEST = 'sha256:1e03eb7759dceb23a560b2b67339f7c37c91909177753aa430fc9e738297b959'
+IMAGE = 'ghcr.io/collite/hebe:0.11.14'
+DIGEST = 'sha256:0565571cdbdc8c517a26a5c8759a0e89c096da8319c64ea7aa4441bf5de65074'
 
 
 def config(cm):
@@ -22,7 +22,7 @@ def image(deploy, pods):
         raise ValueError('expected one Ready Markéta replica')
     containers = deploy['spec']['template']['spec']['containers']
     if len(containers) != 1 or containers[0]['image'] != IMAGE:
-        raise ValueError('deployment is not the reviewed S3.5 0.11.13 image')
+        raise ValueError('deployment is not the reviewed S3.5b 0.11.14 image')
     live = [p for p in pods['items'] if not p['metadata'].get('deletionTimestamp')]
     if len(live) != 1:
         raise ValueError('expected only the new Markéta pod')

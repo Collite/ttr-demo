@@ -1,7 +1,7 @@
 # Hebe mail certification rig — S3.6
 
 This stage adds customer-only mail helpers to the existing engine rig. It retains
-the exact S3.5 Hebe `0.11.13` image/digest, engine, OBO, admission, receipts and
+the exact S3.5b Hebe `0.11.14` image/digest, engine, OBO, admission, receipts and
 isolation checks. No dependency pin, producer code, deployment or realm is changed.
 
 `just hebe-verify --profile mail` fixes context and hosts to bp-dsk, checks email

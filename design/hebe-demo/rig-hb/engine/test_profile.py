@@ -60,7 +60,7 @@ class EngineProfile(unittest.TestCase):
                 profile.image(deploy, {'items': [bad]})
         with self.assertRaises(ValueError):
             profile.image(deploy, {'items': [pod, pod]})
-        for wrong in ['ghcr.io/collite/hebe:0.11.12', 'ghcr.io/collite/hebe:0.11.9']:
+        for wrong in ['ghcr.io/collite/hebe:0.11.13', 'ghcr.io/collite/hebe:0.11.12', 'ghcr.io/collite/hebe:0.11.9']:
             deploy['spec']['template']['spec']['containers'][0]['image'] = wrong
             with self.subTest(image=wrong), self.assertRaises(ValueError):
                 profile.image(deploy, {'items': [pod]})
@@ -70,6 +70,12 @@ class EngineProfile(unittest.TestCase):
             '7bd7d7d2b10b3ff77ceefd39321b9d53dcd35d2b4323dd70ee8ba0a3fdcef126')
         with self.assertRaises(ValueError):
             profile.image(deploy, {'items': [old]})
+        for field in ['containerStatuses', 'initContainerStatuses']:
+            old = copy.deepcopy(pod)
+            old['status'][field][0]['imageID'] = ('ghcr.io/collite/hebe@sha256:'
+                '1e03eb7759dceb23a560b2b67339f7c37c91909177753aa430fc9e738297b959')
+            with self.subTest(old_digest=field), self.assertRaises(ValueError):
+                profile.image(deploy, {'items': [old]})
 
     def test_only_phone_rows_are_na_in_engine_profile(self):
         cm = json.dumps({'data': {'config.toml': '[channels.telegram]\nenabled=false\n[engine]\ndeliver_channels=["web","email"]\nrest_url="http://process-engine.process-engine.svc/engine-rest"'}})

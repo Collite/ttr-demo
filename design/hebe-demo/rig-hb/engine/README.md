@@ -6,9 +6,9 @@ the scheduled Monday brief and phone; neither is certified by an engine-profile 
 
 ## Prerequisites and deployment
 
-HE-D-32 aligns the rig with S3.5's approved mail-enabled baseline: Hebe `0.11.13`,
-source `b6d2f5bd7e5a6c04937fb9e33be23be98d760399`, app/init digest
-`sha256:1e03eb7759dceb23a560b2b67339f7c37c91909177753aa430fc9e738297b959`.
+HE-D-33 adopts S3.5b's exact live exit (Olymp#318 merge0291ede7/T4 PASS): Hebe `0.11.14`,
+source `cc3b5d8d0e35cd56a06feaff7a9db85535bae7e6`, app/init digest
+`sha256:0565571cdbdc8c517a26a5c8759a0e89c096da8319c64ea7aa4441bf5de65074`.
 The rig verifies this exact already deployed release; it changes no estate pin.
 Engine CIB seven Run4 2.2.0; REST Service port 80 at
 `http://process-engine.process-engine.svc/engine-rest`. Public issuer:
