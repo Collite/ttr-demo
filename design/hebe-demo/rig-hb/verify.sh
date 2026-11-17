@@ -265,8 +265,8 @@ check_phone() {
     local out
     out="$(kc -n "$NS" get configmap hebe-config -o json | python3 -I "$HERE/engine/profile.py" config)"
     if [ "$?" -ne 0 ]; then fail telegram "$out"; return; fi
-    na telegram 'bp-dsk engine profile: Telegram disabled; web only'
-    na unmapped-chat 'bp-dsk engine profile: Telegram disabled; web only'
+    na telegram 'bp-dsk engine profile: Telegram disabled; web+email'
+    na unmapped-chat 'bp-dsk engine profile: Telegram disabled; web+email'
     return
   fi
   case "${HEBE_VERIFY_TELEGRAM:-}" in
