@@ -6,11 +6,10 @@ the scheduled Monday brief and phone; neither is certified by an engine-profile 
 
 ## Prerequisites and deployment
 
-After S2.3c/c1 and HE-D-18's origin repair, HE-D-19's S2.3g/h process-choice recovery
-exited at Olymp `3c31bf90`: Hebe `0.11.12`, source
-`de6758b72a206fcc1b04dbf7bc508c754c48a051`, app/init digest
-`sha256:7bd7d7d2b10b3ff77ceefd39321b9d53dcd35d2b4323dd70ee8ba0a3fdcef126`.
-The rig verifies this already deployed release; it changes no estate pin.
+HE-D-33 adopts S3.5b's exact live exit (Olymp#318 merge0291ede7/T4 PASS): Hebe `0.11.14`,
+source `cc3b5d8d0e35cd56a06feaff7a9db85535bae7e6`, app/init digest
+`sha256:0565571cdbdc8c517a26a5c8759a0e89c096da8319c64ea7aa4441bf5de65074`.
+The rig verifies this exact already deployed release; it changes no estate pin.
 Engine CIB seven Run4 2.2.0; REST Service port 80 at
 `http://process-engine.process-engine.svc/engine-rest`. Public issuer:
 `https://keycloak.192-168-1-38.nip.io/realms/kantheon`.
@@ -62,7 +61,7 @@ checks full pod readiness, OBO, receipt key, registry/nonrouting, console login 
 Markéta and refusal of Maya/forged identity, receipt chain and durability, six applicable
 doctor rows, authenticated deduplicated open-task count, and a real direct-header
 isolation probe from another namespace. Only the two phone rows can be N/A, after
-checking live configuration is Telegram-disabled and engine delivery is web-only.
+checking live configuration is Telegram-disabled and engine delivery is exactly web+email.
 Missing/failed engine or authentication checks fail; absent persona credentials remain
 SKIP and exit 3, never a PASS. Legacy filesystem doctor rows do not represent PG-store
 durability; the required `State durability` row must explicitly say both stores are PG.

@@ -4,17 +4,17 @@ import re
 import sys
 import tomllib
 
-IMAGE = 'ghcr.io/collite/hebe:0.11.12'
-DIGEST = 'sha256:7bd7d7d2b10b3ff77ceefd39321b9d53dcd35d2b4323dd70ee8ba0a3fdcef126'
+IMAGE = 'ghcr.io/collite/hebe:0.11.14'
+DIGEST = 'sha256:0565571cdbdc8c517a26a5c8759a0e89c096da8319c64ea7aa4441bf5de65074'
 
 
 def config(cm):
     c = tomllib.loads(cm['data']['config.toml'])
-    if c['channels']['telegram'].get('enabled') is not False or c['engine'].get('deliver_channels') != ['web']:
-        raise ValueError('phone N/A requires Telegram disabled and web-only engine delivery')
+    if c['channels']['telegram'].get('enabled') is not False or c['engine'].get('deliver_channels') != ['web', 'email']:
+        raise ValueError('phone N/A requires Telegram disabled and exactly web+email engine delivery')
     if c['engine'].get('rest_url') != 'http://process-engine.process-engine.svc/engine-rest':
         raise ValueError('wrong bp-dsk engine URL')
-    return 'Telegram disabled; web only'
+    return 'Telegram disabled; web+email'
 
 
 def image(deploy, pods):
@@ -22,7 +22,7 @@ def image(deploy, pods):
         raise ValueError('expected one Ready Markéta replica')
     containers = deploy['spec']['template']['spec']['containers']
     if len(containers) != 1 or containers[0]['image'] != IMAGE:
-        raise ValueError('deployment is not the reviewed 0.11.12 image')
+        raise ValueError('deployment is not the reviewed S3.5b 0.11.14 image')
     live = [p for p in pods['items'] if not p['metadata'].get('deletionTimestamp')]
     if len(live) != 1:
         raise ValueError('expected only the new Markéta pod')

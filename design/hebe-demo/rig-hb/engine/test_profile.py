@@ -60,12 +60,25 @@ class EngineProfile(unittest.TestCase):
                 profile.image(deploy, {'items': [bad]})
         with self.assertRaises(ValueError):
             profile.image(deploy, {'items': [pod, pod]})
-        deploy['spec']['template']['spec']['containers'][0]['image'] = 'ghcr.io/collite/hebe:0.11.9'
+        for wrong in ['ghcr.io/collite/hebe:0.11.13', 'ghcr.io/collite/hebe:0.11.12', 'ghcr.io/collite/hebe:0.11.9']:
+            deploy['spec']['template']['spec']['containers'][0]['image'] = wrong
+            with self.subTest(image=wrong), self.assertRaises(ValueError):
+                profile.image(deploy, {'items': [pod]})
+        deploy['spec']['template']['spec']['containers'][0]['image'] = profile.IMAGE
+        old = copy.deepcopy(pod)
+        old['status']['containerStatuses'][0]['imageID'] = ('ghcr.io/collite/hebe@sha256:'
+            '7bd7d7d2b10b3ff77ceefd39321b9d53dcd35d2b4323dd70ee8ba0a3fdcef126')
         with self.assertRaises(ValueError):
-            profile.image(deploy, {'items': [pod]})
+            profile.image(deploy, {'items': [old]})
+        for field in ['containerStatuses', 'initContainerStatuses']:
+            old = copy.deepcopy(pod)
+            old['status'][field][0]['imageID'] = ('ghcr.io/collite/hebe@sha256:'
+                '1e03eb7759dceb23a560b2b67339f7c37c91909177753aa430fc9e738297b959')
+            with self.subTest(old_digest=field), self.assertRaises(ValueError):
+                profile.image(deploy, {'items': [old]})
 
     def test_only_phone_rows_are_na_in_engine_profile(self):
-        cm = json.dumps({'data': {'config.toml': '[channels.telegram]\nenabled=false\n[engine]\ndeliver_channels=["web"]\nrest_url="http://process-engine.process-engine.svc/engine-rest"'}})
+        cm = json.dumps({'data': {'config.toml': '[channels.telegram]\nenabled=false\n[engine]\ndeliver_channels=["web","email"]\nrest_url="http://process-engine.process-engine.svc/engine-rest"'}})
         with tempfile.NamedTemporaryFile() as ca:
             body = 'kc(){ printf "%s" "$FAKE_CM"; }; check_phone; echo "na=$NA open=$OPEN"'
             result = sourced('--profile engine', body,
@@ -73,10 +86,15 @@ class EngineProfile(unittest.TestCase):
             self.assertEqual(result.stdout.count('N/A'), 2)
             self.assertIn('na=2 open=0', result.stdout)
             self.assertNotIn('brief', result.stdout)
-            result = sourced('--profile engine', body,
-                             {'HEBE_VERIFY_CA_FILE': ca.name, 'FAKE_CM': cm.replace('false', 'true')})
-            self.assertIn('FAIL', result.stdout)
-            self.assertFalse(any(line.startswith('N/A') for line in result.stdout.splitlines()))
+            invalid = [cm.replace('false', 'true')] + [
+                json.dumps({'data': {'config.toml': json.loads(cm)['data']['config.toml'].replace(
+                    '["web","email"]', value)}})
+                for value in ['["web"]', '["web","email","telegram"]']]
+            for bad in invalid:
+                result = sourced('--profile engine', body,
+                                 {'HEBE_VERIFY_CA_FILE': ca.name, 'FAKE_CM': bad})
+                self.assertIn('FAIL', result.stdout)
+                self.assertFalse(any(line.startswith('N/A') for line in result.stdout.splitlines()))
         text = (HERE.parent / 'verify.sh').read_text()
         self.assertIn('if [ "$PROFILE" = full ]; then check_brief', text)
 
