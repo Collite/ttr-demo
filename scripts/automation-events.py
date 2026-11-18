@@ -25,8 +25,9 @@ Each event is one `POST <engine>/message` as `hartland-driver` (the bearer from 
 A start carries `ttrInput {key: {<column>: <key>}, at: <the event's time>}` (a JSON Object variable — the skeleton's
 Open reads it as a Map); a wake carries `ttrEventAt` (the round's clock). A wake no instance is waiting for (the line
 is in another loop, or already closed) answers 400 MismatchingMessageCorrelation: printed as `no waiting instance`, not
-a failure — the daily timers pick the line up. 5xx and transport errors retry three times; 401/403 and any other 4xx
-stop the run (exit 1). --dry-run prints the messages and sends nothing.
+a failure — the daily timers pick the line up. A START that correlates nothing (no deployed definition subscribes the
+message) started no instance that any timer could recover: it stops the run (exit 1), like 401/403 and any other 4xx.
+5xx and transport errors retry three times. --dry-run prints the messages and sends nothing.
 
 `check` validates the timeline (seq 1..n in time order, the four kinds, one integer key each); --dry lists the messages
 it would send in order; --engine-url also asks the engine that every started key has its instance
@@ -212,8 +213,13 @@ def replay_events(events: list[Event], names: dict[str, str], url: str, token: s
         label = f"{e.seq} {e.at.isoformat()} {body['messageName']} {e.key}"
         if 200 <= status < 300:
             print(f"{label} → {detail}")
-        elif unmatched(status, detail):
+        elif unmatched(status, detail) and body["messageName"] not in STARTS:
+            # a wake nobody waits for: the line is in another loop or closed, and its daily timer picks it up
             print(f"{label} → no waiting instance")
+        elif unmatched(status, detail):
+            # a start that started nothing: no definition subscribes the message — nothing would ever recover it
+            print(f"{label} → {status} no process definition starts on {body['messageName']} — stopping")
+            return 1
         else:
             print(f"{label} → {status or 'no answer'} {detail} — stopping")
             return 1

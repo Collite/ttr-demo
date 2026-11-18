@@ -181,6 +181,35 @@ class SendSpec(unittest.TestCase):
         self.assertTrue(printed[-1].endswith("401 unauthorized — stopping"))
         self.assertEqual(json.loads(seen[0].content)["messageName"], "order_placed")
 
+    def test_an_unmatched_wake_is_reported_and_the_run_goes_on(self):
+        seen: list[httpx.Request] = []
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            rc = ae.replay_events(ae.load(write(TIMELINE)), MESSAGES, "http://e/message", "tok", 0,
+                                  self.client([(200, self.STARTED), (200, self.STARTED), (400, self.UNMATCHED),
+                                               (400, self.UNMATCHED)], seen), sleep=lambda s: None)
+        self.assertEqual((rc, len(seen)), (0, 4))
+        self.assertTrue(out.getvalue().splitlines()[-1].endswith("settlement_posted 1000190 → no waiting instance"))
+
+    def test_a_start_that_correlates_nothing_stops_the_run(self):
+        # review-365 B2: C7 answers an uncorrelated start with the same 400 as an unmatched wake, but a start that
+        # started nothing has no timer to recover it — both start kinds stop the replay with exit 1
+        no_start = {"type": "RestException", "message": "org.cibseven.bpm.engine.MismatchingMessageCorrelationException: "
+                    "Cannot correlate message '{}': No process definition or execution matches the parameters"}
+        for seq, (first, kind) in enumerate([(None, "order_placed"), (self.STARTED, "return_requested")], start=1):
+            with self.subTest(kind):
+                seen: list[httpx.Request] = []
+                answers = ([(200, first)] if first else []) + [(400, {**no_start, "message": no_start["message"].format(kind)})]
+                out = io.StringIO()
+                with contextlib.redirect_stdout(out):
+                    rc = ae.replay_events(ae.load(write(TIMELINE)), MESSAGES, "http://e/message", "tok", 0,
+                                          self.client(answers + [(200, self.WOKEN)] * 3, seen), sleep=lambda s: None)
+                self.assertEqual((rc, len(seen)), (1, seq))
+                last = out.getvalue().splitlines()[-1]
+                self.assertIn(f" {kind} ", last)
+                self.assertTrue(last.endswith(f"400 no process definition starts on {kind} — stopping"), last)
+                self.assertNotIn("no waiting instance", out.getvalue())
+
     def test_the_instance_check_asks_the_history_by_process_and_key(self):
         seen: list[httpx.Request] = []
         events = ae.load(write(TIMELINE))
