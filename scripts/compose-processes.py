@@ -99,6 +99,10 @@ return SpinClass.JSON(response)
 """
 
 
+def http_result(what: str) -> str:
+    return HTTP_RESULT_GROOVY.format(what=what.replace("\\", "\\\\").replace("'", "\\'"))
+
+
 class Bpmn:
     """One skeleton, loaded for editing: the tree, an id index, the parent map and the diagram plane."""
 
@@ -206,6 +210,16 @@ class Bpmn:
         self._link(new_target, flow.get("id"), "incoming")
 
     def resource(self, out: pathlib.Path) -> bytes:
+        # every sequence flow drawn: a flow the composer added without waypoints gets a straight edge
+        drawn = {e.get("bpmnElement") for e in self.plane.iter(q("bpmndi:BPMNEdge"))}
+        centre = {}
+        for s in self.plane.iter(q("bpmndi:BPMNShape")):
+            b = s.find(q("dc:Bounds"))
+            centre[s.get("bpmnElement")] = (float(b.get("x")) + float(b.get("width")) / 2,
+                                            float(b.get("y")) + float(b.get("height")) / 2)
+        for f in self.defs.iter(q("bpmn:sequenceFlow")):
+            if f.get("id") not in drawn and f.get("sourceRef") in centre and f.get("targetRef") in centre:
+                self.edge(f.get("id"), [centre[f.get("sourceRef")], centre[f.get("targetRef")]])
         ET.indent(self.tree, space="  ")
         body = ET.tostring(self.defs, encoding="unicode")
         return ('<?xml version="1.0" encoding="UTF-8"?>\n' + body + "\n").encode("utf-8")
@@ -330,7 +344,7 @@ def approvals(doc: Bpmn, lapses: dict, labels: dict, egress: str, deployment: st
     done = []
     for task in list(doc.defs.iter(q("bpmn:userTask"))):
         raw = input_value(task, "ttrAction")
-        if not raw:
+        if not raw or not (doc.parent[task].get("name") or "").startswith("ask each "):
             continue
         action = re.fullmatch(r'\$\{"(\w+)"\}', raw).group(1)
         key_raw = input_value(task, "ttrKey")                       # ${ttrRow.prop("order_number").value()}
@@ -393,7 +407,7 @@ def approvals(doc: Bpmn, lapses: dict, labels: dict, egress: str, deployment: st
             ET.SubElement(m, q("camunda:entry"), {"key": "Content-Type"}).text = "application/json"
             ET.SubElement(io, q("camunda:inputParameter"), {"name": "payload"}).text = payload
             groovy(io, "camunda:outputParameter", {"name": "ttrLapsed"},
-                   HTTP_RESULT_GROOVY.format(what=f"perform {perform['action']} after the lapse"))
+                   http_result(f"perform {perform['action']} after the lapse"))
             ET.SubElement(io, q("camunda:outputParameter"), {"name": "ttrLapsedCode"}).text = "${statusCode}"
             ET.SubElement(e, q("camunda:failedJobRetryTimeCycle")).text = "R3/PT15S"
             doc.flow(scope, f"{n}_lapsed_perform", timer.get("id"), act.get("id"))
@@ -438,7 +452,7 @@ def digest(doc: Bpmn, labels: dict, egress: str, lang: str) -> None:
     ET.SubElement(io, q("camunda:inputParameter"), {"name": "method"}).text = "GET"
     ET.SubElement(io, q("camunda:inputParameter"), {"name": "url"}).text = \
         f'${{"{egress}/runs/".concat(ttrAnchor).concat("/digest?action=notify&lang={lang}")}}'
-    groovy(io, "camunda:outputParameter", {"name": "ttrDigest"}, HTTP_RESULT_GROOVY.format(what="the run digest"))
+    groovy(io, "camunda:outputParameter", {"name": "ttrDigest"}, http_result("the run digest"))
     ET.SubElement(e, q("camunda:failedJobRetryTimeCycle")).text = "R3/PT15S"
 
     send = doc.add(doc.process, "bpmn:sendTask", {"id": "s41_digest_send", "name": labels["digest_send"],
@@ -529,7 +543,350 @@ def compose_release_morning(s: dict) -> Bpmn:
     return doc
 
 
-PROCESSES = {"release_order": compose_release_order, "release_morning": compose_release_morning}
+# ---- H-2: one instance per return line, three skeletons stitched (`20` §4.4, D-147, D-171) ---------------------
+
+def bypass(doc: Bpmn, node: ET.Element) -> None:
+    """Take a node out of its flow: what came into it goes to what followed it; the node, its outgoing flow and their
+    diagram elements go."""
+    scope = doc.parent[node]
+    into, out = doc.flows_into(node.get("id")), doc.flows_from(node.get("id"))
+    if len(out) != 1:
+        raise SystemExit(f"{doc.path}: cannot bypass {node.get('name')!r} with {len(out)} outgoing flows")
+    nxt = out[0].get("targetRef")
+    for f in into:
+        doc.retarget(f, nxt)
+    for inc in doc.byid[nxt].findall(q("bpmn:incoming")):
+        if inc.text == out[0].get("id"):
+            doc.byid[nxt].remove(inc)
+    scope.remove(out[0])
+    scope.remove(node)
+    gone = {node.get("id"), out[0].get("id")} | {e.get("id") for e in node.iter() if e.get("id")}
+    for s in list(doc.plane):
+        if s.get("bpmnElement") in gone:
+            doc.plane.remove(s)
+    doc.reindex()
+
+
+def http_task(doc: Bpmn, scope: ET.Element, tid: str, name: str, method: str, url: str, result: str, what: str,
+              payload: str | None = None, tag: str = "bpmn:serviceTask") -> ET.Element:
+    """An authored HTTP step to the egress, shaped like the skeleton's (async, R3/PT15S, 409 → TTR_STALE,
+    other 4xx → TTR_REFUSED, 5xx → retry then incident)."""
+    task = doc.add(scope, tag, {"id": tid, "name": name, q("camunda:asyncBefore"): "true"})
+    e = ext(task)
+    conn = ET.SubElement(e, q("camunda:connector"))
+    ET.SubElement(conn, q("camunda:connectorId")).text = "http-connector"
+    io = ET.SubElement(conn, q("camunda:inputOutput"))
+    ET.SubElement(io, q("camunda:inputParameter"), {"name": "method"}).text = method
+    ET.SubElement(io, q("camunda:inputParameter"), {"name": "url"}).text = url
+    if payload is not None:
+        hdr = ET.SubElement(io, q("camunda:inputParameter"), {"name": "headers"})
+        ET.SubElement(ET.SubElement(hdr, q("camunda:map")), q("camunda:entry"), {"key": "Content-Type"}).text = "application/json"
+        ET.SubElement(io, q("camunda:inputParameter"), {"name": "payload"}).text = payload
+    groovy(io, "camunda:outputParameter", {"name": result}, http_result(what))
+    ET.SubElement(e, q("camunda:failedJobRetryTimeCycle")).text = "R3/PT15S"
+    return task
+
+
+ROUND_GROOVY = """\
+// AU-hartland S4.1 (authored): this round's port {{key, at}} — the line's key from the message that started the
+// instance, and the round's clock: the `at` of the message that woke it (the driver sends the timeline's time), else
+// now on the Prague clock. A fresh `at` per round: on-event runs deduplicate on it, so a reused one would replay.
+def variables
+try {{ variables = Class.forName('org.cibseven.bpm.engine.variable.Variables') }}
+catch (ClassNotFoundException e) {{ variables = Class.forName('org.camunda.bpm.engine.variable.Variables') }}
+def first = execution.getVariable('ttrInput')
+def at = execution.getVariable('ttrEventAt')
+if (at == null || !at.toString().trim()) at = java.time.OffsetDateTime.now(java.time.ZoneId.of('Europe/Prague')).toString()
+execution.removeVariable('ttrEventAt')
+def round = new LinkedHashMap([key: first['key'], at: at.toString()])
+execution.setVariable('ttrInput', variables.objectValue(round).serializationDataFormat('application/json').create())
+"""
+CARE_BY_GROOVY = """\
+// AU-hartland S4.1 (authored): who decided (D-168's `by`), as the engine saw the completion.
+task.execution.setVariable('ttrCareBy', task.getAssignee())
+"""
+WAYS = ("refund_no_return", "replacement_no_return", "exchange", "refund_after_return")
+WAY_LABELS = {
+    "cs": {"refund_no_return": "Vrácení peněz bez vrácení zboží", "replacement_no_return": "Náhrada bez vrácení zboží",
+           "exchange": "Výměna zboží", "refund_after_return": "Vrácení peněz po vrácení zboží"},
+    "en": {"refund_no_return": "Refund, no return", "replacement_no_return": "Replacement, no return",
+           "exchange": "Exchange", "refund_after_return": "Refund after the return"},
+}
+H2 = {
+    "cs": {"name": "H-2 · reklamace řádku", "start": "reklamace přijata", "verdict": "Výsledek rozhodnutí",
+           "way": "Způsob?", "care": "Rozhodněte o způsobu vyřízení řádku ${ttrInput['key']['line_id']}",
+           "care_field": "Způsob vyřízení", "care_row": "Řádek pro péči", "care_perform": "Provést rozhodnutí péče",
+           "care_way": "Zvolený způsob?", "instructions": "Pokyny k vrácení zákazníkovi", "rejected": "zamítnuto",
+           "inbound_wait": "Čekat na příjem zboží", "receipt": "příjemka zaúčtována", "daily": "denně",
+           "inbound": "Kontrola příjmu zboží", "inbound_round": "Kolo kontroly příjmu", "inbound_verdict": "Výsledek kontroly",
+           "inbound_route": "Stav příjmu?", "not_returned": "zboží nevráceno",
+           "settle_wait": "Čekat na vyrovnání", "settlement": "doklad vyrovnání zaúčtován",
+           "settle": "Vyrovnání", "settle_round": "Kolo vyrovnání", "settle_verdict": "Výsledek vyrovnání",
+           "settle_route": "Vyrovnáno?", "closed": "uzavřeno", "stopped": "zastaveno k opravě",
+           "review": "Posuďte řádek reklamace ${ttrKey}", "other": "jinak"},
+    "en": {"name": "H-2 · a return line", "start": "return requested", "verdict": "The decision",
+           "way": "Which way?", "care": "Decide the way of return line ${ttrInput['key']['line_id']}",
+           "care_field": "The way", "care_row": "The care row", "care_perform": "Perform care's decision",
+           "care_way": "The chosen way?", "instructions": "Return instructions to the customer", "rejected": "rejected",
+           "inbound_wait": "Wait for the goods", "receipt": "receipt posted", "daily": "daily",
+           "inbound": "Monitor the inbound goods", "inbound_round": "Inbound round", "inbound_verdict": "The inbound verdict",
+           "inbound_route": "Inbound state?", "not_returned": "not returned",
+           "settle_wait": "Wait for the settlement", "settlement": "settlement posted",
+           "settle": "Settle", "settle_round": "Settlement round", "settle_verdict": "The settlement verdict",
+           "settle_route": "Settled?", "closed": "closed", "stopped": "stopped for repair",
+           "review": "Review return line ${ttrKey}", "other": "otherwise"},
+}
+
+
+def has_route(verdict: str, route: str) -> str:
+    return (f'${{{verdict}.prop("verdict").prop("routes").hasProp("{route}") && '
+            f'{verdict}.prop("verdict").prop("routes").prop("{route}").prop("rowCount").numberValue() > 0}}')
+
+
+def review_groups() -> dict[str, str]:
+    """route → the Keycloak group of `review { who: role.<r> }` in the recipes (monitor_inbound, settle)."""
+    groups = dict(re.findall(r'def role (\w+)\s*\{\s*resolve:\s*keycloak_group\s*"([^"]+)"',
+                             (ROOT / "automation" / "automation.ttrm").read_text(encoding="utf-8")))
+    found = {}
+    for recipe in ("monitor_inbound", "settle"):
+        text = (ROOT / "automation" / recipe / f"{recipe}.ttrp").read_text(encoding="utf-8")
+        for route, role in re.findall(r"\w+\.(\w+)\s*->\s*review\s*\{\s*who:\s*role\.(\w+)", text):
+            found[route] = groups[role]
+    return found
+
+
+def reviews(doc: Bpmn, labels: dict) -> None:
+    """The recipes' `review` rows render as user tasks with no candidate group: give each its route's group."""
+    groups = review_groups()
+    for task in doc.defs.iter(q("bpmn:userTask")):
+        if input_value(task, "ttrAction") != '${"review"}':
+            continue
+        route = re.fullmatch(r"each (\w+) row", doc.parent[task].get("name") or "").group(1)
+        task.set(q("camunda:candidateGroups"), groups[route])
+        task.set("name", labels["review"])
+        groovy(ext(task), "camunda:taskListener", {"event": "create"}, TASK_VISIBLE_GROOVY.format(action="review"))
+
+
+def embed(doc: Bpmn, other: Bpmn, wid: str, name: str, dx: float, dy: float) -> ET.Element:
+    """Wrap another skeleton's whole process in an embedded subprocess of `doc`: its start → … → its `complete`.
+    A terminate end in a subprocess would only end the subprocess, so `stopped for repair` becomes an error end the
+    wrapper's boundary turns into the root's terminate end."""
+    wrapper = doc.add(doc.process, "bpmn:subProcess", {"id": wid, "name": name})
+    contract = other.process.find(f"{q('bpmn:extensionElements')}/{q('ttr:contract')}")
+    if contract is not None:
+        ext(wrapper).append(copy.deepcopy(contract))
+    for child in list(other.process):
+        if child.tag == q("bpmn:extensionElements"):
+            continue
+        wrapper.append(copy.deepcopy(child))
+    for end in wrapper.findall(q("bpmn:endEvent")):
+        term = end.find(q("bpmn:terminateEventDefinition"))
+        if term is not None:
+            end.remove(term)
+            ET.SubElement(end, q("bpmn:errorEventDefinition"), {"errorRef": "s41_stopped"})
+    xs, ys, xe, ye = [], [], [], []
+    for s in other.plane:
+        el = copy.deepcopy(s)
+        for b in el.iter(q("dc:Bounds")):
+            b.set("x", f"{float(b.get('x')) + dx:g}")
+            b.set("y", f"{float(b.get('y')) + dy:g}")
+            xs.append(float(b.get("x"))); ys.append(float(b.get("y")))
+            xe.append(float(b.get("x")) + float(b.get("width"))); ye.append(float(b.get("y")) + float(b.get("height")))
+        for w in el.iter(q("di:waypoint")):
+            w.set("x", f"{float(w.get('x')) + dx:g}")
+            w.set("y", f"{float(w.get('y')) + dy:g}")
+        doc.plane.append(el)
+    doc.reindex()
+    doc.shape(wid, min(xs) - 30, min(ys) - 30, max(xe) - min(xs) + 60, max(ye) - min(ys) + 60)
+    shape = doc.plane[-1]
+    shape.set(q("bpmndi:isExpanded"), "true")
+    doc.plane.remove(shape)
+    doc.plane.insert(0, shape)
+    return wrapper
+
+
+def compose_return_request(s: dict) -> Bpmn:
+    lang, labels, t = s["lang"], LABELS[s["lang"]], H2[s["lang"]]
+    deps = s["deployments"]
+    doc = Bpmn(export_bpmn(deps["decide_event"]))
+    egress = egress_of(doc)
+    decide_deployment = deployment_of(doc)
+    rename(doc, "return_request", t["name"])
+    recipients(doc, s["mail"])
+    start = message_start(doc, t["start"], "return_requested")
+    P = doc.process
+
+    # care decides outside the run (D-171): the skeleton's approval ask of decide_way goes
+    bypass(doc, doc.named("bpmn:subProcess", "ask each to_customer_care row", P))
+
+    # the stop for repair, shared by the three chains
+    stopped_err = ET.Element(q("bpmn:error"), {"id": "s41_stopped", "errorCode": "TTR_STOPPED", "name": "stopped for repair"})
+    errors = doc.defs.findall(q("bpmn:error"))
+    doc.defs.insert(list(doc.defs).index(errors[-1]) + 1, stopped_err)
+
+    plane_shapes = [s_ for s_ in doc.plane if s_.find(q("dc:Bounds")) is not None]
+    max_y = max(float(s_.find(q("dc:Bounds")).get("y")) + float(s_.find(q("dc:Bounds")).get("height")) for s_ in plane_shapes)
+    max_x = max(float(s_.find(q("dc:Bounds")).get("x")) + float(s_.find(q("dc:Bounds")).get("width")) for s_ in plane_shapes)
+    band = max_y + 150          # the authored flow runs below the decide chain, the two loops below it
+    X = lambda i: 200 + i * 170  # noqa: E731
+
+    # ---- after Decide: read its verdict, branch on the way ----
+    decide_end = doc.named("bpmn:endEvent", "complete", P)
+    into_end = doc.flows_into(decide_end.get("id"))
+    remember = doc.add(P, "bpmn:scriptTask", {"id": "s41_decide_run", "name": t["verdict"], "scriptFormat": "groovy"})
+    ET.SubElement(remember, q("bpmn:script")).text = "execution.setVariable('ttrDecideRun', execution.getVariable('ttrAnchor'))"
+    for f in into_end:
+        doc.retarget(f, remember.get("id"))
+    P.remove(decide_end)
+    for s_ in list(doc.plane):
+        if s_.get("bpmnElement") == decide_end.get("id"):
+            doc.plane.remove(s_)
+    verdict = http_task(doc, P, "s41_decide_verdict", t["verdict"], "GET",
+                        f'${{"{egress}/runs/".concat(ttrDecideRun)}}', "ttrVerdict", "the decision's status")
+    doc.flow(P, "s41_f_remember", "s41_decide_run", "s41_decide_verdict")
+    way = doc.add(P, "bpmn:exclusiveGateway", {"id": "s41_way", "name": t["way"], "default": "s41_f_way_rejected"})
+    doc.flow(P, "s41_f_verdict_way", "s41_decide_verdict", "s41_way")
+    rejected = doc.add(P, "bpmn:endEvent", {"id": "s41_rejected", "name": t["rejected"]})
+    doc.flow(P, "s41_f_way_rejected", "s41_way", "s41_rejected", name=t["rejected"])
+
+    # ---- the care route: a form task, then a typed perform of decide_way {to, way} (D-171, D-168) ----
+    care_row = http_task(doc, P, "s41_care_row", t["care_row"], "GET",
+                         f'${{"{egress}/runs/".concat(ttrDecideRun).concat("/routes/to_customer_care")}}',
+                         "ttrCareRows", "the care route's row")
+    care = doc.add(P, "bpmn:userTask", {"id": "s41_care", "name": t["care"], q("camunda:candidateGroups"): "hartland-care",
+                                       q("camunda:dueDate"): "${ttrApprovalDue}"})
+    ce = ext(care)
+    form = ET.SubElement(ce, q("camunda:formData"))
+    field = ET.SubElement(form, q("camunda:formField"), {"id": "way", "label": t["care_field"], "type": "enum"})
+    ET.SubElement(ET.SubElement(field, q("camunda:validation")), q("camunda:constraint"), {"name": "required"})
+    for w in WAYS:
+        ET.SubElement(field, q("camunda:value"), {"id": w, "name": WAY_LABELS[lang][w]})
+    cio = ET.SubElement(ce, q("camunda:inputOutput"))
+    ET.SubElement(cio, q("camunda:inputParameter"), {"name": "ttrAction"}).text = '${"decide_way"}'
+    ET.SubElement(cio, q("camunda:inputParameter"), {"name": "ttrKey"}).text = "${ttrInput['key']['line_id']}"
+    groovy(ce, "camunda:taskListener", {"event": "create"}, TASK_VISIBLE_GROOVY.format(action="decide_way"))
+    groovy(ce, "camunda:taskListener", {"event": "complete"}, CARE_BY_GROOVY)
+    # an IO-mapped activity keeps what is set in it local: the form's way and the completer leave by output mappings
+    ET.SubElement(cio, q("camunda:outputParameter"), {"name": "way"}).text = "${way}"
+    ET.SubElement(cio, q("camunda:outputParameter"), {"name": "ttrCareBy"}).text = "${ttrCareBy}"
+    care_due = doc.add(P, "bpmn:scriptTask", {"id": "s41_care_due", "name": labels["due"], "scriptFormat": "groovy"})
+    ET.SubElement(care_due, q("bpmn:script")).text = WORKING_DAYS_GROOVY.format(action="decide_way", days=3)
+    to_expr = "(way == 'exchange' || way == 'refund_after_return' ? 'awaiting_goods' : 'settling')"
+    perform = http_task(
+        doc, P, "s41_care_perform", t["care_perform"], "POST",
+        f'${{"{egress}/deployments/{decide_deployment}/actions/decide_way/perform"}}', "ttrCarePerformed",
+        "perform decide_way",
+        payload=("${S('{}').prop(\"key\", S('{}').prop(\"line\", ttrCareRows.prop(\"rows\").elements().get(0).prop(\"line_id\")))"
+                 f".prop(\"params\", S('{{}}').prop(\"to\", {to_expr}).prop(\"way\", way))"
+                 ".prop(\"by\", ttrCareBy).prop(\"origin\", \"engine\")"
+                 ".prop(\"idempotencyKey\", execution.processInstanceId.concat(\":care\")).toString()}"))
+    care_way = doc.add(P, "bpmn:exclusiveGateway", {"id": "s41_care_way", "name": t["care_way"], "default": "s41_f_care_settle"})
+    instructions = doc.add(P, "bpmn:sendTask", {"id": "s41_instructions", "name": t["instructions"],
+                                                q("camunda:type"): "external", q("camunda:topic"): "TTR_CONN_MAIL"})
+    iio = ET.SubElement(ext(instructions), q("camunda:inputOutput"))
+    for k, v in (("ttrRecipient", '${ttrCareRows.prop("rows").elements().get(0).prop("customer_email").stringValue()}'),
+                 ("ttrRow", '${ttrCareRows.prop("rows").elements().get(0)}'),
+                 ("ttrAction", '${"notify_customer"}'), ("ttrTemplate", '${"return-instructions"}'),
+                 ("ttrKey", "${ttrInput['key']['line_id']}")):
+        ET.SubElement(iio, q("camunda:inputParameter"), {"name": k}).text = v
+    doc.flow(P, "s41_f_way_care", "s41_way", "s41_care_row", name="to_customer_care",
+             condition=has_route("ttrVerdict", "to_customer_care"))
+    doc.flow(P, "s41_f_care_row_due", "s41_care_row", "s41_care_due")
+    doc.flow(P, "s41_f_care_due_task", "s41_care_due", "s41_care")
+    doc.flow(P, "s41_f_care_perform", "s41_care", "s41_care_perform")
+    doc.flow(P, "s41_f_care_performed", "s41_care_perform", "s41_care_way")
+
+    # ---- the two loops: wait (message | daily timer) → a round → the recipe's verdict → again or on (D-147) ----
+    def loop(prefix: str, deployment: str, message: str, i_wait: str, wait_label: str, msg_label: str,
+             wrap_label: str, round_label: str, verdict_label: str, route_label: str, row_y: float) -> dict:
+        other = Bpmn(export_bpmn(deployment))
+        merge = doc.add(P, "bpmn:exclusiveGateway", {"id": f"s41_{prefix}_again", "name": wait_label})
+        wait = doc.add(P, "bpmn:eventBasedGateway", {"id": f"s41_{prefix}_wait", "name": wait_label})
+        msg_id = f"s41_message_{message}"
+        if doc.byid.get(msg_id) is None:
+            msg = ET.Element(q("bpmn:message"), {"id": msg_id, "name": message})
+            doc.defs.insert(list(doc.defs).index(doc.defs.find(q("bpmn:process"))), msg)
+            doc.byid[msg_id] = msg
+        catch = doc.add(P, "bpmn:intermediateCatchEvent", {"id": f"s41_{prefix}_message", "name": msg_label})
+        ET.SubElement(catch, q("bpmn:messageEventDefinition"), {"id": f"s41_{prefix}_message_def", "messageRef": msg_id})
+        timer = doc.add(P, "bpmn:intermediateCatchEvent", {"id": f"s41_{prefix}_timer", "name": t["daily"]})
+        td = ET.SubElement(timer, q("bpmn:timerEventDefinition"), {"id": f"s41_{prefix}_timer_def"})
+        ET.SubElement(td, q("bpmn:timeDuration"), {q("xsi:type"): "bpmn:tFormalExpression"}).text = \
+            "${execution.getVariable('ttrLoopPeriod') != null ? ttrLoopPeriod : 'P1D'}"
+        rnd = doc.add(P, "bpmn:scriptTask", {"id": f"s41_{prefix}_round", "name": round_label, "scriptFormat": "groovy"})
+        ET.SubElement(rnd, q("bpmn:script")).text = ROUND_GROOVY
+        wrapper = embed(doc, other, f"s41_{prefix}", wrap_label, dx=300, dy=row_y)
+        stopped = doc.add(P, "bpmn:boundaryEvent", {"id": f"s41_{prefix}_stopped", "name": t["stopped"],
+                                                    "attachedToRef": wrapper.get("id"), "cancelActivity": "true"})
+        ET.SubElement(stopped, q("bpmn:errorEventDefinition"), {"errorRef": "s41_stopped"})
+        stop_end = doc.add(P, "bpmn:endEvent", {"id": f"s41_{prefix}_stop_end", "name": t["stopped"]})
+        ET.SubElement(stop_end, q("bpmn:terminateEventDefinition"))
+        verdict = http_task(doc, P, f"s41_{prefix}_verdict", verdict_label, "GET",
+                            f'${{"{egress}/runs/".concat(ttrAnchor)}}', "ttrVerdict", f"the {prefix} verdict")
+        gw = doc.add(P, "bpmn:exclusiveGateway", {"id": f"s41_{prefix}_route", "name": route_label,
+                                                  "default": f"s41_f_{prefix}_again"})
+        doc.flow(P, f"s41_f_{prefix}_merge_wait", merge.get("id"), wait.get("id"))
+        doc.flow(P, f"s41_f_{prefix}_wait_message", wait.get("id"), catch.get("id"))
+        doc.flow(P, f"s41_f_{prefix}_wait_timer", wait.get("id"), timer.get("id"))
+        doc.flow(P, f"s41_f_{prefix}_message_round", catch.get("id"), rnd.get("id"))
+        doc.flow(P, f"s41_f_{prefix}_timer_round", timer.get("id"), rnd.get("id"))
+        doc.flow(P, f"s41_f_{prefix}_round_run", rnd.get("id"), wrapper.get("id"))
+        doc.flow(P, f"s41_f_{prefix}_run_verdict", wrapper.get("id"), verdict.get("id"))
+        doc.flow(P, f"s41_f_{prefix}_verdict_route", verdict.get("id"), gw.get("id"))
+        doc.flow(P, f"s41_f_{prefix}_again", gw.get("id"), merge.get("id"), name=t["other"])
+        doc.flow(P, f"s41_f_{prefix}_stopped", stopped.get("id"), stop_end.get("id"))
+        # diagram: the wait band above the wrapper
+        wy = row_y - 120
+        for i, el in enumerate((merge, wait)):
+            doc.shape(el.get("id"), X(i), wy, 50, 50)
+        doc.shape(catch.get("id"), X(2), wy - 40, 36, 36)
+        doc.shape(timer.get("id"), X(2), wy + 50, 36, 36)
+        doc.shape(rnd.get("id"), X(3), wy, 100, 80)
+        doc.shape(verdict.get("id"), X(5), wy, 100, 80)
+        doc.shape(gw.get("id"), X(6), wy, 50, 50)
+        doc.shape(stopped.get("id"), X(4), wy + 80, 36, 36)
+        doc.shape(stop_end.get("id"), X(4) + 60, wy + 80, 36, 36)
+        return {"merge": merge.get("id"), "route": gw.get("id")}
+
+    inbound = loop("inbound", deps["inbound_event"], "receipt_posted", "", t["inbound_wait"], t["receipt"],
+                   t["inbound"], t["inbound_round"], t["inbound_verdict"], t["inbound_route"], band + 600)
+    settle_y = band + 600 + 1600
+    settle = loop("settle", deps["settle_event"], "settlement_posted", "", t["settle_wait"], t["settlement"],
+                  t["settle"], t["settle_round"], t["settle_verdict"], t["settle_route"], settle_y)
+
+    # the way → the loops
+    for w, target in (("exchange", inbound["merge"]), ("refund_after_return", inbound["merge"]),
+                      ("refund_no_return", settle["merge"]), ("replacement_no_return", settle["merge"])):
+        doc.flow(P, f"s41_f_way_{w}", "s41_way", target, name=w, condition=has_route("ttrVerdict", w))
+    doc.flow(P, "s41_f_care_inbound", "s41_care_way", "s41_instructions", name="exchange · refund_after_return",
+             condition="${way == 'exchange' || way == 'refund_after_return'}")
+    doc.flow(P, "s41_f_instructions_inbound", "s41_instructions", inbound["merge"])
+    doc.flow(P, "s41_f_care_settle", "s41_care_way", settle["merge"], name="refund_no_return · replacement_no_return")
+    # inbound: complete → settle · expired → end
+    doc.flow(P, "s41_f_inbound_complete", inbound["route"], settle["merge"], name="complete",
+             condition=has_route("ttrVerdict", "complete"))
+    not_returned = doc.add(P, "bpmn:endEvent", {"id": "s41_not_returned", "name": t["not_returned"]})
+    doc.flow(P, "s41_f_inbound_expired", inbound["route"], "s41_not_returned", name="expired",
+             condition=has_route("ttrVerdict", "expired"))
+    closed = doc.add(P, "bpmn:endEvent", {"id": "s41_closed", "name": t["closed"]})
+    doc.flow(P, "s41_f_settle_closed", settle["route"], "s41_closed", name="closed",
+             condition=has_route("ttrVerdict", "closed"))
+    del rejected, care_way, perform, verdict, remember, way, not_returned, closed, care, care_due, care_row
+
+    # diagram of the decide band
+    for i, nid in enumerate(("s41_decide_run", "s41_decide_verdict", "s41_way", "s41_rejected", "s41_care_row",
+                             "s41_care_due", "s41_care", "s41_care_perform", "s41_care_way", "s41_instructions",
+                             "s41_not_returned", "s41_closed")):
+        el = doc.byid[nid]
+        w_, h_ = (50, 50) if "Gateway" in el.tag else (36, 36) if "Event" in el.tag else (100, 80)
+        doc.shape(nid, X(i), band, w_, h_)
+    reviews(doc, H2[lang])
+    del max_x, start
+    return doc
+
+
+PROCESSES = {"release_order": compose_release_order, "release_morning": compose_release_morning,
+             "return_request": compose_return_request}
 
 
 def main(argv: list[str] | None = None) -> int:
