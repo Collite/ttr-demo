@@ -1,0 +1,10 @@
+{
+  "name": "hartland-processes-tests",
+  "private": true,
+  "description": "AU-hartland P4·S4.1 — the authored processes' specs read BPMN with bpmn-moddle (JDK-free). The repo is content-only otherwise; CI runs `npm ci --prefix processes/tests` before `just verify-model`.",
+  "type": "module",
+  "dependencies": {
+    "bpmn-moddle": "10.3.1",
+    "camunda-bpmn-moddle": "8.0.2"
+  }
+}

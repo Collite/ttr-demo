@@ -32,11 +32,11 @@ if (execution.getVariable('TTR_MAIL_RECIPIENTS') == null) {
       <bpmn:incoming>n_b5cdef77539218da0ba1</bpmn:incoming>
       <bpmn:terminateEventDefinition />
     </bpmn:endEvent>
-    <bpmn:userTask id="n_9f6e9daff19c8ee93bfa" name="export outdated">
+    <bpmn:userTask id="n_9f6e9daff19c8ee93bfa" name="export outdated" camunda:candidateGroups="hartland-ops">
       <bpmn:incoming>n_d8d165892796b2148a52</bpmn:incoming>
       <bpmn:outgoing>n_de665a6cba815569252d</bpmn:outgoing>
     </bpmn:userTask>
-    <bpmn:userTask id="n_6cea232e30ad1f75c2a8" name="run refused; inspect evidence">
+    <bpmn:userTask id="n_6cea232e30ad1f75c2a8" name="run refused; inspect evidence" camunda:candidateGroups="hartland-ops">
       <bpmn:incoming>n_f58e57a2d070e43bb44f</bpmn:incoming>
       <bpmn:outgoing>n_b5cdef77539218da0ba1</bpmn:outgoing>
     </bpmn:userTask>
@@ -2922,11 +2922,11 @@ execution.setVariable('ttrInput', variables.objectValue(round).serializationData
         <bpmn:incoming>n_2dd611fcf96e1b178861</bpmn:incoming>
         <bpmn:errorEventDefinition errorRef="s41_stopped" />
       </bpmn:endEvent>
-      <bpmn:userTask id="n_7994ab4df28c5a39362f" name="export outdated">
+      <bpmn:userTask id="n_7994ab4df28c5a39362f" name="export outdated" camunda:candidateGroups="hartland-ops">
         <bpmn:incoming>n_49dc40d168a68c1bcfd0</bpmn:incoming>
         <bpmn:outgoing>n_d72a29b486d85ce76f80</bpmn:outgoing>
       </bpmn:userTask>
-      <bpmn:userTask id="n_fde826c1957e2b5aecaa" name="run refused; inspect evidence">
+      <bpmn:userTask id="n_fde826c1957e2b5aecaa" name="run refused; inspect evidence" camunda:candidateGroups="hartland-ops">
         <bpmn:incoming>n_1fb9f306ca0b9ad04356</bpmn:incoming>
         <bpmn:outgoing>n_2dd611fcf96e1b178861</bpmn:outgoing>
       </bpmn:userTask>
@@ -4608,11 +4608,11 @@ execution.setVariable('ttrInput', variables.objectValue(round).serializationData
         <bpmn:incoming>n_b08cbf3b1c8422d937a3</bpmn:incoming>
         <bpmn:errorEventDefinition errorRef="s41_stopped" />
       </bpmn:endEvent>
-      <bpmn:userTask id="n_398ef1a652b582a71f47" name="export outdated">
+      <bpmn:userTask id="n_398ef1a652b582a71f47" name="export outdated" camunda:candidateGroups="hartland-ops">
         <bpmn:incoming>n_fcfe21214123a33527cf</bpmn:incoming>
         <bpmn:outgoing>n_209418b05887d75f7e5b</bpmn:outgoing>
       </bpmn:userTask>
-      <bpmn:userTask id="n_61470cfa071a1efa7f5e" name="run refused; inspect evidence">
+      <bpmn:userTask id="n_61470cfa071a1efa7f5e" name="run refused; inspect evidence" camunda:candidateGroups="hartland-ops">
         <bpmn:incoming>n_cd61ebc2ec0534d987a6</bpmn:incoming>
         <bpmn:outgoing>n_b08cbf3b1c8422d937a3</bpmn:outgoing>
       </bpmn:userTask>

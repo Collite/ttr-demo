@@ -10,7 +10,7 @@
 # RV-P3.2: the root data area is a third authored surface, and its guards belong in the
 # same command as the model's.)
 verify-model:
-    node --test $(find model agents lexicon automation -name '*.test.mjs')
+    node --test $(find model agents lexicon automation processes -name '*.test.mjs' -not -path '*/node_modules/*')
 
 # XM-P3: read-only catalog acceptance after scan + two successful projection Jobs.
 verify-openmetadata:

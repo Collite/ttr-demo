@@ -38,11 +38,11 @@ if (!execution.getProcessBusinessKey()) {
       <bpmn:incoming>n_4ec7c723e055bbe1e438</bpmn:incoming>
       <bpmn:terminateEventDefinition />
     </bpmn:endEvent>
-    <bpmn:userTask id="n_9ab3f418d4c48e1341ee" name="export outdated">
+    <bpmn:userTask id="n_9ab3f418d4c48e1341ee" name="export outdated" camunda:candidateGroups="hartland-ops">
       <bpmn:incoming>n_da66e8b278b2309f41f2</bpmn:incoming>
       <bpmn:outgoing>n_0cea9bcc3360b1780010</bpmn:outgoing>
     </bpmn:userTask>
-    <bpmn:userTask id="n_8d157f850a5618e280a7" name="run refused; inspect evidence">
+    <bpmn:userTask id="n_8d157f850a5618e280a7" name="run refused; inspect evidence" camunda:candidateGroups="hartland-ops">
       <bpmn:incoming>n_b7e0a081c93094e278f5</bpmn:incoming>
       <bpmn:outgoing>n_4ec7c723e055bbe1e438</bpmn:outgoing>
     </bpmn:userTask>

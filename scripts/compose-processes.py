@@ -284,6 +284,14 @@ def recipients(doc: Bpmn, mail: dict[str, str]) -> None:
     groovy(ext(doc.process), "camunda:executionListener", {"event": "start"}, RECIPIENTS_GROOVY.format(mail=literal))
 
 
+def repairs(doc: Bpmn) -> None:
+    """The skeleton's repair tasks ("export outdated", "run refused; inspect evidence") name no group, so only an engine
+    admin would see them: they go to ops (`def role ops`, hartland-ops — admin on the engine, D-161)."""
+    for task in doc.defs.iter(q("bpmn:userTask")):
+        if task.get(q("camunda:candidateGroups")) is None and task.get(q("camunda:assignee")) is None:
+            task.set(q("camunda:candidateGroups"), "hartland-ops")
+
+
 def message_start(doc: Bpmn, start_label: str, message: str) -> ET.Element:
     start = doc.named("bpmn:startEvent", "start with ttrInput key", doc.process)
     start.set("name", start_label)
@@ -900,7 +908,9 @@ def main(argv: list[str] | None = None) -> int:
     out_dir = ROOT / "processes" / args.set
     drift = []
     for name, build in PROCESSES.items():
-        body = build(sets[args.set]).resource(out_dir)
+        doc = build(sets[args.set])
+        repairs(doc)
+        body = doc.resource(out_dir)
         path = out_dir / f"{name}.bpmn"
         if args.check:
             if not path.exists() or path.read_bytes() != body:
