@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="query.query.returns_by_reason_decision_definitions" name="query.query.returns_by_reason" namespace="https://tatrman.org/dmn/hartland.worlds.demo" xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:camunda="http://camunda.org/schema/1.0/dmn">
+  <decision camunda:historyTimeToLive="30" id="query.query.returns_by_reason_decision" name="query.query.returns_by_reason_decision">
+    <decisionTable hitPolicy="FIRST" id="query.query.returns_by_reason_decision_table">
+      <input id="query.query.returns_by_reason_decision_input_0" label="reason">
+        <inputExpression id="query.query.returns_by_reason_decision_expression_0" typeRef="string">
+          <text>reason</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.returns_by_reason_decision_input_1" label="return_qty">
+        <inputExpression id="query.query.returns_by_reason_decision_expression_1" typeRef="number">
+          <text>return_qty</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.returns_by_reason_decision_input_2" label="return_amt">
+        <inputExpression id="query.query.returns_by_reason_decision_expression_2" typeRef="number">
+          <text>return_amt</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.returns_by_reason_decision_input_3" label="row_count">
+        <inputExpression id="query.query.returns_by_reason_decision_expression_3" typeRef="number">
+          <text>row_count</text>
+        </inputExpression>
+      </input>
+      <output id="query.query.returns_by_reason_decision_output" name="outcome" typeRef="string" />
+    </decisionTable>
+  </decision>
+</definitions>
+

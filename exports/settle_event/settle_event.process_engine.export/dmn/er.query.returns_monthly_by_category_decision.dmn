@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="er.query.returns_monthly_by_category_decision_definitions" name="er.query.returns_monthly_by_category" namespace="https://tatrman.org/dmn/hartland.worlds.demo" xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:camunda="http://camunda.org/schema/1.0/dmn">
+  <decision camunda:historyTimeToLive="30" id="er.query.returns_monthly_by_category_decision" name="er.query.returns_monthly_by_category_decision">
+    <decisionTable hitPolicy="FIRST" id="er.query.returns_monthly_by_category_decision_table">
+      <input id="er.query.returns_monthly_by_category_decision_input_0" label="category">
+        <inputExpression id="er.query.returns_monthly_by_category_decision_expression_0" typeRef="string">
+          <text>category</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.returns_monthly_by_category_decision_input_1" label="month_start">
+        <inputExpression id="er.query.returns_monthly_by_category_decision_expression_1" typeRef="date">
+          <text>month_start</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.returns_monthly_by_category_decision_input_2" label="requests">
+        <inputExpression id="er.query.returns_monthly_by_category_decision_expression_2" typeRef="number">
+          <text>requests</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.returns_monthly_by_category_decision_input_3" label="lines">
+        <inputExpression id="er.query.returns_monthly_by_category_decision_expression_3" typeRef="number">
+          <text>lines</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.returns_monthly_by_category_decision_input_4" label="units">
+        <inputExpression id="er.query.returns_monthly_by_category_decision_expression_4" typeRef="number">
+          <text>units</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.returns_monthly_by_category_decision_input_5" label="amount">
+        <inputExpression id="er.query.returns_monthly_by_category_decision_expression_5" typeRef="number">
+          <text>amount</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.returns_monthly_by_category_decision_input_6" label="open_lines">
+        <inputExpression id="er.query.returns_monthly_by_category_decision_expression_6" typeRef="number">
+          <text>open_lines</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.returns_monthly_by_category_decision_input_7" label="row_count">
+        <inputExpression id="er.query.returns_monthly_by_category_decision_expression_7" typeRef="number">
+          <text>row_count</text>
+        </inputExpression>
+      </input>
+      <output id="er.query.returns_monthly_by_category_decision_output" name="outcome" typeRef="string" />
+    </decisionTable>
+  </decision>
+</definitions>
+

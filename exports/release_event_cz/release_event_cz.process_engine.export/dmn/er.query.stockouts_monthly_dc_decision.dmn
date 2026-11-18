@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="er.query.stockouts_monthly_dc_decision_definitions" name="er.query.stockouts_monthly_dc" namespace="https://tatrman.org/dmn/hartland.worlds.demo" xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:camunda="http://camunda.org/schema/1.0/dmn">
+  <decision camunda:historyTimeToLive="30" id="er.query.stockouts_monthly_dc_decision" name="er.query.stockouts_monthly_dc_decision">
+    <decisionTable hitPolicy="FIRST" id="er.query.stockouts_monthly_dc_decision_table">
+      <input id="er.query.stockouts_monthly_dc_decision_input_0" label="warehouse">
+        <inputExpression id="er.query.stockouts_monthly_dc_decision_expression_0" typeRef="number">
+          <text>warehouse</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.stockouts_monthly_dc_decision_input_1" label="warehouse_name">
+        <inputExpression id="er.query.stockouts_monthly_dc_decision_expression_1" typeRef="string">
+          <text>warehouse_name</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.stockouts_monthly_dc_decision_input_2" label="month_start">
+        <inputExpression id="er.query.stockouts_monthly_dc_decision_expression_2" typeRef="date">
+          <text>month_start</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.stockouts_monthly_dc_decision_input_3" label="stockout_weeks">
+        <inputExpression id="er.query.stockouts_monthly_dc_decision_expression_3" typeRef="number">
+          <text>stockout_weeks</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.stockouts_monthly_dc_decision_input_4" label="weeks">
+        <inputExpression id="er.query.stockouts_monthly_dc_decision_expression_4" typeRef="number">
+          <text>weeks</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.stockouts_monthly_dc_decision_input_5" label="zero_rows">
+        <inputExpression id="er.query.stockouts_monthly_dc_decision_expression_5" typeRef="number">
+          <text>zero_rows</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.stockouts_monthly_dc_decision_input_6" label="total_rows">
+        <inputExpression id="er.query.stockouts_monthly_dc_decision_expression_6" typeRef="number">
+          <text>total_rows</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.stockouts_monthly_dc_decision_input_7" label="row_count">
+        <inputExpression id="er.query.stockouts_monthly_dc_decision_expression_7" typeRef="number">
+          <text>row_count</text>
+        </inputExpression>
+      </input>
+      <output id="er.query.stockouts_monthly_dc_decision_output" name="outcome" typeRef="string" />
+    </decisionTable>
+  </decision>
+</definitions>
+

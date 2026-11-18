@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="query.query.customer_running_total_decision_definitions" name="query.query.customer_running_total" namespace="https://tatrman.org/dmn/hartland.worlds.demo" xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:camunda="http://camunda.org/schema/1.0/dmn">
+  <decision camunda:historyTimeToLive="30" id="query.query.customer_running_total_decision" name="query.query.customer_running_total_decision">
+    <decisionTable hitPolicy="FIRST" id="query.query.customer_running_total_decision_table">
+      <input id="query.query.customer_running_total_decision_input_0" label="c_customer_id">
+        <inputExpression id="query.query.customer_running_total_decision_expression_0" typeRef="string">
+          <text>c_customer_id</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.customer_running_total_decision_input_1" label="d_date">
+        <inputExpression id="query.query.customer_running_total_decision_expression_1" typeRef="dateTime">
+          <text>d_date</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.customer_running_total_decision_input_2" label="running_total">
+        <inputExpression id="query.query.customer_running_total_decision_expression_2" typeRef="number">
+          <text>running_total</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.customer_running_total_decision_input_3" label="row_count">
+        <inputExpression id="query.query.customer_running_total_decision_expression_3" typeRef="number">
+          <text>row_count</text>
+        </inputExpression>
+      </input>
+      <output id="query.query.customer_running_total_decision_output" name="outcome" typeRef="string" />
+    </decisionTable>
+  </decision>
+</definitions>
+

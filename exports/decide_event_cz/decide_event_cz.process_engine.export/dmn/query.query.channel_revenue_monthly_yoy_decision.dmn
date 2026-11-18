@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="query.query.channel_revenue_monthly_yoy_decision_definitions" name="query.query.channel_revenue_monthly_yoy" namespace="https://tatrman.org/dmn/hartland.worlds.demo" xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:camunda="http://camunda.org/schema/1.0/dmn">
+  <decision camunda:historyTimeToLive="30" id="query.query.channel_revenue_monthly_yoy_decision" name="query.query.channel_revenue_monthly_yoy_decision">
+    <decisionTable hitPolicy="FIRST" id="query.query.channel_revenue_monthly_yoy_decision_table">
+      <input id="query.query.channel_revenue_monthly_yoy_decision_input_0" label="month_of_year">
+        <inputExpression id="query.query.channel_revenue_monthly_yoy_decision_expression_0" typeRef="number">
+          <text>month_of_year</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.channel_revenue_monthly_yoy_decision_input_1" label="revenue_current">
+        <inputExpression id="query.query.channel_revenue_monthly_yoy_decision_expression_1" typeRef="number">
+          <text>revenue_current</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.channel_revenue_monthly_yoy_decision_input_2" label="revenue_prior">
+        <inputExpression id="query.query.channel_revenue_monthly_yoy_decision_expression_2" typeRef="number">
+          <text>revenue_prior</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.channel_revenue_monthly_yoy_decision_input_3" label="yoy_pct">
+        <inputExpression id="query.query.channel_revenue_monthly_yoy_decision_expression_3" typeRef="number">
+          <text>yoy_pct</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.channel_revenue_monthly_yoy_decision_input_4" label="row_count">
+        <inputExpression id="query.query.channel_revenue_monthly_yoy_decision_expression_4" typeRef="number">
+          <text>row_count</text>
+        </inputExpression>
+      </input>
+      <output id="query.query.channel_revenue_monthly_yoy_decision_output" name="outcome" typeRef="string" />
+    </decisionTable>
+  </decision>
+</definitions>
+

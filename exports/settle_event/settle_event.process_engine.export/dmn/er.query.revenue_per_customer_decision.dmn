@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="er.query.revenue_per_customer_decision_definitions" name="er.query.revenue_per_customer" namespace="https://tatrman.org/dmn/hartland.worlds.demo" xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:camunda="http://camunda.org/schema/1.0/dmn">
+  <decision camunda:historyTimeToLive="30" id="er.query.revenue_per_customer_decision" name="er.query.revenue_per_customer_decision">
+    <decisionTable hitPolicy="FIRST" id="er.query.revenue_per_customer_decision_table">
+      <input id="er.query.revenue_per_customer_decision_input_0" label="sk">
+        <inputExpression id="er.query.revenue_per_customer_decision_expression_0" typeRef="number">
+          <text>sk</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.revenue_per_customer_decision_input_1" label="customer_id">
+        <inputExpression id="er.query.revenue_per_customer_decision_expression_1" typeRef="string">
+          <text>customer_id</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.revenue_per_customer_decision_input_2" label="hdemo">
+        <inputExpression id="er.query.revenue_per_customer_decision_expression_2" typeRef="number">
+          <text>hdemo</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.revenue_per_customer_decision_input_3" label="birth_year">
+        <inputExpression id="er.query.revenue_per_customer_decision_expression_3" typeRef="number">
+          <text>birth_year</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.revenue_per_customer_decision_input_4" label="revenue">
+        <inputExpression id="er.query.revenue_per_customer_decision_expression_4" typeRef="number">
+          <text>revenue</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.revenue_per_customer_decision_input_5" label="row_count">
+        <inputExpression id="er.query.revenue_per_customer_decision_expression_5" typeRef="number">
+          <text>row_count</text>
+        </inputExpression>
+      </input>
+      <output id="er.query.revenue_per_customer_decision_output" name="outcome" typeRef="string" />
+    </decisionTable>
+  </decision>
+</definitions>
+

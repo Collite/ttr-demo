@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="er.query.placed_order_q_decision_definitions" name="er.query.placed_order_q" namespace="https://tatrman.org/dmn/hartland.worlds.demo" xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:camunda="http://camunda.org/schema/1.0/dmn">
+  <decision camunda:historyTimeToLive="30" id="er.query.placed_order_q_decision" name="er.query.placed_order_q_decision">
+    <decisionTable hitPolicy="FIRST" id="er.query.placed_order_q_decision_table">
+      <input id="er.query.placed_order_q_decision_input_0" label="order_number">
+        <inputExpression id="er.query.placed_order_q_decision_expression_0" typeRef="number">
+          <text>order_number</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.placed_order_q_decision_input_1" label="row_count">
+        <inputExpression id="er.query.placed_order_q_decision_expression_1" typeRef="number">
+          <text>row_count</text>
+        </inputExpression>
+      </input>
+      <output id="er.query.placed_order_q_decision_output" name="outcome" typeRef="string" />
+    </decisionTable>
+  </decision>
+</definitions>
+

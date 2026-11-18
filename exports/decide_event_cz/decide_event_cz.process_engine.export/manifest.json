@@ -1,0 +1,1048 @@
+{
+    "schemaVersion": 1,
+    "world": "hartland.worlds.demo",
+    "deployment": "decide_event_cz",
+    "program": "decide_on_request_cz",
+    "recipe": "decide_return",
+    "target": {
+        "type": "process_engine",
+        "version": "1"
+    },
+    "fingerprints": {
+        "bundle": "3169924c6e75884e2741d16dd52ad41a3215b77428c2c5b0fc55e47d1e7da4dc",
+        "deployment": "sha256:d8d3c5ff8d34cec8123e32f4dd9e1e28607b78968ec2ccc16fbf6854a53661be",
+        "labels": "sha256:b0398bfb0a886907f5212f9906750c334c096b1d59bd1eb72b53c5bfe74e195a",
+        "model": "sha256:988250ce3b7a645275172755bdfed39349f792290931a411dd687bfa0b4b6a6e",
+        "program": "sha256:96485ce7b75a9ec6e0b6b88ba34db7a368c07dd6a238f7ac705f9a7dfeb0912e",
+        "text": "sha256:35d18a87880c8c98ab3e0bf42abe2ced068d63f1bcc9a30174d138574dd480c2",
+        "values": "sha256:6c5da116527944c0c189fdfbd0c8bbdef9f549dd03079764e3f9c1c80bb1ec41",
+        "world": "sha256:35e2b2ec6ef7d4471e6f4efa68adf7e4c9ef5acb05216a461bb21c74925ad3ce"
+    },
+    "toolchain": "org.tatrman:ttrp:0.22.8",
+    "granularity": "parts",
+    "connections": [
+        "TTR_CONN_ERP"
+    ],
+    "calls": [
+        {
+            "task": "n_3665049028896d29b543",
+            "name": "open",
+            "method": "POST",
+            "path": "/automation/recipes/decide_return/runs",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {}
+        },
+        {
+            "task": "n_fbe0e6fd211220d51fca",
+            "name": "status",
+            "method": "GET",
+            "path": "/automation/runs/{id}",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {}
+        },
+        {
+            "task": "n_2d99a7a92f3bcc129bbb",
+            "name": "open",
+            "method": "POST",
+            "path": "/automation/recipes/decide_return/runs",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {}
+        },
+        {
+            "task": "n_55eea47977ce5dfdaa9a",
+            "name": "part",
+            "method": "POST",
+            "path": "/automation/runs/{id}/parts/candidates",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "part": "candidates"
+            }
+        },
+        {
+            "task": "n_212e574adb72eac39a5b",
+            "name": "part",
+            "method": "POST",
+            "path": "/automation/runs/{id}/parts/bought_here",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "part": "bought_here"
+            }
+        },
+        {
+            "task": "n_3f9956245e57c5b2a70b",
+            "name": "part",
+            "method": "POST",
+            "path": "/automation/runs/{id}/parts/return_share",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "part": "return_share"
+            }
+        },
+        {
+            "task": "n_9f6b3180faa4d97b4189",
+            "name": "part",
+            "method": "POST",
+            "path": "/automation/runs/{id}/parts/request_value",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "part": "request_value"
+            }
+        },
+        {
+            "task": "n_f9ad2659ca31e77376b0",
+            "name": "part",
+            "method": "POST",
+            "path": "/automation/runs/{id}/parts/stock_at_center",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "part": "stock_at_center"
+            }
+        },
+        {
+            "task": "n_c0e839f6202d9f3984d0",
+            "name": "part",
+            "method": "POST",
+            "path": "/automation/runs/{id}/parts/decision",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "part": "decision"
+            }
+        },
+        {
+            "task": "n_53f79e7e18782c542f9a",
+            "name": "evaluate",
+            "method": "POST",
+            "path": "/automation/runs/{id}/evaluate",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {}
+        },
+        {
+            "task": "n_ba4f86f138c46d537471",
+            "name": "status",
+            "method": "GET",
+            "path": "/automation/runs/{id}",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {}
+        },
+        {
+            "task": "n_37076c643805774e053e",
+            "name": "status",
+            "method": "GET",
+            "path": "/automation/runs/{id}",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {}
+        },
+        {
+            "task": "n_f474c508ce745e786543",
+            "name": "route",
+            "method": "GET",
+            "path": "/automation/runs/{id}/routes/reject_not_ours",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "route": "reject_not_ours"
+            }
+        },
+        {
+            "task": "n_6ed7291ca93c1528a939",
+            "name": "perform",
+            "method": "POST",
+            "path": "/automation/runs/{id}/actions/set_state/perform",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "action": "set_state"
+            }
+        },
+        {
+            "task": "n_7a0dc0c9eb17a4f6b057",
+            "name": "outcome",
+            "method": "POST",
+            "path": "/automation/runs/{id}/actions/notify_customer/outcome",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "action": "notify_customer"
+            }
+        },
+        {
+            "task": "n_430e1484d422bd86c29f",
+            "name": "route",
+            "method": "GET",
+            "path": "/automation/runs/{id}/routes/reject_late",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "route": "reject_late"
+            }
+        },
+        {
+            "task": "n_991727061b0e92161489",
+            "name": "perform",
+            "method": "POST",
+            "path": "/automation/runs/{id}/actions/set_state/perform",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "action": "set_state"
+            }
+        },
+        {
+            "task": "n_25b37ed3d7f5be760e85",
+            "name": "outcome",
+            "method": "POST",
+            "path": "/automation/runs/{id}/actions/notify_customer/outcome",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "action": "notify_customer"
+            }
+        },
+        {
+            "task": "n_8f9ba3b338cca9391d6f",
+            "name": "route",
+            "method": "GET",
+            "path": "/automation/runs/{id}/routes/reject_abuse",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "route": "reject_abuse"
+            }
+        },
+        {
+            "task": "n_e0d19c8bfbd121a969e1",
+            "name": "perform",
+            "method": "POST",
+            "path": "/automation/runs/{id}/actions/set_state/perform",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "action": "set_state"
+            }
+        },
+        {
+            "task": "n_ea48ff294069aaf31d68",
+            "name": "outcome",
+            "method": "POST",
+            "path": "/automation/runs/{id}/actions/notify_customer/outcome",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "action": "notify_customer"
+            }
+        },
+        {
+            "task": "n_e1814d315d4144edc5c0",
+            "name": "route",
+            "method": "GET",
+            "path": "/automation/runs/{id}/routes/to_customer_care",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "route": "to_customer_care"
+            }
+        },
+        {
+            "task": "n_6e71d36f9fed553742e2",
+            "name": "route",
+            "method": "GET",
+            "path": "/automation/runs/{id}/routes/refund_no_return",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "route": "refund_no_return"
+            }
+        },
+        {
+            "task": "n_141a9504a7eb255cde9c",
+            "name": "perform",
+            "method": "POST",
+            "path": "/automation/runs/{id}/actions/set_state/perform",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "action": "set_state"
+            }
+        },
+        {
+            "task": "n_1d7abbf24fb90b519687",
+            "name": "perform",
+            "method": "POST",
+            "path": "/automation/runs/{id}/actions/expect/perform",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "action": "expect"
+            }
+        },
+        {
+            "task": "n_692217d28822d671ca9f",
+            "name": "route",
+            "method": "GET",
+            "path": "/automation/runs/{id}/routes/replacement_no_return",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "route": "replacement_no_return"
+            }
+        },
+        {
+            "task": "n_ece03bc60f16bdb2e738",
+            "name": "perform",
+            "method": "POST",
+            "path": "/automation/runs/{id}/actions/set_state/perform",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "action": "set_state"
+            }
+        },
+        {
+            "task": "n_3351df81593a478784b4",
+            "name": "perform",
+            "method": "POST",
+            "path": "/automation/runs/{id}/actions/expect/perform",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "action": "expect"
+            }
+        },
+        {
+            "task": "n_aa7a8842057e62a2039d",
+            "name": "route",
+            "method": "GET",
+            "path": "/automation/runs/{id}/routes/exchange",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "route": "exchange"
+            }
+        },
+        {
+            "task": "n_0e618616b9af5c8dac62",
+            "name": "perform",
+            "method": "POST",
+            "path": "/automation/runs/{id}/actions/set_state/perform",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "action": "set_state"
+            }
+        },
+        {
+            "task": "n_9938814f1f0f7a270ebd",
+            "name": "perform",
+            "method": "POST",
+            "path": "/automation/runs/{id}/actions/expect/perform",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "action": "expect"
+            }
+        },
+        {
+            "task": "n_02bce0d53df543a857cd",
+            "name": "outcome",
+            "method": "POST",
+            "path": "/automation/runs/{id}/actions/notify_customer/outcome",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "action": "notify_customer"
+            }
+        },
+        {
+            "task": "n_d67510cc7de1bdc03cf2",
+            "name": "route",
+            "method": "GET",
+            "path": "/automation/runs/{id}/routes/refund_after_return",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "route": "refund_after_return"
+            }
+        },
+        {
+            "task": "n_153c533d8d6681f13481",
+            "name": "perform",
+            "method": "POST",
+            "path": "/automation/runs/{id}/actions/set_state/perform",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "action": "set_state"
+            }
+        },
+        {
+            "task": "n_36c45a9795dc5ab0173c",
+            "name": "perform",
+            "method": "POST",
+            "path": "/automation/runs/{id}/actions/expect/perform",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "action": "expect"
+            }
+        },
+        {
+            "task": "n_30b3ef2c9946a8b58f9f",
+            "name": "outcome",
+            "method": "POST",
+            "path": "/automation/runs/{id}/actions/notify_customer/outcome",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {
+                "action": "notify_customer"
+            }
+        },
+        {
+            "task": "n_07f6f24a47fa79bf4700",
+            "name": "close",
+            "method": "POST",
+            "path": "/automation/runs/{id}/close",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {}
+        },
+        {
+            "task": "n_a22b05edc84dd3b9f22d",
+            "name": "open",
+            "method": "POST",
+            "path": "/automation/recipes/decide_return/runs",
+            "recipe": "decide_return",
+            "program": "decide_on_request_cz",
+            "mode": "on_event",
+            "arguments": {}
+        }
+    ],
+    "conformance": "conformance.json",
+    "files": {
+        "README.md": "sha256:6172a7fe34f455d4815fbb36747da3ee1769450ae512e107d6a817c4856d72d6",
+        "conformance.json": "sha256:ccf3f3b5dff342f820ddd6d0ec7078dab20e7d78c3247b01a006a66f384341d2",
+        "decide_return.c7.bpmn": "sha256:8205b4fef73259973e918d968a0993bdc8fae4b9eb6cd415dc0f523dafcecd5a",
+        "dmn/er.query.placed_order_q_decision.dmn": "sha256:d390826c8004ed8bc9d1e52a9e45298a3a9fe6cd3c4e9071c0e08434ed7b283a",
+        "dmn/er.query.report_returns_review_q_decision.dmn": "sha256:165373087bffa58515cde8205e28d1e553f0a45d74a8315e40a330123720928e",
+        "dmn/er.query.returns_monthly_by_category_decision.dmn": "sha256:47958fff14524147c24481c0b31363ab49fca23d189821e626f7790f91239033",
+        "dmn/er.query.returns_review_decision.dmn": "sha256:3d46cb6d306e66dddf445b7ecd3932274d0529facf2b212ddce6741edb28b6ca",
+        "dmn/er.query.returns_union_decision.dmn": "sha256:f9c32edc7a58927234a032bb0596072cb0635fb1ce0b3049dae3f5737a3ed294",
+        "dmn/er.query.revenue_per_customer_decision.dmn": "sha256:c2e529ee582fd5156b2221911b54bafa47ed75053b710bff08f2f7c01b89bea7",
+        "dmn/er.query.sales_union_decision.dmn": "sha256:49df06ce9a8155ab255c560bbdf1b11f598084d982f821ece7ac77a1c1196988",
+        "dmn/er.query.stockouts_monthly_dc_decision.dmn": "sha256:d4cdaf0511ac8118df7e5c7b39586044bd0b197ea665a67f4b7cb14e7500d6fe",
+        "dmn/query.query.buyer_age_profile_decision.dmn": "sha256:35fa9578bc35d3b184383105275eaba5bfd5c8b30365bcd925527f641ac810b0",
+        "dmn/query.query.category_revenue_decision.dmn": "sha256:090ee37f1b35991896cc45e4915522bd97daaef58734cdf56e5ebe12f241db78",
+        "dmn/query.query.channel_revenue_monthly_decision.dmn": "sha256:f78eaf909d50545a443cd960e0ae9d33ac749ff25ecd806d2814b2e4b79bd117",
+        "dmn/query.query.channel_revenue_monthly_yoy_decision.dmn": "sha256:e7d03a570b0b13af4e3c0eda709b92e0ec9b7a70fb0f98dbeb1217912f5a6ad2",
+        "dmn/query.query.channel_revenue_yoy_decision.dmn": "sha256:66d8fdff6d7cd9c8d775eed5b14b145080715d8a42c2fa528cb1afac5dee4a65",
+        "dmn/query.query.customer_running_total_decision.dmn": "sha256:405735867e335c34d9fc91042dc0bc04330d5f95d3a5bf9374ca8da9b3fb32a2",
+        "dmn/query.query.inventory_on_hand_series_decision.dmn": "sha256:029676a6260b4c5338d07702d420f4463314d2ec78e2c9f86fd20ecfe9646dba",
+        "dmn/query.query.marketplace_revenue_by_warehouse_decision.dmn": "sha256:2a1c94b57eac9876cd766564fd91c833bbd70b5ec3874d8d147d3fad7ffa2670",
+        "dmn/query.query.promo_share_decision.dmn": "sha256:50f9df296de3ee87268e88ed2de0b751542c71dc583bce5103bd67f9fbe245ac",
+        "dmn/query.query.returns_by_reason_decision.dmn": "sha256:d542d80e00ee54a0f385beee287cd5086136bff8e06e774d7abc88d91b255ab3",
+        "dmn/query.query.returns_rate_by_channel_decision.dmn": "sha256:875d78e274b6a8493d4ab76fe31b8b322593cabf6bcbffa5e3d58a1ce84796e6",
+        "dmn/query.query.revenue_by_customer_state_decision.dmn": "sha256:fc38ea7aeda375f81ba962ddca3cb1880c268764b41e0ac4ae67c01e959b7a7b",
+        "dmn/query.query.store_sales_by_month_decision.dmn": "sha256:3681d741517095210a83d777c8b5c9bb6a6f00935ee5e3ed2ba4a309402c3032",
+        "dmn/query.query.top_items_by_revenue_decision.dmn": "sha256:24a61eac94dececd6d391370283442cb6aa030b6207eef854b22145036d13670",
+        "dmn/query.query.warehouse_stockout_week_count_decision.dmn": "sha256:9702a8250725776e1dd8f3c72bd06c704b223b3efe2e199df1da06ddff6c0b89",
+        "dmn/query.query.warehouse_stockout_weeks_decision.dmn": "sha256:bdff5551a1aa6bc2d47879a568e751854c4c8fbe4c822afb937edf399128cd2d",
+        "templates/c7/decide_catch_up.json": "sha256:00f3d7d42a97940e78d3e476fc87b9b0f53f2d63043c4b934ad2bc1ca52acc0b",
+        "templates/c7/decide_catch_up_cz.json": "sha256:ae63cd9268a04f4f11b91d75131f3efd541c4ccd03a550ae8f83915d6bff3845",
+        "templates/c7/decide_on_request.json": "sha256:814bba6f73221961ac4203b122c6afd6c93a689acf7c5bde74007bfc7f9f246b",
+        "templates/c7/decide_on_request_cz.json": "sha256:2f34a6e6c291f9514a4e86af075e5e55809513e594b9aa508c6c10e51d0da1ed",
+        "templates/c7/er.query.placed_order_q.json": "sha256:caa26bff96b40d415b80a21e72eddd9a965b5b713e4c3d84927de336de1ab621",
+        "templates/c7/er.query.report_returns_review_q.json": "sha256:dfd7d481223907007c0c3096378723b77607ddabbe62fc299ad373e844b76085",
+        "templates/c7/er.query.returns_monthly_by_category.json": "sha256:38207ce351812457d5a39d8525268e545eec756061769b34b6f5d5c07ec55864",
+        "templates/c7/er.query.returns_review.json": "sha256:a80736cd6ca91d0f41f30977fb7d0155d7c1d07f90922b2e0ecda1360ea9a763",
+        "templates/c7/er.query.returns_union.json": "sha256:56cc3a7b65e1886fcce2f552fe7c0f12b7bb75feaadedcdedbb5f700bfce1278",
+        "templates/c7/er.query.revenue_per_customer.json": "sha256:d89dca0b35ee27ec161c4a9040f82835939d022455fefbaef0268cce03faca6d",
+        "templates/c7/er.query.sales_union.json": "sha256:8b98e15fe8f16f0b1fb8c9d1afb2ccb00cb6f44ce2cf6f3af3586557a4aae158",
+        "templates/c7/er.query.stockouts_monthly_dc.json": "sha256:7980aefd356121a91d5b3682db728b1219987ed4872689882b9ec3cdad3c8cda",
+        "templates/c7/inbound_daily.json": "sha256:e1ab3dd7335a81955dc70f91cb2cb5cc0e59b0cb2a2e76dc08ed4119d396961c",
+        "templates/c7/inbound_on_receipt.json": "sha256:2c4dca24f166f2c089b001ef6b4a22fc1f269dacb84f5a497b756ced22eaefc6",
+        "templates/c7/morning_release.json": "sha256:749d4f50152d6e5d17319df2204cd47eceb00fda15872df6994be54ceabe5201",
+        "templates/c7/morning_release_cz.json": "sha256:c7ddb09afffca7ea537acf74aee090e2cee57e0102587dfa680ecdb8f6b653e8",
+        "templates/c7/query.query.buyer_age_profile.json": "sha256:9bb705e3cb4d3e16935d86cd437a8929d1b461951e658e3805146fa8d126922d",
+        "templates/c7/query.query.category_revenue.json": "sha256:fba2ee2739cfb0f7aa060c623e8e6502e980e3c0ca6cf78cac55a99f9659d554",
+        "templates/c7/query.query.channel_revenue_monthly.json": "sha256:269909056f9ec8bcef02d57d51005d01dfd2cc9432a59e9b62490efc98dd377d",
+        "templates/c7/query.query.channel_revenue_monthly_yoy.json": "sha256:d618b694908cf7d8df2fbbe1da38fa19421cb31b25e4ace0d4042cafcf892854",
+        "templates/c7/query.query.channel_revenue_yoy.json": "sha256:146f37eac9a4db7f6b17fca94b24a3fde8f1fddcc53baad2a81079ee30d0a63a",
+        "templates/c7/query.query.customer_running_total.json": "sha256:6ec2eb2aa2168df4b57223890b9391f7143d1bb8691f7c370e7e3535dfe160aa",
+        "templates/c7/query.query.inventory_on_hand_series.json": "sha256:2182fc6de8efbf9cee229cec67e962e997a6b454e0de9a5ea180f0773461c2aa",
+        "templates/c7/query.query.marketplace_revenue_by_warehouse.json": "sha256:c5686a35bc5c22f343f0af28965cdc953cb346001c63af857aaec9bbe6c10e39",
+        "templates/c7/query.query.promo_share.json": "sha256:b74304e3a2570d8ec65e6e11c1e05f16b0924c17917de6550d7634229bad2dd8",
+        "templates/c7/query.query.returns_by_reason.json": "sha256:06904ca36fb5809c55e4a98824031f1f6d0418fb4f9c662fa41b62802029d144",
+        "templates/c7/query.query.returns_rate_by_channel.json": "sha256:4084a1e32343a6966f5a665fc89ce3fc58dc08a3f4b012d8acdbca5fca770faf",
+        "templates/c7/query.query.revenue_by_customer_state.json": "sha256:5867552bcccf53c83d789296d5afb42b1f957acd8933894823374d882119f71a",
+        "templates/c7/query.query.store_sales_by_month.json": "sha256:275674f07d412395b6bdbefeb8d3f09ec910662a34191137ef3cb104d404ef36",
+        "templates/c7/query.query.top_items_by_revenue.json": "sha256:b9b34769b1f2fc4ebb9e9b9356fedf4cbc06ca8afda3169977469873da79198b",
+        "templates/c7/query.query.warehouse_stockout_week_count.json": "sha256:b640f33128cd0bdd900f670086b062e5a4c3dcca0c870f65e6935619cb02fa59",
+        "templates/c7/query.query.warehouse_stockout_weeks.json": "sha256:28500d5589dfe9cc2c0401ad06d12027fe160b9b86ad32527e917b6c15d936f9",
+        "templates/c7/release_on_placement.json": "sha256:d735642ced55e84dc33b460b59d01fe209f55c4b3e979bb7a35e75bdb14dbbc2",
+        "templates/c7/release_on_placement_cz.json": "sha256:f55db3c3d7380e0832a140edc1b1e960ff8c3c99374558b49eb368e012574917",
+        "templates/c7/settle_daily.json": "sha256:67ec58fcdfb69a96fad003f20c869fb86c5a671432ecd90422dca891ca29ac5d",
+        "templates/c7/settle_on_document.json": "sha256:5817153fbb61078c63f68cbfdd6bf47ae08555d73483cc52b68fd2bdeadd7ef5",
+        "tests/exchange.cz.yaml": "sha256:328dc85aea20bcad7ead6e9967be7b0bb1abf2e4755429156cd1fe9158e029b3",
+        "tests/exchange.yaml": "sha256:184671b13bf1f4bb285aeca7cf20722619f00ad3f549f0cffecf741966a9b0c6",
+        "tests/refund-after-return.cz.yaml": "sha256:8d7e79c95b72600800df122f31885ee41073dfde00dbda13b4657d7230a67884",
+        "tests/refund-after-return.yaml": "sha256:a7fc0117b63589a1901499df784f35a5ce2bd40bdf1ab2e4c435f49385e92b92",
+        "tests/refund-no-return.cz.yaml": "sha256:f5b57c0273e9ddc5d76c03475b356fb7eccd78432c4ef84249eac3624608d2e8",
+        "tests/refund-no-return.yaml": "sha256:a7a50caed922124a309499caebe696cbc8830344ac497eb0affbccbefc3b6398",
+        "tests/reject-abuse.cz.yaml": "sha256:7c6c6948d8f0cf2e6e6190f0c573735ba947be60bc1612de805d7891aecdbd54",
+        "tests/reject-abuse.yaml": "sha256:83aa850c7db710e04a5e451b4fddcdaec666eaec5952b06a94d9d1412e211393",
+        "tests/reject-late.cz.yaml": "sha256:62a70503eb3d06ba2c37bd73e21c76676840d6d4af271a4d5c091061f3249959",
+        "tests/reject-late.yaml": "sha256:18a2c0660a0a00d6cc5c6f18dd82c1f794573693f84b74fe769dcae3f3222af3",
+        "tests/reject-not-ours.cz.yaml": "sha256:11b7f5e801a90be343da1eeabb85de5146c66e4151bb205fec19d030f6796cd4",
+        "tests/reject-not-ours.yaml": "sha256:bffe616132899a1be9ef9ef5fe498e73f175975061b0bb2a56efa65045238346",
+        "tests/replacement-no-return.cz.yaml": "sha256:e8c6bde75cdde64c69c9d2a4f0c017e14667c0add36b5766acceed401eec2a56",
+        "tests/replacement-no-return.yaml": "sha256:380befe5a01c35cf06b6e61acd4f4ca5edaac0e9878f5d94b4f809a602b55ddf",
+        "tests/to-customer-care.cz.yaml": "sha256:63a65fa375d3449cbf951761dd48240bc2f80fe293f9297b01db0405cc329024",
+        "tests/to-customer-care.yaml": "sha256:c01e3aaf1d24081da1ec987798fbfb0df74423d56d6a47d62a8fb735cda32650"
+    },
+    "authoring": {
+        "dialect": "c7",
+        "omitted": [
+            {
+                "qname": "query.query.customer_channel_overlap",
+                "reason": "TTRP-EXPORT-QUERY: query.query.customer_channel_overlap: Aggregate function 'bool_or' is not in the v1 wire format"
+            }
+        ],
+        "choices": [
+            "decide_catch_up",
+            "decide_catch_up_cz",
+            "decide_on_request",
+            "decide_on_request_cz",
+            "er.query.placed_order_q",
+            "er.query.report_returns_review_q",
+            "er.query.returns_monthly_by_category",
+            "er.query.returns_review",
+            "er.query.returns_union",
+            "er.query.revenue_per_customer",
+            "er.query.sales_union",
+            "er.query.stockouts_monthly_dc",
+            "inbound_daily",
+            "inbound_on_receipt",
+            "morning_release",
+            "morning_release_cz",
+            "query.query.buyer_age_profile",
+            "query.query.category_revenue",
+            "query.query.channel_revenue_monthly",
+            "query.query.channel_revenue_monthly_yoy",
+            "query.query.channel_revenue_yoy",
+            "query.query.customer_running_total",
+            "query.query.inventory_on_hand_series",
+            "query.query.marketplace_revenue_by_warehouse",
+            "query.query.promo_share",
+            "query.query.returns_by_reason",
+            "query.query.returns_rate_by_channel",
+            "query.query.revenue_by_customer_state",
+            "query.query.store_sales_by_month",
+            "query.query.top_items_by_revenue",
+            "query.query.warehouse_stockout_week_count",
+            "query.query.warehouse_stockout_weeks",
+            "release_on_placement",
+            "release_on_placement_cz",
+            "settle_daily",
+            "settle_on_document"
+        ],
+        "steps": [
+            {
+                "name": "decide_catch_up",
+                "params": [
+                    "return_window",
+                    "abuse_share",
+                    "small_value",
+                    "care_threshold",
+                    "settlement",
+                    "inbound_reminder"
+                ],
+                "columns": {}
+            },
+            {
+                "name": "decide_catch_up_cz",
+                "params": [
+                    "return_window",
+                    "abuse_share",
+                    "small_value",
+                    "care_threshold",
+                    "settlement",
+                    "inbound_reminder"
+                ],
+                "columns": {}
+            },
+            {
+                "name": "decide_on_request",
+                "params": [
+                    "return_window",
+                    "abuse_share",
+                    "small_value",
+                    "care_threshold",
+                    "settlement",
+                    "inbound_reminder"
+                ],
+                "columns": {}
+            },
+            {
+                "name": "decide_on_request_cz",
+                "params": [
+                    "return_window",
+                    "abuse_share",
+                    "small_value",
+                    "care_threshold",
+                    "settlement",
+                    "inbound_reminder"
+                ],
+                "columns": {}
+            },
+            {
+                "name": "inbound_daily",
+                "params": [
+                    "inbound_reminder",
+                    "inbound_close",
+                    "settlement"
+                ],
+                "columns": {}
+            },
+            {
+                "name": "inbound_on_receipt",
+                "params": [
+                    "inbound_reminder",
+                    "inbound_close",
+                    "settlement"
+                ],
+                "columns": {}
+            },
+            {
+                "name": "morning_release",
+                "params": [
+                    "tolerance",
+                    "confirmation_threshold"
+                ],
+                "columns": {}
+            },
+            {
+                "name": "morning_release_cz",
+                "params": [
+                    "tolerance",
+                    "confirmation_threshold"
+                ],
+                "columns": {}
+            },
+            {
+                "name": "release_on_placement",
+                "params": [
+                    "tolerance",
+                    "confirmation_threshold"
+                ],
+                "columns": {}
+            },
+            {
+                "name": "release_on_placement_cz",
+                "params": [
+                    "tolerance",
+                    "confirmation_threshold"
+                ],
+                "columns": {}
+            },
+            {
+                "name": "settle_daily",
+                "params": [
+                    "settlement"
+                ],
+                "columns": {}
+            },
+            {
+                "name": "settle_on_document",
+                "params": [
+                    "settlement"
+                ],
+                "columns": {}
+            },
+            {
+                "name": "er.query.placed_order_q",
+                "params": [],
+                "columns": {
+                    "order_number": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/er.query.placed_order_q_decision.dmn"
+            },
+            {
+                "name": "er.query.report_returns_review_q",
+                "params": [],
+                "columns": {
+                    "category": "string",
+                    "requests": "number",
+                    "received": "number",
+                    "open": "number",
+                    "amount": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/er.query.report_returns_review_q_decision.dmn"
+            },
+            {
+                "name": "er.query.returns_monthly_by_category",
+                "params": [],
+                "columns": {
+                    "category": "string",
+                    "month_start": "date",
+                    "requests": "number",
+                    "lines": "number",
+                    "units": "number",
+                    "amount": "number",
+                    "open_lines": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/er.query.returns_monthly_by_category_decision.dmn"
+            },
+            {
+                "name": "er.query.returns_review",
+                "params": [],
+                "columns": {
+                    "request_id": "number",
+                    "customer": "number",
+                    "category": "string",
+                    "requested_at": "dateTime",
+                    "received_at": "dateTime",
+                    "status": "string",
+                    "amount": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/er.query.returns_review_decision.dmn"
+            },
+            {
+                "name": "er.query.returns_union",
+                "params": [],
+                "columns": {
+                    "channel": "string",
+                    "item": "number",
+                    "customer": "number",
+                    "returned_date": "number",
+                    "reason": "number",
+                    "return_quantity": "number",
+                    "return_amt": "number",
+                    "line_ref": "number",
+                    "store": "number",
+                    "warehouse": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/er.query.returns_union_decision.dmn"
+            },
+            {
+                "name": "er.query.revenue_per_customer",
+                "params": [],
+                "columns": {
+                    "sk": "number",
+                    "customer_id": "string",
+                    "hdemo": "number",
+                    "birth_year": "number",
+                    "revenue": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/er.query.revenue_per_customer_decision.dmn"
+            },
+            {
+                "name": "er.query.sales_union",
+                "params": [],
+                "columns": {
+                    "channel": "string",
+                    "item": "number",
+                    "customer": "number",
+                    "sold_date": "number",
+                    "promo": "number",
+                    "quantity": "number",
+                    "ext_sales_price": "number",
+                    "line_ref": "number",
+                    "store": "number",
+                    "warehouse": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/er.query.sales_union_decision.dmn"
+            },
+            {
+                "name": "er.query.stockouts_monthly_dc",
+                "params": [],
+                "columns": {
+                    "warehouse": "number",
+                    "warehouse_name": "string",
+                    "month_start": "date",
+                    "stockout_weeks": "number",
+                    "weeks": "number",
+                    "zero_rows": "number",
+                    "total_rows": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/er.query.stockouts_monthly_dc_decision.dmn"
+            },
+            {
+                "name": "query.query.buyer_age_profile",
+                "params": [
+                    "channel",
+                    "year"
+                ],
+                "columns": {
+                    "buyer_age": "number",
+                    "order_lines": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/query.query.buyer_age_profile_decision.dmn"
+            },
+            {
+                "name": "query.query.category_revenue",
+                "params": [
+                    "channel",
+                    "year"
+                ],
+                "columns": {
+                    "category": "string",
+                    "revenue": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/query.query.category_revenue_decision.dmn"
+            },
+            {
+                "name": "query.query.channel_revenue_monthly",
+                "params": [
+                    "channel",
+                    "year_from",
+                    "year_to"
+                ],
+                "columns": {
+                    "channel": "string",
+                    "d_year": "number",
+                    "d_moy": "number",
+                    "revenue": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/query.query.channel_revenue_monthly_decision.dmn"
+            },
+            {
+                "name": "query.query.channel_revenue_monthly_yoy",
+                "params": [
+                    "channel",
+                    "year",
+                    "prior_year"
+                ],
+                "columns": {
+                    "month_of_year": "number",
+                    "revenue_current": "number",
+                    "revenue_prior": "number",
+                    "yoy_pct": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/query.query.channel_revenue_monthly_yoy_decision.dmn"
+            },
+            {
+                "name": "query.query.channel_revenue_yoy",
+                "params": [
+                    "year",
+                    "prior_year"
+                ],
+                "columns": {
+                    "channel": "string",
+                    "revenue_current": "number",
+                    "revenue_prior": "number",
+                    "yoy_pct": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/query.query.channel_revenue_yoy_decision.dmn"
+            },
+            {
+                "name": "query.query.customer_running_total",
+                "params": [],
+                "columns": {
+                    "c_customer_id": "string",
+                    "d_date": "dateTime",
+                    "running_total": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/query.query.customer_running_total_decision.dmn"
+            },
+            {
+                "name": "query.query.inventory_on_hand_series",
+                "params": [
+                    "warehouse",
+                    "year"
+                ],
+                "columns": {
+                    "warehouse": "string",
+                    "d_week_seq": "number",
+                    "on_hand_qty": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/query.query.inventory_on_hand_series_decision.dmn"
+            },
+            {
+                "name": "query.query.marketplace_revenue_by_warehouse",
+                "params": [
+                    "year_from",
+                    "year_to"
+                ],
+                "columns": {
+                    "warehouse": "string",
+                    "d_year": "number",
+                    "revenue": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/query.query.marketplace_revenue_by_warehouse_decision.dmn"
+            },
+            {
+                "name": "query.query.promo_share",
+                "params": [
+                    "channel",
+                    "year"
+                ],
+                "columns": {
+                    "promo_revenue": "number",
+                    "total_revenue": "number",
+                    "promo_share_pct": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/query.query.promo_share_decision.dmn"
+            },
+            {
+                "name": "query.query.returns_by_reason",
+                "params": [
+                    "channel",
+                    "year"
+                ],
+                "columns": {
+                    "reason": "string",
+                    "return_qty": "number",
+                    "return_amt": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/query.query.returns_by_reason_decision.dmn"
+            },
+            {
+                "name": "query.query.returns_rate_by_channel",
+                "params": [
+                    "year"
+                ],
+                "columns": {
+                    "channel": "string",
+                    "revenue": "number",
+                    "return_amt": "number",
+                    "return_rate_pct": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/query.query.returns_rate_by_channel_decision.dmn"
+            },
+            {
+                "name": "query.query.revenue_by_customer_state",
+                "params": [
+                    "channel",
+                    "year"
+                ],
+                "columns": {
+                    "state": "string",
+                    "revenue": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/query.query.revenue_by_customer_state_decision.dmn"
+            },
+            {
+                "name": "query.query.store_sales_by_month",
+                "params": [],
+                "columns": {
+                    "d_year": "number",
+                    "d_moy": "number",
+                    "revenue": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/query.query.store_sales_by_month_decision.dmn"
+            },
+            {
+                "name": "query.query.top_items_by_revenue",
+                "params": [
+                    "year",
+                    "limit"
+                ],
+                "columns": {
+                    "i_item_id": "string",
+                    "i_product_name": "string",
+                    "revenue": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/query.query.top_items_by_revenue_decision.dmn"
+            },
+            {
+                "name": "query.query.warehouse_stockout_week_count",
+                "params": [
+                    "warehouse",
+                    "year"
+                ],
+                "columns": {
+                    "warehouse": "string",
+                    "stockout_weeks": "number",
+                    "first_week": "number",
+                    "last_week": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/query.query.warehouse_stockout_week_count_decision.dmn"
+            },
+            {
+                "name": "query.query.warehouse_stockout_weeks",
+                "params": [
+                    "year"
+                ],
+                "columns": {
+                    "warehouse": "string",
+                    "d_week_seq": "number",
+                    "zero_rows": "number",
+                    "total_rows": "number",
+                    "row_count": "integer"
+                },
+                "dmn": "dmn/query.query.warehouse_stockout_weeks_decision.dmn"
+            }
+        ]
+    }
+}

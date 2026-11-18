@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="query.query.returns_rate_by_channel_decision_definitions" name="query.query.returns_rate_by_channel" namespace="https://tatrman.org/dmn/hartland.worlds.demo" xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:camunda="http://camunda.org/schema/1.0/dmn">
+  <decision camunda:historyTimeToLive="30" id="query.query.returns_rate_by_channel_decision" name="query.query.returns_rate_by_channel_decision">
+    <decisionTable hitPolicy="FIRST" id="query.query.returns_rate_by_channel_decision_table">
+      <input id="query.query.returns_rate_by_channel_decision_input_0" label="channel">
+        <inputExpression id="query.query.returns_rate_by_channel_decision_expression_0" typeRef="string">
+          <text>channel</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.returns_rate_by_channel_decision_input_1" label="revenue">
+        <inputExpression id="query.query.returns_rate_by_channel_decision_expression_1" typeRef="number">
+          <text>revenue</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.returns_rate_by_channel_decision_input_2" label="return_amt">
+        <inputExpression id="query.query.returns_rate_by_channel_decision_expression_2" typeRef="number">
+          <text>return_amt</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.returns_rate_by_channel_decision_input_3" label="return_rate_pct">
+        <inputExpression id="query.query.returns_rate_by_channel_decision_expression_3" typeRef="number">
+          <text>return_rate_pct</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.returns_rate_by_channel_decision_input_4" label="row_count">
+        <inputExpression id="query.query.returns_rate_by_channel_decision_expression_4" typeRef="number">
+          <text>row_count</text>
+        </inputExpression>
+      </input>
+      <output id="query.query.returns_rate_by_channel_decision_output" name="outcome" typeRef="string" />
+    </decisionTable>
+  </decision>
+</definitions>
+

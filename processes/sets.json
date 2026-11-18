@@ -1,0 +1,23 @@
+{
+  "_comment": "AU-hartland P4·S4.1 — one deployment set per cluster (review-236 P2, D-139/D-174): bp-dsk runs the CZ set, the hartland cluster the US set; never both on one engine (two definitions cannot both subscribe the message start order_placed). The composer (scripts/compose-processes.py), the export recipe and the driver read the set by name. inbound/settle have no CZ twin (no money parameter), so both sets call the same two deployments.",
+  "cz": {
+    "cluster": "bp-dsk",
+    "lang": "cs",
+    "world": "cz",
+    "deployments": {
+      "release_event": "release_event_cz",
+      "release_morning": "release_morning_cz",
+      "decide_event": "decide_event_cz",
+      "inbound_event": "inbound_event",
+      "settle_event": "settle_event"
+    },
+    "mail": {
+      "role.sales": "hartland-sales@hartland.example",
+      "role.ar": "hartland-ar@hartland.example",
+      "role.customer_care": "hartland-care@hartland.example",
+      "role.finance": "hartland-finance@hartland.example",
+      "role.logistics": "hartland-logistics@hartland.example",
+      "customer": "zakaznik@hartland.example"
+    }
+  }
+}

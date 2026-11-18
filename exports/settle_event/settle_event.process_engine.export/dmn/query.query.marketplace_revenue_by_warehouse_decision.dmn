@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="query.query.marketplace_revenue_by_warehouse_decision_definitions" name="query.query.marketplace_revenue_by_warehouse" namespace="https://tatrman.org/dmn/hartland.worlds.demo" xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:camunda="http://camunda.org/schema/1.0/dmn">
+  <decision camunda:historyTimeToLive="30" id="query.query.marketplace_revenue_by_warehouse_decision" name="query.query.marketplace_revenue_by_warehouse_decision">
+    <decisionTable hitPolicy="FIRST" id="query.query.marketplace_revenue_by_warehouse_decision_table">
+      <input id="query.query.marketplace_revenue_by_warehouse_decision_input_0" label="warehouse">
+        <inputExpression id="query.query.marketplace_revenue_by_warehouse_decision_expression_0" typeRef="string">
+          <text>warehouse</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.marketplace_revenue_by_warehouse_decision_input_1" label="d_year">
+        <inputExpression id="query.query.marketplace_revenue_by_warehouse_decision_expression_1" typeRef="number">
+          <text>d_year</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.marketplace_revenue_by_warehouse_decision_input_2" label="revenue">
+        <inputExpression id="query.query.marketplace_revenue_by_warehouse_decision_expression_2" typeRef="number">
+          <text>revenue</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.marketplace_revenue_by_warehouse_decision_input_3" label="row_count">
+        <inputExpression id="query.query.marketplace_revenue_by_warehouse_decision_expression_3" typeRef="number">
+          <text>row_count</text>
+        </inputExpression>
+      </input>
+      <output id="query.query.marketplace_revenue_by_warehouse_decision_output" name="outcome" typeRef="string" />
+    </decisionTable>
+  </decision>
+</definitions>
+
