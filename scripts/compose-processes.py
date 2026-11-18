@@ -53,24 +53,66 @@ def q(name: str) -> str:
 
 B, C = "bpmn", "camunda"
 WORKING_DAYS_GROOVY = """\
-// AU-hartland S4.1 (authored): the confirmation's due date — `def action {action} {{ due: {days} working_days }}`,
-// Monday to Friday on the Prague clock (the world calendar's holidays are not read here). A process variable
-// ttrApprovalDueOverride (an ISO-8601 duration, e.g. PT2M) replaces it: the shortened lapse of a certification walk.
+// AU-hartland S4.1 (authored): the confirmation's due date — `def action @ACTION@ {{ due: @DAYS@ working_days }}`.
+// A working day is not a weekend and not a holiday of the world (D-82, contracts §1: date_dim.d_working_day); the
+// holidays are the world's public-holiday rules of data/calendar/calendar.sql (world @WORLD@), counted on the Prague
+// clock from the engine's clock — the one the boundary timer is due on. A process variable ttrApprovalDueOverride
+// (an ISO-8601 duration, e.g. PT2M) replaces it: the shortened lapse of a certification walk.
 def zone = java.time.ZoneId.of('Europe/Prague')
-def now = java.time.ZonedDateTime.now(zone)
+def now = java.time.ZonedDateTime.ofInstant(org.cibseven.bpm.engine.impl.util.ClockUtil.getCurrentTime().toInstant(), zone)
+def fixedDays = [@FIXED@] as Set
+def easterOffsets = [@EASTER@]
+def easter = {{ int y ->
+    int a = y % 19, b = y.intdiv(100), c = y % 100, d = b.intdiv(4), e = b % 4, f = (b + 8).intdiv(25)
+    int g = (b - f + 1).intdiv(3), h = (19 * a + b - d - g + 15) % 30, i = c.intdiv(4), k = c % 4
+    int l = (32 + 2 * e + 2 * i - h - k) % 7, m = (a + 11 * h + 22 * l).intdiv(451)
+    java.time.LocalDate.of(y, (h + l - 7 * m + 114).intdiv(31), (h + l - 7 * m + 114) % 31 + 1)
+}}
+def workingDay = {{ java.time.LocalDate day ->
+    if (day.getDayOfWeek().getValue() > 5) return false
+    if (fixedDays.contains(String.format('%02d-%02d', day.getMonthValue(), day.getDayOfMonth()))) return false
+    def e = easter(day.getYear())
+    return !easterOffsets.any {{ day == e.plusDays(it as long) }}
+}}
 def override = execution.getVariable('ttrApprovalDueOverride')
 def due = now
 if (override != null && override.toString().trim()) {{
     due = now.plus(java.time.Duration.parse(override.toString().trim()))
 }} else {{
-    int left = {days}
+    int left = @DAYS@
     while (left > 0) {{
         due = due.plusDays(1)
-        if (due.getDayOfWeek().getValue() < 6) left--
+        if (workingDay(due.toLocalDate())) left--
     }}
 }}
 execution.setVariableLocal('ttrApprovalDue', java.util.Date.from(due.toInstant()))
 """
+CALENDAR_SQL = ROOT / "data" / "calendar" / "calendar.sql"
+
+
+def world_holidays(world: str) -> tuple[list[str], list[int]]:
+    """The world's public-holiday rules, read from data/calendar/calendar.sql (the one source date_dim.d_holiday is
+    written from): its fixed (month, day) list and its Easter offsets. Only rules of that shape are drawn — a world
+    whose holidays move by weekday (us: observed days, n-th Mondays) stops the composer."""
+    sql = CALENDAR_SQL.read_text(encoding="utf-8")
+    fixed = re.search(r"\(VALUES ((?:\(\d+, \d+\),?\s*)+)\) f\(m, dd\)\s*WHERE :'world' = '" + world + "'", sql)
+    easter = re.search(r"cal_easter\(y\) \+ x FROM _cal_year, \(VALUES ((?:\(-?\d+\),? ?)+)\) e\(x\) WHERE :'world' = '"
+                       + world + "'", sql)
+    if not fixed or not easter or f"WHERE :'world' = '{world}'" in sql.replace(fixed.group(0), "").replace(easter.group(0), ""):
+        raise SystemExit(f"{CALENDAR_SQL.relative_to(ROOT)}: the holidays of world {world!r} are not fixed days + "
+                         "Easter offsets only — the due-date script cannot draw them")
+    days = [f"{int(m):02d}-{int(d):02d}" for m, d in re.findall(r"\((\d+), (\d+)\)", fixed.group(1))]
+    offsets = [int(x) for x in re.findall(r"\((-?\d+)\)", easter.group(1))]
+    return days, offsets
+
+
+def due_script(action: str, days: int, world: str) -> str:
+    fixed, offsets = world_holidays(world)
+    src = WORKING_DAYS_GROOVY.replace("{{", "{").replace("}}", "}")
+    return (src.replace("@ACTION@", action).replace("@DAYS@", str(days)).replace("@WORLD@", world)
+            .replace("@FIXED@", ", ".join(f"'{d}'" for d in fixed)).replace("@EASTER@", ", ".join(map(str, offsets))))
+
+
 TASK_VISIBLE_GROOVY = """\
 // AU-hartland S4.1 (authored): what Hebe and the D-98 guard read from the task itself (HE-8): the action and its key.
 task.setVariableLocal('ttr_action', '{action}')
@@ -322,6 +364,9 @@ def timer_start(doc: Bpmn, start_label: str, cron: str) -> ET.Element:
     return start
 
 
+# D-98 as a read: a committed open task of the action for the key. It is not a lock — two instances that reach it at
+# the same moment both read zero and both open a task (review-365 B3, reproduced 3/10 on CIB seven). Atomic needs a
+# per-key primitive the BPMN does not have (a unique constraint or a lock): S4.1 Found L hands it over.
 PENDING = ("execution.processEngineServices.taskService.createTaskQuery().active()"
            ".taskVariableValueEquals('ttr_action', '{action}').taskVariableValueEquals('ttr_about', {key}).count() > 0")
 
@@ -346,7 +391,7 @@ def start_guard(doc: Bpmn, start: ET.Element, action: str, key_expr: str, labels
     doc.edge("s41_pending_yes", [(sx + sw + 35, sy + 43), (sx + sw + 35, sy + 90)])
 
 
-def approvals(doc: Bpmn, lapses: dict, labels: dict, egress: str, deployment: str) -> list[str]:
+def approvals(doc: Bpmn, lapses: dict, labels: dict, egress: str, deployment: str, world: str) -> list[str]:
     """Every approval user task of the skeleton (a userTask with a ttrAction input) gets the D-98 guard, its due date,
     the task-visible variables and — when `lapses` names the action — a timer boundary that performs the fallback."""
     done = []
@@ -374,7 +419,7 @@ def approvals(doc: Bpmn, lapses: dict, labels: dict, egress: str, deployment: st
         guard = doc.add(scope, "bpmn:exclusiveGateway",
                         {"id": f"{n}_guard", "name": labels["pending_q"], "default": f"{n}_guard_no"})
         due = doc.add(scope, "bpmn:scriptTask", {"id": f"{n}_due", "name": labels["due"], "scriptFormat": "groovy"})
-        ET.SubElement(due, q("bpmn:script")).text = WORKING_DAYS_GROOVY.format(action=action, days=spec["days"] if spec else 2)
+        ET.SubElement(due, q("bpmn:script")).text = due_script(action, spec["days"] if spec else 2, world)
         doc.retarget(into[0], guard.get("id"))
         doc.flow(scope, f"{n}_guard_no", guard.get("id"), due.get("id"), name=labels["no"])
         doc.flow(scope, f"{n}_guard_yes", guard.get("id"), complete.get("id"), name=labels["yes"],
@@ -533,7 +578,7 @@ def compose_release_order(s: dict) -> Bpmn:
     recipients(doc, s["mail"])
     start = message_start(doc, "objednávka založena" if lang == "cs" else "order placed", "order_placed")
     start_guard(doc, start, "release_confirmed", "ttrInput['key']['order_number'].toString()", labels)
-    approvals(doc, release_lapses(lang), labels, egress, deployment)
+    approvals(doc, release_lapses(lang), labels, egress, deployment, s["world"])
     return doc
 
 
@@ -546,7 +591,7 @@ def compose_release_morning(s: dict) -> Bpmn:
     # 06:00 Prague = 05:00 UTC in winter: the engine's cron runs on its JVM zone (UTC on bp-dsk), and a C7 cron
     # carries no zone — in summer (CEST) this is 07:00 Prague.
     timer_start(doc, "každé ráno v 6:00 (SEČ)" if lang == "cs" else "every morning at 06:00 (CET)", "0 0 5 * * ?")
-    approvals(doc, release_lapses(lang), labels, egress, deployment)
+    approvals(doc, release_lapses(lang), labels, egress, deployment, s["world"])
     digest(doc, labels, egress, lang)
     return doc
 
@@ -778,7 +823,7 @@ def compose_return_request(s: dict) -> Bpmn:
     ET.SubElement(cio, q("camunda:outputParameter"), {"name": "way"}).text = "${way}"
     ET.SubElement(cio, q("camunda:outputParameter"), {"name": "ttrCareBy"}).text = "${ttrCareBy}"
     care_due = doc.add(P, "bpmn:scriptTask", {"id": "s41_care_due", "name": labels["due"], "scriptFormat": "groovy"})
-    ET.SubElement(care_due, q("bpmn:script")).text = WORKING_DAYS_GROOVY.format(action="decide_way", days=3)
+    ET.SubElement(care_due, q("bpmn:script")).text = due_script("decide_way", 3, s["world"])
     to_expr = "(way == 'exchange' || way == 'refund_after_return' ? 'awaiting_goods' : 'settling')"
     perform = http_task(
         doc, P, "s41_care_perform", t["care_perform"], "POST",

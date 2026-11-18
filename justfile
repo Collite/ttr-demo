@@ -358,9 +358,23 @@ compose-processes set="cz" *FLAGS:
 automation-deploy set="cz" *FLAGS:
     bash scripts/automation-export.sh deploy {{set}} {{FLAGS}}
 
-# The authored processes' specs alone (bpmn-moddle; `npm ci --prefix processes/tests` once). verify-model runs them too.
+# The authored processes' specs alone (`npm ci --prefix processes/tests` + `just processes-tools` once). verify-model runs them too.
 processes-test:
-    node --test processes/tests/processes.test.mjs
+    node --test processes/tests/*.test.mjs
+
+# Groovy 5.0.4 — the jar bp-dsk's engine image (cibseven run4-2.2.0) ships — for the due-date specs, which run the
+# composed scripts on a fixed engine clock (review-365 B1). Maven Central, sha256-pinned, into processes/tests/.tools/.
+processes-tools:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    jar=processes/tests/.tools/groovy-5.0.4.jar
+    sha=35d6e6a658ebf549c736c06fbaf370521a3a72e3a044f6a868b33a0844d40d6c
+    if [ -f "$jar" ] && echo "$sha  $jar" | shasum -a 256 -c --status; then exit 0; fi
+    mkdir -p processes/tests/.tools
+    curl -fsSL -o "$jar.part" https://repo1.maven.org/maven2/org/apache/groovy/groovy/5.0.4/groovy-5.0.4.jar
+    if ! echo "$sha  $jar.part" | shasum -a 256 -c --status; then rm -f "$jar.part"; echo "groovy-5.0.4.jar: sha256 mismatch" >&2; exit 1; fi
+    mv "$jar.part" "$jar"
+    echo "fetched $jar"
 
 # The generator's suite on a throwaway local Postgres (pgserver via uv — no Docker, no cluster) loaded
 # with data/automation/tests/fixture.sql. `ONLY=reset just automation-test` runs one script.

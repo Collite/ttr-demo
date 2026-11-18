@@ -187,10 +187,11 @@ jobs:
         working-directory: hartland
         run: just n8n-test
 
-      # AU-hartland P4·S4.1: the processes' specs read BPMN with bpmn-moddle (processes/tests/package-lock.json).
+      # AU-hartland P4·S4.1: the processes' specs read BPMN with bpmn-moddle (processes/tests/package-lock.json) and
+      # run the due-date scripts on Groovy 5.0.4, the engine image's jar (sha-pinned; the JDK is the toolchain's).
       - name: Process spec dependencies
         working-directory: hartland
-        run: npm ci --prefix processes/tests --ignore-scripts --no-audit --no-fund
+        run: npm ci --prefix processes/tests --ignore-scripts --no-audit --no-fund && just processes-tools
 
       - name: Model suites
         working-directory: hartland

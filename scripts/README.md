@@ -26,8 +26,10 @@ a recipe or world change before re-exporting.
 it under ids that start with `s41_`:
 
 - **release_order** (H-1, on placement): the message start `order_placed`; a guard that ends the instance when a
-  confirmation for the order is already open (D-98); the confirmation task's due date (2 working days on the Prague
-  clock); on the lapse, a typed `perform hold {order, department: Sales}` (D-168).
+  confirmation for the order is already open (D-98 — a read, not a lock: two placements of one order at the same moment
+  can still open two, S4.1 Found L); the confirmation task's due date (2 working days on the Prague clock: no weekend,
+  no holiday of the world's rules in `data/calendar/calendar.sql`, counted from the engine's clock); on the lapse, a
+  typed `perform hold {order, department: Sales}` (D-168).
 - **release_morning** (H-1, the batch): a timer start, `0 0 5 * * ?` on the engine's UTC clock (06:00 CET); the
   batch's business key `release_morning:<date>`; the same guard, due date and lapse per row; one digest send task per
   `who` group after the close (`GET /runs/{id}/digest`, D-148) in place of the per-row mail.
@@ -71,4 +73,6 @@ HARTLAND_DRIVER_TOKEN=… just automation-events-check cz 2026-11-02 --engine-ur
 - Any other 4xx (401 for a bad bearer, for example) stops the run with exit 1. 5xx and transport errors are retried
   three times.
 
-Specs: `just automation-events-test` (no cluster, no network).
+Specs: `just automation-events-test` (no cluster, no network). The process specs: `just processes-test` (needs
+`npm ci --prefix processes/tests` and `just processes-tools` — the due-date specs run the composed Groovy on the
+engine image's Groovy 5.0.4 with a JDK).

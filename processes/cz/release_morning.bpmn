@@ -1619,11 +1619,27 @@ try {
           <bpmn:scriptTask id="s41_release_confirmed_due" name="Termín potvrzení" scriptFormat="groovy">
             <bpmn:incoming>s41_release_confirmed_guard_no</bpmn:incoming>
             <bpmn:outgoing>s41_release_confirmed_due_task</bpmn:outgoing>
-            <bpmn:script>// AU-hartland S4.1 (authored): the confirmation's due date — `def action release_confirmed { due: 2 working_days }`,
-// Monday to Friday on the Prague clock (the world calendar's holidays are not read here). A process variable
-// ttrApprovalDueOverride (an ISO-8601 duration, e.g. PT2M) replaces it: the shortened lapse of a certification walk.
+            <bpmn:script>// AU-hartland S4.1 (authored): the confirmation's due date — `def action release_confirmed { due: 2 working_days }`.
+// A working day is not a weekend and not a holiday of the world (D-82, contracts §1: date_dim.d_working_day); the
+// holidays are the world's public-holiday rules of data/calendar/calendar.sql (world cz), counted on the Prague
+// clock from the engine's clock — the one the boundary timer is due on. A process variable ttrApprovalDueOverride
+// (an ISO-8601 duration, e.g. PT2M) replaces it: the shortened lapse of a certification walk.
 def zone = java.time.ZoneId.of('Europe/Prague')
-def now = java.time.ZonedDateTime.now(zone)
+def now = java.time.ZonedDateTime.ofInstant(org.cibseven.bpm.engine.impl.util.ClockUtil.getCurrentTime().toInstant(), zone)
+def fixedDays = ['01-01', '05-01', '05-08', '07-05', '07-06', '09-28', '10-28', '11-17', '12-24', '12-25', '12-26'] as Set
+def easterOffsets = [-2, 1]
+def easter = { int y -&gt;
+    int a = y % 19, b = y.intdiv(100), c = y % 100, d = b.intdiv(4), e = b % 4, f = (b + 8).intdiv(25)
+    int g = (b - f + 1).intdiv(3), h = (19 * a + b - d - g + 15) % 30, i = c.intdiv(4), k = c % 4
+    int l = (32 + 2 * e + 2 * i - h - k) % 7, m = (a + 11 * h + 22 * l).intdiv(451)
+    java.time.LocalDate.of(y, (h + l - 7 * m + 114).intdiv(31), (h + l - 7 * m + 114) % 31 + 1)
+}
+def workingDay = { java.time.LocalDate day -&gt;
+    if (day.getDayOfWeek().getValue() &gt; 5) return false
+    if (fixedDays.contains(String.format('%02d-%02d', day.getMonthValue(), day.getDayOfMonth()))) return false
+    def e = easter(day.getYear())
+    return !easterOffsets.any { day == e.plusDays(it as long) }
+}
 def override = execution.getVariable('ttrApprovalDueOverride')
 def due = now
 if (override != null &amp;&amp; override.toString().trim()) {
@@ -1632,7 +1648,7 @@ if (override != null &amp;&amp; override.toString().trim()) {
     int left = 2
     while (left &gt; 0) {
         due = due.plusDays(1)
-        if (due.getDayOfWeek().getValue() &lt; 6) left--
+        if (workingDay(due.toLocalDate())) left--
     }
 }
 execution.setVariableLocal('ttrApprovalDue', java.util.Date.from(due.toInstant()))
