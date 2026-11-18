@@ -55,7 +55,7 @@ expect "events/us.csv: a row per event" "$(( $(wc -l < "$F") - 1 ))" -eq "$(q "S
 # The driver reads what the generator writes: its own check passes on the file (format, order, payload keys).
 uv run --quiet "$AUTO_DIR/../../scripts/automation-events.py" check --world us --csv "$F" > "$(log_of driver "$S")" 2>&1; rc=$?
 expect "scripts/automation-events.py check passes on events/us.csv" "$rc" -eq 0
-expect "--dry-run renders a body per demo event" "$(uv run --quiet "$AUTO_DIR/../../scripts/automation-events.py" replay --world us --csv "$F" --demo --dry-run 2>/dev/null | grep -c '"idempotencyKey": "events:us:')" -eq "$(conf events_demo)"
+expect "--dry-run renders an engine message per demo event" "$(uv run --quiet "$AUTO_DIR/../../scripts/automation-events.py" replay --world us --csv "$F" --demo --dry-run 2>/dev/null | grep -c '"messageName": ')" -eq "$(conf events_demo)"
 
 drop_scratch "$S"
 finish
