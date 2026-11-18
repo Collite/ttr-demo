@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="query.query.buyer_age_profile_decision_definitions" name="query.query.buyer_age_profile" namespace="https://tatrman.org/dmn/hartland.worlds.demo" xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:camunda="http://camunda.org/schema/1.0/dmn">
+  <decision camunda:historyTimeToLive="30" id="query.query.buyer_age_profile_decision" name="query.query.buyer_age_profile_decision">
+    <decisionTable hitPolicy="FIRST" id="query.query.buyer_age_profile_decision_table">
+      <input id="query.query.buyer_age_profile_decision_input_0" label="buyer_age">
+        <inputExpression id="query.query.buyer_age_profile_decision_expression_0" typeRef="number">
+          <text>buyer_age</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.buyer_age_profile_decision_input_1" label="order_lines">
+        <inputExpression id="query.query.buyer_age_profile_decision_expression_1" typeRef="number">
+          <text>order_lines</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.buyer_age_profile_decision_input_2" label="row_count">
+        <inputExpression id="query.query.buyer_age_profile_decision_expression_2" typeRef="number">
+          <text>row_count</text>
+        </inputExpression>
+      </input>
+      <output id="query.query.buyer_age_profile_decision_output" name="outcome" typeRef="string" />
+    </decisionTable>
+  </decision>
+</definitions>
+

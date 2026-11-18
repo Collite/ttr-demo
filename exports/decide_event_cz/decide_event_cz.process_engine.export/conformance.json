@@ -1,0 +1,23 @@
+{
+    "fixtures": [
+        "tests/exchange.cz.yaml",
+        "tests/exchange.yaml",
+        "tests/refund-after-return.cz.yaml",
+        "tests/refund-after-return.yaml",
+        "tests/refund-no-return.cz.yaml",
+        "tests/refund-no-return.yaml",
+        "tests/reject-abuse.cz.yaml",
+        "tests/reject-abuse.yaml",
+        "tests/reject-late.cz.yaml",
+        "tests/reject-late.yaml",
+        "tests/reject-not-ours.cz.yaml",
+        "tests/reject-not-ours.yaml",
+        "tests/replacement-no-return.cz.yaml",
+        "tests/replacement-no-return.yaml",
+        "tests/to-customer-care.cz.yaml",
+        "tests/to-customer-care.yaml"
+    ],
+    "cells": [
+        "process_engine.on_event"
+    ]
+}

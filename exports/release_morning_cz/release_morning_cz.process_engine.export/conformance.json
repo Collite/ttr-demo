@@ -1,0 +1,15 @@
+{
+    "fixtures": [
+        "tests/hold-ar.cz.yaml",
+        "tests/hold-ar.yaml",
+        "tests/hold-sales.cz.yaml",
+        "tests/hold-sales.yaml",
+        "tests/release-confirmed.cz.yaml",
+        "tests/release-confirmed.yaml",
+        "tests/release.cz.yaml",
+        "tests/release.yaml"
+    ],
+    "cells": [
+        "process_engine.batch"
+    ]
+}

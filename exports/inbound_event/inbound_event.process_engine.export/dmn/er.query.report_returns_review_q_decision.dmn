@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="er.query.report_returns_review_q_decision_definitions" name="er.query.report_returns_review_q" namespace="https://tatrman.org/dmn/hartland.worlds.demo" xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:camunda="http://camunda.org/schema/1.0/dmn">
+  <decision camunda:historyTimeToLive="30" id="er.query.report_returns_review_q_decision" name="er.query.report_returns_review_q_decision">
+    <decisionTable hitPolicy="FIRST" id="er.query.report_returns_review_q_decision_table">
+      <input id="er.query.report_returns_review_q_decision_input_0" label="category">
+        <inputExpression id="er.query.report_returns_review_q_decision_expression_0" typeRef="string">
+          <text>category</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.report_returns_review_q_decision_input_1" label="requests">
+        <inputExpression id="er.query.report_returns_review_q_decision_expression_1" typeRef="number">
+          <text>requests</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.report_returns_review_q_decision_input_2" label="received">
+        <inputExpression id="er.query.report_returns_review_q_decision_expression_2" typeRef="number">
+          <text>received</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.report_returns_review_q_decision_input_3" label="open">
+        <inputExpression id="er.query.report_returns_review_q_decision_expression_3" typeRef="number">
+          <text>open</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.report_returns_review_q_decision_input_4" label="amount">
+        <inputExpression id="er.query.report_returns_review_q_decision_expression_4" typeRef="number">
+          <text>amount</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.report_returns_review_q_decision_input_5" label="row_count">
+        <inputExpression id="er.query.report_returns_review_q_decision_expression_5" typeRef="number">
+          <text>row_count</text>
+        </inputExpression>
+      </input>
+      <output id="er.query.report_returns_review_q_decision_output" name="outcome" typeRef="string" />
+    </decisionTable>
+  </decision>
+</definitions>
+

@@ -1,0 +1,2969 @@
+{
+    "$schema": "https://unpkg.com/@camunda/element-templates-json-schema@0.12.1/resources/schema.json",
+    "name": "Tatrman query.query.channel_revenue_monthly",
+    "id": "tatrman.hartland.worlds.demo.query.query.channel_revenue_monthly",
+    "version": 1,
+    "appliesTo": [
+        "bpmn:ServiceTask"
+    ],
+    "properties": [
+        {
+            "id": "ttr_source",
+            "label": "World program or query",
+            "type": "Dropdown",
+            "value": "query.query.channel_revenue_monthly",
+            "choices": [
+                {
+                    "name": "decide_catch_up",
+                    "value": "decide_catch_up"
+                },
+                {
+                    "name": "decide_catch_up_cz",
+                    "value": "decide_catch_up_cz"
+                },
+                {
+                    "name": "decide_on_request",
+                    "value": "decide_on_request"
+                },
+                {
+                    "name": "decide_on_request_cz",
+                    "value": "decide_on_request_cz"
+                },
+                {
+                    "name": "er.query.placed_order_q",
+                    "value": "er.query.placed_order_q"
+                },
+                {
+                    "name": "er.query.report_returns_review_q",
+                    "value": "er.query.report_returns_review_q"
+                },
+                {
+                    "name": "er.query.returns_monthly_by_category",
+                    "value": "er.query.returns_monthly_by_category"
+                },
+                {
+                    "name": "er.query.returns_review",
+                    "value": "er.query.returns_review"
+                },
+                {
+                    "name": "er.query.returns_union",
+                    "value": "er.query.returns_union"
+                },
+                {
+                    "name": "er.query.revenue_per_customer",
+                    "value": "er.query.revenue_per_customer"
+                },
+                {
+                    "name": "er.query.sales_union",
+                    "value": "er.query.sales_union"
+                },
+                {
+                    "name": "er.query.stockouts_monthly_dc",
+                    "value": "er.query.stockouts_monthly_dc"
+                },
+                {
+                    "name": "inbound_daily",
+                    "value": "inbound_daily"
+                },
+                {
+                    "name": "inbound_on_receipt",
+                    "value": "inbound_on_receipt"
+                },
+                {
+                    "name": "morning_release",
+                    "value": "morning_release"
+                },
+                {
+                    "name": "morning_release_cz",
+                    "value": "morning_release_cz"
+                },
+                {
+                    "name": "query.query.buyer_age_profile",
+                    "value": "query.query.buyer_age_profile"
+                },
+                {
+                    "name": "query.query.category_revenue",
+                    "value": "query.query.category_revenue"
+                },
+                {
+                    "name": "query.query.channel_revenue_monthly",
+                    "value": "query.query.channel_revenue_monthly"
+                },
+                {
+                    "name": "query.query.channel_revenue_monthly_yoy",
+                    "value": "query.query.channel_revenue_monthly_yoy"
+                },
+                {
+                    "name": "query.query.channel_revenue_yoy",
+                    "value": "query.query.channel_revenue_yoy"
+                },
+                {
+                    "name": "query.query.customer_running_total",
+                    "value": "query.query.customer_running_total"
+                },
+                {
+                    "name": "query.query.inventory_on_hand_series",
+                    "value": "query.query.inventory_on_hand_series"
+                },
+                {
+                    "name": "query.query.marketplace_revenue_by_warehouse",
+                    "value": "query.query.marketplace_revenue_by_warehouse"
+                },
+                {
+                    "name": "query.query.promo_share",
+                    "value": "query.query.promo_share"
+                },
+                {
+                    "name": "query.query.returns_by_reason",
+                    "value": "query.query.returns_by_reason"
+                },
+                {
+                    "name": "query.query.returns_rate_by_channel",
+                    "value": "query.query.returns_rate_by_channel"
+                },
+                {
+                    "name": "query.query.revenue_by_customer_state",
+                    "value": "query.query.revenue_by_customer_state"
+                },
+                {
+                    "name": "query.query.store_sales_by_month",
+                    "value": "query.query.store_sales_by_month"
+                },
+                {
+                    "name": "query.query.top_items_by_revenue",
+                    "value": "query.query.top_items_by_revenue"
+                },
+                {
+                    "name": "query.query.warehouse_stockout_week_count",
+                    "value": "query.query.warehouse_stockout_week_count"
+                },
+                {
+                    "name": "query.query.warehouse_stockout_weeks",
+                    "value": "query.query.warehouse_stockout_weeks"
+                },
+                {
+                    "name": "release_on_placement",
+                    "value": "release_on_placement"
+                },
+                {
+                    "name": "release_on_placement_cz",
+                    "value": "release_on_placement_cz"
+                },
+                {
+                    "name": "settle_daily",
+                    "value": "settle_daily"
+                },
+                {
+                    "name": "settle_on_document",
+                    "value": "settle_on_document"
+                }
+            ],
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "ttr_source"
+            }
+        },
+        {
+            "id": "ttr_deployment",
+            "label": "World deployment (program steps: the run this task opens)",
+            "type": "String",
+            "value": "",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "ttr_deployment"
+            }
+        },
+        {
+            "id": "n_e7c26778221bc6294179",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_catch_up"
+            },
+            "label": "abuse_share",
+            "type": "String",
+            "value": "${0.40}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "abuse_share"
+            }
+        },
+        {
+            "id": "n_7d2a0bf03070222d8d62",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_catch_up"
+            },
+            "label": "care_threshold",
+            "type": "String",
+            "value": "${500}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "care_threshold"
+            }
+        },
+        {
+            "id": "n_7642e0ae246c0ebbf803",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_catch_up"
+            },
+            "label": "inbound_reminder",
+            "type": "String",
+            "value": "${14}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "inbound_reminder"
+            }
+        },
+        {
+            "id": "n_507c334a25a6c9fa3483",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_catch_up"
+            },
+            "label": "return_window",
+            "type": "String",
+            "value": "${30}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "return_window"
+            }
+        },
+        {
+            "id": "n_165a2142c14613c10d8c",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_catch_up"
+            },
+            "label": "settlement",
+            "type": "String",
+            "value": "${5}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "settlement"
+            }
+        },
+        {
+            "id": "n_0b271c1667901b64e61f",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_catch_up"
+            },
+            "label": "small_value",
+            "type": "String",
+            "value": "${15}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "small_value"
+            }
+        },
+        {
+            "id": "n_9dabb3cee88112885a95",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_catch_up_cz"
+            },
+            "label": "abuse_share",
+            "type": "String",
+            "value": "${0.40}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "abuse_share"
+            }
+        },
+        {
+            "id": "n_f6ecd730b0417ac502a7",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_catch_up_cz"
+            },
+            "label": "care_threshold",
+            "type": "String",
+            "value": "${500}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "care_threshold"
+            }
+        },
+        {
+            "id": "n_6120e58277dd50d340c1",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_catch_up_cz"
+            },
+            "label": "inbound_reminder",
+            "type": "String",
+            "value": "${14}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "inbound_reminder"
+            }
+        },
+        {
+            "id": "n_e8675a933f44dbf60b6a",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_catch_up_cz"
+            },
+            "label": "return_window",
+            "type": "String",
+            "value": "${30}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "return_window"
+            }
+        },
+        {
+            "id": "n_797b857f826136002e0a",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_catch_up_cz"
+            },
+            "label": "settlement",
+            "type": "String",
+            "value": "${5}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "settlement"
+            }
+        },
+        {
+            "id": "n_8f14d6fcf70c45a2a34a",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_catch_up_cz"
+            },
+            "label": "small_value",
+            "type": "String",
+            "value": "${15}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "small_value"
+            }
+        },
+        {
+            "id": "n_19e12bfa963158871269",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_on_request"
+            },
+            "label": "abuse_share",
+            "type": "String",
+            "value": "${0.40}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "abuse_share"
+            }
+        },
+        {
+            "id": "n_9a9a4d74c135f1f77373",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_on_request"
+            },
+            "label": "care_threshold",
+            "type": "String",
+            "value": "${500}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "care_threshold"
+            }
+        },
+        {
+            "id": "n_5119f24da6e564c7ed2f",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_on_request"
+            },
+            "label": "inbound_reminder",
+            "type": "String",
+            "value": "${14}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "inbound_reminder"
+            }
+        },
+        {
+            "id": "n_4e673fe570959fd68c16",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_on_request"
+            },
+            "label": "return_window",
+            "type": "String",
+            "value": "${30}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "return_window"
+            }
+        },
+        {
+            "id": "n_bb4604c134a1a311a977",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_on_request"
+            },
+            "label": "settlement",
+            "type": "String",
+            "value": "${5}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "settlement"
+            }
+        },
+        {
+            "id": "n_80230034ebacb8fc7402",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_on_request"
+            },
+            "label": "small_value",
+            "type": "String",
+            "value": "${15}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "small_value"
+            }
+        },
+        {
+            "id": "n_c8216d9dd0c40c2f8f1c",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_on_request_cz"
+            },
+            "label": "abuse_share",
+            "type": "String",
+            "value": "${0.40}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "abuse_share"
+            }
+        },
+        {
+            "id": "n_dba74ac33528a55b241f",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_on_request_cz"
+            },
+            "label": "care_threshold",
+            "type": "String",
+            "value": "${500}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "care_threshold"
+            }
+        },
+        {
+            "id": "n_fb56fd36d53912831859",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_on_request_cz"
+            },
+            "label": "inbound_reminder",
+            "type": "String",
+            "value": "${14}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "inbound_reminder"
+            }
+        },
+        {
+            "id": "n_181ef93eb5f7ce5eb285",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_on_request_cz"
+            },
+            "label": "return_window",
+            "type": "String",
+            "value": "${30}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "return_window"
+            }
+        },
+        {
+            "id": "n_adff7ab36d299a98860f",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_on_request_cz"
+            },
+            "label": "settlement",
+            "type": "String",
+            "value": "${5}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "settlement"
+            }
+        },
+        {
+            "id": "n_e4705eeec7c98e902a40",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "decide_on_request_cz"
+            },
+            "label": "small_value",
+            "type": "String",
+            "value": "${15}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "small_value"
+            }
+        },
+        {
+            "id": "n_4a0c5eac1ea8754552d3",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.placed_order_q"
+            },
+            "label": "order_number",
+            "type": "String",
+            "value": "order_number",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${order_number}"
+            }
+        },
+        {
+            "id": "n_d5ca5a8a1785cbbf4c7c",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.placed_order_q"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_51fab79626a59ea88e77",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.report_returns_review_q"
+            },
+            "label": "category",
+            "type": "String",
+            "value": "category",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${category}"
+            }
+        },
+        {
+            "id": "n_d8fb1dd331eb10629a64",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.report_returns_review_q"
+            },
+            "label": "requests",
+            "type": "String",
+            "value": "requests",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${requests}"
+            }
+        },
+        {
+            "id": "n_ca831073ae6e7f6c7ff2",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.report_returns_review_q"
+            },
+            "label": "received",
+            "type": "String",
+            "value": "received",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${received}"
+            }
+        },
+        {
+            "id": "n_618aacb513d16ba0a370",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.report_returns_review_q"
+            },
+            "label": "open",
+            "type": "String",
+            "value": "open",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${open}"
+            }
+        },
+        {
+            "id": "n_9490a4e1752829e22aac",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.report_returns_review_q"
+            },
+            "label": "amount",
+            "type": "String",
+            "value": "amount",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${amount}"
+            }
+        },
+        {
+            "id": "n_15ee23a1da6e576e8d99",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.report_returns_review_q"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_e73c1772b97354f7b653",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_monthly_by_category"
+            },
+            "label": "category",
+            "type": "String",
+            "value": "category",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${category}"
+            }
+        },
+        {
+            "id": "n_9997bb7f9ae38049bdc7",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_monthly_by_category"
+            },
+            "label": "month_start",
+            "type": "String",
+            "value": "month_start",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${month_start}"
+            }
+        },
+        {
+            "id": "n_69c6e0209215ede9915c",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_monthly_by_category"
+            },
+            "label": "requests",
+            "type": "String",
+            "value": "requests",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${requests}"
+            }
+        },
+        {
+            "id": "n_a9a4f7a96c08895c46ec",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_monthly_by_category"
+            },
+            "label": "lines",
+            "type": "String",
+            "value": "lines",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${lines}"
+            }
+        },
+        {
+            "id": "n_ffad4e3c2b89ceae6781",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_monthly_by_category"
+            },
+            "label": "units",
+            "type": "String",
+            "value": "units",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${units}"
+            }
+        },
+        {
+            "id": "n_31674df81f9c250ae6a6",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_monthly_by_category"
+            },
+            "label": "amount",
+            "type": "String",
+            "value": "amount",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${amount}"
+            }
+        },
+        {
+            "id": "n_dc047b0390f616c4d0a4",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_monthly_by_category"
+            },
+            "label": "open_lines",
+            "type": "String",
+            "value": "open_lines",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${open_lines}"
+            }
+        },
+        {
+            "id": "n_cea4e956c4bfd24ee3d3",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_monthly_by_category"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_4f3060850a523503e179",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_review"
+            },
+            "label": "request_id",
+            "type": "String",
+            "value": "request_id",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${request_id}"
+            }
+        },
+        {
+            "id": "n_7e6538c1cdbd9fbbccf9",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_review"
+            },
+            "label": "customer",
+            "type": "String",
+            "value": "customer",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${customer}"
+            }
+        },
+        {
+            "id": "n_2eae80909448aef3e9e9",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_review"
+            },
+            "label": "category",
+            "type": "String",
+            "value": "category",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${category}"
+            }
+        },
+        {
+            "id": "n_63500949c0e993193911",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_review"
+            },
+            "label": "requested_at",
+            "type": "String",
+            "value": "requested_at",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${requested_at}"
+            }
+        },
+        {
+            "id": "n_8ce4cac5d4fd992a4268",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_review"
+            },
+            "label": "received_at",
+            "type": "String",
+            "value": "received_at",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${received_at}"
+            }
+        },
+        {
+            "id": "n_7c2222e005ddea525bf2",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_review"
+            },
+            "label": "status",
+            "type": "String",
+            "value": "status",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${status}"
+            }
+        },
+        {
+            "id": "n_43ee8f3f361596f1de91",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_review"
+            },
+            "label": "amount",
+            "type": "String",
+            "value": "amount",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${amount}"
+            }
+        },
+        {
+            "id": "n_9a9ac209a434b687d67c",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_review"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_7d6e8a5f15a17be23585",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_union"
+            },
+            "label": "channel",
+            "type": "String",
+            "value": "channel",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${channel}"
+            }
+        },
+        {
+            "id": "n_01e113245e296e291731",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_union"
+            },
+            "label": "item",
+            "type": "String",
+            "value": "item",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${item}"
+            }
+        },
+        {
+            "id": "n_ac0297a94f60c711258d",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_union"
+            },
+            "label": "customer",
+            "type": "String",
+            "value": "customer",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${customer}"
+            }
+        },
+        {
+            "id": "n_0f6263ef81250885aec2",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_union"
+            },
+            "label": "returned_date",
+            "type": "String",
+            "value": "returned_date",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${returned_date}"
+            }
+        },
+        {
+            "id": "n_4c08d748e052543a73b7",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_union"
+            },
+            "label": "reason",
+            "type": "String",
+            "value": "reason",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${reason}"
+            }
+        },
+        {
+            "id": "n_d3198243e92287207b73",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_union"
+            },
+            "label": "return_quantity",
+            "type": "String",
+            "value": "return_quantity",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${return_quantity}"
+            }
+        },
+        {
+            "id": "n_86d753028559425320c5",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_union"
+            },
+            "label": "return_amt",
+            "type": "String",
+            "value": "return_amt",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${return_amt}"
+            }
+        },
+        {
+            "id": "n_fdfb57795e97a6345011",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_union"
+            },
+            "label": "line_ref",
+            "type": "String",
+            "value": "line_ref",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${line_ref}"
+            }
+        },
+        {
+            "id": "n_1ffc94162d0741f726ca",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_union"
+            },
+            "label": "store",
+            "type": "String",
+            "value": "store",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${store}"
+            }
+        },
+        {
+            "id": "n_62bcd0f745b1ccfbdf40",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_union"
+            },
+            "label": "warehouse",
+            "type": "String",
+            "value": "warehouse",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${warehouse}"
+            }
+        },
+        {
+            "id": "n_42d3b7d06fd84fc94c34",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.returns_union"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_a04c5173d6192c50a5ce",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.revenue_per_customer"
+            },
+            "label": "sk",
+            "type": "String",
+            "value": "sk",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${sk}"
+            }
+        },
+        {
+            "id": "n_9b906ea90538ab6c0811",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.revenue_per_customer"
+            },
+            "label": "customer_id",
+            "type": "String",
+            "value": "customer_id",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${customer_id}"
+            }
+        },
+        {
+            "id": "n_03772384cfbf9d738e3d",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.revenue_per_customer"
+            },
+            "label": "hdemo",
+            "type": "String",
+            "value": "hdemo",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${hdemo}"
+            }
+        },
+        {
+            "id": "n_8a537fe9f315117ed86a",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.revenue_per_customer"
+            },
+            "label": "birth_year",
+            "type": "String",
+            "value": "birth_year",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${birth_year}"
+            }
+        },
+        {
+            "id": "n_d8ec37ef804a43fd9952",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.revenue_per_customer"
+            },
+            "label": "revenue",
+            "type": "String",
+            "value": "revenue",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${revenue}"
+            }
+        },
+        {
+            "id": "n_ae541e2441c46c114abd",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.revenue_per_customer"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_53022b151b68bce4517b",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.sales_union"
+            },
+            "label": "channel",
+            "type": "String",
+            "value": "channel",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${channel}"
+            }
+        },
+        {
+            "id": "n_aebdd41947765615183b",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.sales_union"
+            },
+            "label": "item",
+            "type": "String",
+            "value": "item",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${item}"
+            }
+        },
+        {
+            "id": "n_01085f82bb52c7d5a61e",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.sales_union"
+            },
+            "label": "customer",
+            "type": "String",
+            "value": "customer",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${customer}"
+            }
+        },
+        {
+            "id": "n_dfa2b86f79dcee790859",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.sales_union"
+            },
+            "label": "sold_date",
+            "type": "String",
+            "value": "sold_date",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${sold_date}"
+            }
+        },
+        {
+            "id": "n_ea99cabfae16e20acb5b",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.sales_union"
+            },
+            "label": "promo",
+            "type": "String",
+            "value": "promo",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${promo}"
+            }
+        },
+        {
+            "id": "n_fa485d97eb8aeedfd2d0",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.sales_union"
+            },
+            "label": "quantity",
+            "type": "String",
+            "value": "quantity",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${quantity}"
+            }
+        },
+        {
+            "id": "n_afe0f64f1783bc6ad41d",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.sales_union"
+            },
+            "label": "ext_sales_price",
+            "type": "String",
+            "value": "ext_sales_price",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${ext_sales_price}"
+            }
+        },
+        {
+            "id": "n_2d13f9bd4ed2c1bcf2a6",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.sales_union"
+            },
+            "label": "line_ref",
+            "type": "String",
+            "value": "line_ref",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${line_ref}"
+            }
+        },
+        {
+            "id": "n_8e8319894c59b42779b6",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.sales_union"
+            },
+            "label": "store",
+            "type": "String",
+            "value": "store",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${store}"
+            }
+        },
+        {
+            "id": "n_c8fe564372b8af81d1cf",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.sales_union"
+            },
+            "label": "warehouse",
+            "type": "String",
+            "value": "warehouse",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${warehouse}"
+            }
+        },
+        {
+            "id": "n_8708abf7acc7787881fa",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.sales_union"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_90edf4650f882a6405c9",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.stockouts_monthly_dc"
+            },
+            "label": "warehouse",
+            "type": "String",
+            "value": "warehouse",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${warehouse}"
+            }
+        },
+        {
+            "id": "n_6d65179814ccc6c73c85",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.stockouts_monthly_dc"
+            },
+            "label": "warehouse_name",
+            "type": "String",
+            "value": "warehouse_name",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${warehouse_name}"
+            }
+        },
+        {
+            "id": "n_9d58a0a271e9179ba17c",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.stockouts_monthly_dc"
+            },
+            "label": "month_start",
+            "type": "String",
+            "value": "month_start",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${month_start}"
+            }
+        },
+        {
+            "id": "n_8c4cafc6ded20f631e60",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.stockouts_monthly_dc"
+            },
+            "label": "stockout_weeks",
+            "type": "String",
+            "value": "stockout_weeks",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${stockout_weeks}"
+            }
+        },
+        {
+            "id": "n_d25a23467a8d70d88ce2",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.stockouts_monthly_dc"
+            },
+            "label": "weeks",
+            "type": "String",
+            "value": "weeks",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${weeks}"
+            }
+        },
+        {
+            "id": "n_fc480e7d3430a17f9e85",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.stockouts_monthly_dc"
+            },
+            "label": "zero_rows",
+            "type": "String",
+            "value": "zero_rows",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${zero_rows}"
+            }
+        },
+        {
+            "id": "n_5f88aad408692b122c60",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.stockouts_monthly_dc"
+            },
+            "label": "total_rows",
+            "type": "String",
+            "value": "total_rows",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${total_rows}"
+            }
+        },
+        {
+            "id": "n_1c12e03d54d24a27004d",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "er.query.stockouts_monthly_dc"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_c18786bd246af6d002f1",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "inbound_daily"
+            },
+            "label": "inbound_close",
+            "type": "String",
+            "value": "${30}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "inbound_close"
+            }
+        },
+        {
+            "id": "n_d997ed4fce91ced5cb3e",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "inbound_daily"
+            },
+            "label": "inbound_reminder",
+            "type": "String",
+            "value": "${14}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "inbound_reminder"
+            }
+        },
+        {
+            "id": "n_0d41f33a01cd5f4144b3",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "inbound_daily"
+            },
+            "label": "settlement",
+            "type": "String",
+            "value": "${5}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "settlement"
+            }
+        },
+        {
+            "id": "n_09674c401d69a1b744fc",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "inbound_on_receipt"
+            },
+            "label": "inbound_close",
+            "type": "String",
+            "value": "${30}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "inbound_close"
+            }
+        },
+        {
+            "id": "n_da009c22117a4e00764a",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "inbound_on_receipt"
+            },
+            "label": "inbound_reminder",
+            "type": "String",
+            "value": "${14}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "inbound_reminder"
+            }
+        },
+        {
+            "id": "n_e1134bd1011aab847253",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "inbound_on_receipt"
+            },
+            "label": "settlement",
+            "type": "String",
+            "value": "${5}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "settlement"
+            }
+        },
+        {
+            "id": "n_4cde5c55eec9c138fe87",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "morning_release"
+            },
+            "label": "confirmation_threshold",
+            "type": "String",
+            "value": "${50000}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "confirmation_threshold"
+            }
+        },
+        {
+            "id": "n_607fe62a6d466fda796f",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "morning_release"
+            },
+            "label": "tolerance",
+            "type": "String",
+            "value": "${0.01}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "tolerance"
+            }
+        },
+        {
+            "id": "n_072be9d8838401eedc1c",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "morning_release_cz"
+            },
+            "label": "confirmation_threshold",
+            "type": "String",
+            "value": "${50000}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "confirmation_threshold"
+            }
+        },
+        {
+            "id": "n_06b0bf522575b6b6b6cc",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "morning_release_cz"
+            },
+            "label": "tolerance",
+            "type": "String",
+            "value": "${0.01}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "tolerance"
+            }
+        },
+        {
+            "id": "n_ee66455af0673c7d2810",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.buyer_age_profile"
+            },
+            "label": "channel",
+            "type": "String",
+            "value": "${channel}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "channel"
+            }
+        },
+        {
+            "id": "n_92e5eca0f2026ff984f8",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.buyer_age_profile"
+            },
+            "label": "year",
+            "type": "String",
+            "value": "${year}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "year"
+            }
+        },
+        {
+            "id": "n_d4e85e834f9efb82a5f7",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.buyer_age_profile"
+            },
+            "label": "buyer_age",
+            "type": "String",
+            "value": "buyer_age",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${buyer_age}"
+            }
+        },
+        {
+            "id": "n_b2f467c0bdd5b82d8333",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.buyer_age_profile"
+            },
+            "label": "order_lines",
+            "type": "String",
+            "value": "order_lines",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${order_lines}"
+            }
+        },
+        {
+            "id": "n_1227734c85a8013c8a9f",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.buyer_age_profile"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_f4b29f553e053ad53d85",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.category_revenue"
+            },
+            "label": "channel",
+            "type": "String",
+            "value": "${channel}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "channel"
+            }
+        },
+        {
+            "id": "n_a6a2c7b2648c89658dda",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.category_revenue"
+            },
+            "label": "year",
+            "type": "String",
+            "value": "${year}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "year"
+            }
+        },
+        {
+            "id": "n_263932a4005760791557",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.category_revenue"
+            },
+            "label": "category",
+            "type": "String",
+            "value": "category",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${category}"
+            }
+        },
+        {
+            "id": "n_f30cf2df43f50e375706",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.category_revenue"
+            },
+            "label": "revenue",
+            "type": "String",
+            "value": "revenue",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${revenue}"
+            }
+        },
+        {
+            "id": "n_27a83a4a581ff3bbd47c",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.category_revenue"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_87529ce373377c7e8644",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_monthly"
+            },
+            "label": "channel",
+            "type": "String",
+            "value": "${channel}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "channel"
+            }
+        },
+        {
+            "id": "n_1ab2a3ca77c2be5ac40f",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_monthly"
+            },
+            "label": "year_from",
+            "type": "String",
+            "value": "${year_from}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "year_from"
+            }
+        },
+        {
+            "id": "n_d8b9600f35a1056d36e0",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_monthly"
+            },
+            "label": "year_to",
+            "type": "String",
+            "value": "${year_to}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "year_to"
+            }
+        },
+        {
+            "id": "n_56b59bc2ceb2f5d5c8c6",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_monthly"
+            },
+            "label": "channel",
+            "type": "String",
+            "value": "channel",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${channel}"
+            }
+        },
+        {
+            "id": "n_be2edcf8a4660ea31736",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_monthly"
+            },
+            "label": "d_year",
+            "type": "String",
+            "value": "d_year",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${d_year}"
+            }
+        },
+        {
+            "id": "n_cd75a53d760188bcdeb6",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_monthly"
+            },
+            "label": "d_moy",
+            "type": "String",
+            "value": "d_moy",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${d_moy}"
+            }
+        },
+        {
+            "id": "n_c5e65a762f0dbe46ef27",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_monthly"
+            },
+            "label": "revenue",
+            "type": "String",
+            "value": "revenue",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${revenue}"
+            }
+        },
+        {
+            "id": "n_dd2a28435427b7f72ac7",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_monthly"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_bb7b7fdadc2ae89b9a57",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_monthly_yoy"
+            },
+            "label": "channel",
+            "type": "String",
+            "value": "${channel}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "channel"
+            }
+        },
+        {
+            "id": "n_af14d7a749e42b2ef677",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_monthly_yoy"
+            },
+            "label": "prior_year",
+            "type": "String",
+            "value": "${prior_year}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "prior_year"
+            }
+        },
+        {
+            "id": "n_8ae4df004909fcefbd7d",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_monthly_yoy"
+            },
+            "label": "year",
+            "type": "String",
+            "value": "${year}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "year"
+            }
+        },
+        {
+            "id": "n_961803856c3c3dc268ab",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_monthly_yoy"
+            },
+            "label": "month_of_year",
+            "type": "String",
+            "value": "month_of_year",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${month_of_year}"
+            }
+        },
+        {
+            "id": "n_9e5a1ad83a6defd31d01",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_monthly_yoy"
+            },
+            "label": "revenue_current",
+            "type": "String",
+            "value": "revenue_current",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${revenue_current}"
+            }
+        },
+        {
+            "id": "n_f6769fb3f352f4358add",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_monthly_yoy"
+            },
+            "label": "revenue_prior",
+            "type": "String",
+            "value": "revenue_prior",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${revenue_prior}"
+            }
+        },
+        {
+            "id": "n_f939949ccc82cada6282",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_monthly_yoy"
+            },
+            "label": "yoy_pct",
+            "type": "String",
+            "value": "yoy_pct",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${yoy_pct}"
+            }
+        },
+        {
+            "id": "n_d81de046767ef74a503a",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_monthly_yoy"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_38fd9af94d4bb69f4cdd",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_yoy"
+            },
+            "label": "prior_year",
+            "type": "String",
+            "value": "${prior_year}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "prior_year"
+            }
+        },
+        {
+            "id": "n_c6de5fd5ef88985809b9",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_yoy"
+            },
+            "label": "year",
+            "type": "String",
+            "value": "${year}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "year"
+            }
+        },
+        {
+            "id": "n_ff0d2b23b1fc9efce09f",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_yoy"
+            },
+            "label": "channel",
+            "type": "String",
+            "value": "channel",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${channel}"
+            }
+        },
+        {
+            "id": "n_82ca845f7d63135d88e5",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_yoy"
+            },
+            "label": "revenue_current",
+            "type": "String",
+            "value": "revenue_current",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${revenue_current}"
+            }
+        },
+        {
+            "id": "n_ad1c282fe2353d562f40",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_yoy"
+            },
+            "label": "revenue_prior",
+            "type": "String",
+            "value": "revenue_prior",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${revenue_prior}"
+            }
+        },
+        {
+            "id": "n_68c666351f89f352a6a9",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_yoy"
+            },
+            "label": "yoy_pct",
+            "type": "String",
+            "value": "yoy_pct",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${yoy_pct}"
+            }
+        },
+        {
+            "id": "n_f177f27f1ed172f934eb",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.channel_revenue_yoy"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_c06ba6410a84c943919f",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.customer_running_total"
+            },
+            "label": "c_customer_id",
+            "type": "String",
+            "value": "c_customer_id",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${c_customer_id}"
+            }
+        },
+        {
+            "id": "n_6f11444e0a009342d9ff",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.customer_running_total"
+            },
+            "label": "d_date",
+            "type": "String",
+            "value": "d_date",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${d_date}"
+            }
+        },
+        {
+            "id": "n_bbb55dfb05d185507fd4",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.customer_running_total"
+            },
+            "label": "running_total",
+            "type": "String",
+            "value": "running_total",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${running_total}"
+            }
+        },
+        {
+            "id": "n_4f3051703a68ffc6a7bc",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.customer_running_total"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_87404dd53022e97e8358",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.inventory_on_hand_series"
+            },
+            "label": "warehouse",
+            "type": "String",
+            "value": "${warehouse}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "warehouse"
+            }
+        },
+        {
+            "id": "n_1ba58cacf4b5ba578ca6",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.inventory_on_hand_series"
+            },
+            "label": "year",
+            "type": "String",
+            "value": "${year}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "year"
+            }
+        },
+        {
+            "id": "n_a6fb23ceb3862298e3cf",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.inventory_on_hand_series"
+            },
+            "label": "warehouse",
+            "type": "String",
+            "value": "warehouse",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${warehouse}"
+            }
+        },
+        {
+            "id": "n_6eb0a393bcaa06199615",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.inventory_on_hand_series"
+            },
+            "label": "d_week_seq",
+            "type": "String",
+            "value": "d_week_seq",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${d_week_seq}"
+            }
+        },
+        {
+            "id": "n_aa4564c208ea6b782339",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.inventory_on_hand_series"
+            },
+            "label": "on_hand_qty",
+            "type": "String",
+            "value": "on_hand_qty",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${on_hand_qty}"
+            }
+        },
+        {
+            "id": "n_0450263179d09c979813",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.inventory_on_hand_series"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_2ac7418c51c74a88355c",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.marketplace_revenue_by_warehouse"
+            },
+            "label": "year_from",
+            "type": "String",
+            "value": "${year_from}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "year_from"
+            }
+        },
+        {
+            "id": "n_c8faf2361f76049024d8",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.marketplace_revenue_by_warehouse"
+            },
+            "label": "year_to",
+            "type": "String",
+            "value": "${year_to}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "year_to"
+            }
+        },
+        {
+            "id": "n_a34eb4216ff637f63a65",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.marketplace_revenue_by_warehouse"
+            },
+            "label": "warehouse",
+            "type": "String",
+            "value": "warehouse",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${warehouse}"
+            }
+        },
+        {
+            "id": "n_5a45bcd0752c28426bdd",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.marketplace_revenue_by_warehouse"
+            },
+            "label": "d_year",
+            "type": "String",
+            "value": "d_year",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${d_year}"
+            }
+        },
+        {
+            "id": "n_1771435ad44ee7bbcbaf",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.marketplace_revenue_by_warehouse"
+            },
+            "label": "revenue",
+            "type": "String",
+            "value": "revenue",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${revenue}"
+            }
+        },
+        {
+            "id": "n_3aca5cfad17f42a30403",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.marketplace_revenue_by_warehouse"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_c53daea92e42d63315b2",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.promo_share"
+            },
+            "label": "channel",
+            "type": "String",
+            "value": "${channel}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "channel"
+            }
+        },
+        {
+            "id": "n_f0eb8c4ef1568fec4d89",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.promo_share"
+            },
+            "label": "year",
+            "type": "String",
+            "value": "${year}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "year"
+            }
+        },
+        {
+            "id": "n_155b46deae0f84368eac",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.promo_share"
+            },
+            "label": "promo_revenue",
+            "type": "String",
+            "value": "promo_revenue",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${promo_revenue}"
+            }
+        },
+        {
+            "id": "n_d6d3b5b38beab0681b61",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.promo_share"
+            },
+            "label": "total_revenue",
+            "type": "String",
+            "value": "total_revenue",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${total_revenue}"
+            }
+        },
+        {
+            "id": "n_495d6a774d4d3968cc4c",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.promo_share"
+            },
+            "label": "promo_share_pct",
+            "type": "String",
+            "value": "promo_share_pct",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${promo_share_pct}"
+            }
+        },
+        {
+            "id": "n_140d26ee10d23c60fa0d",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.promo_share"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_77a6e31ecb1c67d25f1f",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.returns_by_reason"
+            },
+            "label": "channel",
+            "type": "String",
+            "value": "${channel}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "channel"
+            }
+        },
+        {
+            "id": "n_fac76a5976b14c4d4d93",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.returns_by_reason"
+            },
+            "label": "year",
+            "type": "String",
+            "value": "${year}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "year"
+            }
+        },
+        {
+            "id": "n_a61831150b34c513e53f",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.returns_by_reason"
+            },
+            "label": "reason",
+            "type": "String",
+            "value": "reason",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${reason}"
+            }
+        },
+        {
+            "id": "n_cee7b9eefaaf896442d1",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.returns_by_reason"
+            },
+            "label": "return_qty",
+            "type": "String",
+            "value": "return_qty",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${return_qty}"
+            }
+        },
+        {
+            "id": "n_2216aafb914b08c0fd32",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.returns_by_reason"
+            },
+            "label": "return_amt",
+            "type": "String",
+            "value": "return_amt",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${return_amt}"
+            }
+        },
+        {
+            "id": "n_5ced57d69bcabdbfe9d6",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.returns_by_reason"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_3c9c62beed303cede4fa",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.returns_rate_by_channel"
+            },
+            "label": "year",
+            "type": "String",
+            "value": "${year}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "year"
+            }
+        },
+        {
+            "id": "n_0eb4cacd6a0df63a18cb",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.returns_rate_by_channel"
+            },
+            "label": "channel",
+            "type": "String",
+            "value": "channel",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${channel}"
+            }
+        },
+        {
+            "id": "n_c607b765a5440809ff13",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.returns_rate_by_channel"
+            },
+            "label": "revenue",
+            "type": "String",
+            "value": "revenue",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${revenue}"
+            }
+        },
+        {
+            "id": "n_aba951e33e167ed1c208",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.returns_rate_by_channel"
+            },
+            "label": "return_amt",
+            "type": "String",
+            "value": "return_amt",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${return_amt}"
+            }
+        },
+        {
+            "id": "n_082d4c5843554a1ad3f5",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.returns_rate_by_channel"
+            },
+            "label": "return_rate_pct",
+            "type": "String",
+            "value": "return_rate_pct",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${return_rate_pct}"
+            }
+        },
+        {
+            "id": "n_901ba2d80e2904cfeb14",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.returns_rate_by_channel"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_23a2d48de2bd8c75e29c",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.revenue_by_customer_state"
+            },
+            "label": "channel",
+            "type": "String",
+            "value": "${channel}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "channel"
+            }
+        },
+        {
+            "id": "n_3d89f7116c61e72db402",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.revenue_by_customer_state"
+            },
+            "label": "year",
+            "type": "String",
+            "value": "${year}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "year"
+            }
+        },
+        {
+            "id": "n_46ed7f1b707cc58a2e4d",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.revenue_by_customer_state"
+            },
+            "label": "state",
+            "type": "String",
+            "value": "state",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${state}"
+            }
+        },
+        {
+            "id": "n_ae9d69301f2073b84434",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.revenue_by_customer_state"
+            },
+            "label": "revenue",
+            "type": "String",
+            "value": "revenue",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${revenue}"
+            }
+        },
+        {
+            "id": "n_b6c529297eefc5b2f813",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.revenue_by_customer_state"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_6c65899774526817c6a4",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.store_sales_by_month"
+            },
+            "label": "d_year",
+            "type": "String",
+            "value": "d_year",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${d_year}"
+            }
+        },
+        {
+            "id": "n_825eb6a8e85b0a7c5a3d",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.store_sales_by_month"
+            },
+            "label": "d_moy",
+            "type": "String",
+            "value": "d_moy",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${d_moy}"
+            }
+        },
+        {
+            "id": "n_0342d132f82a6246e551",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.store_sales_by_month"
+            },
+            "label": "revenue",
+            "type": "String",
+            "value": "revenue",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${revenue}"
+            }
+        },
+        {
+            "id": "n_e7dd8bb9b24098c62fcc",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.store_sales_by_month"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_1b54198d6dff77dd714b",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.top_items_by_revenue"
+            },
+            "label": "limit",
+            "type": "String",
+            "value": "${limit}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "limit"
+            }
+        },
+        {
+            "id": "n_a1068a1462c4774bb931",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.top_items_by_revenue"
+            },
+            "label": "year",
+            "type": "String",
+            "value": "${year}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "year"
+            }
+        },
+        {
+            "id": "n_2ffcb36437eb55160a34",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.top_items_by_revenue"
+            },
+            "label": "i_item_id",
+            "type": "String",
+            "value": "i_item_id",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${i_item_id}"
+            }
+        },
+        {
+            "id": "n_b9a720185960a6e7ea61",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.top_items_by_revenue"
+            },
+            "label": "i_product_name",
+            "type": "String",
+            "value": "i_product_name",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${i_product_name}"
+            }
+        },
+        {
+            "id": "n_293eb4e9c9568193549b",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.top_items_by_revenue"
+            },
+            "label": "revenue",
+            "type": "String",
+            "value": "revenue",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${revenue}"
+            }
+        },
+        {
+            "id": "n_2a6417a252780b0581d5",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.top_items_by_revenue"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_2cf2eda08de8c9f3f8a6",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.warehouse_stockout_week_count"
+            },
+            "label": "warehouse",
+            "type": "String",
+            "value": "${warehouse}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "warehouse"
+            }
+        },
+        {
+            "id": "n_f75b99123b77a607b9e5",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.warehouse_stockout_week_count"
+            },
+            "label": "year",
+            "type": "String",
+            "value": "${year}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "year"
+            }
+        },
+        {
+            "id": "n_1d17dca81b8d42e85fc3",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.warehouse_stockout_week_count"
+            },
+            "label": "warehouse",
+            "type": "String",
+            "value": "warehouse",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${warehouse}"
+            }
+        },
+        {
+            "id": "n_9a6787186ad18dff5b86",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.warehouse_stockout_week_count"
+            },
+            "label": "stockout_weeks",
+            "type": "String",
+            "value": "stockout_weeks",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${stockout_weeks}"
+            }
+        },
+        {
+            "id": "n_42ae595e10d60465e73d",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.warehouse_stockout_week_count"
+            },
+            "label": "first_week",
+            "type": "String",
+            "value": "first_week",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${first_week}"
+            }
+        },
+        {
+            "id": "n_8065cad15fefe2693599",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.warehouse_stockout_week_count"
+            },
+            "label": "last_week",
+            "type": "String",
+            "value": "last_week",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${last_week}"
+            }
+        },
+        {
+            "id": "n_9b5070b43ebce98bba9a",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.warehouse_stockout_week_count"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_e27e71b81edcfbab346a",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.warehouse_stockout_weeks"
+            },
+            "label": "year",
+            "type": "String",
+            "value": "${year}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "year"
+            }
+        },
+        {
+            "id": "n_13b38e4f7d70e5090dcb",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.warehouse_stockout_weeks"
+            },
+            "label": "warehouse",
+            "type": "String",
+            "value": "warehouse",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${warehouse}"
+            }
+        },
+        {
+            "id": "n_ff6f3377a8eb0eff90bd",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.warehouse_stockout_weeks"
+            },
+            "label": "d_week_seq",
+            "type": "String",
+            "value": "d_week_seq",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${d_week_seq}"
+            }
+        },
+        {
+            "id": "n_7649d2e3c77b03508878",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.warehouse_stockout_weeks"
+            },
+            "label": "zero_rows",
+            "type": "String",
+            "value": "zero_rows",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${zero_rows}"
+            }
+        },
+        {
+            "id": "n_0ce16255be3c6700f68d",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.warehouse_stockout_weeks"
+            },
+            "label": "total_rows",
+            "type": "String",
+            "value": "total_rows",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${total_rows}"
+            }
+        },
+        {
+            "id": "n_17fb8038083d4cc01f03",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "query.query.warehouse_stockout_weeks"
+            },
+            "label": "row_count",
+            "type": "String",
+            "value": "row_count",
+            "binding": {
+                "type": "camunda:outputParameter",
+                "source": "${row_count}"
+            }
+        },
+        {
+            "id": "n_7e522c5b170e1507bad5",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "release_on_placement"
+            },
+            "label": "confirmation_threshold",
+            "type": "String",
+            "value": "${50000}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "confirmation_threshold"
+            }
+        },
+        {
+            "id": "n_953e3d3d5873e40934bd",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "release_on_placement"
+            },
+            "label": "tolerance",
+            "type": "String",
+            "value": "${0.01}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "tolerance"
+            }
+        },
+        {
+            "id": "n_7827b7fa362d643f5f57",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "release_on_placement_cz"
+            },
+            "label": "confirmation_threshold",
+            "type": "String",
+            "value": "${50000}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "confirmation_threshold"
+            }
+        },
+        {
+            "id": "n_f7c6620d85fe37c8234a",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "release_on_placement_cz"
+            },
+            "label": "tolerance",
+            "type": "String",
+            "value": "${0.01}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "tolerance"
+            }
+        },
+        {
+            "id": "n_b7024774d2ed6591c6ad",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "settle_daily"
+            },
+            "label": "settlement",
+            "type": "String",
+            "value": "${5}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "settlement"
+            }
+        },
+        {
+            "id": "n_dd8d97372040c37add5e",
+            "condition": {
+                "property": "ttr_source",
+                "equals": "settle_on_document"
+            },
+            "label": "settlement",
+            "type": "String",
+            "value": "${5}",
+            "binding": {
+                "type": "camunda:inputParameter",
+                "name": "settlement"
+            }
+        }
+    ],
+    "scopes": [
+        {
+            "type": "camunda:Connector",
+            "properties": [
+                {
+                    "type": "Hidden",
+                    "value": "http-connector",
+                    "binding": {
+                        "type": "property",
+                        "name": "connectorId"
+                    }
+                },
+                {
+                    "type": "Hidden",
+                    "value": "POST",
+                    "binding": {
+                        "type": "camunda:inputParameter",
+                        "name": "method"
+                    }
+                },
+                {
+                    "type": "Hidden",
+                    "value": "def source = execution.getVariable('ttr_source')\ndef programs = ['decide_catch_up': [recipe: 'decide_return', port: 'none'], 'decide_catch_up_cz': [recipe: 'decide_return', port: 'none'], 'decide_on_request': [recipe: 'decide_return', port: 'key'], 'decide_on_request_cz': [recipe: 'decide_return', port: 'key'], 'inbound_daily': [recipe: 'monitor_inbound', port: 'none'], 'inbound_on_receipt': [recipe: 'monitor_inbound', port: 'key'], 'morning_release': [recipe: 'release_order', port: 'none'], 'morning_release_cz': [recipe: 'release_order', port: 'none'], 'release_on_placement': [recipe: 'release_order', port: 'key'], 'release_on_placement_cz': [recipe: 'release_order', port: 'key'], 'settle_daily': [recipe: 'settle', port: 'none'], 'settle_on_document': [recipe: 'settle', port: 'key']]\nprograms.containsKey(source) ? 'http://process-engine-egress.process-engine.svc/automation/recipes/' + programs[source].recipe + '/runs' : 'http://process-engine-egress.process-engine.svc/automation/query'",
+                    "binding": {
+                        "type": "camunda:inputParameter",
+                        "name": "url",
+                        "scriptFormat": "groovy"
+                    }
+                },
+                {
+                    "type": "Hidden",
+                    "value": "['Content-Type': 'application/json']",
+                    "binding": {
+                        "type": "camunda:inputParameter",
+                        "name": "headers",
+                        "scriptFormat": "groovy"
+                    }
+                },
+                {
+                    "type": "Hidden",
+                    "value": "def SpinClass; try { SpinClass = Class.forName('org.cibseven.spin.Spin') } catch (ClassNotFoundException e) { SpinClass = Class.forName('org.camunda.spin.Spin') }\ndef source = execution.getVariable('ttr_source')\ndef programs = ['decide_catch_up': [recipe: 'decide_return', port: 'none'], 'decide_catch_up_cz': [recipe: 'decide_return', port: 'none'], 'decide_on_request': [recipe: 'decide_return', port: 'key'], 'decide_on_request_cz': [recipe: 'decide_return', port: 'key'], 'inbound_daily': [recipe: 'monitor_inbound', port: 'none'], 'inbound_on_receipt': [recipe: 'monitor_inbound', port: 'key'], 'morning_release': [recipe: 'release_order', port: 'none'], 'morning_release_cz': [recipe: 'release_order', port: 'none'], 'release_on_placement': [recipe: 'release_order', port: 'key'], 'release_on_placement_cz': [recipe: 'release_order', port: 'key'], 'settle_daily': [recipe: 'settle', port: 'none'], 'settle_on_document': [recipe: 'settle', port: 'key']]\ndef queries = ['er.query.placed_order_q': [], 'er.query.report_returns_review_q': [], 'er.query.returns_monthly_by_category': [], 'er.query.returns_review': [], 'er.query.returns_union': [], 'er.query.revenue_per_customer': [], 'er.query.sales_union': [], 'er.query.stockouts_monthly_dc': [], 'query.query.buyer_age_profile': ['channel', 'year'], 'query.query.category_revenue': ['channel', 'year'], 'query.query.channel_revenue_monthly': ['channel', 'year_from', 'year_to'], 'query.query.channel_revenue_monthly_yoy': ['channel', 'prior_year', 'year'], 'query.query.channel_revenue_yoy': ['prior_year', 'year'], 'query.query.customer_running_total': [], 'query.query.inventory_on_hand_series': ['warehouse', 'year'], 'query.query.marketplace_revenue_by_warehouse': ['year_from', 'year_to'], 'query.query.promo_share': ['channel', 'year'], 'query.query.returns_by_reason': ['channel', 'year'], 'query.query.returns_rate_by_channel': ['year'], 'query.query.revenue_by_customer_state': ['channel', 'year'], 'query.query.store_sales_by_month': [], 'query.query.top_items_by_revenue': ['limit', 'year'], 'query.query.warehouse_stockout_week_count': ['warehouse', 'year'], 'query.query.warehouse_stockout_weeks': ['year']]\nif (programs.containsKey(source)) {\n    def kind = programs[source].port\n    def input = kind == 'none' ? null : execution.getVariable('ttrInput')\n    def port = kind == 'none' ? [none: true] : [(kind): input[kind]]\n    if (kind != 'none' && input['at'] != null) port.at = input['at']\n    def engine = [instanceId: execution.processInstanceId, businessKey: execution.processBusinessKey, deploymentId: execution.processEngineServices.repositoryService.getProcessDefinition(execution.processDefinitionId).deploymentId]\n    return SpinClass.JSON([deployment: execution.getVariable('ttr_deployment'), port: port, origin: 'engine', engine: engine]).toString()\n}\nif (!queries.containsKey(source)) throw new IllegalArgumentException('unknown world program or query ' + source)\nreturn SpinClass.JSON([query: source, parameters: queries[source].collectEntries { [(it): execution.getVariable(it)] }]).toString()",
+                    "binding": {
+                        "type": "camunda:inputParameter",
+                        "name": "payload",
+                        "scriptFormat": "groovy"
+                    }
+                },
+                {
+                    "type": "Hidden",
+                    "value": "ttr_response",
+                    "binding": {
+                        "type": "camunda:outputParameter",
+                        "source": "def SpinClass; try { SpinClass = Class.forName('org.cibseven.spin.Spin') } catch (ClassNotFoundException e) { SpinClass = Class.forName('org.camunda.spin.Spin') }\ndef code = ((Number) statusCode).intValue()\nif (code < 200 || code >= 300) throw new IllegalStateException('run API HTTP ' + code)\nreturn SpinClass.JSON(response)",
+                        "scriptFormat": "groovy"
+                    }
+                }
+            ]
+        }
+    ],
+    "metadata": {
+        "fingerprint": "1b2591907da4d92dc2e5b845a26fff1ee4a8784d796ad26a3112e7ffe474f3b6"
+    }
+}

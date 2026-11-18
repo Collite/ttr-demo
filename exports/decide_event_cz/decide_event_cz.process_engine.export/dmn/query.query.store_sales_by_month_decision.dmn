@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="query.query.store_sales_by_month_decision_definitions" name="query.query.store_sales_by_month" namespace="https://tatrman.org/dmn/hartland.worlds.demo" xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:camunda="http://camunda.org/schema/1.0/dmn">
+  <decision camunda:historyTimeToLive="30" id="query.query.store_sales_by_month_decision" name="query.query.store_sales_by_month_decision">
+    <decisionTable hitPolicy="FIRST" id="query.query.store_sales_by_month_decision_table">
+      <input id="query.query.store_sales_by_month_decision_input_0" label="d_year">
+        <inputExpression id="query.query.store_sales_by_month_decision_expression_0" typeRef="number">
+          <text>d_year</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.store_sales_by_month_decision_input_1" label="d_moy">
+        <inputExpression id="query.query.store_sales_by_month_decision_expression_1" typeRef="number">
+          <text>d_moy</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.store_sales_by_month_decision_input_2" label="revenue">
+        <inputExpression id="query.query.store_sales_by_month_decision_expression_2" typeRef="number">
+          <text>revenue</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.store_sales_by_month_decision_input_3" label="row_count">
+        <inputExpression id="query.query.store_sales_by_month_decision_expression_3" typeRef="number">
+          <text>row_count</text>
+        </inputExpression>
+      </input>
+      <output id="query.query.store_sales_by_month_decision_output" name="outcome" typeRef="string" />
+    </decisionTable>
+  </decision>
+</definitions>
+

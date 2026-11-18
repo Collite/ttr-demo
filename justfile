@@ -10,7 +10,7 @@
 # RV-P3.2: the root data area is a third authored surface, and its guards belong in the
 # same command as the model's.)
 verify-model:
-    node --test $(find model agents lexicon automation -name '*.test.mjs')
+    node --test $(find model agents lexicon automation processes -name '*.test.mjs' -not -path '*/node_modules/*')
 
 # XM-P3: read-only catalog acceptance after scan + two successful projection Jobs.
 verify-openmetadata:
@@ -323,17 +323,58 @@ automation-recon world ctx=CTX:
     esac
     data/automation/run-recon.sh "{{ctx}}" "hartland_{{world}}" "{{world}}" "$pod"
 
-# The demo day's event driver (contracts §6): replays data/automation/events/<world>.csv as webhooks to the
-# Server's HTTP connector. `--dry-run` prints the bodies (no Server needed); `--demo` the runbook's subset.
+# The demo day's event driver (contracts §6 as amended at P4·S4.1, D-143): replays data/automation/events/<world>.csv
+# as engine messages (scripts/README.md). <day> = one Prague day of the timeline, or `-` for all of it. The bearer of
+# `hartland-driver` is read from $HARTLAND_DRIVER_TOKEN; --engine-url defaults to the world's executor url.
 #
-#     just automation-events cz --dry-run --demo
-#     just automation-events cz --url https://…/automation/webhooks/events --speed 60 --token-env AUTOMATION_EVENTS_TOKEN
-automation-events world *FLAGS:
-    uv run scripts/automation-events.py replay --world {{world}} {{FLAGS}}
+#     just automation-events cz 2026-11-02 --dry-run
+#     just automation-events cz - --to 2026-11-02T00:00:00+01:00 --engine-url http://127.0.0.1:8080/engine-rest
+#     just automation-events cz 2026-11-02 --demo --speed 60 --engine-url …
+automation-events world day *FLAGS:
+    uv run scripts/automation-events.py replay --world {{world}} {{ if day == "-" { "" } else { "--day " + day } }} {{FLAGS}}
 
-# The timeline of a world, checked (no cluster): order, kinds, payload keys.
-automation-events-check world:
-    uv run scripts/automation-events.py check --world {{world}}
+# The timeline of a world, checked (no cluster): order, kinds, payload keys. --dry lists the messages;
+# --engine-url (+ the bearer) checks the started instances exist.
+automation-events-check world day="-" *FLAGS:
+    uv run scripts/automation-events.py check --world {{world}} {{ if day == "-" { "" } else { "--day " + day } }} {{FLAGS}}
+
+# ── the engine (AU-hartland P4·S4.1, ⚑20-1, D-143) ─────────────────────────────────────────────────────────
+# One deployment set per cluster (processes/sets.json: cz = bp-dsk). exports/<d>/ = `ttrp emit` of the set's
+# deployments, from a `git archive` copy of HEAD (commit first); processes/<set>/*.bpmn = the authored processes,
+# composed from those skeletons by scripts/compose-processes.py (`--check` = the drift gate).
+#
+#     just automation-export cz && just compose-processes cz      # after a pin move or a recipe/world change
+#     TTR_BEARER=… ENGINE_URL=http://127.0.0.1:8080/engine-rest just automation-deploy cz
+
+# Emit the set's deployments into exports/ (from a git archive copy of HEAD).
+automation-export set="cz":
+    bash scripts/automation-export.sh export {{set}}
+
+# Compose processes/<set>/ from the exports; --check = the drift gate.
+compose-processes set="cz" *FLAGS:
+    python3 scripts/compose-processes.py --set {{set}} {{FLAGS}}
+
+# Deploy the set's deployments + processes (TTR_BEARER, ENGINE_URL); --check = absent/current/stale/foreign.
+automation-deploy set="cz" *FLAGS:
+    bash scripts/automation-export.sh deploy {{set}} {{FLAGS}}
+
+# The authored processes' specs alone (`npm ci --prefix processes/tests` + `just processes-tools` once). verify-model runs them too.
+processes-test:
+    node --test processes/tests/*.test.mjs
+
+# Groovy 5.0.4 — the jar bp-dsk's engine image (cibseven run4-2.2.0) ships — for the due-date specs, which run the
+# composed scripts on a fixed engine clock (review-365 B1). Maven Central, sha256-pinned, into processes/tests/.tools/.
+processes-tools:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    jar=processes/tests/.tools/groovy-5.0.4.jar
+    sha=35d6e6a658ebf549c736c06fbaf370521a3a72e3a044f6a868b33a0844d40d6c
+    if [ -f "$jar" ] && echo "$sha  $jar" | shasum -a 256 -c --status; then exit 0; fi
+    mkdir -p processes/tests/.tools
+    curl -fsSL -o "$jar.part" https://repo1.maven.org/maven2/org/apache/groovy/groovy/5.0.4/groovy-5.0.4.jar
+    if ! echo "$sha  $jar.part" | shasum -a 256 -c --status; then rm -f "$jar.part"; echo "groovy-5.0.4.jar: sha256 mismatch" >&2; exit 1; fi
+    mv "$jar.part" "$jar"
+    echo "fetched $jar"
 
 # The generator's suite on a throwaway local Postgres (pgserver via uv — no Docker, no cluster) loaded
 # with data/automation/tests/fixture.sql. `ONLY=reset just automation-test` runs one script.

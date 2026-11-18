@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="query.query.category_revenue_decision_definitions" name="query.query.category_revenue" namespace="https://tatrman.org/dmn/hartland.worlds.demo" xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:camunda="http://camunda.org/schema/1.0/dmn">
+  <decision camunda:historyTimeToLive="30" id="query.query.category_revenue_decision" name="query.query.category_revenue_decision">
+    <decisionTable hitPolicy="FIRST" id="query.query.category_revenue_decision_table">
+      <input id="query.query.category_revenue_decision_input_0" label="category">
+        <inputExpression id="query.query.category_revenue_decision_expression_0" typeRef="string">
+          <text>category</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.category_revenue_decision_input_1" label="revenue">
+        <inputExpression id="query.query.category_revenue_decision_expression_1" typeRef="number">
+          <text>revenue</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.category_revenue_decision_input_2" label="row_count">
+        <inputExpression id="query.query.category_revenue_decision_expression_2" typeRef="number">
+          <text>row_count</text>
+        </inputExpression>
+      </input>
+      <output id="query.query.category_revenue_decision_output" name="outcome" typeRef="string" />
+    </decisionTable>
+  </decision>
+</definitions>
+

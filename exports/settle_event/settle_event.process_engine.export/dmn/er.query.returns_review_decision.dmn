@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="er.query.returns_review_decision_definitions" name="er.query.returns_review" namespace="https://tatrman.org/dmn/hartland.worlds.demo" xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:camunda="http://camunda.org/schema/1.0/dmn">
+  <decision camunda:historyTimeToLive="30" id="er.query.returns_review_decision" name="er.query.returns_review_decision">
+    <decisionTable hitPolicy="FIRST" id="er.query.returns_review_decision_table">
+      <input id="er.query.returns_review_decision_input_0" label="request_id">
+        <inputExpression id="er.query.returns_review_decision_expression_0" typeRef="number">
+          <text>request_id</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.returns_review_decision_input_1" label="customer">
+        <inputExpression id="er.query.returns_review_decision_expression_1" typeRef="number">
+          <text>customer</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.returns_review_decision_input_2" label="category">
+        <inputExpression id="er.query.returns_review_decision_expression_2" typeRef="string">
+          <text>category</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.returns_review_decision_input_3" label="requested_at">
+        <inputExpression id="er.query.returns_review_decision_expression_3" typeRef="dateTime">
+          <text>requested_at</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.returns_review_decision_input_4" label="received_at">
+        <inputExpression id="er.query.returns_review_decision_expression_4" typeRef="dateTime">
+          <text>received_at</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.returns_review_decision_input_5" label="status">
+        <inputExpression id="er.query.returns_review_decision_expression_5" typeRef="string">
+          <text>status</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.returns_review_decision_input_6" label="amount">
+        <inputExpression id="er.query.returns_review_decision_expression_6" typeRef="number">
+          <text>amount</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.returns_review_decision_input_7" label="row_count">
+        <inputExpression id="er.query.returns_review_decision_expression_7" typeRef="number">
+          <text>row_count</text>
+        </inputExpression>
+      </input>
+      <output id="er.query.returns_review_decision_output" name="outcome" typeRef="string" />
+    </decisionTable>
+  </decision>
+</definitions>
+

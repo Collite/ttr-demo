@@ -1,0 +1,19 @@
+{
+    "fixtures": [
+        "tests/closed.cz.yaml",
+        "tests/closed.yaml",
+        "tests/credit-note-issued.cz.yaml",
+        "tests/credit-note-issued.yaml",
+        "tests/goods-overdue.cz.yaml",
+        "tests/goods-overdue.yaml",
+        "tests/goods-shipped.cz.yaml",
+        "tests/goods-shipped.yaml",
+        "tests/money-overdue.cz.yaml",
+        "tests/money-overdue.yaml",
+        "tests/money-received.cz.yaml",
+        "tests/money-received.yaml"
+    ],
+    "cells": [
+        "process_engine.on_event"
+    ]
+}

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="query.query.top_items_by_revenue_decision_definitions" name="query.query.top_items_by_revenue" namespace="https://tatrman.org/dmn/hartland.worlds.demo" xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:camunda="http://camunda.org/schema/1.0/dmn">
+  <decision camunda:historyTimeToLive="30" id="query.query.top_items_by_revenue_decision" name="query.query.top_items_by_revenue_decision">
+    <decisionTable hitPolicy="FIRST" id="query.query.top_items_by_revenue_decision_table">
+      <input id="query.query.top_items_by_revenue_decision_input_0" label="i_item_id">
+        <inputExpression id="query.query.top_items_by_revenue_decision_expression_0" typeRef="string">
+          <text>i_item_id</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.top_items_by_revenue_decision_input_1" label="i_product_name">
+        <inputExpression id="query.query.top_items_by_revenue_decision_expression_1" typeRef="string">
+          <text>i_product_name</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.top_items_by_revenue_decision_input_2" label="revenue">
+        <inputExpression id="query.query.top_items_by_revenue_decision_expression_2" typeRef="number">
+          <text>revenue</text>
+        </inputExpression>
+      </input>
+      <input id="query.query.top_items_by_revenue_decision_input_3" label="row_count">
+        <inputExpression id="query.query.top_items_by_revenue_decision_expression_3" typeRef="number">
+          <text>row_count</text>
+        </inputExpression>
+      </input>
+      <output id="query.query.top_items_by_revenue_decision_output" name="outcome" typeRef="string" />
+    </decisionTable>
+  </decision>
+</definitions>
+

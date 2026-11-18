@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="er.query.sales_union_decision_definitions" name="er.query.sales_union" namespace="https://tatrman.org/dmn/hartland.worlds.demo" xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:camunda="http://camunda.org/schema/1.0/dmn">
+  <decision camunda:historyTimeToLive="30" id="er.query.sales_union_decision" name="er.query.sales_union_decision">
+    <decisionTable hitPolicy="FIRST" id="er.query.sales_union_decision_table">
+      <input id="er.query.sales_union_decision_input_0" label="channel">
+        <inputExpression id="er.query.sales_union_decision_expression_0" typeRef="string">
+          <text>channel</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.sales_union_decision_input_1" label="item">
+        <inputExpression id="er.query.sales_union_decision_expression_1" typeRef="number">
+          <text>item</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.sales_union_decision_input_2" label="customer">
+        <inputExpression id="er.query.sales_union_decision_expression_2" typeRef="number">
+          <text>customer</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.sales_union_decision_input_3" label="sold_date">
+        <inputExpression id="er.query.sales_union_decision_expression_3" typeRef="number">
+          <text>sold_date</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.sales_union_decision_input_4" label="promo">
+        <inputExpression id="er.query.sales_union_decision_expression_4" typeRef="number">
+          <text>promo</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.sales_union_decision_input_5" label="quantity">
+        <inputExpression id="er.query.sales_union_decision_expression_5" typeRef="number">
+          <text>quantity</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.sales_union_decision_input_6" label="ext_sales_price">
+        <inputExpression id="er.query.sales_union_decision_expression_6" typeRef="number">
+          <text>ext_sales_price</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.sales_union_decision_input_7" label="line_ref">
+        <inputExpression id="er.query.sales_union_decision_expression_7" typeRef="number">
+          <text>line_ref</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.sales_union_decision_input_8" label="store">
+        <inputExpression id="er.query.sales_union_decision_expression_8" typeRef="number">
+          <text>store</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.sales_union_decision_input_9" label="warehouse">
+        <inputExpression id="er.query.sales_union_decision_expression_9" typeRef="number">
+          <text>warehouse</text>
+        </inputExpression>
+      </input>
+      <input id="er.query.sales_union_decision_input_10" label="row_count">
+        <inputExpression id="er.query.sales_union_decision_expression_10" typeRef="number">
+          <text>row_count</text>
+        </inputExpression>
+      </input>
+      <output id="er.query.sales_union_decision_output" name="outcome" typeRef="string" />
+    </decisionTable>
+  </decision>
+</definitions>
+

@@ -1,0 +1,17 @@
+{
+    "fixtures": [
+        "tests/complete.cz.yaml",
+        "tests/complete.yaml",
+        "tests/damaged.cz.yaml",
+        "tests/damaged.yaml",
+        "tests/expired.cz.yaml",
+        "tests/expired.yaml",
+        "tests/none.cz.yaml",
+        "tests/none.yaml",
+        "tests/remind.cz.yaml",
+        "tests/remind.yaml"
+    ],
+    "cells": [
+        "process_engine.on_event"
+    ]
+}
