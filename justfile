@@ -323,33 +323,20 @@ automation-recon world ctx=CTX:
     esac
     data/automation/run-recon.sh "{{ctx}}" "hartland_{{world}}" "{{world}}" "$pod"
 
-# The demo day's event driver (contracts §6): replays data/automation/events/<world>.csv as webhooks to the
-# Server's HTTP connector. `--dry-run` prints the bodies (no Server needed); `--demo` the runbook's subset.
+# The demo day's event driver (contracts §6 as amended at P4·S4.1, D-143): replays data/automation/events/<world>.csv
+# as engine messages (scripts/README.md). <day> = one Prague day of the timeline, or `-` for all of it. The bearer of
+# `hartland-driver` is read from $HARTLAND_DRIVER_TOKEN; --engine-url defaults to the world's executor url.
 #
-#     just automation-events cz --dry-run --demo
-#     just automation-events cz --url https://…/automation/webhooks/events --speed 60 --token-env AUTOMATION_EVENTS_TOKEN
-automation-events world *FLAGS:
-    uv run scripts/automation-events.py replay --world {{world}} {{FLAGS}}
+#     just automation-events cz 2026-11-02 --dry-run
+#     just automation-events cz - --to 2026-11-02T00:00:00+01:00 --engine-url http://127.0.0.1:8080/engine-rest
+#     just automation-events cz 2026-11-02 --demo --speed 60 --engine-url …
+automation-events world day *FLAGS:
+    uv run scripts/automation-events.py replay --world {{world}} {{ if day == "-" { "" } else { "--day " + day } }} {{FLAGS}}
 
-# The timeline of a world, checked (no cluster): order, kinds, payload keys.
-automation-events-check world:
-    uv run scripts/automation-events.py check --world {{world}}
-
-# ── the engine (AU-hartland P4·S4.1, ⚑20-1, D-143) ─────────────────────────────────────────────────────────
-# One deployment set per cluster (processes/sets.json: cz = bp-dsk). exports/<d>/ = `ttrp emit` of the set's
-# deployments, from a `git archive` copy of HEAD (commit first); processes/<set>/*.bpmn = the authored processes,
-# composed from those skeletons by scripts/compose-processes.py (`--check` = the drift gate).
-#
-#     just automation-export cz && just compose-processes cz      # after a pin move or a recipe/world change
-#     TTR_BEARER=… ENGINE_URL=http://127.0.0.1:8080/engine-rest just automation-deploy cz
-automation-export set="cz":
-    bash scripts/automation-export.sh export {{set}}
-
-compose-processes set="cz" *FLAGS:
-    python3 scripts/compose-processes.py --set {{set}} {{FLAGS}}
-
-automation-deploy set="cz" *FLAGS:
-    bash scripts/automation-export.sh deploy {{set}} {{FLAGS}}
+# The timeline of a world, checked (no cluster): order, kinds, payload keys. --dry lists the messages;
+# --engine-url (+ the bearer) checks the started instances exist.
+automation-events-check world day="-" *FLAGS:
+    uv run scripts/automation-events.py check --world {{world}} {{ if day == "-" { "" } else { "--day " + day } }} {{FLAGS}}
 
 # The generator's suite on a throwaway local Postgres (pgserver via uv — no Docker, no cluster) loaded
 # with data/automation/tests/fixture.sql. `ONLY=reset just automation-test` runs one script.

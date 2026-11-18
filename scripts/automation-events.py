@@ -3,22 +3,34 @@
 # requires-python = ">=3.11"
 # dependencies = ["httpx>=0.27", "pyyaml>=6"]
 # ///
-"""AU-hartland — the demo day's event driver (contracts §6, ⚑AU-P-8): replays the timeline the generator wrote
-(data/automation/60-events.sql → data/automation/events/<world>.csv) as webhooks to the Server's HTTP connector.
+"""AU-hartland — the demo day's event driver (contracts §6, D-143, AU-hartland P4·S4.1): replays the timeline the
+generator planted (data/automation/60-events.sql → data/automation/events/<world>.csv) as **engine messages** to the
+process engine of the world's deployment set (processes/sets.json). No webhooks: the Server has no intake (D-143).
 
-    uv run scripts/automation-events.py check --world us [--csv PATH] [--db-url URL]
-    uv run scripts/automation-events.py replay --world us --url https://…/automation/webhooks/events \\
-        [--from TS] [--to TS] [--speed 60] [--demo] [--dry-run] [--token-env AUTOMATION_EVENTS_TOKEN] [--config FILE]
-    uv run scripts/automation-events.py init-config [--out FILE]
+    uv run scripts/automation-events.py check  --world cz [--day 2026-10-26 | --demo] [--dry] [--engine-url URL]
+    uv run scripts/automation-events.py replay --world cz --engine-url https://…/engine-rest \\
+        [--day D | --from TS --to TS | --demo] [--speed 60] [--token-env HARTLAND_DRIVER_TOKEN] [--db-url URL]
+        [--approval-due PT2M] [--loop-period PT1M] [--dry-run]
 
-`check` validates the timeline without a cluster: seq runs 1..n in time order, every kind is one of the four,
-every payload names exactly its kind's key. With --db-url it also asks the world (psql) that every key exists.
-`replay` POSTs one body per event — `{deployment, event, payload, idempotencyKey: "events:<world>:<seq>"}`, the
-connector's inbound event shape (ttr-server contracts §1.4) — waiting the timeline's gaps divided by --speed
-(0 = no waiting); a 5xx is retried three times with backoff; a 409 is an event already posted (idempotent, so a
-replay of a replay is fine); any other 4xx stops the run (exit 1). --dry-run prints the bodies and posts nothing,
-so it works before the Server exists. The deployment of each kind is automation.conf's
-`events_deployment_<kind>`; `init-config` writes them as the YAML --config reads.
+The rows behind every event — the order, the return line, its receipts, credit notes, payments and shipments — are
+already in the world's database: `just automation-data` writes the whole planted timeline (contracts §5/§6). replay
+therefore writes no business rows; with --db-url it first checks (read-only, psql) that each event's key exists, so a
+message never runs ahead of its data.
+
+Each event is one `POST <engine>/message` as `hartland-driver` (the bearer from --token-env; never printed):
+  order_placed      → message `order_placed`      starts release_order      (businessKey = the order number)
+  line_received     → message `return_requested`  starts return_request     (businessKey = the line id)
+  receipt_posted    → message `receipt_posted`    wakes that line's inbound wait
+  settlement_posted → message `settlement_posted` wakes that line's settlement wait
+A start carries `ttrInput {key: {<column>: <key>}, at: <the event's time>}` (a JSON Object variable — the skeleton's
+Open reads it as a Map); a wake carries `ttrEventAt` (the round's clock). A wake no instance is waiting for (the line
+is in another loop, or already closed) answers 400 MismatchingMessageCorrelation: printed as `no waiting instance`, not
+a failure — the daily timers pick the line up. 5xx and transport errors retry three times; 401/403 and any other 4xx
+stop the run (exit 1). --dry-run prints the messages and sends nothing.
+
+`check` validates the timeline (seq 1..n in time order, the four kinds, one integer key each); --dry lists the messages
+it would send in order; --engine-url also asks the engine that every started key has its instance
+(`GET /history/process-instance?processDefinitionKey=…&businessKey=…`).
 """
 
 from __future__ import annotations
@@ -37,15 +49,19 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 import httpx
-import yaml
 
 KINDS = ("order_placed", "line_received", "receipt_posted", "settlement_posted")
 KEY_OF = {"order_placed": "order_number", "line_received": "line_id", "receipt_posted": "line_id",
           "settlement_posted": "line_id"}
 HERE = pathlib.Path(__file__).resolve().parent
-DATA = HERE.parent / "data" / "automation"
+ROOT = HERE.parent
+DATA = ROOT / "data" / "automation"
 CONF = DATA / "automation.conf"
+SETS = ROOT / "processes" / "sets.json"
+PRAGUE = dt.timezone(dt.timedelta(hours=1))  # only a fallback for naive --from/--to; the CSV carries offsets
 RETRIES = 3
+# the process a start message starts (processes/<set>/*.bpmn); wakes start nothing
+STARTS = {"order_placed": "release_order", "return_requested": "return_request"}
 
 
 @dataclass(frozen=True)
@@ -103,14 +119,45 @@ def check_world(events: list[Event], db_url: str) -> list[str]:
             for e in events if e.key not in (orders if e.kind == "order_placed" else lines)]
 
 
-def body(e: Event, world: str, deployments: dict[str, str]) -> dict:
-    return {"deployment": deployments[e.kind], "event": e.kind, "payload": e.payload,
-            "idempotencyKey": f"events:{world}:{e.seq}"}
+def messages_from_conf(path: pathlib.Path) -> dict[str, str]:
+    """automation.conf's `\\set events_message_<kind> '<message>'` — the engine message of each timeline kind."""
+    found = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        m = re.match(r"\\set\s+events_message_(\w+)\s+'?([\w.-]+)'?\s*$", line.strip())
+        if m:
+            found[m.group(1)] = m.group(2)
+    missing = [k for k in KINDS if k not in found]
+    if missing:
+        raise SystemExit(f"automation.conf names no engine message for {', '.join(missing)} (events_message_<kind>)")
+    return found
 
 
-def select(events: list[Event], frm: dt.datetime | None, to: dt.datetime | None, demo: bool) -> list[Event]:
+def message(e: Event, names: dict[str, str], approval_due: str | None = None, loop_period: str | None = None) -> dict:
+    """The `POST /message` body of one event (Camunda 7 REST)."""
+    name = names[e.kind]
+    variables: dict[str, Any] = {}
+    if name in STARTS:
+        ttr_input = {"key": {KEY_OF[e.kind]: e.key}, "at": e.at.isoformat()}
+        variables["ttrInput"] = {"value": json.dumps(ttr_input), "type": "Object",
+                                 "valueInfo": {"objectTypeName": "java.util.LinkedHashMap",
+                                               "serializationDataFormat": "application/json"}}
+        if approval_due and name == "order_placed":
+            variables["ttrApprovalDueOverride"] = {"value": approval_due, "type": "String"}
+        if loop_period and name == "return_requested":
+            variables["ttrLoopPeriod"] = {"value": loop_period, "type": "String"}
+    else:
+        variables["ttrEventAt"] = {"value": e.at.isoformat(), "type": "String"}
+    return {"messageName": name, "businessKey": str(e.key), "processVariables": variables, "resultEnabled": True}
+
+
+def select(events: list[Event], frm: dt.datetime | None, to: dt.datetime | None, demo: bool,
+           day: dt.date | None = None) -> list[Event]:
+    def prague_day(e: Event) -> dt.date:
+        # the timeline is on the Prague clock: the CSV's own offset is the event's local time
+        return e.at.date()
     return [e for e in events
-            if (frm is None or e.at >= frm) and (to is None or e.at <= to) and (not demo or e.demo)]
+            if (frm is None or e.at >= frm) and (to is None or e.at <= to) and (not demo or e.demo)
+            and (day is None or prague_day(e) == day)]
 
 
 def wall_delays(events: list[Event], speed: float) -> list[float]:
@@ -120,125 +167,155 @@ def wall_delays(events: list[Event], speed: float) -> list[float]:
     return [0.0] + [(b.at - a.at).total_seconds() / speed for a, b in zip(events, events[1:])]
 
 
-def post(client: httpx.Client, url: str, payload: dict, token: str | None,
-         sleep: Callable[[float], None] = time.sleep) -> tuple[int, str | None]:
-    """POST once, and again up to three times on a 5xx or a transport error (1 s, 2 s, 4 s apart)."""
+def send(client: httpx.Client, url: str, body: dict, token: str | None,
+         sleep: Callable[[float], None] = time.sleep) -> tuple[int, str]:
+    """POST once, again up to three times on a 5xx or a transport error (1 s, 2 s, 4 s apart).
+    Returns (status, the started/woken instance id or the engine's message)."""
     headers = {"Authorization": f"Bearer {token}"} if token else {}
-    status, run = 0, None
+    status, detail = 0, "no answer"
     for attempt in range(RETRIES + 1):
         try:
-            r = client.post(url, json=payload, headers=headers)
+            r = client.post(url, json=body, headers=headers)
             status = r.status_code
             if status < 500:
                 try:
-                    run = r.json().get("runId")
-                except (ValueError, AttributeError):
-                    run = None
-                return status, run
-        except httpx.TransportError:
-            status = 0
+                    answer = r.json()
+                except ValueError:
+                    answer = None
+                if 200 <= status < 300 and isinstance(answer, list) and answer:
+                    first = answer[0]
+                    pi = (first.get("processInstance") or {}).get("id") or (first.get("execution") or {}).get("processInstanceId")
+                    detail = pi or "-"
+                elif isinstance(answer, dict):
+                    detail = str(answer.get("message", ""))[:200]
+                else:
+                    detail = "-"
+                return status, detail
+        except httpx.TransportError as exc:
+            status, detail = 0, type(exc).__name__
         if attempt < RETRIES:
             sleep(float(2 ** attempt))
-    return status, run
+    return status, detail
 
 
-def replay_events(events: list[Event], world: str, url: str, deployments: dict[str, str], token: str | None,
-                  speed: float, client: httpx.Client, sleep: Callable[[float], None] = time.sleep) -> int:
+def unmatched(status: int, detail: str) -> bool:
+    return status == 400 and ("MismatchingMessageCorrelation" in detail or "No process definition or execution" in detail)
+
+
+def replay_events(events: list[Event], names: dict[str, str], url: str, token: str | None, speed: float,
+                  client: httpx.Client, sleep: Callable[[float], None] = time.sleep, **knobs) -> int:
     for e, wait in zip(events, wall_delays(events, speed)):
         if wait > 0:
             sleep(wait)
-        status, run = post(client, url, body(e, world, deployments), token, sleep=sleep)
-        if status == 409:
-            print(f"{e.seq} {e.kind} {e.key} → 409 (already posted)")
-        elif 200 <= status < 300:
-            print(f"{e.seq} {e.kind} {e.key} → {status} {run or '-'}")
+        body = message(e, names, **knobs)
+        status, detail = send(client, url, body, token, sleep=sleep)
+        label = f"{e.seq} {e.at.isoformat()} {body['messageName']} {e.key}"
+        if 200 <= status < 300:
+            print(f"{label} → {detail}")
+        elif unmatched(status, detail):
+            print(f"{label} → no waiting instance")
         else:
-            print(f"{e.seq} {e.kind} {e.key} → {status or 'no answer'} — stopping")
+            print(f"{label} → {status or 'no answer'} {detail} — stopping")
             return 1
     return 0
 
 
-def deployments_from_conf(path: pathlib.Path) -> dict[str, str]:
-    found = {}
-    for line in path.read_text(encoding="utf-8").splitlines():
-        m = re.match(r"\\set\s+events_deployment_(\w+)\s+'?([\w.-]+)'?\s*$", line.strip())
-        if m:
-            found[m.group(1)] = m.group(2)
-    return found
-
-
-def load_deployments(config: str | None) -> dict[str, str]:
-    deployments = (yaml.safe_load(pathlib.Path(config).read_text(encoding="utf-8")) or {}).get("deployments", {}) \
-        if config else deployments_from_conf(CONF)
-    missing = [k for k in KINDS if k not in deployments]
-    if missing:
-        raise SystemExit(f"no deployment for {', '.join(missing)} — automation.conf events_deployment_* / --config")
-    return deployments
+def check_instances(events: list[Event], names: dict[str, str], engine: str, token: str | None,
+                    client: httpx.Client) -> list[str]:
+    """Every start of the selection has its instance on the engine (running or ended)."""
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
+    problems = []
+    for e in events:
+        process = STARTS.get(names[e.kind])
+        if not process:
+            continue
+        r = client.get(f"{engine}/history/process-instance",
+                       params={"processDefinitionKey": process, "processInstanceBusinessKey": str(e.key)}, headers=headers)
+        if r.status_code != 200:
+            problems.append(f"seq {e.seq}: the engine answered {r.status_code} for {process} {e.key}")
+        elif not r.json():
+            problems.append(f"seq {e.seq}: no {process} instance for {e.key}")
+    return problems
 
 
 def ts(text: str | None) -> dt.datetime | None:
     if not text:
         return None
     t = parse_at(text)
-    return t if t.tzinfo else t.replace(tzinfo=dt.timezone.utc)
+    return t if t.tzinfo else t.replace(tzinfo=PRAGUE)
 
 
 def default_csv(world: str) -> pathlib.Path:
     return DATA / "events" / f"{world}.csv"
 
 
+def engine_of() -> str | None:
+    """The engine REST url the world's deployment set targets (the world file's `def executor engine { url }`)."""
+    text = (ROOT / "automation" / "worlds" / "demo.ttrm").read_text(encoding="utf-8")
+    m = re.search(r'def executor engine \{[^}]*url:\s*"([^"]+)"', text)
+    return m.group(1) if m else None
+
+
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="AU-hartland demo-day event driver (contracts §6)")
+    ap = argparse.ArgumentParser(description="AU-hartland demo-day event driver: engine messages (contracts §6, D-143)")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    c = sub.add_parser("check", help="validate a world's timeline (no cluster)")
-    c.add_argument("--world", required=True, choices=("us", "cz"))
-    c.add_argument("--csv", help="default: data/automation/events/<world>.csv")
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--world", required=True, choices=("us", "cz"))
+    common.add_argument("--csv", help="default: data/automation/events/<world>.csv")
+    common.add_argument("--day", help="only the events of this Prague day (YYYY-MM-DD)")
+    common.add_argument("--from", dest="frm", help="first event time (ISO 8601)")
+    common.add_argument("--to", help="last event time (ISO 8601)")
+    common.add_argument("--demo", action="store_true", help="only the runbook's demo subset")
+    common.add_argument("--token-env", default="HARTLAND_DRIVER_TOKEN", help="env var holding the hartland-driver bearer")
+    common.add_argument("--engine-url", help="the engine's /engine-rest (default: the world's executor url)")
+    c = sub.add_parser("check", parents=[common], help="validate the timeline; --dry lists the messages; "
+                                                      "--engine-url checks the started instances")
     c.add_argument("--db-url", help="also check every key exists in this database (psql)")
-    r = sub.add_parser("replay", help="post the timeline as webhooks")
-    r.add_argument("--world", required=True, choices=("us", "cz"))
-    r.add_argument("--url", help="the connector's event endpoint (required unless --dry-run)")
-    r.add_argument("--csv", help="default: data/automation/events/<world>.csv")
-    r.add_argument("--config", help="YAML {deployments: {kind: name}} — default: automation.conf")
-    r.add_argument("--from", dest="frm", help="first event time (ISO 8601)")
-    r.add_argument("--to", help="last event time (ISO 8601)")
+    c.add_argument("--dry", action="store_true", help="list the messages that replay would send, in order")
+    r = sub.add_parser("replay", parents=[common], help="send the timeline as engine messages")
     r.add_argument("--speed", type=float, default=0, help="timeline seconds per wall second (0 = no waiting)")
-    r.add_argument("--demo", action="store_true", help="only the demo-speed subset")
-    r.add_argument("--dry-run", action="store_true", help="print the bodies, post nothing")
-    r.add_argument("--token-env", default="AUTOMATION_EVENTS_TOKEN", help="env var holding the bearer token")
-    i = sub.add_parser("init-config", help="write automation.conf's deployments as YAML")
-    i.add_argument("--out", help="default: stdout")
+    r.add_argument("--db-url", help="first check every key exists in this database (psql, read-only)")
+    r.add_argument("--approval-due", help="ISO duration replacing a confirmation's due date (a certification walk)")
+    r.add_argument("--loop-period", help="ISO duration replacing the return loops' daily timer")
+    r.add_argument("--dry-run", action="store_true", help="print the messages, send nothing")
     args = ap.parse_args(argv)
 
-    if args.cmd == "init-config":
-        text = yaml.safe_dump({"deployments": load_deployments(None)}, sort_keys=False)
-        if args.out:
-            pathlib.Path(args.out).write_text(text, encoding="utf-8")
-        else:
-            sys.stdout.write(text)
-        return 0
-
+    names = messages_from_conf(CONF)
     events = load(pathlib.Path(args.csv) if args.csv else default_csv(args.world))
+    problems = check(events)
+    chosen = select(events, ts(args.frm), ts(args.to), args.demo,
+                    dt.date.fromisoformat(args.day) if args.day else None)
+    if args.db_url and not problems:
+        problems += check_world(chosen, args.db_url)
+    token = os.environ.get(args.token_env)
+
     if args.cmd == "check":
-        problems = check(events) + (check_world(events, args.db_url) if args.db_url else [])
+        if args.dry:
+            for e in chosen:
+                print(json.dumps(message(e, names), ensure_ascii=False))
+        if args.engine_url and not problems:
+            with httpx.Client(timeout=30) as client:
+                problems += check_instances(chosen, names, args.engine_url.rstrip("/"), token, client)
         for p in problems:
             print(p)
-        print(f"{len(events)} events, {sum(e.demo for e in events)} demo, {len(problems)} problems")
+        print(f"{len(events)} events, {sum(e.demo for e in events)} demo, {len(chosen)} selected, {len(problems)} problems")
         return 1 if problems else 0
 
-    problems = check(events)
     if problems:
         print("\n".join(problems), file=sys.stderr)
         return 1
-    deployments = load_deployments(args.config)
-    chosen = select(events, ts(args.frm), ts(args.to), args.demo)
+    knobs = {"approval_due": args.approval_due, "loop_period": args.loop_period}
     if args.dry_run:
         for e in chosen:
-            print(json.dumps(body(e, args.world, deployments), ensure_ascii=False))
+            print(json.dumps(message(e, names, **knobs), ensure_ascii=False))
         return 0
-    if not args.url:
-        ap.error("replay needs --url (or --dry-run)")
+    engine = (args.engine_url or engine_of() or "").rstrip("/")
+    if not engine:
+        ap.error("replay needs --engine-url (or --dry-run)")
+    if not token:
+        ap.error(f"replay needs the hartland-driver bearer in ${args.token_env}")
     with httpx.Client(timeout=30) as client:
-        return replay_events(chosen, args.world, args.url, deployments, os.environ.get(args.token_env), args.speed, client)
+        return replay_events(chosen, names, f"{engine}/message", token, args.speed, client, **knobs)
 
 
 if __name__ == "__main__":
