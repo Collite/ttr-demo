@@ -338,6 +338,30 @@ automation-events world day *FLAGS:
 automation-events-check world day="-" *FLAGS:
     uv run scripts/automation-events.py check --world {{world}} {{ if day == "-" { "" } else { "--day " + day } }} {{FLAGS}}
 
+# ── the engine (AU-hartland P4·S4.1, ⚑20-1, D-143) ─────────────────────────────────────────────────────────
+# One deployment set per cluster (processes/sets.json: cz = bp-dsk). exports/<d>/ = `ttrp emit` of the set's
+# deployments, from a `git archive` copy of HEAD (commit first); processes/<set>/*.bpmn = the authored processes,
+# composed from those skeletons by scripts/compose-processes.py (`--check` = the drift gate).
+#
+#     just automation-export cz && just compose-processes cz      # after a pin move or a recipe/world change
+#     TTR_BEARER=… ENGINE_URL=http://127.0.0.1:8080/engine-rest just automation-deploy cz
+
+# Emit the set's deployments into exports/ (from a git archive copy of HEAD).
+automation-export set="cz":
+    bash scripts/automation-export.sh export {{set}}
+
+# Compose processes/<set>/ from the exports; --check = the drift gate.
+compose-processes set="cz" *FLAGS:
+    python3 scripts/compose-processes.py --set {{set}} {{FLAGS}}
+
+# Deploy the set's deployments + processes (TTR_BEARER, ENGINE_URL); --check = absent/current/stale/foreign.
+automation-deploy set="cz" *FLAGS:
+    bash scripts/automation-export.sh deploy {{set}} {{FLAGS}}
+
+# The authored processes' specs alone (bpmn-moddle; `npm ci --prefix processes/tests` once). verify-model runs them too.
+processes-test:
+    node --test processes/tests/processes.test.mjs
+
 # The generator's suite on a throwaway local Postgres (pgserver via uv — no Docker, no cluster) loaded
 # with data/automation/tests/fixture.sql. `ONLY=reset just automation-test` runs one script.
 automation-test:
