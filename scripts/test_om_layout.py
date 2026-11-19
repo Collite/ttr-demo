@@ -100,7 +100,7 @@ class FakeCatalog:
                 about={'id': customer['id'], 'fullyQualifiedName': customer['fullyQualifiedName']},
                 assignees=[{'id': self.get('users/name/petr.novak')['id'], 'type': 'user', 'name': 'petr.novak'}], comments=[],
                 taskFormSchemaId=self.get('taskFormSchemas/name/ttrSuggestChange')['id'],
-                workflowStageId='review', availableTransitions=[{'id': 'approve', 'label': 'Approve'}])
+                createdAt=len(self.writes), workflowStageId='review', availableTransitions=[{'id': 'approve', 'label': 'Approve'}])
             self.values['tasks/name/' + number] = item
             return copy.deepcopy(item)
         elif method == 'POST' and resource.startswith('tasks/'):

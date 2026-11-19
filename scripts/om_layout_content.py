@@ -482,7 +482,8 @@ class Content:
                 aboutEntity=self.customer()['fullyQualifiedName'], statusGroup='open')
             task = self.task_for(self.content['tasks'][2])
             return (wanted is not None and path.is_file() and path.read_text() == wanted
-                    and bool(open_tasks) and open_tasks[0]['id'] == task['id'])
+                    and bool(open_tasks) and sorted(open_tasks,
+                        key=lambda t: t.get('createdAt', 0), reverse=True)[0]['id'] == task['id'])
 
         return [('workflow: two stages and four transitions', workflow),
                 ('form bound to workflow', form), ('accounts, team and four domains', accounts),

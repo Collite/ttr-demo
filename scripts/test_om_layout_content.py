@@ -338,7 +338,7 @@ class ChatRouteTests(unittest.TestCase):
         layout=make_layout(fake,env={},output=lambda _:None)
         self.assertEqual(0,layout.run('apply'))
         other=copy.deepcopy(layout.task_list()[-1])
-        other.update(id='other-open-task',name='OTHER',status='Open')
+        other.update(id='other-open-task',name='OTHER',status='Open',createdAt=other['createdAt']+1000)
         other['payload']['value']='unowned suggestion'
         fake.values['tasks/name/OTHER']=other
         self.assertEqual(1,layout.run('verify'))
