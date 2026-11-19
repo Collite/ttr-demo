@@ -4,7 +4,7 @@ FROM (
   FROM (SELECT *
           FROM (SELECT *
                   FROM "obligation"
-                  WHERE "entity" = 'return_request_line') AS "t"
-          WHERE "kind" = 'inbound') AS "t0"
+                  WHERE "entity" = 'er.entity.return_request_line') AS "t"
+          WHERE "kind" IN ('credit_note', 'payment', 'replacement')) AS "t0"
   WHERE "state" IN ('open', 'overdue', 'reopened')
 ) AS "_ttrp_part"

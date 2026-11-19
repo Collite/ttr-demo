@@ -14,7 +14,7 @@ candidates awaiting(out lines) target erp """sql
         FROM   er.entity.return_request_line l
         JOIN   er.entity.return_request r ON r.request_number = l.request_number
         LEFT JOIN er.entity.customer c    ON c.sk = r.customer
-        JOIN   er.entity.obligation ob    ON ob.entity = 'return_request_line' AND ob.key = l.line_id AND ob.kind = 'inbound'
+        JOIN   er.entity.obligation ob    ON ob.entity = 'er.entity.return_request_line' AND ob.key = concat(concat('{"line_id":', CAST(l.line_id AS VARCHAR)), '}') AND ob.kind = 'inbound'
                                           AND ob.state IN ('open', 'overdue', 'reopened')
         WHERE  l.state = 'awaiting_goods'
 """
