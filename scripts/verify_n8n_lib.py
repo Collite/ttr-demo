@@ -12,7 +12,9 @@ import subprocess
 from urllib.parse import urlsplit, urlencode
 import uuid
 
-IMAGE = 'docker.n8n.io/n8nio/n8n:2.44.6'
+# The image every cluster runs (olymp platform/middleware/n8n/base/values.yaml): n8n 2.44.6 + the Tatrman nodes.
+# Move it with that pin; N8N_IMAGE overrides.
+IMAGE = 'ghcr.io/collite/n8n-tatrman:2.44.6-0.1.0'
 # Chart n8n-1.24.43's `n8n.main.name` helper; the Deployment/Service are simply `n8n`.
 CONTAINER = 'n8n-main'
 PVC = 'n8n-main-persistence'

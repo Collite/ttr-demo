@@ -52,7 +52,7 @@ old invitation token remains usable. V8 does not certify role denial or NetworkP
 remain separate checks. DNS discovery does not replace the stage's actual SMTP-delivery check.
 
 Override defaults with `KUBE_CONTEXT`, `N8N_URL` (default `https://n8n.hartland.collite.cz`) and `N8N_IMAGE`
-(default `docker.n8n.io/n8nio/n8n:2.44.6`). TLS validation stays on; redirects are not followed. Failed
+(default `ghcr.io/collite/n8n-tatrman:2.44.6-0.1.0`, olymp's pin). TLS validation stays on; redirects are not followed. Failed
 HTTP/command bodies are withheld from output.
 
 V5 sends the complete upgrade headers, a random key, a pushRef and the public Origin. The
