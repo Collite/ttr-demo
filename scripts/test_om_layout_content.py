@@ -148,12 +148,28 @@ class FrozenContentTests(unittest.TestCase):
         if source.exists():
             self.assertEqual(source.read_bytes(), (self.layout.pack / 'change-1-golem-chat.html').read_bytes())
         self.layout.run('apply')
-        built = (self.layout.pack / 'build/change-1-golem-chat.html').read_text()
+        built = (self.layout.pack / 'build/bp-dsk/change-1-golem-chat.html').read_text()
         task = self.layout.task_for(self.layout.content['tasks'][2])
         self.assertIn('/glossary/demo%20Concepts.cn.role.Customer/activity_feed/tasks', built)
         self.assertIn(task['taskId'], built)
         self.assertNotIn('/tasks/' + task['taskId'], built)
         self.assertNotIn('{{TASK_', built)
+
+    def test_each_targets_chat_build_preserves_the_other_page(self):
+        fake = FakeCatalog()
+        for target in ('bp-dsk', 'hartland', 'bp-dsk'):
+            catalog = FakeCatalog(target)
+            catalog.pack = fake.pack
+            layout = make_layout(catalog, output=lambda _: None, env={})
+            other = 'hartland' if target == 'bp-dsk' else 'bp-dsk'
+            other_path = fake.pack / 'build' / other / 'change-1-golem-chat.html'
+            before = other_path.read_bytes() if other_path.exists() else None
+            self.assertEqual(0, layout.run('apply'))
+            built = (fake.pack / 'build' / target / 'change-1-golem-chat.html').read_text()
+            self.assertIn(om.ADDRESSES[target] + '/glossary/' + catalog.world + '%20Concepts', built)
+            self.assertNotIn(om.ADDRESSES[other], built)
+            if before is not None:
+                self.assertEqual(before, other_path.read_bytes())
 
 class ActorTests(unittest.TestCase):
     def test_person_and_bot_tokens_stay_in_memory_and_login_failure_uses_admin(self):

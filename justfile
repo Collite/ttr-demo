@@ -20,7 +20,7 @@ verify-openmetadata:
 openmetadata-test:
     python3 -m unittest scripts/test_verify_openmetadata.py
 
-# LD layout pack (bp-dsk only until P2); no build, release or cluster change.
+# LD layout pack (bp-dsk and the called hartland showing); no release or cluster change.
 om-layout verb="plan" target="bp-dsk":
     python3 scripts/om_layout.py {{verb}} --target {{target}}
 

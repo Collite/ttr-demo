@@ -422,13 +422,16 @@ class Content:
 
     def chat_page(self):
         desired = self.chat_value()
-        path = self.pack / 'build/change-1-golem-chat.html'
+        path = self.chat_path()
         def build():
             self.require(desired is not None, 'chat task is missing')
-            path.parent.mkdir(exist_ok=True)
+            path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(desired)
         yield self.operation('offline chat page', '', '', None, path.read_text() if path.exists() else None,
                              desired or 'pending odběratel task', build)
+
+    def chat_path(self):
+        return self.pack / 'build' / self.target / 'change-1-golem-chat.html'
 
     def content_checks(self):
         def workflow():
@@ -476,7 +479,7 @@ class Content:
                         and any(a['id'] == item['id'] for a in self.announcement_list()))
 
         def chat():
-            path = self.pack / 'build/change-1-golem-chat.html'
+            path = self.chat_path()
             wanted = self.chat_value()
             open_tasks = self.listing('tasks', 'about,payload',
                 aboutEntity=self.customer()['fullyQualifiedName'], statusGroup='open')

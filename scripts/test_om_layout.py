@@ -15,7 +15,9 @@ import om_layout as om
 
 
 class FakeCatalog:
-    def __init__(self):
+    def __init__(self, target='bp-dsk'):
+        self.target = target
+        self.world = om.read_json(om.PACK / 'targets.json')[target]['world']
         self.writes = []
         self.temp = tempfile.mkdtemp()
         self.pack = Path(self.temp) / "pack"
@@ -35,7 +37,7 @@ class FakeCatalog:
                     for i in range(10)] + [{'name': 'unrelated', 'isSymmetric': True}]}},
         }
 
-        self.base = "https://openmetadata.192-168-1-38.nip.io/api/v1/"
+        self.base = om.ADDRESSES[target] + '/api/v1/'
         weakref.finalize(self, shutil.rmtree, self.temp, True)
         self.seed_content()
 
@@ -43,13 +45,13 @@ class FakeCatalog:
         specs = om.read_json(om.PACK / 'content.json')
         for i, spec in enumerate(specs['terms']):
             name = spec['qname']
-            item = {'id': 'term-' + str(i), 'name': name, 'fullyQualifiedName': 'demo ' + spec['glossary'] + '.' + name,
-                    'glossary': {'name': 'demo ' + spec['glossary']},
+            item = {'id': 'term-' + str(i), 'name': name, 'fullyQualifiedName': self.world + ' ' + spec['glossary'] + '.' + name,
+                    'glossary': {'name': self.world + ' ' + spec['glossary']},
                     'extension': {'ttrQname': name, 'foreign': 'keep'}, 'entityStatus': 'Approved',
                     'relatedTerms': [], 'reviewers': [], 'tags': []}
             self.values['glossaryTerms/name/' + item['fullyQualifiedName']] = item
-        customer = self.values['glossaryTerms/name/demo Concepts.cn.role.Customer']
-        sale = self.values['glossaryTerms/name/demo Concepts.cn.event.Sale']
+        customer = self.values['glossaryTerms/name/' + self.world + ' Concepts.cn.role.Customer']
+        sale = self.values['glossaryTerms/name/' + self.world + ' Concepts.cn.event.Sale']
         customer['relatedTerms'] = [{'term': {'id': sale['id'], 'type': 'glossaryTerm'}, 'relationType': 'relatedTo'}]
         sale['relatedTerms'] = [{'term': {'id': customer['id'], 'type': 'glossaryTerm'}, 'relationType': 'relatedTo'}]
         spec = specs['table']
@@ -175,9 +177,42 @@ class FrameTests(unittest.TestCase):
                 om.Catalog('bp-dsk', {}, pack)
 
     def test_disabled_and_unknown_targets_refused(self):
-        for target in ('hartland', 'another-catalog'):
-            with self.subTest(target=target), self.assertRaises(om.LayoutError):
-                om.Catalog(target, {})
+        with self.assertRaisesRegex(om.LayoutError, 'unknown target'):
+            om.Catalog('another-catalog', {})
+
+    def test_each_target_is_enabled_independently(self):
+        fake = FakeCatalog()
+        for enabled in om.ADDRESSES:
+            targets = om.read_json(fake.pack / 'targets.json')
+            for name in targets:
+                targets[name]['enabled'] = name == enabled
+            (fake.pack / 'targets.json').write_text(json.dumps(targets))
+            for name in targets:
+                with self.subTest(enabled=enabled, target=name):
+                    if name == enabled:
+                        self.assertEqual(om.ADDRESSES[name], om.target_url(name, fake.pack))
+                    else:
+                        with self.assertRaisesRegex(om.LayoutError, 'target is disabled'):
+                            om.Catalog(name, {}, fake.pack)
+
+    def test_fresh_projected_catalog_plans_all_owned_objects_for_each_world(self):
+        created = {'persona ' + name for name in ('ttr-model-steward', 'ttr-model-reader', 'ttr-stock-view')}
+        created.update({'document persona.' + name for name in om.PERSONAS})
+        created.update({'account ' + name for name in ('jana.dvorakova', 'petr.novak', 'tatrman-maintainer')})
+        created.update({'team sales-team', 'workflow ttrSuggestionWorkflow', 'form ttrSuggestChange',
+                        'task klient', 'task kupující', 'task odběratel', 'announcement Model published',
+                        'offline chat page'})
+        created.update({'domain ' + name for name in ('Sales', 'Returns', 'Inventory', 'OrdersAndInvoices')})
+        for target, world in (('bp-dsk', 'demo'), ('hartland', 'hartland')):
+            with self.subTest(target=target):
+                fake, output = FakeCatalog(target), []
+                layout = make_layout(fake, output=output.append, env={})
+                self.assertEqual(0, layout.run('plan'))
+                self.assertEqual(created, {line.removeprefix('create ') for line in output if line.startswith('create ')})
+                self.assertEqual({world + ' Concepts', world + ' Entities'},
+                                 {term['glossary']['name'] for term in layout.objects().values()})
+                self.assertEqual([], fake.writes)
+                self.assertFalse((fake.pack / 'build').exists())
 
     def test_non_admin_refused_before_writes(self):
         catalog = FakeCatalog()
