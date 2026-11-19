@@ -203,7 +203,7 @@ jobs:
 
       - name: OpenMetadata rig regressions (offline)
         working-directory: hartland
-        run: just openmetadata-test
+        run: just openmetadata-test && just om-layout-test
 
       - name: Hebe rig specs (Keycloak form parsing, verify.sh helpers)
         working-directory: hartland
