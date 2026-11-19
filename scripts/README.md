@@ -5,8 +5,9 @@ together: the engine exports, the authored processes and the demo-day driver.
 
 ## The deployment set
 
-`processes/sets.json` names one **deployment set** per cluster: `cz` = bp-dsk (the CZ program twins; bp-dsk serves CZ
-data only, D-139). Never deploy two sets on one engine: two definitions cannot both start on `order_placed`.
+`processes/sets.json` names the **deployment set** each engine runs: `cz` = bp-dsk and hartland (the CZ program twins;
+bp-dsk serves CZ data only, D-139; hartland mirrors bp-dsk since 2026-11-19). Never deploy two sets on one engine: two
+definitions cannot both start on `order_placed`.
 
 ## Exports → processes → engine
 

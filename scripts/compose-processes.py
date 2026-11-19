@@ -3,7 +3,7 @@
 
     python3 scripts/compose-processes.py [--set cz] [--check]
 
-Reads `processes/sets.json` (the deployment set of one cluster) and the skeletons under `exports/<deployment>/`
+Reads `processes/sets.json` (the deployment set an engine runs) and the skeletons under `exports/<deployment>/`
 (`just automation-export <set>` writes them), and writes `processes/<set>/<process>.bpmn`. `--check` writes nothing and
 exits 1 when a committed process differs from what the exports compose to (the drift gate, like check-recipe-drift).
 

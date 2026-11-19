@@ -339,7 +339,7 @@ automation-events-check world day="-" *FLAGS:
     uv run scripts/automation-events.py check --world {{world}} {{ if day == "-" { "" } else { "--day " + day } }} {{FLAGS}}
 
 # ── the engine (AU-hartland P4·S4.1, ⚑20-1, D-143) ─────────────────────────────────────────────────────────
-# One deployment set per cluster (processes/sets.json: cz = bp-dsk). exports/<d>/ = `ttrp emit` of the set's
+# One deployment set per engine (processes/sets.json: cz = bp-dsk and hartland). exports/<d>/ = `ttrp emit` of the set's
 # deployments, from a `git archive` copy of HEAD (commit first); processes/<set>/*.bpmn = the authored processes,
 # composed from those skeletons by scripts/compose-processes.py (`--check` = the drift gate).
 #
