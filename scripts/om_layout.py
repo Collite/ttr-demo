@@ -42,6 +42,20 @@ def read_json(path):
     return json.loads(path.read_text())
 
 
+PERSONAS = ('ttr-model-steward', 'ttr-model-reader')
+
+
+def layout_document(document):
+    """Keep create fields; tab/navigation ids and widget i are UI keys, not entity ids."""
+    result = {key: copy.deepcopy(document[key])
+              for key in ('name', 'fullyQualifiedName', 'entityType', 'data')}
+    # UICustomization can also carry its own server metadata inside docStore.data.
+    for key in ('id', 'version', 'updatedAt', 'updatedBy', 'createdAt', 'createdBy',
+                'href', 'changeDescription', 'incrementalChangeDescription'):
+        result['data'].pop(key, None)
+    return result
+
+
 def target_url(name, pack=PACK):
     targets = read_json(pack / 'targets.json')
     require(name in ADDRESSES and name in targets, 'unknown target')
@@ -244,6 +258,18 @@ class Layout(Content):
         return Operation('admin personas and Stock view', 'PATCH',
                          'users/' + quote(admin['id'], safe=''), body, current, desired)
 
+    def export(self, persona):
+        require(persona in PERSONAS, 'export requires an owned layout persona')
+        document = self.catalog.get('docStore/name/persona.' + persona, missing=True)
+        require(document is not None, 'persona layout document not found')
+        require(document.get('fullyQualifiedName') == 'persona.' + persona
+                and document.get('entityType') == 'Page', 'unexpected persona layout document')
+        path = self.pack / 'persona-ui' / (persona + '.json')
+        path.write_text(json.dumps(layout_document(document), ensure_ascii=False,
+                                   indent=2, sort_keys=True) + '\n')
+        self.output('exported persona-ui/' + path.name)
+        return 0
+
     def verify(self, applying=False):
         def theme():
             actual = self.catalog.get('system/settings/customUiThemePreference')['config_value']
@@ -392,14 +418,18 @@ class Layout(Content):
 
 def main(argv=None, env=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('verb', choices=('plan', 'apply', 'verify', 'remove'),
+    parser.add_argument('verb', choices=('plan', 'apply', 'verify', 'export', 'remove'),
                         nargs='?', default='plan')
     parser.add_argument('--target', required=True, choices=tuple(ADDRESSES))
     parser.add_argument('--execute', action='store_true')
+    parser.add_argument('--persona', choices=PERSONAS)
     args = parser.parse_args(argv)
     require(not args.execute or args.verb == 'remove', '--execute is only for remove')
+    require((args.persona is not None) == (args.verb == 'export'),
+            '--persona is required for export and only valid with export')
     env = os.environ if env is None else env
-    return Layout(Catalog(args.target, env), env=env).run(args.verb, args.execute)
+    layout = Layout(Catalog(args.target, env), env=env)
+    return layout.export(args.persona) if args.verb == 'export' else layout.run(args.verb, args.execute)
 
 
 if __name__ == '__main__':

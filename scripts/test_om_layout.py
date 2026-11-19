@@ -358,6 +358,56 @@ class RelationTests(unittest.TestCase):
 
 
 class PersonaTests(unittest.TestCase):
+    def test_export_strips_server_metadata_preserves_ui_keys_and_sorts_keys(self):
+        fake = FakeCatalog()
+        layout = make_layout(fake, output=lambda _: None)
+        name = 'ttr-model-steward'
+        source = om.read_json(fake.pack / 'persona-ui' / (name + '.json'))
+        source.update(id='server-id', version=4, updatedAt=123, updatedBy='admin',
+                      href='server-url', changeDescription={'old': 'value'})
+        source['data'].update(id='ui-server-id', version=2, updatedAt=42, href='server-url')
+        fake.values['docStore/name/persona.' + name] = source
+        before = copy.deepcopy(source)
+        self.assertEqual(0, layout.export(name))
+        path = fake.pack / 'persona-ui' / (name + '.json')
+        exported = om.read_json(path)
+        self.assertEqual({'name', 'fullyQualifiedName', 'entityType', 'data'}, set(exported))
+        self.assertFalse({'id', 'version', 'updatedAt', 'href'} & exported['data'].keys())
+        self.assertEqual('overview', exported['data']['pages'][0]['tabs'][0]['id'])
+        self.assertEqual('/my-data', exported['data']['navigation'][0]['id'])
+        self.assertEqual('KnowledgePanel.LeftPanel',
+                         exported['data']['pages'][0]['tabs'][0]['layout'][0]['i'])
+        self.assertEqual(json.dumps(exported, ensure_ascii=False, indent=2, sort_keys=True) + '\n',
+                         path.read_text())
+        self.assertEqual(before, fake.values['docStore/name/persona.' + name])
+        self.assertEqual([], fake.writes)
+
+    def test_export_apply_export_is_byte_identical(self):
+        fake = FakeCatalog()
+        layout = make_layout(fake, output=lambda _: None)
+        layout.run('apply')
+        for name in om.PERSONAS:
+            layout.export(name)
+            path = fake.pack / 'persona-ui' / (name + '.json')
+            first = path.read_bytes()
+            fake.values['docStore/name/persona.' + name]['data'] = {}
+            writes = len(fake.writes)
+            for operation in layout.personas_and_documents():
+                if operation.action != 'unchanged':
+                    fake.write(operation.method, operation.path, operation.body)
+            self.assertTrue(any(method == 'PUT' and resource == 'docStore'
+                                for method, resource, _ in fake.writes[writes:]))
+            layout.export(name)
+            self.assertEqual(first, path.read_bytes())
+
+    def test_export_rejects_unowned_or_absent_documents_before_file_write(self):
+        fake = FakeCatalog()
+        layout = make_layout(fake, output=lambda _: None)
+        for name in ('../../outside', 'ttr-stock-view', 'ttr-model-reader'):
+            with self.subTest(name=name), self.assertRaises(om.LayoutError):
+                layout.export(name)
+        self.assertEqual([], fake.writes)
+
     def test_export_has_only_create_fields_and_original_ui_keys(self):
         for path in (om.PACK / 'persona-ui').glob('*.json'):
             doc = om.read_json(path)
