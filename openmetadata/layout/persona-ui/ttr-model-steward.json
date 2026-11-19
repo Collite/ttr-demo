@@ -440,6 +440,45 @@
             "name": "custom_properties"
           }
         ]
+      },
+      {
+        "layout": [
+          {
+            "h": 3,
+            "i": "KnowledgePanel.MyTask-241",
+            "moved": false,
+            "static": false,
+            "w": 1,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "h": 3,
+            "i": "KnowledgePanel.Domains-242",
+            "moved": false,
+            "static": false,
+            "w": 1,
+            "x": 1,
+            "y": 0
+          },
+          {
+            "config": {
+              "queryFilter": "{\"query\":{\"bool\":{\"must\":[{\"bool\":{\"must\":[{\"term\":{\"domains.displayName.keyword\":\"sales\"}}]}}]}}}",
+              "resources": [
+                "glossaryTerm"
+              ],
+              "title": "Curated Assets"
+            },
+            "h": 3,
+            "i": "KnowledgePanel.CuratedAssets-303",
+            "moved": false,
+            "static": false,
+            "w": 1,
+            "x": 2,
+            "y": 0
+          }
+        ],
+        "pageType": "LandingPage"
       }
     ]
   },
