@@ -22,11 +22,15 @@ ADDRESSES = {
 # LD-C12: write reviewers after the frozen task history, then verify the complete pack.
 ORDER = ('theme', 'relation_types', 'personas_and_documents', 'accounts_and_team',
          'domains', 'workflow_and_form', 'content_except_reviewers', 'relations',
-         'tasks', 'reviewers', 'announcement', 'chat_page')
+         'tasks', 'reviewers', 'customer_approval', 'announcement', 'chat_page')
 
 
 class LayoutError(ValueError):
     """Only authored diagnostics, never credentials or server response bodies."""
+
+    def __init__(self, message, status=None):
+        super().__init__(message)
+        self.status = status
 
 
 def require(condition, message):
@@ -88,7 +92,7 @@ class Catalog:
         except HTTPError as error:
             if missing and method == 'GET' and error.code == 404:
                 return None
-            raise LayoutError('catalog request failed (HTTP ' + str(error.code) + ')') from None
+            raise LayoutError('catalog request failed (HTTP ' + str(error.code) + ')', status=error.code) from None
         except Exception:
             raise LayoutError('catalog request failed; check connection and OM_CA_FILE') from None
 
@@ -151,6 +155,7 @@ class Layout(Content):
         self.catalog, self.pack, self.output = catalog, pack, output
         self.env = os.environ if env is None else env
         self.actors = {}
+        self.reviewer_skip_reason = None
         self.target = getattr(catalog, "target", "bp-dsk")
         self.content = read_json(pack / "content.json")
         require(catalog.get('system/version').get('version') == '2.0.6',

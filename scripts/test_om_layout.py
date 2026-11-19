@@ -71,6 +71,10 @@ class FakeCatalog:
             query = parse_qs(parsed.query)
             if resource == 'tasks' and 'aboutEntity' in query:
                 items = [v for v in items if v['about']['fullyQualifiedName'] == query['aboutEntity'][0]]
+            if resource == 'tasks':
+                for field in ('type','category'):
+                    if field in query:
+                        items = [v for v in items if v.get(field) == query[field][0]]
             if resource == 'announcements' and 'entityLink' in query:
                 items = [v for v in items if v['entityLink'] == query['entityLink'][0]]
             return {'data': items, 'paging': {}}
@@ -100,7 +104,12 @@ class FakeCatalog:
             item = next(v for v in self.values.values() if v and v.get('id') == resource.split('/')[1])
             if resource.endswith('/resolve'):
                 transition = body['transitionId']
-                if transition == 'approve':
+                if item.get('type') == 'RequestApproval':
+                    if getattr(self, 'deny_approval', False):
+                        raise om.LayoutError('catalog request failed (HTTP 403)', status=403)
+                    item.update(status='Approved', workflowStageId='approved', availableTransitions=[])
+                    self.values['glossaryTerms/name/' + item['about']['fullyQualifiedName']]['entityStatus'] = 'Approved'
+                elif transition == 'approve':
                     item.update(status='InProgress', workflowStageId='publication', availableTransitions=[{'id': 'publish', 'label': 'Published with the model'}])
                 elif transition == 'publish':
                     item.update(status='Completed', workflowStageId='published', availableTransitions=[])
@@ -132,6 +141,18 @@ class FakeCatalog:
                         self.values[key].pop(field, None)
                     else:
                         self.values[key][field] = copy.deepcopy(op['value'])
+                    if resource.startswith('glossaryTerms/') and field == 'reviewers':
+                        if op.get('value'):
+                            entity = self.values[key]
+                            entity['entityStatus'] = 'In Review'
+                            self.values['tasks/name/APPROVAL'] = {'id':'APPROVAL', 'name':'APPROVAL',
+                                'type':'RequestApproval', 'category':'Approval', 'status':'Open', 'comments':[],
+                                'about': {'id':entity['id'], 'fullyQualifiedName':entity['fullyQualifiedName']},
+                                'payload': {'proposedChanges': {'entityStatus': {'added':['In Review']}}},
+                                'assignees': copy.deepcopy(op['value']),
+                                'availableTransitions':[{'id':'approve'}]}
+                        else:
+                            self.values[key]['entityStatus'] = 'Approved'
                 return copy.deepcopy(self.values[key])
         else:
             self.values[resource] = copy.deepcopy(body)

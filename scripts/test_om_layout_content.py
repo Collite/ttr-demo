@@ -45,7 +45,7 @@ class FrozenContentTests(unittest.TestCase):
         self.assertEqual(0, self.layout.run('apply'))
         writes = self.fake.writes
         first_task = next(i for i, w in enumerate(writes) if w[:2] == ('POST', 'tasks'))
-        last_task = max(i for i, w in enumerate(writes) if w[1].startswith('tasks'))
+        last_task = max(i for i, w in enumerate(writes) if w[1].startswith('tasks') and not w[1].startswith('tasks/APPROVAL'))
         customer_id = self.layout.customer()['id']
         patches = [(i, w[2]) for i, w in enumerate(writes) if w[:2] == ('PATCH', 'glossaryTerms/' + customer_id)]
         reviewer = next(i for i, patch in patches if any(p['path'] == '/reviewers' for p in patch))
@@ -137,7 +137,8 @@ class FrozenContentTests(unittest.TestCase):
         before = {k: copy.deepcopy(v) for k,v in self.fake.values.items() if k.startswith(('glossaryTerms/', 'tables/', 'metrics/'))}
         self.layout.run('remove', execute=True)
         self.assertEqual(before, {k:v for k,v in self.fake.values.items() if k in before})
-        self.assertFalse(any(k.startswith(('tasks/', 'users/name/', 'domains/', 'announcements/')) for k in self.fake.values))
+        self.assertFalse(any(k.startswith(('users/name/', 'domains/', 'announcements/')) for k in self.fake.values))
+        self.assertEqual(['tasks/name/APPROVAL'], [k for k in self.fake.values if k.startswith('tasks/')])
         restore = next(l for l in self.output if l.startswith('restore edited terms:'))
         self.assertIn('--context bp-dsk', restore)
         self.assertIn('--state-file', restore)
@@ -212,3 +213,102 @@ class ReferenceSetTests(unittest.TestCase):
                                         {field:[{'id':'a'},{'id':'b'}]}))
         for field in ('comments','nodes','tabs','navigation','synonyms'):
             self.assertFalse(subset({field:['b','a']},{field:['a','b']}))
+
+class ApprovalTests(unittest.TestCase):
+    def setUp(self):
+        self.fake, self.output = FakeCatalog(), []
+        self.layout = make_layout(self.fake, env={}, output=self.output.append)
+
+    def test_reviewers_raise_an_approval_and_apply_approves_once(self):
+        self.assertEqual(0, self.layout.run('apply'))
+        customer = self.layout.customer()
+        self.assertEqual('Approved', customer['entityStatus'])
+        self.assertEqual(self.layout.reference('users','petr.novak','user')['id'], customer['reviewers'][0]['id'])
+        approval = self.fake.values['tasks/name/APPROVAL']
+        self.assertEqual('Approved', approval['status'])
+        reviewer_index = next(i for i,w in enumerate(self.fake.writes) if w[0]=='PATCH' and any(p.get('path')=='/reviewers' for p in w[2] if isinstance(p,dict)))
+        approval_index = next(i for i,w in enumerate(self.fake.writes) if w[1]=='tasks/APPROVAL/resolve')
+        self.assertGreater(approval_index, reviewer_index)
+        self.fake.writes.clear()
+        self.output.clear()
+        self.assertEqual(0, self.layout.run('apply'))
+        self.assertFalse(any(w[1]=='tasks/APPROVAL/resolve' for w in self.fake.writes))
+        self.assertTrue(all(l.startswith('unchanged ') or 'renew end time' in l for l in self.output))
+
+    def test_existing_in_review_customer_is_repaired_without_rewriting_reviewer(self):
+        self.layout.run('apply')
+        customer = self.layout.customer()
+        self.fake.values['glossaryTerms/name/' + customer['fullyQualifiedName']]['entityStatus']='In Review'
+        self.fake.values['tasks/name/APPROVAL'].update(status='Open', availableTransitions=[{'id':'approve'}])
+        self.fake.writes.clear()
+        fresh = make_layout(self.fake, env={}, output=lambda _:None)
+        self.assertEqual(0, fresh.run('apply'))
+        self.assertEqual('Approved', fresh.customer()['entityStatus'])
+        self.assertEqual(1, sum(w[1]=='tasks/APPROVAL/resolve' for w in self.fake.writes))
+        self.assertFalse(any(w[0]=='PATCH' and w[1].startswith('glossaryTerms/') for w in self.fake.writes))
+
+    def test_both_accounts_refused_removes_reviewer_and_plan_reports_skip(self):
+        self.layout.run('apply')
+        customer = self.layout.customer()
+        self.fake.values['glossaryTerms/name/' + customer['fullyQualifiedName']]['entityStatus']='In Review'
+        self.fake.values['tasks/name/APPROVAL'].update(status='Open', availableTransitions=[{'id':'approve'}])
+        self.fake.deny_approval = True
+        class RefusedPetr:
+            calls = 0
+            def write(client, *args):
+                client.calls += 1
+                raise om.LayoutError('catalog request failed (HTTP 403)', status=403)
+        petr = RefusedPetr()
+        self.layout.env={'OM_DEMO_PASSWORD':'test-only'}
+        self.layout.actors['petr.novak']=petr
+        self.fake.writes.clear()
+        self.layout.approve_customer()
+        self.assertEqual(1, petr.calls)
+        self.assertEqual('Approved', self.layout.customer()['entityStatus'])
+        self.assertEqual([], self.layout.customer()['reviewers'])
+        self.assertFalse(any(p.get('path')=='/entityStatus' for w in self.fake.writes if w[0]=='PATCH' for p in w[2]))
+        self.output.clear()
+        self.fake.writes.clear()
+        self.layout.run('plan')
+        self.assertTrue(any('skip Customer reviewer: approval refused: HTTP 403, HTTP 403' in l for l in self.output))
+        self.assertEqual([], self.fake.writes)
+        # A fresh process can recognize the catalog's remaining open approval.
+        fresh = make_layout(self.fake, env={}, output=lambda _:None)
+        self.assertTrue(fresh.reviewer_skip(fresh.customer()))
+        self.assertEqual(0, fresh.run('verify'))
+
+    def test_network_failure_does_not_remove_reviewer(self):
+        self.layout.run('apply')
+        customer = self.layout.customer()
+        self.fake.values['glossaryTerms/name/' + customer['fullyQualifiedName']]['entityStatus']='In Review'
+        self.fake.values['tasks/name/APPROVAL'].update(status='Open', availableTransitions=[{'id':'approve'}])
+        original = self.fake.write
+        def unreachable(method,path,body=None):
+            if path=='tasks/APPROVAL/resolve':raise om.LayoutError('catalog request failed; check connection')
+            return original(method,path,body)
+        self.fake.write=unreachable
+        with self.assertRaisesRegex(om.LayoutError,'check connection'):
+            self.layout.approve_customer()
+        self.assertTrue(self.layout.customer()['reviewers'])
+
+class BotTokenTests(unittest.TestCase):
+    def test_nearly_expired_owned_bot_token_is_renewed_in_memory(self):
+        class TokenCatalog(FakeCatalog):
+            def get(self,path,missing=False):
+                if path.startswith('users/token/'):
+                    return {'JWTToken':'expired-test-token','JWTTokenExpiresAt':1}
+                return super().get(path,missing)
+            def write(self,method,path,body=None):
+                if path=='users/generateToken':
+                    self.renewal=(method,body)
+                    return {'JWTToken':'renewed-test-token'}
+                return super().write(method,path,body)
+            def as_token(self,token):
+                return ('client',token)
+        fake=TokenCatalog()
+        fake.values['users/name/tatrman-maintainer']={'id':'bot-id','name':'tatrman-maintainer'}
+        output=[]
+        layout=make_layout(fake,env={'OM_DEMO_PASSWORD':'test-only'},output=output.append)
+        self.assertEqual(('client','renewed-test-token'),layout.actor('tatrman-maintainer'))
+        self.assertEqual(('POST',{'id':'bot-id','JWTTokenExpiry':'OneHour'}),fake.renewal)
+        self.assertEqual([],output)

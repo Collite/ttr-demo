@@ -100,6 +100,9 @@ class Content:
             if user.get('isBot'):
                 record = self.named('users', name)
                 result = self.catalog.get('users/token/' + record['id'])
+                if result.get('JWTTokenExpiresAt', float('inf')) < (time.time() + 300) * 1000:
+                    result = self.catalog.write('POST', 'users/generateToken',
+                             {'id': record['id'], 'JWTTokenExpiry': 'OneHour'})
                 token = result.get('JWTToken')
             else:
                 password = base64.b64encode(self.env['OM_DEMO_PASSWORD'].encode()).decode()
@@ -214,7 +217,7 @@ class Content:
         return self.objects()['cn.role.Customer']
 
     def task_list(self):
-        return self.listing('tasks', 'about,payload,comments,assignees,availableTransitions',
+        return self.listing('tasks', 'about,payload,comments,assignees,availableTransitions,createdBy',
                             aboutEntity=self.customer()['fullyQualifiedName'], type='CustomTask')
 
     def task_for(self, spec):
@@ -304,10 +307,79 @@ class Content:
                                  True if ready else (False if current else None), True,
                                  lambda spec=spec: self.walk_task(spec))
 
+    def approval_tasks(self):
+        customer = self.customer()
+        return [task for task in self.listing('tasks',
+                    'about,payload,assignees,availableTransitions',
+                    aboutEntity=customer['fullyQualifiedName'], category='Approval')
+                if (task.get('about') or {}).get('id') == customer['id']
+                and task.get('type') in ('RequestApproval', 'GlossaryApproval')
+                and task.get('status') in ('Open', 'InProgress', 'Pending')
+                and any(a.get('id') == self.reference('users', 'petr.novak', 'user')['id']
+                        for a in task.get('assignees', []))
+                and (task.get('type') == 'GlossaryApproval' or
+                     'In Review' in task.get('payload', {}).get('proposedChanges', {})
+                     .get('entityStatus', {}).get('added', []))]
+
+    def reviewer_skip(self, customer):
+        if self.reviewer_skip_reason:
+            return self.reviewer_skip_reason
+        # No local state file: an open status approval left behind on an Approved,
+        # reviewer-less Customer is the catalog evidence for the removal fallback.
+        if not customer.get('reviewers') and customer.get('entityStatus') == 'Approved' and self.approval_tasks():
+            return 'server approval remains open after reviewer removal'
+        return None
+
     def reviewers(self):
         customer = self.customer()
-        desired = {'reviewers': [self.reference('users', 'petr.novak', 'user')]}
+        reason = self.reviewer_skip(customer)
+        if reason:
+            self.output('skip Customer reviewer: ' + reason)
+            desired = {'reviewers': []}
+        else:
+            desired = {'reviewers': [self.reference('users', 'petr.novak', 'user')]}
         yield self.patch_fields('Customer reviewer Petr', 'glossaryTerms', customer, desired)
+
+    def wait_customer_approved(self):
+        for _ in range(40):
+            if self.customer().get('entityStatus') == 'Approved':
+                return
+            time.sleep(.25)
+        raise self.error('Customer did not end Approved after its approval step')
+
+    def approve_customer(self):
+        tasks = self.approval_tasks()
+        self.require(len(tasks) == 1, 'expected one open Customer status approval')
+        task = tasks[0]
+        self.require(any(t.get('id') == 'approve' for t in task.get('availableTransitions', [])),
+                     'Customer approval has no approve transition')
+        clients, answers = [], []
+        for client in (self.actor('petr.novak'), self.catalog):
+            if any(client is seen for seen in clients):
+                continue
+            clients.append(client)
+            try:
+                client.write('POST', 'tasks/' + task['id'] + '/resolve',
+                             {'transitionId': 'approve', 'comment': 'Approve the frozen Customer demo content.'})
+            except self.error as error:
+                if error.status not in (400, 401, 403, 409):
+                    raise
+                answers.append('HTTP ' + str(error.status))
+                continue
+            self.wait_customer_approved()
+            return
+        # Contracted fallback: remove only the reviewer; never patch entityStatus.
+        self.catalog.write('PATCH', 'glossaryTerms/' + self.customer()['id'],
+                           [{'op': 'add', 'path': '/reviewers', 'value': []}])
+        self.reviewer_skip_reason = 'approval refused: ' + ', '.join(answers)
+        self.output('skip Customer reviewer: ' + self.reviewer_skip_reason)
+        self.wait_customer_approved()
+
+    def customer_approval(self):
+        current = self.customer().get('entityStatus')
+        self.require(current in ('Approved', 'In Review'),
+                     'Customer has an unexpected status before approval')
+        yield self.operation('Customer status approval', '', '', None, current, 'Approved', self.approve_customer)
 
     def announcement_list(self):
         return self.listing('announcements', entityLink='<#E::glossaryTerm::' + self.customer()['fullyQualifiedName'] + '>')
@@ -362,7 +434,10 @@ class Content:
             item = self.customer()
             spec = self.content['terms'][0]
             wanted = self.fields(item, spec, self.objects())
-            wanted['reviewers'] = [self.reference('users', 'petr.novak', 'user')]
+            reason = self.reviewer_skip(item)
+            wanted['reviewers'] = [] if reason else [self.reference('users', 'petr.novak', 'user')]
+            if reason:
+                self.output('skip Customer reviewer: ' + reason)
             return subset(item, wanted) and all(t.get('entityStatus') == 'Approved'
                                                for t in self.objects().values())
 
