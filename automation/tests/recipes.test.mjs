@@ -147,10 +147,16 @@ test('S2.2 T3 — monitor_inbound\'s two expects on `complete` are conditional o
 
 // ── the four heroes ARE ttr-core's engine fixtures (`20`, AU-hartland P3E) ──────────────────────────────────────
 // Compared without comments, blank lines and indentation (P3 derives H-1 from Markdown). The oracle is Core's
-// `recipes/hartland-engine/` (CG-2): `20` §3–§4's action blocks over the shared hero bodies. Three deltas remain:
-// D-153's scoped `latest()` bodies, the customer address column (`notify_customer { to: customer_email }`), and
-// D-211's batch-bounded `request_value`. All go when Core's engine fixtures carry them.
+// `recipes/hartland-engine/` (CG-2): `20` §3–§4's action blocks over the shared hero bodies. Four deltas remain:
+// D-153's scoped `latest()` bodies, the customer address column (`notify_customer { to: customer_email }`),
+// D-211's batch-bounded `request_value`, and S4.1y's canonical obligation identity (`OBLIGATION_IDENTITY`).
+// All go when Core's engine fixtures carry them.
 const ADDRESS_WIRING = [/notify_customer( +)\{ customer: customer, template:/g, 'notify_customer$1{ customer: customer, to: customer_email, template:'];
+// S4.1y (Collite/ttr-demo#190) — a stored obligation's entity is the qname and its key canonical JSON text
+const OBLIGATION_IDENTITY = (v) => [
+  `ob.entity = 'return_request_line' AND ob.key = ${v}.line_id`,
+  `ob.entity = 'er.entity.return_request_line' AND ob.key = concat(concat('{"line_id":', CAST(${v}.line_id AS VARCHAR)), '}')`,
+];
 const FIXTURE_DELTAS = {
   // D-153 — goes when [ttrp] carries the scoped fixtures
   release_order: [
@@ -189,6 +195,10 @@ const FIXTURE_DELTAS = {
   ],
   monitor_inbound: [
     ADDRESS_WIRING,
+    OBLIGATION_IDENTITY('l'),
+  ],
+  settle: [
+    OBLIGATION_IDENTITY('q'),
   ],
 };
 const lines = (text) => code(text).split('\n').map((l) => l.trim()).filter((l) => l !== '').join('\n');
