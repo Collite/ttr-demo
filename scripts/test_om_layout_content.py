@@ -150,7 +150,9 @@ class FrozenContentTests(unittest.TestCase):
         self.layout.run('apply')
         built = (self.layout.pack / 'build/change-1-golem-chat.html').read_text()
         task = self.layout.task_for(self.layout.content['tasks'][2])
-        self.assertIn('/tasks/' + task['taskId'], built)
+        self.assertIn('/glossary/demo%20Concepts.cn.role.Customer/activity_feed/tasks', built)
+        self.assertIn(task['taskId'], built)
+        self.assertNotIn('/tasks/' + task['taskId'], built)
         self.assertNotIn('{{TASK_', built)
 
 class ActorTests(unittest.TestCase):
@@ -328,3 +330,15 @@ class ActionFallbackTests(unittest.TestCase):
         self.assertEqual([('PUT','test-action',{'safe':'value'})],fake.writes)
         self.assertIn('admin performs the refused action',output[0])
         self.assertFalse(any(w[1].startswith(('users/','roles/','policies/')) for w in fake.writes))
+
+
+class ChatRouteTests(unittest.TestCase):
+    def test_chat_verification_requires_odberatel_to_be_the_opened_task(self):
+        fake=FakeCatalog()
+        layout=make_layout(fake,env={},output=lambda _:None)
+        self.assertEqual(0,layout.run('apply'))
+        other=copy.deepcopy(layout.task_list()[-1])
+        other.update(id='other-open-task',name='OTHER',status='Open')
+        other['payload']['value']='unowned suggestion'
+        fake.values['tasks/name/OTHER']=other
+        self.assertEqual(1,layout.run('verify'))

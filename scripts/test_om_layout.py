@@ -72,6 +72,9 @@ class FakeCatalog:
             if resource == 'tasks' and 'aboutEntity' in query:
                 items = [v for v in items if v['about']['fullyQualifiedName'] == query['aboutEntity'][0]]
             if resource == 'tasks':
+                if 'statusGroup' in query:
+                    closed = {'Approved','Completed','Rejected','Cancelled','Failed'}
+                    items = [v for v in reversed(items) if (v.get('status') not in closed) == (query['statusGroup'][0]=='open')]
                 for field in ('type','category'):
                     if field in query:
                         items = [v for v in items if v.get(field) == query[field][0]]

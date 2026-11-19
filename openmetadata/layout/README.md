@@ -45,7 +45,9 @@ so server ordering does not cause repeated updates.
 
 The HTML chat source is copied unchanged from the frozen planning asset. Apply
 writes `build/change-1-golem-chat.html` with the odběratel task URL and number;
-open that file locally. Nothing on the page loads from the network. Plans do not
+open that file locally. The supported Customer Changes/tasks address opens its
+newest open task, odběratel (raised last); check 15 confirms that it is still first.
+Nothing on the page loads from the network. Plans do not
 write it. All generated output is ignored by Git.
 
 `remove` previews deletion of owned objects and requires `--execute` to perform

@@ -412,9 +412,11 @@ class Content:
         task = self.task_for(next(t for t in self.content['tasks'] if t['value'] == 'odběratel'))
         if not task:
             return None
-        # OM uses the human taskId/name in the task panel route.
+        # OM 2.0.6 has no standalone custom-task route. Changes/tasks opens
+        # its newest open task; the frozen odběratel suggestion is raised last.
         number = task.get('taskId') or task['name']
-        url = self.catalog.base.removesuffix('/api/v1/') + '/tasks/' + quote(number, safe='')
+        url = (self.catalog.base.removesuffix('/api/v1/') + '/glossary/' +
+               quote(self.customer()['fullyQualifiedName'], safe='') + '/activity_feed/tasks')
         template = (self.pack / 'change-1-golem-chat.html').read_text()
         return template.replace('{{TASK_URL}}', html.escape(url, quote=True)).replace('{{TASK_NO}}', html.escape(number))
 
@@ -476,7 +478,11 @@ class Content:
         def chat():
             path = self.pack / 'build/change-1-golem-chat.html'
             wanted = self.chat_value()
-            return wanted is not None and path.is_file() and path.read_text() == wanted
+            open_tasks = self.listing('tasks', 'about,payload',
+                aboutEntity=self.customer()['fullyQualifiedName'], statusGroup='open')
+            task = self.task_for(self.content['tasks'][2])
+            return (wanted is not None and path.is_file() and path.read_text() == wanted
+                    and bool(open_tasks) and open_tasks[0]['id'] == task['id'])
 
         return [('workflow: two stages and four transitions', workflow),
                 ('form bound to workflow', form), ('accounts, team and four domains', accounts),
