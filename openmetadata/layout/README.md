@@ -1,17 +1,19 @@
 # OpenMetadata layout pack
 
-LD P1·S1.2, OpenMetadata 2.0.6. Stdlib Python only. The allow-list in `targets.json`
+LD P1·S1.3, OpenMetadata 2.0.6. Stdlib Python only. The allow-list in `targets.json`
 enables bp-dsk; hartland is disabled until a showing is explicitly requested.
 Neither a pin nor an image is changed by this pack.
 
 Set `OM_TOKEN` or `OM_TOKEN_FILE` (the latter names a readable token file).
 Use `OM_CA_FILE` for a custom CA bundle if needed. Credentials and response bodies
-are never printed; redirects are refused. All four verbs require an admin.
+are never printed; redirects are refused. All five verbs require an admin.
 
 ```
 just om-layout plan bp-dsk       # read-only; plan is also the Python default
 just om-layout apply bp-dsk      # execute LD-C12, then verify
 just om-layout verify bp-dsk     # read-only; exit code is the failed check count
+python3 scripts/om_layout.py export --target bp-dsk --persona ttr-model-steward
+python3 scripts/om_layout.py export --target bp-dsk --persona ttr-model-reader
 just om-layout remove bp-dsk     # read-only deletion preview
 python3 scripts/om_layout.py remove --target bp-dsk --execute
 just om-layout-test              # offline fake catalog
@@ -31,8 +33,8 @@ written directly. If Petr and admin both receive a refusal, the reviewer is remo
 and the reason is reported as a skip. Tasks are found by Customer and New value, checked against the
 owned form, and resumed to their frozen stages without repeating comments or
 transitions. It renews the announcement's 90-day end time; other operations are
-unchanged on a second run. `verify` checks 1–15. Table, Metric and Home layouts,
-`export` and the show sheet belong to S1.3.
+unchanged on a second run. `verify` checks 1–16, including Table, Metric and Home
+in both documents and the exact four Table tabs (Columns first).
 
 Set `OM_DEMO_PASSWORD` to create and sign in as the two people. It never resets an
 existing person's password. Without it, new people receive separate random
@@ -69,9 +71,24 @@ owned; error, success and info are preserved. If a field fails the browser check
 its path is emptied in `theme.json` and `imageSkips` records the reason, printed
 by `plan`. No image hosting is required.
 
-`persona-ui/` is the bp-dsk document snapshot read on 2026-11-19, before any pack
-write: navigation and GlossaryTerm only, as authored on 2026-11-17. Server ids,
-versions, timestamps, hrefs and change history are omitted. Tab `id`, navigation
-`id` and widget `i` remain: these are UI keys, not server entity identities.
-The stored navigation titles are retained even though OM ignores their text;
-Settings is the stock bottom menu. Table, Metric and Home are left for S1.3.
+`persona-ui/` contains the bp-dsk documents authored in Customize UI and exported
+on 2026-11-19: navigation, GlossaryTerm, Table, Metric and Home. The reader has the
+same pages with its own Home. `export --persona` strips document/customization
+server ids, versions, timestamps, hrefs and change history and writes sorted JSON;
+tab/navigation ids and widget keys remain because they identify UI elements.
+Only the two owned layout personas may be exported.
+
+The Metric editor keeps its nested Dimensions and Measures panels (amended LD-C7);
+Related Metrics is placed below them on the left. Owners/Domain are not separate
+widgets on Table/Metric and remain in the header. The Home picker offers no
+separate Recently Viewed widget, so LD-C7's omission rule applies; recent-item
+shortcuts remain in the stock welcome panel. The sheet records these differences.
+
+For a showing from a clean, already projected bp-dsk catalog: set an admin token
+that lasts through setup and `OM_DEMO_PASSWORD`, run `just om-layout apply bp-dsk`,
+then `just om-layout verify bp-dsk` (16/16). Open [SCREENS.md](SCREENS.md), sign in
+as Petr, and open the generated chat file in a second tab. Apply after any
+projection run. The sheet gives all ten addresses, the named account and what to
+point at; it does not perform task actions. A completely empty catalog first
+needs the existing scan/projection rig in `design/demo-openmetadata.md`. The pack
+never creates projected objects. Hartland remains disabled until P2 is called.
