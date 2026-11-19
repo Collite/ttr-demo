@@ -412,7 +412,10 @@ class PersonaTests(unittest.TestCase):
         for path in (om.PACK / 'persona-ui').glob('*.json'):
             doc = om.read_json(path)
             self.assertEqual({'name', 'fullyQualifiedName', 'entityType', 'data'}, set(doc))
-            self.assertEqual(['GlossaryTerm'], [p['pageType'] for p in doc['data']['pages']])
+            page_types = [p['pageType'] for p in doc['data']['pages']]
+            self.assertIn('GlossaryTerm', page_types)
+            self.assertEqual(len(page_types), len(set(page_types)))
+            self.assertLessEqual(set(page_types), {'GlossaryTerm', 'Table', 'Metric', 'LandingPage'})
             tabs = doc['data']['pages'][0]['tabs']
             self.assertEqual(['overview', 'glossary_terms', 'assets', 'relations_graph',
                               'activity_feed', 'custom_properties'], [t['id'] for t in tabs])
