@@ -1,7 +1,8 @@
 # OpenMetadata layout pack
 
 LD P2·S2.1, OpenMetadata 2.0.6. Stdlib Python only. The allow-list in `targets.json`
-enables bp-dsk (world `demo`) and the hartland showing called by Bora (world `hartland`).
+enables bp-dsk and the hartland showing called by Bora, both world `demo` after
+the Hartland projection repair (XM S3.4, AR D-83).
 Neither a pin nor an image is changed by this pack.
 
 Set `OM_TOKEN` or `OM_TOKEN_FILE` (the latter names a readable token file).
@@ -99,6 +100,7 @@ token and use `just om-layout plan hartland`, `just om-layout apply hartland`, t
 `just om-layout verify hartland`. First check that neither hartland glossary has
 reviewers and no projection Job is running
 (`kubectl --context hartland -n openmetadata get jobs`). Leave the projection alone.
-The chat is `build/hartland/change-1-golem-chat.html`; bp-dsk's is
+Both catalogs hold `demo Concepts` and `demo Entities`. The chat is
+`build/hartland/change-1-golem-chat.html`; bp-dsk's is
 `build/bp-dsk/change-1-golem-chat.html`. Switch back to bp-dsk's own token and CA
 bundle when verifying bp-dsk. The show sheet describes the morning-of-showing check.

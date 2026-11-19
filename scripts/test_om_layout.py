@@ -203,7 +203,7 @@ class FrameTests(unittest.TestCase):
                         'task klient', 'task kupující', 'task odběratel', 'announcement Model published',
                         'offline chat page'})
         created.update({'domain ' + name for name in ('Sales', 'Returns', 'Inventory', 'OrdersAndInvoices')})
-        for target, world in (('bp-dsk', 'demo'), ('hartland', 'hartland')):
+        for target, world in (('bp-dsk', 'demo'), ('hartland', 'demo')):
             with self.subTest(target=target):
                 fake, output = FakeCatalog(target), []
                 layout = make_layout(fake, output=output.append, env={})
