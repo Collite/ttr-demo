@@ -27,6 +27,11 @@ It edits only the named projected terms, CZ customer table and revenue metric in
 `content.json`. Unrelated fields, custom properties and relation edges are retained.
 The admin belongs to all three personas and stays on Stock view.
 
+Customer must exist. A missing neighbour, table or metric is skipped with its
+dependent fields and relations, never created as a replacement (LD-C10). `plan`
+names each missing qname; `verify` names any skips beside the affected check.
+Duplicate qnames and a table whose qname does not match remain errors.
+
 `apply` follows LD-C12: fields before tasks; reviewers afterwards, so the terms
 are approved through their own OpenMetadata approval task after reviewers are set.
 Customer found In Review on a later run is repaired through that task. No status is

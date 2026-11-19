@@ -41,6 +41,41 @@ class FrozenContentTests(unittest.TestCase):
         self.fake, self.output = FakeCatalog(), []
         self.layout = make_layout(self.fake, output=self.output.append, env={})
 
+    def test_missing_neighbours_skip_fields_and_relations_without_creating_replacements(self):
+        optional = ['cn.event.Sale', 'cn.event.OrderPlaced', 'cn.phase.DebtorCustomer',
+                    'er.entity.customer', 'db.dbo.customer', 'md.measure.revenue', 'md.measure.quantity']
+        for qname in optional:
+            with self.subTest(qname=qname):
+                fake, output = FakeCatalog('hartland'), []
+                key = next(k for k,v in fake.values.items() if v.get('extension',{}).get('ttrQname') == qname)
+                missing = fake.values.pop(key)
+                layout = make_layout(fake, output=output.append, env={})
+                self.assertEqual(0, layout.run('plan'))
+                self.assertIn('skip ' + qname + ': not in this catalog', output)
+                self.assertEqual([], fake.writes)
+                self.assertEqual(0, layout.run('apply'))
+                self.assertNotIn(key, fake.values)
+                self.assertFalse(any(w[1].split('?')[0].endswith('/' + missing['id']) for w in fake.writes))
+                self.assertFalse(any(w[0] == 'POST' and w[1] in ('glossaryTerms','tables','metrics') for w in fake.writes))
+                output.clear()
+                fake.writes.clear()
+                self.assertEqual(0, layout.run('verify'))
+                self.assertEqual(16, len(output))
+                self.assertTrue(any(line.startswith('ok ') and '; skip ' + qname + ': not in this catalog' in line for line in output))
+                self.assertEqual([], fake.writes)
+
+    def test_missing_customer_and_duplicate_neighbour_are_errors(self):
+        for qname in ('cn.role.Customer', 'cn.event.OrderPlaced'):
+            with self.subTest(qname=qname):
+                fake = FakeCatalog()
+                key = next(k for k,v in fake.values.items() if v.get('extension',{}).get('ttrQname') == qname)
+                if qname == 'cn.role.Customer':
+                    del fake.values[key]
+                else:
+                    fake.values[key + '-duplicate'] = dict(fake.values[key], id='duplicate')
+                with self.assertRaisesRegex(om.LayoutError, 'expected one projected term: ' + qname):
+                    make_layout(fake, output=lambda _:None).objects()
+
     def test_reviewers_follow_all_tasks_and_other_fields_precede_them(self):
         self.assertEqual(0, self.layout.run('apply'))
         writes = self.fake.writes

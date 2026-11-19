@@ -31,6 +31,13 @@ def subset(actual, desired, field=None):
 
 
 class Content:
+    def missing_object(self, qname):
+        if self.check_skips is not None:
+            self.check_skips.add(qname)
+        elif qname not in self.reported_missing:
+            self.output('skip ' + qname + ': not in this catalog')
+            self.reported_missing.add(qname)
+
     def listing(self, resource, fields='', **filters):
         items, after, seen = [], None, set()
         while True:
@@ -153,7 +160,11 @@ class Content:
         for spec in self.content['terms']:
             matches = [t for t in all_terms if t.get('extension', {}).get('ttrQname') == spec['qname']
                        and t.get('glossary', {}).get('name') == world + ' ' + spec['glossary']]
-            self.require(len(matches) == 1, 'expected one projected term: ' + spec['qname'])
+            self.require(len(matches) <= 1, 'expected one projected term: ' + spec['qname'])
+            if not matches and spec['qname'] != 'cn.role.Customer':
+                self.missing_object(spec['qname'])
+                continue
+            self.require(bool(matches), 'expected one projected term: ' + spec['qname'])
             terms[spec['qname']] = matches[0]
         return terms
 
@@ -163,7 +174,10 @@ class Content:
     def metric_object(self, qname, metrics=None):
         matches = [m for m in (self.metric_objects() if metrics is None else metrics)
                    if m.get('extension', {}).get('ttrQname') == qname]
-        self.require(len(matches) == 1, 'expected one projected metric: ' + qname)
+        self.require(len(matches) <= 1, 'expected one projected metric: ' + qname)
+        if not matches:
+            self.missing_object(qname)
+            return None
         return matches[0]
 
     def fields(self, current, spec, terms):
@@ -177,28 +191,36 @@ class Content:
         if 'parent' in desired:
             desired['parent'] = ref(terms[desired['parent']], 'glossaryTerm')
         if 'relatedMetrics' in desired:
-            desired['relatedMetrics'] = [ref(self.metric_object(q), 'metric') for q in desired['relatedMetrics']]
+            metrics = [self.metric_object(q) for q in desired['relatedMetrics']]
+            desired['relatedMetrics'] = [ref(m, 'metric') for m in metrics if m is not None]
         if 'glossaryTerm' in desired:
-            sale = terms[desired.pop('glossaryTerm')]
-            kept = [t for t in current.get('tags', []) if t.get('tagFQN') != sale['fullyQualifiedName']]
-            desired['tags'] = kept + [{'tagFQN': sale['fullyQualifiedName'], 'source': 'Glossary',
-                                      'labelType': 'Manual', 'state': 'Confirmed'}]
+            sale = terms.get(desired.pop('glossaryTerm'))
+            if sale:
+                kept = [t for t in current.get('tags', []) if t.get('tagFQN') != sale['fullyQualifiedName']]
+                desired['tags'] = kept + [{'tagFQN': sale['fullyQualifiedName'], 'source': 'Glossary',
+                                          'labelType': 'Manual', 'state': 'Confirmed'}]
         return desired
 
     def content_except_reviewers(self):
         terms = self.objects()
         for spec in self.content['terms']:
+            if spec['qname'] not in terms:
+                continue
             current = terms[spec['qname']]
             desired = self.fields(current, spec, terms)
             yield self.patch_fields('term ' + spec['qname'], 'glossaryTerms', current, desired)
         spec = self.content['table']
         table = self.named('tables', spec['fqn'], 'extension,owners,domains')
-        self.require(table and table.get('extension', {}).get('ttrQname') == spec['qname'],
-                     'expected projected CZ customer table')
-        yield self.patch_fields('CZ customer table', 'tables', table, self.fields(table, spec, terms))
+        if table is None:
+            self.missing_object(spec['qname'])
+        else:
+            self.require(table.get('extension', {}).get('ttrQname') == spec['qname'],
+                         'expected projected CZ customer table')
+            yield self.patch_fields('CZ customer table', 'tables', table, self.fields(table, spec, terms))
         spec = self.content['metric']
         metric = self.metric_object(spec['qname'])
-        yield self.patch_fields('metric ' + spec['qname'], 'metrics', metric, self.fields(metric, spec, terms))
+        if metric is not None:
+            yield self.patch_fields('metric ' + spec['qname'], 'metrics', metric, self.fields(metric, spec, terms))
 
     def relation_value(self, current, target, relation_type):
         # Replace only the plain/owned edge of this pair, preserving every other edge.
@@ -217,6 +239,8 @@ class Content:
         for source, relation_type, target in self.content['relations']:
             # Re-read for every pair: patching one end hydrates the reciprocal end on OM.
             terms = self.objects()
+            if source not in terms or target not in terms:
+                continue
             for a, b, typ in [(source, target, relation_type),
                               (target, source, types[relation_type]['inverseRelation'])]:
                 current = self.named('glossaryTerms', terms[a]['fullyQualifiedName'], 'relatedTerms')
@@ -462,7 +486,9 @@ class Content:
 
         def phase():
             terms = self.objects()
-            item = terms['cn.phase.DebtorCustomer']
+            item = terms.get('cn.phase.DebtorCustomer')
+            if item is None:
+                return True
             return subset(item.get('parent'), ref(terms['cn.role.Customer'], 'glossaryTerm'))
 
         def assets():

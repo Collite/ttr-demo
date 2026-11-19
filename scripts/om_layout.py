@@ -169,6 +169,8 @@ class Layout(Content):
         self.catalog, self.pack, self.output = catalog, pack, output
         self.env = os.environ if env is None else env
         self.actors = {}
+        self.reported_missing = set()
+        self.check_skips = None
         self.reviewer_skip_reason = None
         self.target = getattr(catalog, "target", "bp-dsk")
         self.content = read_json(pack / "content.json")
@@ -357,15 +359,19 @@ class Layout(Content):
                 ('term page: six tab names', tabs), ('four relation types and inverses', relation_types))
                 + tuple(self.content_checks())
                 + (('Table, Metric and Home layouts; Table tabs', self.page_layouts),), 1):
+            self.check_skips = set()
             try:
                 ok = check()
             except Exception:
                 ok = False
+            skips = self.check_skips
+            self.check_skips = None
             failed += not ok
             status = 'ok' if ok else 'FAIL'
             # Every successful second-apply line begins unchanged, including its checks.
             prefix = 'unchanged verify' if applying and ok else status
-            self.output(f'{prefix} {number} {name}' + (' ok' if applying and ok else ''))
+            self.output(f'{prefix} {number} {name}' + (' ok' if applying and ok else '') +
+                        ''.join('; skip ' + q + ': not in this catalog' for q in sorted(skips)))
         return failed
 
     def run(self, verb='plan', execute=False):
