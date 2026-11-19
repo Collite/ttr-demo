@@ -15,7 +15,7 @@ import unittest
 from scripts.verify_n8n_lib import CheckError, http_code, managed_role_version, websocket_status, probe_push, run_private_wrapper
 
 ROOT = Path(__file__).resolve().parents[1]
-IMAGE = 'docker.n8n.io/n8nio/n8n:2.44.6'
+IMAGE = 'ghcr.io/collite/n8n-tatrman:2.44.6-0.1.0'
 GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 
 
