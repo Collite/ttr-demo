@@ -9,6 +9,22 @@ import om_layout as om
 
 
 class AccountTests(unittest.TestCase):
+    def test_user_persona_references_include_names_for_server_sorting(self):
+        class NamedPersonas(FakeCatalog):
+            def write(self, method, path, body=None):
+                if method == 'PATCH' and path.startswith('users/'):
+                    for operation in body:
+                        if operation['path'] == '/personas':
+                            if any(not p.get('name') for p in operation['value']):
+                                raise AssertionError('OM sorts persona references by name')
+                return super().write(method, path, body)
+        fake = NamedPersonas('hartland')
+        layout = make_layout(fake, output=lambda _:None, env={})
+        self.assertEqual(0, layout.run('apply'))
+        # Exercise the existing-user update path as well as fresh account creation.
+        fake.values['users/name/petr.novak']['personas'] = []
+        self.assertEqual(0, layout.run('apply'))
+
     def test_plan_does_not_create_passwords_or_log_credentials(self):
         fake, output = FakeCatalog(), []
         layout = make_layout(fake, output=output.append, env={'OM_DEMO_PASSWORD': 'not-a-real-password'})

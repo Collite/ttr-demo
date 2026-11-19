@@ -72,7 +72,11 @@ class Content:
 
     def reference(self, resource, name, kind):
         item = self.named(resource, name)
-        return ref(item, kind) if item else {'id': 'new:' + name, 'type': kind}
+        result = ref(item, kind) if item else {'id': 'new:' + name, 'type': kind}
+        if kind == 'persona':
+            # OM 2.0.6 sorts patched user personas by EntityReference.name.
+            result['name'] = name
+        return result
 
     def accounts_and_team(self):
         for person in self.content['accounts']:

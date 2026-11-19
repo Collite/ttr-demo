@@ -247,7 +247,7 @@ class Layout(Content):
         for persona in read_json(self.pack / 'personas.json'):
             name = persona['name']
             item = self.catalog.get('personas/name/' + quote(name, safe=''), missing=True)
-            ref = {'id': item['id'] if item else 'new:' + name, 'type': 'persona'}
+            ref = {'id': item['id'] if item else 'new:' + name, 'type': 'persona', 'name': name}
             if ref['id'] not in {r['id'] for r in refs}:
                 refs.append(ref)
             if name == 'ttr-stock-view':
