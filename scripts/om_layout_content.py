@@ -230,8 +230,10 @@ class Content:
         expected = [c[1] for c in spec['comments']]
         return (task.get('workflowStageId') == spec['stage'] and task.get('status') == spec['status']
                 and messages == expected and
-                (spec['stage'] != 'review' or any(a.get('name') == 'petr.novak'
-                 for a in task.get('assignees', []))))
+                (spec['stage'] not in ('review', 'publication') or
+                 any(a.get('id') == self.reference('users',
+                     'petr.novak' if spec['stage'] == 'review' else 'tatrman-maintainer', 'user')['id']
+                     for a in task.get('assignees', []))))
 
     def await_task(self, task, stage=None):
         for attempt in range(20):
@@ -259,7 +261,15 @@ class Content:
                      'demo task is at an unexpected workflow stage')
         if task['workflowStageId'] == 'review' and spec['stage'] != 'review':
             task = self.actor('petr.novak').write('POST', 'tasks/' + task['id'] + '/resolve',
-                      {'transitionId': 'approve', 'comment': spec['comments'][0][1]})
+                      {'transitionId': 'approve', 'comment': spec['comments'][0][1],
+                       'payload': {'assignees': [self.reference('users', 'tatrman-maintainer', 'user')]}})
+            task = self.await_task(task, 'publication')
+        if spec['stage'] == 'publication' and not any(
+                a['id'] == self.reference('users', 'tatrman-maintainer', 'user')['id']
+                for a in task.get('assignees', [])):
+            self.catalog.write('PATCH', 'tasks/' + task['id'],
+                [{'op': 'add', 'path': '/assignees',
+                  'value': [self.reference('users', 'tatrman-maintainer', 'user')]}])
             task = self.await_task(task, 'publication')
         if spec['stage'] != 'review':
             for author, message in spec['comments']:
@@ -272,6 +282,11 @@ class Content:
                 task = self.actor('tatrman-maintainer').write('POST', 'tasks/' + task['id'] + '/resolve',
                         {'transitionId': 'publish', 'comment': spec['comments'][-1][1]})
         task = self.await_task(task, spec['stage'])
+        # OM 2.0.6 may omit the comment on a terminal resolution. Read back before
+        # adding it, so both that behavior and a server that stores it are idempotent.
+        for author, message in spec['comments']:
+            if message not in [c['message'] for c in task.get('comments', [])]:
+                task = self.actor(author).write('POST', 'tasks/' + task['id'] + '/comments', {'message': message})
         self.require(self.task_ready(task, spec), 'demo task did not reach frozen state')
 
     def tasks(self):

@@ -91,6 +91,16 @@ class FrozenContentTests(unittest.TestCase):
         for actor in ('jana.dvorakova', 'petr.novak', 'tatrman-maintainer'):
             self.assertIs(self.fake, self.layout.actor(actor))
 
+    def test_terminal_resolution_without_saved_comment_is_repaired_once(self):
+        self.fake.omit_terminal_comment = True
+        self.assertEqual(0, self.layout.run('apply'))
+        task = self.layout.task_for(self.layout.content['tasks'][0])
+        self.assertEqual(['Agreed.', 'Model check passed.', 'Published with the model.'],
+                         [c['message'] for c in task['comments']])
+        self.fake.writes.clear()
+        self.assertEqual(0, self.layout.run('apply'))
+        self.assertFalse(any(w[1].startswith('tasks/') for w in self.fake.writes))
+
     def test_duplicate_task_is_refused_instead_of_raised_again(self):
         self.layout.run('apply')
         old = self.layout.task_list()[0]

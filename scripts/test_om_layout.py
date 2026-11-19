@@ -91,7 +91,7 @@ class FakeCatalog:
             customer = next(v for v in self.values.values() if v and v.get('extension', {}).get('ttrQname') == 'cn.role.Customer')
             item = dict(copy.deepcopy(body), id=number, name=number, taskId=number, status='Open',
                 about={'id': customer['id'], 'fullyQualifiedName': customer['fullyQualifiedName']},
-                assignees=[{'id': 'petr', 'type': 'user', 'name': 'petr.novak'}], comments=[],
+                assignees=[{'id': self.get('users/name/petr.novak')['id'], 'type': 'user', 'name': 'petr.novak'}], comments=[],
                 taskFormSchemaId=self.get('taskFormSchemas/name/ttrSuggestChange')['id'],
                 workflowStageId='review', availableTransitions=[{'id': 'approve', 'label': 'Approve'}])
             self.values['tasks/name/' + number] = item
@@ -106,7 +106,9 @@ class FakeCatalog:
                     item.update(status='Completed', workflowStageId='published', availableTransitions=[])
                 else:
                     raise AssertionError('unexpected transition')
-                if body.get('comment'):
+                if body.get('payload', {}).get('assignees'):
+                    item['assignees'] = copy.deepcopy(body['payload']['assignees'])
+                if body.get('comment') and not (transition == 'publish' and getattr(self, 'omit_terminal_comment', False)):
                     item['comments'].append({'message': body['comment']})
             else:
                 item['comments'].append({'message': body['message']})
