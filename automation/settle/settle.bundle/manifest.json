@@ -61,7 +61,7 @@
       "executor": "native",
       "invocation": "duckdb",
       "file": "islands/open_obligations.rows.duckdb.sql",
-      "sha256": "sha256:34131d2fa0ff9ca3c0a31e4485a13fb0fdbd26cfb8e271efa777f1fadde2e75a",
+      "sha256": "sha256:2ce905ffd3669584f37f5d04101b724eae9285536387b61fecd8e86ce2270ffc",
       "connections": [
         "TTR_CONN_AUTOMATION",
         "TTR_CONN_ERP"
@@ -70,7 +70,7 @@
         {
           "port": "rows",
           "file": "islands/open_obligations.rows.duckdb.sql",
-          "sha256": "sha256:34131d2fa0ff9ca3c0a31e4485a13fb0fdbd26cfb8e271efa777f1fadde2e75a",
+          "sha256": "sha256:2ce905ffd3669584f37f5d04101b724eae9285536387b61fecd8e86ce2270ffc",
           "columns": [
             {
               "name": "line_id",
@@ -92,10 +92,10 @@
           "keyed": true,
           "combine": {
             "file": "islands/open_obligations.rows.duckdb.sql",
-            "sha256": "sha256:34131d2fa0ff9ca3c0a31e4485a13fb0fdbd26cfb8e271efa777f1fadde2e75a",
+            "sha256": "sha256:2ce905ffd3669584f37f5d04101b724eae9285536387b61fecd8e86ce2270ffc",
             "parts": [
               "p_927a867d",
-              "p_8124de4c"
+              "p_53d4630f"
             ],
             "params": [],
             "engine": "duckdb",
@@ -162,7 +162,7 @@
       "executor": "native",
       "invocation": "duckdb",
       "file": "islands/overdue_days.rows.duckdb.sql",
-      "sha256": "sha256:89014e75313b3c26de8de4c41100b48252f34b5ca0936a7a4fd634c24c4bbd07",
+      "sha256": "sha256:88adf1e707e429982f29e72ff6b6b8d686ab6b849230162148354b23e0f37bd7",
       "connections": [
         "TTR_CONN_AUTOMATION",
         "TTR_CONN_ERP"
@@ -174,7 +174,7 @@
         {
           "port": "rows",
           "file": "islands/overdue_days.rows.duckdb.sql",
-          "sha256": "sha256:89014e75313b3c26de8de4c41100b48252f34b5ca0936a7a4fd634c24c4bbd07",
+          "sha256": "sha256:88adf1e707e429982f29e72ff6b6b8d686ab6b849230162148354b23e0f37bd7",
           "columns": [
             {
               "name": "line_id",
@@ -195,10 +195,10 @@
           "keyed": true,
           "combine": {
             "file": "islands/overdue_days.rows.duckdb.sql",
-            "sha256": "sha256:89014e75313b3c26de8de4c41100b48252f34b5ca0936a7a4fd634c24c4bbd07",
+            "sha256": "sha256:88adf1e707e429982f29e72ff6b6b8d686ab6b849230162148354b23e0f37bd7",
             "parts": [
               "p_927a867d",
-              "p_8124de4c",
+              "p_53d4630f",
               "p_7e21ab69"
             ],
             "params": [
@@ -217,7 +217,7 @@
       "executor": "native",
       "invocation": "duckdb",
       "file": "islands/settlement.credit_note_issued.duckdb.sql",
-      "sha256": "sha256:36f15e93685fcb57dc16bef9c44a4baf0aa0216378ac980767a9a1ffebb9443b",
+      "sha256": "sha256:cae362d65086cfe95a8ee276935f19c1e69f267b6ff39a0b3e4c13fd439ff88a",
       "connections": [
         "TTR_CONN_AUTOMATION",
         "TTR_CONN_ERP"
@@ -229,7 +229,7 @@
         {
           "port": "credit_note_issued",
           "file": "islands/settlement.credit_note_issued.duckdb.sql",
-          "sha256": "sha256:36f15e93685fcb57dc16bef9c44a4baf0aa0216378ac980767a9a1ffebb9443b",
+          "sha256": "sha256:cae362d65086cfe95a8ee276935f19c1e69f267b6ff39a0b3e4c13fd439ff88a",
           "columns": [
             {
               "name": "line_id",
@@ -302,11 +302,11 @@
           "keyed": true,
           "combine": {
             "file": "islands/settlement.credit_note_issued.duckdb.sql",
-            "sha256": "sha256:36f15e93685fcb57dc16bef9c44a4baf0aa0216378ac980767a9a1ffebb9443b",
+            "sha256": "sha256:cae362d65086cfe95a8ee276935f19c1e69f267b6ff39a0b3e4c13fd439ff88a",
             "parts": [
               "p_77af0c22",
               "p_927a867d",
-              "p_8124de4c",
+              "p_53d4630f",
               "p_7e21ab69"
             ],
             "params": [
@@ -319,7 +319,7 @@
         {
           "port": "money_received",
           "file": "islands/settlement.money_received.duckdb.sql",
-          "sha256": "sha256:a9184bac617b52075ec354b7ab26dc7226e78b820a12ae5eb7940865b69d52d3",
+          "sha256": "sha256:829dbfcee91d4ca886afba380e8d34f387fb277c500ed01498dc634066630f65",
           "columns": [
             {
               "name": "line_id",
@@ -392,11 +392,11 @@
           "keyed": true,
           "combine": {
             "file": "islands/settlement.money_received.duckdb.sql",
-            "sha256": "sha256:a9184bac617b52075ec354b7ab26dc7226e78b820a12ae5eb7940865b69d52d3",
+            "sha256": "sha256:829dbfcee91d4ca886afba380e8d34f387fb277c500ed01498dc634066630f65",
             "parts": [
               "p_859395aa",
               "p_927a867d",
-              "p_8124de4c",
+              "p_53d4630f",
               "p_7e21ab69"
             ],
             "params": [
@@ -409,7 +409,7 @@
         {
           "port": "goods_shipped",
           "file": "islands/settlement.goods_shipped.duckdb.sql",
-          "sha256": "sha256:4275108ea9e1b84dc67f89f52db500d895431afb008e041227bdb55bf7732d2b",
+          "sha256": "sha256:50ec1f3c13969bca93235627ac0896989461477fdb1ecd1296f077fca32da055",
           "columns": [
             {
               "name": "line_id",
@@ -482,11 +482,11 @@
           "keyed": true,
           "combine": {
             "file": "islands/settlement.goods_shipped.duckdb.sql",
-            "sha256": "sha256:4275108ea9e1b84dc67f89f52db500d895431afb008e041227bdb55bf7732d2b",
+            "sha256": "sha256:50ec1f3c13969bca93235627ac0896989461477fdb1ecd1296f077fca32da055",
             "parts": [
               "p_99be0ef6",
               "p_927a867d",
-              "p_8124de4c",
+              "p_53d4630f",
               "p_7e21ab69"
             ],
             "params": [
@@ -499,7 +499,7 @@
         {
           "port": "money_overdue",
           "file": "islands/settlement.money_overdue.duckdb.sql",
-          "sha256": "sha256:8904adcc4e5fa67f64d3b1620952d0f2c8c224283a2bb90325b478f6fb1d0f8d",
+          "sha256": "sha256:92d7dd3ec97cc63fbb60cf43517ab69a2a46f81debadee6775b71ae803768969",
           "columns": [
             {
               "name": "line_id",
@@ -572,11 +572,11 @@
           "keyed": true,
           "combine": {
             "file": "islands/settlement.money_overdue.duckdb.sql",
-            "sha256": "sha256:8904adcc4e5fa67f64d3b1620952d0f2c8c224283a2bb90325b478f6fb1d0f8d",
+            "sha256": "sha256:92d7dd3ec97cc63fbb60cf43517ab69a2a46f81debadee6775b71ae803768969",
             "parts": [
               "p_202d930b",
               "p_927a867d",
-              "p_8124de4c",
+              "p_53d4630f",
               "p_7e21ab69"
             ],
             "params": [
@@ -589,7 +589,7 @@
         {
           "port": "goods_overdue",
           "file": "islands/settlement.goods_overdue.duckdb.sql",
-          "sha256": "sha256:f1cf247ca183a99ebc4cada39ad37d6911b0168b56c6055334ace42c790a7d9c",
+          "sha256": "sha256:39b74f847e68e4c14d511950439676dd2a87ea22961fd959b9ca29810fff7833",
           "columns": [
             {
               "name": "line_id",
@@ -662,11 +662,11 @@
           "keyed": true,
           "combine": {
             "file": "islands/settlement.goods_overdue.duckdb.sql",
-            "sha256": "sha256:f1cf247ca183a99ebc4cada39ad37d6911b0168b56c6055334ace42c790a7d9c",
+            "sha256": "sha256:39b74f847e68e4c14d511950439676dd2a87ea22961fd959b9ca29810fff7833",
             "parts": [
               "p_6755f6ba",
               "p_927a867d",
-              "p_8124de4c",
+              "p_53d4630f",
               "p_7e21ab69"
             ],
             "params": [
@@ -679,7 +679,7 @@
         {
           "port": "closed",
           "file": "islands/settlement.closed.duckdb.sql",
-          "sha256": "sha256:26b3bd35397d66a24f1ec6e82741f0beba2005f55ca7954c0967f8e6b1f2e63a",
+          "sha256": "sha256:c711ffb45baef4b4554c3ab7ce592aced9f7c5e91ad3d1a75d91dc3745515f4c",
           "columns": [
             {
               "name": "line_id",
@@ -752,11 +752,11 @@
           "keyed": true,
           "combine": {
             "file": "islands/settlement.closed.duckdb.sql",
-            "sha256": "sha256:26b3bd35397d66a24f1ec6e82741f0beba2005f55ca7954c0967f8e6b1f2e63a",
+            "sha256": "sha256:c711ffb45baef4b4554c3ab7ce592aced9f7c5e91ad3d1a75d91dc3745515f4c",
             "parts": [
               "p_2cb8a6cb",
               "p_927a867d",
-              "p_8124de4c",
+              "p_53d4630f",
               "p_7e21ab69"
             ],
             "params": [
@@ -769,7 +769,7 @@
         {
           "port": "money_overdue.open_obligations",
           "file": "islands/settlement.money_overdue.open_obligations.duckdb.sql",
-          "sha256": "sha256:41efdfe3b366857b9609399616210f55ba67e814860e1742b8b6f5592442df02",
+          "sha256": "sha256:46eaad7a8ac731bb9c86a6e3370f80a22b65bb16e63449ef8cf613ffa3c1fa1e",
           "columns": [
             {
               "name": "line_id",
@@ -802,10 +802,10 @@
           "keyed": true,
           "combine": {
             "file": "islands/settlement.money_overdue.open_obligations.duckdb.sql",
-            "sha256": "sha256:41efdfe3b366857b9609399616210f55ba67e814860e1742b8b6f5592442df02",
+            "sha256": "sha256:46eaad7a8ac731bb9c86a6e3370f80a22b65bb16e63449ef8cf613ffa3c1fa1e",
             "parts": [
               "p_927a867d",
-              "p_8124de4c",
+              "p_53d4630f",
               "p_202d930b",
               "p_7e21ab69"
             ],
@@ -819,7 +819,7 @@
         {
           "port": "goods_overdue.open_obligations",
           "file": "islands/settlement.goods_overdue.open_obligations.duckdb.sql",
-          "sha256": "sha256:5537e355658d13a87b84e5aa5ae4a5c37f88db9ffffe8f130d0ecb6a01e69b04",
+          "sha256": "sha256:a03a193c0803767fc9dad5ac4b2b85aa8c15df4f8ad9ecde5ab84110c828ffe4",
           "columns": [
             {
               "name": "line_id",
@@ -852,10 +852,10 @@
           "keyed": true,
           "combine": {
             "file": "islands/settlement.goods_overdue.open_obligations.duckdb.sql",
-            "sha256": "sha256:5537e355658d13a87b84e5aa5ae4a5c37f88db9ffffe8f130d0ecb6a01e69b04",
+            "sha256": "sha256:a03a193c0803767fc9dad5ac4b2b85aa8c15df4f8ad9ecde5ab84110c828ffe4",
             "parts": [
               "p_927a867d",
-              "p_8124de4c",
+              "p_53d4630f",
               "p_6755f6ba",
               "p_7e21ab69"
             ],
@@ -1109,7 +1109,7 @@
       "er.entity.return_request_line"
     ],
     "fingerprints": {
-      "text": "sha256:a9ab9c3d1112d6ed0e722c4f9f24a6d588e33f764fcfd75a2a0f1ad0d841ce0b",
+      "text": "sha256:1aa35071a080e4582705f9fe7359a2d77448655d68f75289d76229442214c3b3",
       "values": "sha256:26cd4bbbdef5ad8c69ea41324530ab1e48a37ff0a1a73819a49ce3c729d82016",
       "labels": "sha256:e2f330b51947026ae548f2f338fb62ae4a49941e95ee127b7db332787c18dd26"
     },
@@ -1232,6 +1232,61 @@
         ],
         "params": [],
         "keyed": true
+      },
+      {
+        "name": "p_53d4630f",
+        "storage": "automation_db",
+        "engine": "automation",
+        "file": "parts/p_53d4630f.sql",
+        "sha256": "sha256:8770e78267d2a15cb2b18da26660d6b7bec46ecdc9846d435d1710274dc2364e",
+        "columns": [
+          {
+            "name": "id",
+            "type": "text"
+          },
+          {
+            "name": "recipe",
+            "type": "text"
+          },
+          {
+            "name": "run",
+            "type": "text"
+          },
+          {
+            "name": "entity",
+            "type": "text"
+          },
+          {
+            "name": "key",
+            "type": "text"
+          },
+          {
+            "name": "kind",
+            "type": "text"
+          },
+          {
+            "name": "due",
+            "type": "date"
+          },
+          {
+            "name": "state",
+            "type": "text"
+          },
+          {
+            "name": "fulfilled_by",
+            "type": "text"
+          },
+          {
+            "name": "fulfilled_at",
+            "type": "timestamp"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp"
+          }
+        ],
+        "params": [],
+        "keyed": false
       },
       {
         "name": "p_6755f6ba",
@@ -1370,61 +1425,6 @@
         "params": [
           "as_of"
         ],
-        "keyed": false
-      },
-      {
-        "name": "p_8124de4c",
-        "storage": "automation_db",
-        "engine": "automation",
-        "file": "parts/p_8124de4c.sql",
-        "sha256": "sha256:c4e74fcd8724ee95ebc2be43c5dfb684f8356746ff714cc1a1c09713551bdc89",
-        "columns": [
-          {
-            "name": "id",
-            "type": "text"
-          },
-          {
-            "name": "recipe",
-            "type": "text"
-          },
-          {
-            "name": "run",
-            "type": "text"
-          },
-          {
-            "name": "entity",
-            "type": "text"
-          },
-          {
-            "name": "key",
-            "type": "text"
-          },
-          {
-            "name": "kind",
-            "type": "text"
-          },
-          {
-            "name": "due",
-            "type": "date"
-          },
-          {
-            "name": "state",
-            "type": "text"
-          },
-          {
-            "name": "fulfilled_by",
-            "type": "text"
-          },
-          {
-            "name": "fulfilled_at",
-            "type": "timestamp"
-          },
-          {
-            "name": "created_at",
-            "type": "timestamp"
-          }
-        ],
-        "params": [],
         "keyed": false
       },
       {
@@ -1603,26 +1603,26 @@
   },
   "files": {
     "README.md": "sha256:a7a4b3146e7961be0e2625ec7c9083de08048b38a8b4b54fcac7a87a71d3cb48",
-    "catalog/settle.ttrm": "sha256:3399a38d3e847487cd54a386e5f03e36c8ff134c82642f58f6aa924e1a098b39",
+    "catalog/settle.ttrm": "sha256:97101c275a67875babc2f01a049a4997d865f12be95b62308efdfb77bfecf232",
     "catalog/settle_verdict.ttrm": "sha256:8bef7895d5acc30dff3004b158b6bdc71a4495a3dc683117f9534b56c618eb5e",
     "islands/documents.rows.sql": "sha256:41c398ad0086c9fdd9760afc170abb8eff98e96237cfa621de7cb03433f1a20e",
-    "islands/open_obligations.rows.duckdb.sql": "sha256:34131d2fa0ff9ca3c0a31e4485a13fb0fdbd26cfb8e271efa777f1fadde2e75a",
-    "islands/overdue_days.rows.duckdb.sql": "sha256:89014e75313b3c26de8de4c41100b48252f34b5ca0936a7a4fd634c24c4bbd07",
-    "islands/settlement.closed.duckdb.sql": "sha256:26b3bd35397d66a24f1ec6e82741f0beba2005f55ca7954c0967f8e6b1f2e63a",
-    "islands/settlement.credit_note_issued.duckdb.sql": "sha256:36f15e93685fcb57dc16bef9c44a4baf0aa0216378ac980767a9a1ffebb9443b",
-    "islands/settlement.goods_overdue.duckdb.sql": "sha256:f1cf247ca183a99ebc4cada39ad37d6911b0168b56c6055334ace42c790a7d9c",
-    "islands/settlement.goods_overdue.open_obligations.duckdb.sql": "sha256:5537e355658d13a87b84e5aa5ae4a5c37f88db9ffffe8f130d0ecb6a01e69b04",
-    "islands/settlement.goods_shipped.duckdb.sql": "sha256:4275108ea9e1b84dc67f89f52db500d895431afb008e041227bdb55bf7732d2b",
-    "islands/settlement.money_overdue.duckdb.sql": "sha256:8904adcc4e5fa67f64d3b1620952d0f2c8c224283a2bb90325b478f6fb1d0f8d",
-    "islands/settlement.money_overdue.open_obligations.duckdb.sql": "sha256:41efdfe3b366857b9609399616210f55ba67e814860e1742b8b6f5592442df02",
-    "islands/settlement.money_received.duckdb.sql": "sha256:a9184bac617b52075ec354b7ab26dc7226e78b820a12ae5eb7940865b69d52d3",
+    "islands/open_obligations.rows.duckdb.sql": "sha256:2ce905ffd3669584f37f5d04101b724eae9285536387b61fecd8e86ce2270ffc",
+    "islands/overdue_days.rows.duckdb.sql": "sha256:88adf1e707e429982f29e72ff6b6b8d686ab6b849230162148354b23e0f37bd7",
+    "islands/settlement.closed.duckdb.sql": "sha256:c711ffb45baef4b4554c3ab7ce592aced9f7c5e91ad3d1a75d91dc3745515f4c",
+    "islands/settlement.credit_note_issued.duckdb.sql": "sha256:cae362d65086cfe95a8ee276935f19c1e69f267b6ff39a0b3e4c13fd439ff88a",
+    "islands/settlement.goods_overdue.duckdb.sql": "sha256:39b74f847e68e4c14d511950439676dd2a87ea22961fd959b9ca29810fff7833",
+    "islands/settlement.goods_overdue.open_obligations.duckdb.sql": "sha256:a03a193c0803767fc9dad5ac4b2b85aa8c15df4f8ad9ecde5ab84110c828ffe4",
+    "islands/settlement.goods_shipped.duckdb.sql": "sha256:50ec1f3c13969bca93235627ac0896989461477fdb1ecd1296f077fca32da055",
+    "islands/settlement.money_overdue.duckdb.sql": "sha256:92d7dd3ec97cc63fbb60cf43517ab69a2a46f81debadee6775b71ae803768969",
+    "islands/settlement.money_overdue.open_obligations.duckdb.sql": "sha256:46eaad7a8ac731bb9c86a6e3370f80a22b65bb16e63449ef8cf613ffa3c1fa1e",
+    "islands/settlement.money_received.duckdb.sql": "sha256:829dbfcee91d4ca886afba380e8d34f387fb277c500ed01498dc634066630f65",
     "islands/settling.lines.sql": "sha256:6fb59f830a15e5e2d07acab8c1c1de4e33fb506248ff9391348d398aa5c1a706",
     "parts/p_202d930b.sql": "sha256:d319f5ab8000c5531434b8a05483dd7eaea617da27ffe53c9cf9f9c6203f0ad8",
     "parts/p_2cb8a6cb.sql": "sha256:804146713b25d01a0ea1d48ba3c786f76d65af63dec076444090c310dcef8161",
+    "parts/p_53d4630f.sql": "sha256:8770e78267d2a15cb2b18da26660d6b7bec46ecdc9846d435d1710274dc2364e",
     "parts/p_6755f6ba.sql": "sha256:568fd243b04cc41a1989a9d8b99c5bf473c8365de05143d658d1151649ab5d13",
     "parts/p_77af0c22.sql": "sha256:1e1663b54f34a7227f7973fddd73db8a07b2cc52284e677435737711aa30c766",
     "parts/p_7e21ab69.sql": "sha256:7c9510903ac49bd97457a90c61e901f6d3339532ee2c7144012287fbd5653251",
-    "parts/p_8124de4c.sql": "sha256:c4e74fcd8724ee95ebc2be43c5dfb684f8356746ff714cc1a1c09713551bdc89",
     "parts/p_859395aa.sql": "sha256:de59977beeed87ef454450fffe72b327fe0efc805eef6f836ea4265c5281b6ae",
     "parts/p_927a867d.sql": "sha256:6b278431878f4289b0768c6ed3aafde2548ee6c8744c92c55e0d6e84e6fd64e3",
     "parts/p_99be0ef6.sql": "sha256:a95df18e322d28c4ef048016df0ccd86dfb26599cda37b4db02098d50402ddb5",

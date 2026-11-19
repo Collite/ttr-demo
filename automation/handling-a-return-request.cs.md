@@ -190,7 +190,7 @@ Posuzujeme každou položku čekající na zboží s otevřeným závazkem pří
         FROM   er.entity.return_request_line l
         JOIN   er.entity.return_request r ON r.request_number = l.request_number
         LEFT JOIN er.entity.customer c    ON c.sk = r.customer
-        JOIN   er.entity.obligation ob    ON ob.entity = 'return_request_line' AND ob.key = l.line_id AND ob.kind = 'inbound'
+        JOIN   er.entity.obligation ob    ON ob.entity = 'er.entity.return_request_line' AND ob.key = concat(concat('{"line_id":', CAST(l.line_id AS VARCHAR)), '}') AND ob.kind = 'inbound'
                                           AND ob.state IN ('open', 'overdue', 'reopened')
         WHERE  l.state = 'awaiting_goods'
 ```
@@ -293,7 +293,7 @@ Vyhledáme otevřené závazky dobropisu, platby a náhrady pro každou položku
 
 ```sql context open_obligations(in lines, out rows) target erp
         SELECT q.line_id, ob.id AS obligation_id, ob.kind, ob.due
-        FROM   lines q JOIN er.entity.obligation ob ON ob.entity = 'return_request_line' AND ob.key = q.line_id
+        FROM   lines q JOIN er.entity.obligation ob ON ob.entity = 'er.entity.return_request_line' AND ob.key = concat(concat('{"line_id":', CAST(q.line_id AS VARCHAR)), '}')
         WHERE  ob.kind IN ('credit_note', 'payment', 'replacement') AND ob.state IN ('open', 'overdue', 'reopened')
 ```
 
