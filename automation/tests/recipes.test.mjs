@@ -147,9 +147,10 @@ test('S2.2 T3 — monitor_inbound\'s two expects on `complete` are conditional o
 
 // ── the four heroes ARE ttr-core's engine fixtures (`20`, AU-hartland P3E) ──────────────────────────────────────
 // Compared without comments, blank lines and indentation (P3 derives H-1 from Markdown). The oracle is Core's
-// `recipes/hartland-engine/` (CG-2): `20` §3–§4's action blocks over the shared hero bodies. Four deltas remain:
+// `recipes/hartland-engine/` (CG-2): `20` §3–§4's action blocks over the shared hero bodies. Deltas remain:
 // D-153's scoped `latest()` bodies, the customer address column (`notify_customer { to: customer_email }`),
 // D-211's batch-bounded `request_value`, and S4.1y's canonical obligation identity (`OBLIGATION_IDENTITY`).
+// S4.1z also requires an open obligation of the matching kind for a document-success route.
 // All go when Core's engine fixtures carry them.
 const ADDRESS_WIRING = [/notify_customer( +)\{ customer: customer, template:/g, 'notify_customer$1{ customer: customer, to: customer_email, template:'];
 // S4.1y (Collite/ttr-demo#190) — a stored obligation's entity is the qname and its key canonical JSON text
@@ -199,6 +200,21 @@ const FIXTURE_DELTAS = {
   ],
   settle: [
     OBLIGATION_IDENTITY('q'),
+    // S4.1z — document existence alone cannot fulfil an ungoverned historical line.
+    ["v = lines -> join(right: documents,    kind: left, on: left.line_id = right.line_id)", `credit_notes = open_obligations -> filter(kind = "credit_note")
+-> aggregate { group_by: line_id credit_note_open = count(kind) }
+payments = open_obligations -> filter(kind = "payment")
+-> aggregate { group_by: line_id payment_open = count(kind) }
+replacements = open_obligations -> filter(kind = "replacement")
+-> aggregate { group_by: line_id replacement_open = count(kind) }
+v = lines -> join(right: documents,    kind: left, on: left.line_id = right.line_id)`],
+    ["-> join(right: overdue_days, kind: left, on: left.line_id = right.line_id)", `-> join(right: overdue_days, kind: left, on: left.line_id = right.line_id)
+-> join(right: credit_notes, kind: left, on: left.line_id = right.line_id)
+-> join(right: payments, kind: left, on: left.line_id = right.line_id)
+-> join(right: replacements, kind: left, on: left.line_id = right.line_id)`],
+    ["credit_note_id is not null", "credit_note_id is not null and credit_note_open > 0"],
+    ["payment_id is not null", "payment_id is not null and payment_open > 0"],
+    ["shipment_id is not null", "shipment_id is not null and replacement_open > 0"],
   ],
 };
 const lines = (text) => code(text).split('\n').map((l) => l.trim()).filter((l) => l !== '').join('\n');
@@ -207,7 +223,11 @@ for (const name of ['release_order', 'decide_return', 'monitor_inbound', 'settle
   const fixture = path.join(FIXTURES, 'hartland-engine', `${name}.ttrp`);
   test(`S2.2 T2/T3 — ${name} is ttr-core's engine fixture (20; comments aside)`, { skip: cliMissing }, async () => {
     let want = lines(await readFile(fixture, 'utf-8'));
-    for (const [re, to] of FIXTURE_DELTAS[name] ?? []) want = want.replace(re, to);
+    for (const [re, to] of FIXTURE_DELTAS[name] ?? []) {
+      assert.ok(typeof re === 'string' ? want.includes(re) : new RegExp(re.source, re.flags).test(want),
+        `delta ${name} not found — drop it if Core carries it`);
+      want = want.replace(re, to);
+    }
     assert.equal(lines(sources[name]), want);
   });
 }

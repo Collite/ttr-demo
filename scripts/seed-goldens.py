@@ -97,7 +97,10 @@ def render_case(recipe: str, world: str, as_of: str, params: dict[str, str], rou
         "keys: [" + ", ".join(scalar(key_value(k)) for k in keys) + "]",
         "expected:",
     ]
-    verdicts = [r for k in keys for r in by_key[k] if r["route"] != "none"]
+    # S4.1z: these document plants predate governed obligations. Keep their debug keys and
+    # the other verdicts, but a historical document alone cannot fulfil an obligation.
+    historical_documents = {"credit_note_issued", "money_received", "goods_shipped"} if recipe == "settle" else set()
+    verdicts = [r for k in keys for r in by_key[k] if r["route"] != "none" and r["route"] not in historical_documents]
     if not verdicts:
         lines.append("  verdicts: []                              # the keys get no verdict row")
     else:

@@ -8,11 +8,8 @@ parameters: { settlement: 5 }
 keys: [1217619, 1217621, 1218225]
 expected:
   verdicts:
-    - { key: 1217619, route: credit_note_issued, verdict_reason: "credit note {credit_note_id} issued" }
     - { key: 1217619, route: money_overdue, verdict_reason: "refund {max_late} working days late" }
-    - { key: 1217621, route: credit_note_issued, verdict_reason: "credit note {credit_note_id} issued" }
     - { key: 1217621, route: money_overdue, verdict_reason: "refund {max_late} working days late" }
-    - { key: 1218225, route: credit_note_issued, verdict_reason: "credit note {credit_note_id} issued" }
     - { key: 1218225, route: money_overdue, verdict_reason: "refund {max_late} working days late" }
   detail_counts:
     1217619: { open_obligations: 1 }

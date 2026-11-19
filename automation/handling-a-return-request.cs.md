@@ -318,17 +318,27 @@ Změříme počet pracovních dnů od splatnosti nesplněných závazků.
     }
 ```
 
+Úspěšné dokladové cesty vyžadují otevřený řízený závazek odpovídajícího druhu. Před spojením shrneme každý druh na položku, aby více otevřených závazků nenásobilo řádky výsledků.
 Zaznamenáme všechny odpovídající výsledky. Položka může mít vystavený dobropis a současně platbu po lhůtě; zaplacené vrácení peněz nebo odeslaná náhrada položku také uzavře.
 
 ```ttrp
     decision settlement(in lines, in open_obligations, in documents, in overdue_days) {
+        credit_notes = open_obligations -> filter(kind = "credit_note")
+                      -> aggregate { group_by: line_id credit_note_open = count(kind) }
+        payments = open_obligations -> filter(kind = "payment")
+                   -> aggregate { group_by: line_id payment_open = count(kind) }
+        replacements = open_obligations -> filter(kind = "replacement")
+                       -> aggregate { group_by: line_id replacement_open = count(kind) }
         v = lines -> join(right: documents,    kind: left, on: left.line_id = right.line_id)
                   -> join(right: overdue_days, kind: left, on: left.line_id = right.line_id)
+                  -> join(right: credit_notes, kind: left, on: left.line_id = right.line_id)
+                  -> join(right: payments, kind: left, on: left.line_id = right.line_id)
+                  -> join(right: replacements, kind: left, on: left.line_id = right.line_id)
         v -> switch {
             mode: overlapping                                    // a line may be both "credit note issued" and "money overdue"
-            credit_note_issued:  credit_note_id is not null     because: "credit note {credit_note_id} issued"
-            money_received:      payment_id is not null         because: "refund paid on {paid_date}"
-            goods_shipped:       shipment_id is not null        because: "replacement shipped on {shipped_date}"
+            credit_note_issued:  credit_note_id is not null and credit_note_open > 0     because: "credit note {credit_note_id} issued"
+            money_received:      payment_id is not null and payment_open > 0         because: "refund paid on {paid_date}"
+            goods_shipped:       shipment_id is not null and replacement_open > 0        because: "replacement shipped on {shipped_date}"
             money_overdue:       way in ("refund_no_return", "refund_after_return") and payment_id is null and max_late > 0
                                                                 because: "refund {max_late} working days late"       detail: open_obligations
             goods_overdue:       way in ("replacement_no_return", "exchange") and shipment_id is null and max_late > 0
