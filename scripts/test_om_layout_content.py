@@ -312,3 +312,19 @@ class BotTokenTests(unittest.TestCase):
         self.assertEqual(('client','renewed-test-token'),layout.actor('tatrman-maintainer'))
         self.assertEqual(('POST',{'id':'bot-id','JWTTokenExpiry':'OneHour'}),fake.renewal)
         self.assertEqual([],output)
+
+
+class ActionFallbackTests(unittest.TestCase):
+    def test_refused_named_action_uses_admin_without_changing_permissions(self):
+        fake=FakeCatalog()
+        layout=make_layout(fake,env={'OM_DEMO_PASSWORD':'test-only'},output=lambda _:None)
+        class Refused:
+            def write(self,*args):
+                raise om.LayoutError('catalog request failed (HTTP 403)',status=403)
+        layout.actors['tatrman-maintainer']=Refused()
+        output=[]
+        layout.output=output.append
+        layout.write_as('tatrman-maintainer','PUT','test-action',{'safe':'value'})
+        self.assertEqual([('PUT','test-action',{'safe':'value'})],fake.writes)
+        self.assertIn('admin performs the refused action',output[0])
+        self.assertFalse(any(w[1].startswith(('users/','roles/','policies/')) for w in fake.writes))

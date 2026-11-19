@@ -38,7 +38,7 @@ Set `OM_DEMO_PASSWORD` to create and sign in as the two people. It never resets 
 existing person's password. Without it, new people receive separate random
 passwords that are discarded, and all task actions use the admin. `plan` says so.
 When provided, person sign-in and the bot JWT are kept only in memory; a failed
-sign-in falls back to the admin with a diagnostic. No actor attribution is forged.
+sign-in or HTTP 401/403 action falls back to the admin with a diagnostic. No actor attribution is forged.
 New bots get an hour-long JWT; the owned bot token is renewed if it is near expiry.
 An unavailable bot token uses the same fallback. Reference lists compare as sets,
 so server ordering does not cause repeated updates.

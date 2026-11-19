@@ -332,6 +332,8 @@ class Layout(Content):
             return self.remove(execute)
         if verb == 'plan' and not self.env.get('OM_DEMO_PASSWORD'):
             self.output('skip named task actors: OM_DEMO_PASSWORD absent; admin performs all task actions')
+        elif verb == 'plan':
+            self.output('skip unavailable named-account actions: admin fallback on HTTP 401/403')
         for operation in self.operations():
             self.output(f'{operation.action} {operation.label}')
             if verb == 'apply' and operation.action != 'unchanged':
