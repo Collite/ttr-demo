@@ -12,19 +12,25 @@ from urllib.error import HTTPError
 from urllib.parse import quote
 from urllib.request import HTTPSHandler, HTTPRedirectHandler, Request, build_opener
 
+from om_layout_content import Content
+
 PACK = Path(__file__).resolve().parents[1] / 'openmetadata/layout'
 ADDRESSES = {
     'bp-dsk': 'https://openmetadata.192-168-1-38.nip.io',
     'hartland': 'https://openmetadata.hartland.collite.cz',
 }
-# LD-C12: later stages fill the empty steps; this stage writes only the first three.
+# LD-C12: write reviewers after the frozen task history, then verify the complete pack.
 ORDER = ('theme', 'relation_types', 'personas_and_documents', 'accounts_and_team',
          'domains', 'workflow_and_form', 'content_except_reviewers', 'relations',
-         'tasks', 'reviewers', 'announcement', 'chat_page')
+         'tasks', 'reviewers', 'customer_approval', 'announcement', 'chat_page')
 
 
 class LayoutError(ValueError):
     """Only authored diagnostics, never credentials or server response bodies."""
+
+    def __init__(self, message, status=None):
+        super().__init__(message)
+        self.status = status
 
 
 def require(condition, message):
@@ -64,6 +70,7 @@ class NoRedirect(HTTPRedirectHandler):
 
 class Catalog:
     def __init__(self, target, env, pack=PACK):
+        self.target = target
         self.base = target_url(target, pack) + '/api/v1/'
         self._token = credentials(env)
         context = ssl.create_default_context(cafile=env.get('OM_CA_FILE') or None)
@@ -85,9 +92,14 @@ class Catalog:
         except HTTPError as error:
             if missing and method == 'GET' and error.code == 404:
                 return None
-            raise LayoutError('catalog request failed (HTTP ' + str(error.code) + ')') from None
+            raise LayoutError('catalog request failed (HTTP ' + str(error.code) + ')', status=error.code) from None
         except Exception:
             raise LayoutError('catalog request failed; check connection and OM_CA_FILE') from None
+
+    def as_token(self, token):
+        client = copy.copy(self)
+        client._token = token
+        return client
 
     def get(self, path, missing=False):
         return self.request('GET', path, missing=missing)
@@ -104,6 +116,7 @@ class Operation:
     body: object
     current: object
     desired: object
+    executor: object = None
 
     @property
     def action(self):
@@ -133,9 +146,18 @@ def merge_relations(current, desired):
     return result
 
 
-class Layout:
-    def __init__(self, catalog, pack=PACK, output=print):
+class Layout(Content):
+    operation = Operation
+    require = staticmethod(require)
+    error = LayoutError
+
+    def __init__(self, catalog, pack=PACK, output=print, env=None):
         self.catalog, self.pack, self.output = catalog, pack, output
+        self.env = os.environ if env is None else env
+        self.actors = {}
+        self.reviewer_skip_reason = None
+        self.target = getattr(catalog, "target", "bp-dsk")
+        self.content = read_json(pack / "content.json")
         require(catalog.get('system/version').get('version') == '2.0.6',
                 'expected OpenMetadata 2.0.6')
         self.admin = catalog.get('users/loggedInUser?fields=personas,defaultPersona')
@@ -290,7 +312,7 @@ class Layout:
         failed = 0
         for number, (name, check) in enumerate((('theme colours', theme), ('three personas', personas),
                 ('two documents: navigation order and hidden set', documents),
-                ('term page: six tab names', tabs), ('four relation types and inverses', relation_types)), 1):
+                ('term page: six tab names', tabs), ('four relation types and inverses', relation_types)) + tuple(self.content_checks()), 1):
             try:
                 ok = check()
             except Exception:
@@ -308,13 +330,21 @@ class Layout:
             return self.verify()
         if verb == 'remove':
             return self.remove(execute)
+        if verb == 'plan' and not self.env.get('OM_DEMO_PASSWORD'):
+            self.output('skip named task actors: OM_DEMO_PASSWORD absent; admin performs all task actions')
+        elif verb == 'plan':
+            self.output('skip unavailable named-account actions: admin fallback on HTTP 401/403')
         for operation in self.operations():
             self.output(f'{operation.action} {operation.label}')
             if verb == 'apply' and operation.action != 'unchanged':
-                self.catalog.write(operation.method, operation.path, operation.body)
+                if operation.executor:
+                    operation.executor()
+                else:
+                    self.catalog.write(operation.method, operation.path, operation.body)
         return self.verify(applying=True) if verb == 'apply' else 0
 
     def removal_operations(self):
+        yield from self.content_removals()
         owned = {p['name'] for p in read_json(self.pack / 'personas.json')}
         admin = self.catalog.get('users/loggedInUser?fields=personas,defaultPersona')
         personas = [self.catalog.get('personas/name/' + name, missing=True) for name in sorted(owned)]
@@ -352,6 +382,7 @@ class Layout:
                    {'config_type': 'customUiThemePreference', 'config_value': new})
 
     def remove(self, execute=False):
+        self.restore_command()
         for label, method, path, body in self.removal_operations():
             self.output(label if execute else 'would ' + label)
             if execute:
@@ -368,7 +399,7 @@ def main(argv=None, env=None):
     args = parser.parse_args(argv)
     require(not args.execute or args.verb == 'remove', '--execute is only for remove')
     env = os.environ if env is None else env
-    return Layout(Catalog(args.target, env)).run(args.verb, args.execute)
+    return Layout(Catalog(args.target, env), env=env).run(args.verb, args.execute)
 
 
 if __name__ == '__main__':

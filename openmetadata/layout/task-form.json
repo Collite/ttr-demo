@@ -1,0 +1,137 @@
+{
+  "name": "ttrSuggestChange",
+  "displayName": "Suggest a change",
+  "description": "A suggestion to change the model: a synonym, a definition, a label, or a question about the meaning.",
+  "taskType": "CustomTask",
+  "taskCategory": "Custom",
+  "formSchema": {
+    "type": "object",
+    "required": [
+      "what",
+      "value"
+    ],
+    "properties": {
+      "why": {
+        "type": "string",
+        "title": "Why",
+        "maxLength": 2000
+      },
+      "what": {
+        "enum": [
+          "A synonym",
+          "The definition",
+          "A label or translation",
+          "A question about the meaning"
+        ],
+        "type": "string",
+        "title": "What should change",
+        "default": "A synonym"
+      },
+      "value": {
+        "type": "string",
+        "title": "New value",
+        "maxLength": 2000
+      },
+      "language": {
+        "enum": [
+          "Czech",
+          "English"
+        ],
+        "type": "string",
+        "title": "Language",
+        "default": "Czech"
+      }
+    }
+  },
+  "uiSchema": {
+    "why": {
+      "ui:widget": "textarea"
+    },
+    "what": {
+      "ui:widget": "radio"
+    },
+    "ui:order": [
+      "what",
+      "value",
+      "language",
+      "why"
+    ]
+  },
+  "workflowDefinitionRef": "ttrSuggestionWorkflow",
+  "transitionForms": {
+    "refuse": {
+      "uiSchema": {
+        "comment": {
+          "ui:widget": "textarea"
+        }
+      },
+      "formSchema": {
+        "type": "object",
+        "required": [
+          "comment"
+        ],
+        "properties": {
+          "comment": {
+            "type": "string",
+            "title": "What the model check said"
+          }
+        }
+      },
+      "requiresComment": true
+    },
+    "reject": {
+      "uiSchema": {
+        "comment": {
+          "ui:widget": "textarea"
+        }
+      },
+      "formSchema": {
+        "type": "object",
+        "required": [
+          "comment"
+        ],
+        "properties": {
+          "comment": {
+            "type": "string",
+            "title": "Why it is rejected"
+          }
+        }
+      },
+      "requiresComment": true
+    },
+    "approve": {
+      "uiSchema": {
+        "comment": {
+          "ui:widget": "textarea"
+        }
+      },
+      "formSchema": {
+        "type": "object",
+        "properties": {
+          "comment": {
+            "type": "string",
+            "title": "Review comment"
+          }
+        }
+      },
+      "requiresComment": false
+    },
+    "publish": {
+      "uiSchema": {
+        "comment": {
+          "ui:widget": "textarea"
+        }
+      },
+      "formSchema": {
+        "type": "object",
+        "properties": {
+          "comment": {
+            "type": "string",
+            "title": "Publication note"
+          }
+        }
+      },
+      "requiresComment": false
+    }
+  }
+}

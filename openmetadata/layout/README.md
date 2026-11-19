@@ -1,6 +1,6 @@
 # OpenMetadata layout pack
 
-LD P1·S1.1, OpenMetadata 2.0.6. Stdlib Python only. The allow-list in `targets.json`
+LD P1·S1.2, OpenMetadata 2.0.6. Stdlib Python only. The allow-list in `targets.json`
 enables bp-dsk; hartland is disabled until a showing is explicitly requested.
 Neither a pin nor an image is changed by this pack.
 
@@ -17,14 +17,44 @@ python3 scripts/om_layout.py remove --target bp-dsk --execute
 just om-layout-test              # offline fake catalog
 ```
 
-The pack owns theme values, three named personas, two persona documents, and the
-four relation types with their inverses. It adds the admin to all three personas
-and leaves the account on Stock view, so there is a route back to the stock UI.
-Unrelated settings, relation types and persona memberships are retained.
-`remove` deletes those named objects and clears the owned theme values; it never
-deletes projected content. No state file is kept. Later LD stages supply content,
-Home/Table/Metric layouts and export; the empty LD-C12 steps do nothing here.
-Working output lives under ignored `build/` directories.
+The pack owns theme values, the three named personas and their two documents,
+relation types with inverses, three accounts, Sales team, four domains, the
+suggestion workflow/form, three frozen tasks and the Model published announcement.
+It edits only the named projected terms, CZ customer table and revenue metric in
+`content.json`. Unrelated fields, custom properties and relation edges are retained.
+The admin belongs to all three personas and stays on Stock view.
+
+`apply` follows LD-C12: fields before tasks; reviewers afterwards, so the terms
+are approved through their own OpenMetadata approval task after reviewers are set.
+Customer found In Review on a later run is repaired through that task. No status is
+written directly. If Petr and admin both receive a refusal, the reviewer is removed
+and the reason is reported as a skip. Tasks are found by Customer and New value, checked against the
+owned form, and resumed to their frozen stages without repeating comments or
+transitions. It renews the announcement's 90-day end time; other operations are
+unchanged on a second run. `verify` checks 1–15. Table, Metric and Home layouts,
+`export` and the show sheet belong to S1.3.
+
+Set `OM_DEMO_PASSWORD` to create and sign in as the two people. It never resets an
+existing person's password. Without it, new people receive separate random
+passwords that are discarded, and all task actions use the admin. `plan` says so.
+When provided, person sign-in and the bot JWT are kept only in memory; a failed
+sign-in or HTTP 401/403 action falls back to the admin with a diagnostic. No actor attribution is forged.
+New bots get an hour-long JWT; the owned bot token is renewed if it is near expiry.
+An unavailable bot token uses the same fallback. Reference lists compare as sets,
+so server ordering does not cause repeated updates.
+
+The HTML chat source is copied unchanged from the frozen planning asset. Apply
+writes `build/change-1-golem-chat.html` with the odběratel task URL and number;
+open that file locally. The supported Customer Changes/tasks address opens its
+newest open task, odběratel (raised last); check 15 confirms that it is still first.
+Nothing on the page loads from the network. Plans do not
+write it. All generated output is ignored by Git.
+
+`remove` previews deletion of owned objects and requires `--execute` to perform
+it. It never deletes or reverses projected terms, tables or metrics. It prints
+the fresh-state projection Job command for the selected cluster, following
+`design/demo-openmetadata.md`; it does not run that command. Apply the pack after
+any projection run. No local state file is kept.
 
 The API shapes follow OpenMetadata's official `2.0.6-release` schemas:
 [theme](https://github.com/open-metadata/OpenMetadata/blob/2.0.6-release/openmetadata-spec/src/main/resources/json/schema/configuration/uiThemePreference.json),

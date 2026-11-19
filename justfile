@@ -25,7 +25,7 @@ om-layout verb="plan" target="bp-dsk":
     python3 scripts/om_layout.py {{verb}} --target {{target}}
 
 om-layout-test:
-    python3 -m unittest scripts/test_om_layout.py
+    python3 -m unittest scripts/test_om_layout.py scripts/test_om_layout_content.py
 
 # GX (NLS-P6.2) — check every mounted `intent.yaml` against the plan-composer placeholder
 # contract. The kantheon sibling is `IntentPromptContractSpec`; this repo has no CI lane, and
