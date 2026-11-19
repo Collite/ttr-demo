@@ -14,6 +14,7 @@
 ## What it reads
 
 - Customer (`er.entity.customer`)
+- Calendar (`er.entity.date_dim`)
 - Inventory Snapshots (`er.entity.inventory`)
 - Order (`er.entity.order`)
 - Return Request (`er.entity.return_request`)

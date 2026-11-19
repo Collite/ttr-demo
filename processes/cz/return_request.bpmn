@@ -881,7 +881,7 @@ execution.setVariable('ttrPageState', state)</bpmn:script>
                       <camunda:entry key="Content-Type">application/json</camunda:entry>
                     </camunda:map>
                   </camunda:inputParameter>
-                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                   <camunda:outputParameter name="ttrPerformed">
                     <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -946,7 +946,7 @@ try {
                       <camunda:entry key="Content-Type">application/json</camunda:entry>
                     </camunda:map>
                   </camunda:inputParameter>
-                  <camunda:inputParameter name="payload">${(S('{}').prop("outcomes",S('[]').append(S('{}').prop("key",ttrRow.prop("line_id").value()).prop("status","delivered").prop("at",dateTime().toString())))).toString()}</camunda:inputParameter>
+                  <camunda:inputParameter name="payload">${(S('{}').prop("outcomes",S('[]').append(S('{}').prop("key",S('{}').prop("line_id",ttrRow.prop("line_id").value())).prop("status","delivered").prop("at",dateTime().toString())))).toString()}</camunda:inputParameter>
                   <camunda:outputParameter name="ttrOutcome">
                     <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -1112,7 +1112,7 @@ execution.setVariable('ttrPageState', state)</bpmn:script>
                       <camunda:entry key="Content-Type">application/json</camunda:entry>
                     </camunda:map>
                   </camunda:inputParameter>
-                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                   <camunda:outputParameter name="ttrPerformed">
                     <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -1177,7 +1177,7 @@ try {
                       <camunda:entry key="Content-Type">application/json</camunda:entry>
                     </camunda:map>
                   </camunda:inputParameter>
-                  <camunda:inputParameter name="payload">${(S('{}').prop("outcomes",S('[]').append(S('{}').prop("key",ttrRow.prop("line_id").value()).prop("status","delivered").prop("at",dateTime().toString())))).toString()}</camunda:inputParameter>
+                  <camunda:inputParameter name="payload">${(S('{}').prop("outcomes",S('[]').append(S('{}').prop("key",S('{}').prop("line_id",ttrRow.prop("line_id").value())).prop("status","delivered").prop("at",dateTime().toString())))).toString()}</camunda:inputParameter>
                   <camunda:outputParameter name="ttrOutcome">
                     <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -1343,7 +1343,7 @@ execution.setVariable('ttrPageState', state)</bpmn:script>
                       <camunda:entry key="Content-Type">application/json</camunda:entry>
                     </camunda:map>
                   </camunda:inputParameter>
-                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                   <camunda:outputParameter name="ttrPerformed">
                     <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -1408,7 +1408,7 @@ try {
                       <camunda:entry key="Content-Type">application/json</camunda:entry>
                     </camunda:map>
                   </camunda:inputParameter>
-                  <camunda:inputParameter name="payload">${(S('{}').prop("outcomes",S('[]').append(S('{}').prop("key",ttrRow.prop("line_id").value()).prop("status","delivered").prop("at",dateTime().toString())))).toString()}</camunda:inputParameter>
+                  <camunda:inputParameter name="payload">${(S('{}').prop("outcomes",S('[]').append(S('{}').prop("key",S('{}').prop("line_id",ttrRow.prop("line_id").value())).prop("status","delivered").prop("at",dateTime().toString())))).toString()}</camunda:inputParameter>
                   <camunda:outputParameter name="ttrOutcome">
                     <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -1689,7 +1689,7 @@ execution.setVariable('ttrPageState', state)</bpmn:script>
                       <camunda:entry key="Content-Type">application/json</camunda:entry>
                     </camunda:map>
                   </camunda:inputParameter>
-                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                   <camunda:outputParameter name="ttrPerformed">
                     <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -1732,7 +1732,7 @@ try {
                       <camunda:entry key="Content-Type">application/json</camunda:entry>
                     </camunda:map>
                   </camunda:inputParameter>
-                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                   <camunda:outputParameter name="ttrPerformed">
                     <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -1892,7 +1892,7 @@ execution.setVariable('ttrPageState', state)</bpmn:script>
                       <camunda:entry key="Content-Type">application/json</camunda:entry>
                     </camunda:map>
                   </camunda:inputParameter>
-                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                   <camunda:outputParameter name="ttrPerformed">
                     <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -1935,7 +1935,7 @@ try {
                       <camunda:entry key="Content-Type">application/json</camunda:entry>
                     </camunda:map>
                   </camunda:inputParameter>
-                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                   <camunda:outputParameter name="ttrPerformed">
                     <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -2095,7 +2095,7 @@ execution.setVariable('ttrPageState', state)</bpmn:script>
                       <camunda:entry key="Content-Type">application/json</camunda:entry>
                     </camunda:map>
                   </camunda:inputParameter>
-                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                   <camunda:outputParameter name="ttrPerformed">
                     <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -2138,7 +2138,7 @@ try {
                       <camunda:entry key="Content-Type">application/json</camunda:entry>
                     </camunda:map>
                   </camunda:inputParameter>
-                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                   <camunda:outputParameter name="ttrPerformed">
                     <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -2203,7 +2203,7 @@ try {
                       <camunda:entry key="Content-Type">application/json</camunda:entry>
                     </camunda:map>
                   </camunda:inputParameter>
-                  <camunda:inputParameter name="payload">${(S('{}').prop("outcomes",S('[]').append(S('{}').prop("key",ttrRow.prop("line_id").value()).prop("status","delivered").prop("at",dateTime().toString())))).toString()}</camunda:inputParameter>
+                  <camunda:inputParameter name="payload">${(S('{}').prop("outcomes",S('[]').append(S('{}').prop("key",S('{}').prop("line_id",ttrRow.prop("line_id").value())).prop("status","delivered").prop("at",dateTime().toString())))).toString()}</camunda:inputParameter>
                   <camunda:outputParameter name="ttrOutcome">
                     <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -2370,7 +2370,7 @@ execution.setVariable('ttrPageState', state)</bpmn:script>
                       <camunda:entry key="Content-Type">application/json</camunda:entry>
                     </camunda:map>
                   </camunda:inputParameter>
-                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                   <camunda:outputParameter name="ttrPerformed">
                     <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -2413,7 +2413,7 @@ try {
                       <camunda:entry key="Content-Type">application/json</camunda:entry>
                     </camunda:map>
                   </camunda:inputParameter>
-                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                  <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                   <camunda:outputParameter name="ttrPerformed">
                     <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -2478,7 +2478,7 @@ try {
                       <camunda:entry key="Content-Type">application/json</camunda:entry>
                     </camunda:map>
                   </camunda:inputParameter>
-                  <camunda:inputParameter name="payload">${(S('{}').prop("outcomes",S('[]').append(S('{}').prop("key",ttrRow.prop("line_id").value()).prop("status","delivered").prop("at",dateTime().toString())))).toString()}</camunda:inputParameter>
+                  <camunda:inputParameter name="payload">${(S('{}').prop("outcomes",S('[]').append(S('{}').prop("key",S('{}').prop("line_id",ttrRow.prop("line_id").value())).prop("status","delivered").prop("at",dateTime().toString())))).toString()}</camunda:inputParameter>
                   <camunda:outputParameter name="ttrOutcome">
                     <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -3731,7 +3731,7 @@ execution.setVariable('ttrPageState', state)</bpmn:script>
                         <camunda:entry key="Content-Type">application/json</camunda:entry>
                       </camunda:map>
                     </camunda:inputParameter>
-                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                     <camunda:outputParameter name="ttrPerformed">
                       <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -3774,7 +3774,7 @@ try {
                         <camunda:entry key="Content-Type">application/json</camunda:entry>
                       </camunda:map>
                     </camunda:inputParameter>
-                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                     <camunda:outputParameter name="ttrPerformed">
                       <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -3817,7 +3817,7 @@ try {
                         <camunda:entry key="Content-Type">application/json</camunda:entry>
                       </camunda:map>
                     </camunda:inputParameter>
-                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                     <camunda:outputParameter name="ttrPerformed">
                       <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -4125,7 +4125,7 @@ execution.setVariable('ttrPageState', state)</bpmn:script>
                         <camunda:entry key="Content-Type">application/json</camunda:entry>
                       </camunda:map>
                     </camunda:inputParameter>
-                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                     <camunda:outputParameter name="ttrPerformed">
                       <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -4168,7 +4168,7 @@ try {
                         <camunda:entry key="Content-Type">application/json</camunda:entry>
                       </camunda:map>
                     </camunda:inputParameter>
-                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                     <camunda:outputParameter name="ttrPerformed">
                       <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -4350,7 +4350,7 @@ execution.setVariable('ttrPageState', state)</bpmn:script>
                         <camunda:entry key="Content-Type">application/json</camunda:entry>
                       </camunda:map>
                     </camunda:inputParameter>
-                    <camunda:inputParameter name="payload">${(S('{}').prop("outcomes",S('[]').append(S('{}').prop("key",ttrRow.prop("line_id").value()).prop("status","delivered").prop("at",dateTime().toString())))).toString()}</camunda:inputParameter>
+                    <camunda:inputParameter name="payload">${(S('{}').prop("outcomes",S('[]').append(S('{}').prop("key",S('{}').prop("line_id",ttrRow.prop("line_id").value())).prop("status","delivered").prop("at",dateTime().toString())))).toString()}</camunda:inputParameter>
                     <camunda:outputParameter name="ttrOutcome">
                       <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -5421,7 +5421,7 @@ execution.setVariable('ttrPageState', state)</bpmn:script>
                         <camunda:entry key="Content-Type">application/json</camunda:entry>
                       </camunda:map>
                     </camunda:inputParameter>
-                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                     <camunda:outputParameter name="ttrPerformed">
                       <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -5464,7 +5464,7 @@ try {
                         <camunda:entry key="Content-Type">application/json</camunda:entry>
                       </camunda:map>
                     </camunda:inputParameter>
-                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                     <camunda:outputParameter name="ttrPerformed">
                       <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -5624,7 +5624,7 @@ execution.setVariable('ttrPageState', state)</bpmn:script>
                         <camunda:entry key="Content-Type">application/json</camunda:entry>
                       </camunda:map>
                     </camunda:inputParameter>
-                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                     <camunda:outputParameter name="ttrPerformed">
                       <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -5783,7 +5783,7 @@ execution.setVariable('ttrPageState', state)</bpmn:script>
                         <camunda:entry key="Content-Type">application/json</camunda:entry>
                       </camunda:map>
                     </camunda:inputParameter>
-                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                     <camunda:outputParameter name="ttrPerformed">
                       <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -6236,7 +6236,7 @@ execution.setVariable('ttrPageState', state)</bpmn:script>
                         <camunda:entry key="Content-Type">application/json</camunda:entry>
                       </camunda:map>
                     </camunda:inputParameter>
-                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(ttrRow.prop("line_id").value()))).toString()}</camunda:inputParameter>
+                    <camunda:inputParameter name="payload">${(S('{}').prop("keys",S('[]').append(S('{}').prop("line_id",ttrRow.prop("line_id").value())))).toString()}</camunda:inputParameter>
                     <camunda:outputParameter name="ttrPerformed">
                       <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()

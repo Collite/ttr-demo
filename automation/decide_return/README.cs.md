@@ -14,6 +14,7 @@
 ## Co čte
 
 - Zákazník (`er.entity.customer`)
+- Kalendář (`er.entity.date_dim`)
 - Stavy zásob (`er.entity.inventory`)
 - Objednávka (`er.entity.order`)
 - Reklamace (`er.entity.return_request`)

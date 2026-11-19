@@ -9,7 +9,7 @@
         "version": "1"
     },
     "fingerprints": {
-        "bundle": "3169924c6e75884e2741d16dd52ad41a3215b77428c2c5b0fc55e47d1e7da4dc",
+        "bundle": "fdc4b05f5f684622e294c7555e07de4f3db47ab7c74095097f4ed8275eba1458",
         "deployment": "sha256:d8d3c5ff8d34cec8123e32f4dd9e1e28607b78968ec2ccc16fbf6854a53661be",
         "labels": "sha256:b0398bfb0a886907f5212f9906750c334c096b1d59bd1eb72b53c5bfe74e195a",
         "model": "sha256:988250ce3b7a645275172755bdfed39349f792290931a411dd687bfa0b4b6a6e",
@@ -18,7 +18,7 @@
         "values": "sha256:6c5da116527944c0c189fdfbd0c8bbdef9f549dd03079764e3f9c1c80bb1ec41",
         "world": "sha256:35e2b2ec6ef7d4471e6f4efa68adf7e4c9ef5acb05216a461bb21c74925ad3ce"
     },
-    "toolchain": "org.tatrman:ttrp:0.22.8",
+    "toolchain": "org.tatrman:ttrp:0.22.10",
     "granularity": "parts",
     "connections": [
         "TTR_CONN_ERP"
@@ -469,7 +469,7 @@
     "files": {
         "README.md": "sha256:6172a7fe34f455d4815fbb36747da3ee1769450ae512e107d6a817c4856d72d6",
         "conformance.json": "sha256:ccf3f3b5dff342f820ddd6d0ec7078dab20e7d78c3247b01a006a66f384341d2",
-        "decide_return.c7.bpmn": "sha256:8205b4fef73259973e918d968a0993bdc8fae4b9eb6cd415dc0f523dafcecd5a",
+        "decide_return.c7.bpmn": "sha256:328361fa8a80a361d33847e7c6bdab47ca09a820d730796a9392f78c0d4c3e6b",
         "dmn/er.query.placed_order_q_decision.dmn": "sha256:d390826c8004ed8bc9d1e52a9e45298a3a9fe6cd3c4e9071c0e08434ed7b283a",
         "dmn/er.query.report_returns_review_q_decision.dmn": "sha256:165373087bffa58515cde8205e28d1e553f0a45d74a8315e40a330123720928e",
         "dmn/er.query.returns_monthly_by_category_decision.dmn": "sha256:47958fff14524147c24481c0b31363ab49fca23d189821e626f7790f91239033",

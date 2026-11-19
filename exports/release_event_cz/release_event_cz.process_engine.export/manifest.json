@@ -9,7 +9,7 @@
         "version": "1"
     },
     "fingerprints": {
-        "bundle": "2ec33266ca818e047e24d64ecda84816aba2156945bac411b1d661b157ebf0cd",
+        "bundle": "c98d129bc231a76c49ad9aeefa3578e476478fd26d40f57c655c5410f1a61791",
         "deployment": "sha256:d5516d0545f139614b1dd47182ae3d6f968229b6e6b21e69b7844d1d13ef23c8",
         "labels": "sha256:f4b3496f4bff1eb1bfeeb8388a3a72f9775f8c5d14769e1d4e6088347fa4a30c",
         "model": "sha256:988250ce3b7a645275172755bdfed39349f792290931a411dd687bfa0b4b6a6e",
@@ -18,7 +18,7 @@
         "values": "sha256:54e165c4463646ed8b9ae490dc1a830b34e76dda883caa0f3df407699c7ae888",
         "world": "sha256:35e2b2ec6ef7d4471e6f4efa68adf7e4c9ef5acb05216a461bb21c74925ad3ce"
     },
-    "toolchain": "org.tatrman:ttrp:0.22.8",
+    "toolchain": "org.tatrman:ttrp:0.22.10",
     "granularity": "parts",
     "connections": [
         "TTR_CONN_ERP"
@@ -301,7 +301,7 @@
         "dmn/query.query.top_items_by_revenue_decision.dmn": "sha256:24a61eac94dececd6d391370283442cb6aa030b6207eef854b22145036d13670",
         "dmn/query.query.warehouse_stockout_week_count_decision.dmn": "sha256:9702a8250725776e1dd8f3c72bd06c704b223b3efe2e199df1da06ddff6c0b89",
         "dmn/query.query.warehouse_stockout_weeks_decision.dmn": "sha256:bdff5551a1aa6bc2d47879a568e751854c4c8fbe4c822afb937edf399128cd2d",
-        "release_order.c7.bpmn": "sha256:b5995d80292c818d330878aa6bcdb9586a8120cb2d306396652ab59e1fc13027",
+        "release_order.c7.bpmn": "sha256:bd26b064c5b688cb41b3e36142acd734e9cb5519ab15eccb44fe6055d31bde24",
         "templates/c7/decide_catch_up.json": "sha256:9e9806bcf76b07707cd615d537d75f44279b687e5d0b6ceaeda2fb1370ed264f",
         "templates/c7/decide_catch_up_cz.json": "sha256:da7585801e514b33a57478e6ed0af00de020c2e6514d7cb57997013906e73f0d",
         "templates/c7/decide_on_request.json": "sha256:ebdedda4be488efdae4a83c210b70399b91d35f889a36016021d9f18774f0164",

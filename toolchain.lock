@@ -8,8 +8,9 @@ ref = "grammar/v0.21.1"          # the gate's toolchain checkout (was inline in 
 [ttrp]
 # Recipe builds/checks move independently of the model reader and serving image.
 # A commit pin requires a prerelease version; delete version when moving ref to a release tag.
-ref = "grammar/v0.22.8"          # AU-hartland P3H (D-238): S1.5.6 engine block in every engine Open, S1.5.7 one-call answer,
-                                 # S1.5.9 library/CLI split, S2.4e `latest` reduces by its own date, NULL-safe (ttr-server#434)
+ref = "grammar/v0.22.10"         # AU-hartland P3J (D-249, D-250, D-253): S2.4f — decide_return's manifest reads er.entity.date_dim;
+                                 # S1.5.10 — every emitted perform `keys` and outcome `key` is a key object ({<key column>: value})
+                                 # was 0.22.8 (P3H, D-238): S1.5.6 engine block, S1.5.7 one-call answer, S1.5.9, S2.4e `latest`
 
 [veles]
 image = "0.11.35"                # S8.6: grammar/metadata 0.21.1 (server-libs/v0.11.35), on bp-dsk since olymp#258 — readers first
