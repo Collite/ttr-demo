@@ -26,3 +26,7 @@ model/db/.schema-ref/
 
 # Ignore accidental old relative content-seed state.
 /hartland-n8n/
+
+# LD working artifacts (never committed)
+/build/
+/openmetadata/layout/build/

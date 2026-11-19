@@ -1,0 +1,265 @@
+{
+  "name": "ttr-model-steward-ttr-model-steward",
+  "fullyQualifiedName": "persona.ttr-model-steward",
+  "entityType": "Page",
+  "data": {
+    "pages": [
+      {
+        "tabs": [
+          {
+            "id": "overview",
+            "name": "overview",
+            "layout": [
+              {
+                "h": 8,
+                "i": "KnowledgePanel.LeftPanel",
+                "w": 6,
+                "x": 0,
+                "y": 0,
+                "static": true,
+                "children": [
+                  {
+                    "h": 2,
+                    "i": "KnowledgePanel.Description",
+                    "w": 1,
+                    "x": 0,
+                    "y": 0,
+                    "static": false
+                  },
+                  {
+                    "h": 3,
+                    "i": "KnowledgePanel.RelatedTerms",
+                    "w": 1,
+                    "x": 0,
+                    "y": 1,
+                    "static": false
+                  },
+                  {
+                    "h": 1.5,
+                    "i": "KnowledgePanel.Synonyms",
+                    "w": 0.5,
+                    "x": 0,
+                    "y": 2,
+                    "static": false
+                  },
+                  {
+                    "h": 1.5,
+                    "i": "KnowledgePanel.Tags",
+                    "w": 0.5,
+                    "x": 3,
+                    "y": 2,
+                    "static": false
+                  }
+                ]
+              },
+              {
+                "h": 3.5,
+                "i": "KnowledgePanel.CustomProperties",
+                "w": 2,
+                "x": 6,
+                "y": 0,
+                "static": false
+              },
+              {
+                "h": 1.5,
+                "i": "KnowledgePanel.WorkflowHistory",
+                "w": 2,
+                "x": 6,
+                "y": 1,
+                "static": false
+              },
+              {
+                "h": 1.5,
+                "i": "KnowledgePanel.Reviewer",
+                "w": 2,
+                "x": 6,
+                "y": 2,
+                "static": false
+              },
+              {
+                "h": 1.5,
+                "i": "KnowledgePanel.Owner",
+                "w": 2,
+                "x": 6,
+                "y": 3,
+                "static": false
+              },
+              {
+                "h": 1.5,
+                "i": "KnowledgePanel.Domain",
+                "w": 2,
+                "x": 6,
+                "y": 4,
+                "static": false
+              }
+            ],
+            "editable": true,
+            "displayName": "Overview"
+          },
+          {
+            "id": "glossary_terms",
+            "name": "glossary_terms",
+            "layout": [],
+            "editable": false,
+            "displayName": "Narrower terms"
+          },
+          {
+            "id": "assets",
+            "name": "assets",
+            "layout": [],
+            "editable": false,
+            "displayName": "Bound data"
+          },
+          {
+            "id": "relations_graph",
+            "name": "relations_graph",
+            "layout": [],
+            "editable": false,
+            "displayName": "Model map"
+          },
+          {
+            "id": "activity_feed",
+            "name": "activity_feed",
+            "layout": [],
+            "editable": false,
+            "displayName": "Changes"
+          },
+          {
+            "id": "custom_properties",
+            "name": "custom_properties",
+            "layout": [],
+            "editable": false,
+            "displayName": "Custom properties"
+          }
+        ],
+        "layout": {},
+        "pageType": "GlossaryTerm",
+        "entityType": "Page",
+        "knowledgePanels": []
+      }
+    ],
+    "navigation": [
+      {
+        "id": "/my-data",
+        "title": "Home",
+        "pageId": "/my-data",
+        "children": [],
+        "isHidden": false
+      },
+      {
+        "id": "governance",
+        "title": "Model",
+        "pageId": "governance",
+        "children": [
+          {
+            "id": "/glossary",
+            "title": "Concepts and entities",
+            "pageId": "/glossary",
+            "children": [],
+            "isHidden": false
+          },
+          {
+            "id": "/governance/ontology",
+            "title": "Model map",
+            "pageId": "/governance/ontology",
+            "children": [],
+            "isHidden": false
+          },
+          {
+            "id": "/metrics",
+            "title": "Measures",
+            "pageId": "/metrics",
+            "children": [],
+            "isHidden": false
+          },
+          {
+            "id": "/tags",
+            "title": "Classification",
+            "pageId": "/tags",
+            "children": [],
+            "isHidden": true
+          },
+          {
+            "id": "/column-bulk-operations",
+            "title": "Column Bulk Operations",
+            "pageId": "/column-bulk-operations",
+            "children": [],
+            "isHidden": true
+          },
+          {
+            "id": "/workflows",
+            "title": "Workflows",
+            "pageId": "/workflows",
+            "children": [],
+            "isHidden": true
+          }
+        ],
+        "isHidden": false
+      },
+      {
+        "id": "/explore",
+        "title": "Data",
+        "pageId": "/explore",
+        "children": [],
+        "isHidden": false
+      },
+      {
+        "id": "/data-marketplace-section",
+        "title": "Areas",
+        "pageId": "/data-marketplace-section",
+        "children": [
+          {
+            "id": "/domain",
+            "title": "Domains",
+            "pageId": "/domain",
+            "children": [],
+            "isHidden": false
+          },
+          {
+            "id": "/data-marketplace",
+            "title": "Overview",
+            "pageId": "/data-marketplace",
+            "children": [],
+            "isHidden": true
+          },
+          {
+            "id": "/dataProduct",
+            "title": "Data Products",
+            "pageId": "/dataProduct",
+            "children": [],
+            "isHidden": true
+          }
+        ],
+        "isHidden": false
+      },
+      {
+        "id": "/lineage",
+        "title": "Lineage",
+        "pageId": "/lineage",
+        "children": [],
+        "isHidden": true
+      },
+      {
+        "id": "/observability",
+        "title": "Observability",
+        "pageId": "/observability",
+        "children": [],
+        "isHidden": true
+      },
+      {
+        "id": "/data-insights",
+        "title": "Insights",
+        "pageId": "/data-insights",
+        "children": [],
+        "isHidden": true
+      },
+      {
+        "id": "/context-center",
+        "title": "Context Center",
+        "pageId": "/context-center",
+        "children": [],
+        "isHidden": true
+      }
+    ]
+  }
+}

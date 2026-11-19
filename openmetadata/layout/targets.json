@@ -1,0 +1,4 @@
+{
+  "bp-dsk": {"address": "https://openmetadata.192-168-1-38.nip.io", "world": "demo", "enabled": true},
+  "hartland": {"address": "https://openmetadata.hartland.collite.cz", "world": "hartland", "enabled": false}
+}

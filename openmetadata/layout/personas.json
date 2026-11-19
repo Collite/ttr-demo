@@ -1,0 +1,14 @@
+[
+  {
+    "name": "ttr-model-steward",
+    "displayName": "Model steward"
+  },
+  {
+    "name": "ttr-model-reader",
+    "displayName": "Model reader"
+  },
+  {
+    "name": "ttr-stock-view",
+    "displayName": "Stock view"
+  }
+]

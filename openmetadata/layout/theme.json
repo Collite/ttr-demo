@@ -1,0 +1,15 @@
+{
+  "customTheme": {
+    "primaryColor": "#16283F",
+    "panelBackgroundColor": "#16283F",
+    "warningColor": "#F2A200",
+    "selectedColor": "",
+    "hoverColor": ""
+  },
+  "customLogoConfig": {
+    "customLogoUrlPath": "brand/tatrman-lockup.svg",
+    "customMonogramUrlPath": "brand/tatrman-mark.svg",
+    "customFaviconUrlPath": "brand/tatrman-mark.svg"
+  },
+  "imageSkips": {}
+}
