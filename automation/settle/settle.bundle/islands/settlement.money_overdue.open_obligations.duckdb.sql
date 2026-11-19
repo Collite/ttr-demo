@@ -2,20 +2,35 @@ SELECT "t"."line_id", "t"."obligation_id", "t"."kind", "t"."due", 'money_overdue
 FROM (SELECT "p_927a867d"."line_id", "p_53d4630f"."id" AS "obligation_id", "p_53d4630f"."kind", "p_53d4630f"."due"
         FROM "p_927a867d"
             INNER JOIN "p_53d4630f" ON "p_53d4630f"."entity" = 'er.entity.return_request_line' AND "p_53d4630f"."key" = '{"line_id":' || CAST("p_927a867d"."line_id" AS VARCHAR(65536)) || '}') AS "t"
-    INNER JOIN (SELECT "line_id"
-        FROM (SELECT "p_202d930b"."line_id", "p_202d930b"."request_number", "p_202d930b"."item", "p_202d930b"."quantity", "p_202d930b"."way", "p_202d930b"."customer", "p_202d930b"."credit_note_id", "p_202d930b"."issued_date", "p_202d930b"."payment_id", "p_202d930b"."paid_date", "p_202d930b"."shipment_id", "p_202d930b"."shipped_date", "t6"."max_late", "t6"."kinds_open"
-                FROM "p_202d930b"
-                    LEFT JOIN (SELECT "t0"."line_id", MAX(CASE WHEN "t0"."due" IS NULL THEN NULL ELSE COALESCE("t4"."_ttrp_n_n20_0", 0) END) AS "max_late", COUNT("t0"."kind") AS "kinds_open"
-                        FROM (SELECT "p_927a867d0"."line_id", "p_53d4630f0"."id" AS "obligation_id", "p_53d4630f0"."kind", "p_53d4630f0"."due"
-                                FROM "p_927a867d" AS "p_927a867d0"
-                                    INNER JOIN "p_53d4630f" AS "p_53d4630f0" ON "p_53d4630f0"."entity" = 'er.entity.return_request_line' AND "p_53d4630f0"."key" = '{"line_id":' || CAST("p_927a867d0"."line_id" AS VARCHAR(65536)) || '}') AS "t0"
-                            LEFT JOIN (SELECT "t2"."due" AS "_ttrp_k_n20_0_due", COUNT("p_7e21ab69"."_ttrp_d_n20_0") AS "_ttrp_n_n20_0"
-                                FROM (SELECT "p_53d4630f1"."due"
-                                        FROM "p_927a867d" AS "p_927a867d1"
-                                            INNER JOIN "p_53d4630f" AS "p_53d4630f1" ON "p_53d4630f1"."entity" = 'er.entity.return_request_line' AND "p_53d4630f1"."key" = '{"line_id":' || CAST("p_927a867d1"."line_id" AS VARCHAR(65536)) || '}'
-                                        GROUP BY "p_53d4630f1"."due") AS "t2"
-                                    INNER JOIN "p_7e21ab69" ON "t2"."due" < "p_7e21ab69"."_ttrp_d_n20_0" AND "p_7e21ab69"."_ttrp_d_n20_0" <= :as_of
-                                GROUP BY "t2"."due") AS "t4" ON "t0"."due" = "t4"."_ttrp_k_n20_0_due"
-                        GROUP BY "t0"."line_id") AS "t6" ON "p_202d930b"."line_id" = "t6"."line_id") AS "t7"
-        WHERE "t7"."max_late" > 0
-        GROUP BY "line_id") AS "t10" ON "t"."line_id" = "t10"."line_id"
+    INNER JOIN (SELECT "t14"."line_id"
+        FROM (SELECT "t11"."line_id", "t11"."request_number", "t11"."item", "t11"."quantity", "t11"."way", "t11"."customer", "t11"."credit_note_id", "t11"."issued_date", "t11"."payment_id", "t11"."paid_date", "t11"."shipment_id", "t11"."shipped_date", "t11"."max_late", "t11"."kinds_open", "t11"."credit_note_open", "t13"."payment_open"
+                FROM (SELECT "t8"."line_id", "t8"."request_number", "t8"."item", "t8"."quantity", "t8"."way", "t8"."customer", "t8"."credit_note_id", "t8"."issued_date", "t8"."payment_id", "t8"."paid_date", "t8"."shipment_id", "t8"."shipped_date", "t8"."max_late", "t8"."kinds_open", "t10"."credit_note_open"
+                        FROM (SELECT *
+                                FROM (SELECT "p_202d930b"."line_id", "p_202d930b"."request_number", "p_202d930b"."item", "p_202d930b"."quantity", "p_202d930b"."way", "p_202d930b"."customer", "p_202d930b"."credit_note_id", "p_202d930b"."issued_date", "p_202d930b"."payment_id", "p_202d930b"."paid_date", "p_202d930b"."shipment_id", "p_202d930b"."shipped_date", "t6"."max_late", "t6"."kinds_open"
+                                        FROM "p_202d930b"
+                                            LEFT JOIN (SELECT "t0"."line_id", MAX(CASE WHEN "t0"."due" IS NULL THEN NULL ELSE COALESCE("t4"."_ttrp_n_n20_0", 0) END) AS "max_late", COUNT("t0"."kind") AS "kinds_open"
+                                                FROM (SELECT "p_927a867d0"."line_id", "p_53d4630f0"."id" AS "obligation_id", "p_53d4630f0"."kind", "p_53d4630f0"."due"
+                                                        FROM "p_927a867d" AS "p_927a867d0"
+                                                            INNER JOIN "p_53d4630f" AS "p_53d4630f0" ON "p_53d4630f0"."entity" = 'er.entity.return_request_line' AND "p_53d4630f0"."key" = '{"line_id":' || CAST("p_927a867d0"."line_id" AS VARCHAR(65536)) || '}') AS "t0"
+                                                    LEFT JOIN (SELECT "t2"."due" AS "_ttrp_k_n20_0_due", COUNT("p_7e21ab69"."_ttrp_d_n20_0") AS "_ttrp_n_n20_0"
+                                                        FROM (SELECT "p_53d4630f1"."due"
+                                                                FROM "p_927a867d" AS "p_927a867d1"
+                                                                    INNER JOIN "p_53d4630f" AS "p_53d4630f1" ON "p_53d4630f1"."entity" = 'er.entity.return_request_line' AND "p_53d4630f1"."key" = '{"line_id":' || CAST("p_927a867d1"."line_id" AS VARCHAR(65536)) || '}'
+                                                                GROUP BY "p_53d4630f1"."due") AS "t2"
+                                                            INNER JOIN "p_7e21ab69" ON "t2"."due" < "p_7e21ab69"."_ttrp_d_n20_0" AND "p_7e21ab69"."_ttrp_d_n20_0" <= :as_of
+                                                        GROUP BY "t2"."due") AS "t4" ON "t0"."due" = "t4"."_ttrp_k_n20_0_due"
+                                                GROUP BY "t0"."line_id") AS "t6" ON "p_202d930b"."line_id" = "t6"."line_id") AS "t7"
+                                WHERE "t7"."max_late" > 0) AS "t8"
+                            LEFT JOIN (SELECT "p_927a867d2"."line_id", COUNT("p_1943c707"."kind") AS "credit_note_open"
+                                FROM "p_927a867d" AS "p_927a867d2"
+                                    INNER JOIN "p_1943c707" ON "p_1943c707"."entity" = 'er.entity.return_request_line' AND "p_1943c707"."key" = '{"line_id":' || CAST("p_927a867d2"."line_id" AS VARCHAR(65536)) || '}'
+                                GROUP BY "p_927a867d2"."line_id") AS "t10" ON "t8"."line_id" = "t10"."line_id") AS "t11"
+                    LEFT JOIN (SELECT "p_927a867d3"."line_id", COUNT("p_5a31f3a2"."kind") AS "payment_open"
+                        FROM "p_927a867d" AS "p_927a867d3"
+                            INNER JOIN "p_5a31f3a2" ON "p_5a31f3a2"."entity" = 'er.entity.return_request_line' AND "p_5a31f3a2"."key" = '{"line_id":' || CAST("p_927a867d3"."line_id" AS VARCHAR(65536)) || '}'
+                        GROUP BY "p_927a867d3"."line_id") AS "t13" ON "t11"."line_id" = "t13"."line_id") AS "t14"
+            LEFT JOIN (SELECT "p_927a867d4"."line_id", COUNT("p_2e30a994"."kind") AS "replacement_open"
+                FROM "p_927a867d" AS "p_927a867d4"
+                    INNER JOIN "p_2e30a994" ON "p_2e30a994"."entity" = 'er.entity.return_request_line' AND "p_2e30a994"."key" = '{"line_id":' || CAST("p_927a867d4"."line_id" AS VARCHAR(65536)) || '}'
+                GROUP BY "p_927a867d4"."line_id") AS "t16" ON "t14"."line_id" = "t16"."line_id"
+        GROUP BY "t14"."line_id") AS "t18" ON "t"."line_id" = "t18"."line_id"

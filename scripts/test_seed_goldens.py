@@ -9,7 +9,9 @@ from __future__ import annotations
 import importlib.util
 import contextlib
 import io
+import json
 import re
+import sqlite3
 import shutil
 import tempfile
 import unittest
@@ -94,12 +96,15 @@ class GoldenCases(unittest.TestCase):
         self.assertLessEqual(len(case['keys']), 5)
         self.assertEqual(case['expected']['verdicts'], [])
 
-    def test_settlement_case_keeps_overlapping_outcomes_for_the_same_key(self) -> None:
+    def test_historical_settlement_documents_do_not_fulfil_without_governed_obligations(self) -> None:
         case = yaml.safe_load((AUTOMATION / 'settle/tests/credit-note-issued.yaml').read_text())
         routes_by_key = {}
         for verdict in case['expected']['verdicts']:
             routes_by_key.setdefault(verdict['key'], set()).add(verdict['route'])
-        self.assertTrue(any({'credit_note_issued', 'money_overdue'} <= routes for routes in routes_by_key.values()))
+        self.assertTrue(any('money_overdue' in routes for routes in routes_by_key.values()))
+        for source in (AUTOMATION / 'settle/tests').glob('*.yaml'):
+            verdicts = yaml.safe_load(source.read_text())['expected']['verdicts']
+            self.assertFalse({'credit_note_issued', 'money_received', 'goods_shipped'} & {v['route'] for v in verdicts})
 
     def test_every_case_is_a_contracts_7_case(self) -> None:
         for path in self.cases:
@@ -215,6 +220,93 @@ class PinnedSeedPreservation(unittest.TestCase):
                 self.assertEqual(status, 2)
                 self.assertIn(str(pinned.relative_to(self.root)), error)
                 self.assertEqual({p: p.read_bytes() for p in self.root.rglob('*.yaml')}, before)
+
+
+class SettleObligationGate(unittest.TestCase):
+    """Execute the emitted leaf reads and combine SQL against isolated in-memory tables."""
+
+    bundle = AUTOMATION / 'settle/settle.bundle'
+
+    def setUp(self) -> None:
+        self.db = sqlite3.connect(':memory:')
+        self.addCleanup(self.db.close)
+        schemas = {
+            'return_request_line': 'line_id request_number line_no item quantity unit_price reason requested_resolution requested_variant state way customer',
+            'return_request': 'request_number customer order_number channel requested_date state',
+            'credit_note': 'credit_note_id line_id customer issued_date amount status',
+            'refund_payment': 'payment_id credit_note_id paid_date amount',
+            'replacement_shipment': 'shipment_id line_id shipped_date',
+            'obligation': 'id recipe run entity key kind due state fulfilled_by fulfilled_at created_at',
+            'date_dim': 'cal_date working_day',
+        }
+        for name, columns in schemas.items():
+            self.db.execute(f'CREATE TABLE "{name}" ({", ".join(columns.split())})')
+        self.db.execute("INSERT INTO return_request_line (line_id, request_number, state, way) VALUES (1, 10, 'settling', 'refund_no_return')")
+        self.db.execute('INSERT INTO return_request (request_number, customer) VALUES (10, 20)')
+        self.db.execute("INSERT INTO credit_note (credit_note_id, line_id, issued_date) VALUES (30, 1, '2026-11-19')")
+        self.db.execute("INSERT INTO refund_payment (payment_id, credit_note_id, paid_date) VALUES (40, 30, '2026-11-19')")
+        self.db.execute("INSERT INTO replacement_shipment (shipment_id, line_id, shipped_date) VALUES (50, 1, '2026-11-19')")
+        for part in (self.bundle / 'parts').glob('*.sql'):
+            sql = part.read_text().replace(':as_of', "'2026-11-19'")
+            self.db.execute(f'CREATE TEMP VIEW "{part.stem}" AS {sql}')
+
+    def obligation(self, kind, state='open', entity='er.entity.return_request_line', key='{"line_id":1}'):
+        self.db.execute('INSERT INTO obligation (id, entity, key, kind, state) VALUES (?, ?, ?, ?, ?)',
+                        (str(self.db.total_changes), entity, key, kind, state))
+
+    def routes(self):
+        manifest = json.loads((self.bundle / 'manifest.json').read_text())
+        outputs = next(i for i in manifest['islands'] if i['name'] == 'settlement')['outputs']
+        result = {}
+        for output in outputs:
+            if '.' not in output['port']:
+                sql = (self.bundle / output['file']).read_text()
+                result[output['port']] = self.db.execute(sql, {'as_of': '2026-11-19'}).fetchall()
+        return result
+
+    def test_historical_documents_do_not_fulfil(self):
+        routes = self.routes()
+        for route in ('credit_note_issued', 'money_received', 'goods_shipped'):
+            self.assertEqual(routes[route], [])
+        self.assertEqual(len(routes['closed']), 1)
+
+    def test_each_kind_matches_only_its_route_in_every_active_state(self):
+        mapping = {'credit_note': 'credit_note_issued', 'payment': 'money_received', 'replacement': 'goods_shipped'}
+        for kind, expected in mapping.items():
+            for state in ('open', 'overdue', 'reopened'):
+                with self.subTest(kind=kind, state=state):
+                    self.db.execute('DELETE FROM obligation')
+                    self.obligation(kind, state)
+                    routes = self.routes()
+                    for route in mapping.values():
+                        self.assertEqual(len(routes[route]), int(route == expected))
+
+    def test_closed_wrong_kind_and_noncanonical_identities_do_not_fulfil(self):
+        for kind in ('credit_note', 'payment', 'replacement'):
+            for state in ('fulfilled', 'cancelled'):
+                self.obligation(kind, state)
+            self.obligation(kind, entity='return_request_line')
+            self.obligation(kind, key='1')
+            self.obligation(kind, key='{"line_id":2}')
+        self.obligation('inbound')
+        for route in ('credit_note_issued', 'money_received', 'goods_shipped'):
+            self.assertEqual(self.routes()[route], [])
+
+    def test_multiple_kinds_and_duplicate_obligations_do_not_multiply_routes(self):
+        for kind in ('credit_note', 'payment', 'replacement'):
+            self.obligation(kind)
+            self.obligation(kind, 'overdue')
+        routes = self.routes()
+        for route in ('credit_note_issued', 'money_received', 'goods_shipped', 'closed'):
+            self.assertEqual(len(routes[route]), 1)
+
+    def test_obligation_without_document_does_not_fulfil(self):
+        for kind in ('credit_note', 'payment', 'replacement'):
+            self.obligation(kind)
+        for table in ('credit_note', 'refund_payment', 'replacement_shipment'):
+            self.db.execute(f'DELETE FROM {table}')
+        for route in ('credit_note_issued', 'money_received', 'goods_shipped'):
+            self.assertEqual(self.routes()[route], [])
 
 
 if __name__ == "__main__":
