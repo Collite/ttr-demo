@@ -1,0 +1,246 @@
+{
+  "accounts": [
+    {
+      "name": "jana.dvorakova",
+      "displayName": "Jana Dvořáková",
+      "email": "jana.dvorakova@hartland.example",
+      "isBot": false,
+      "persona": "ttr-model-reader"
+    },
+    {
+      "name": "petr.novak",
+      "displayName": "Petr Novák",
+      "email": "petr.novak@hartland.example",
+      "isBot": false,
+      "persona": "ttr-model-steward"
+    },
+    {
+      "name": "tatrman-maintainer",
+      "displayName": "tatrman-maintainer",
+      "email": "tatrman-maintainer@hartland.example",
+      "isBot": true
+    }
+  ],
+  "team": {
+    "name": "sales-team",
+    "displayName": "Sales team",
+    "teamType": "Group"
+  },
+  "domains": [
+    {
+      "name": "Sales",
+      "displayName": "Sales",
+      "description": "Sales demo domain.",
+      "domainType": "Aggregate"
+    },
+    {
+      "name": "Returns",
+      "displayName": "Returns",
+      "description": "Returns demo domain.",
+      "domainType": "Aggregate"
+    },
+    {
+      "name": "Inventory",
+      "displayName": "Inventory",
+      "description": "Inventory demo domain.",
+      "domainType": "Aggregate"
+    },
+    {
+      "name": "OrdersAndInvoices",
+      "displayName": "Orders and invoices",
+      "description": "Orders and invoices demo domain.",
+      "domainType": "Aggregate"
+    }
+  ],
+  "terms": [
+    {
+      "qname": "cn.role.Customer",
+      "glossary": "Concepts",
+      "fields": {
+        "description": "Someone who places orders with Hartland. A party becomes a customer by the event Order placed.",
+        "synonyms": [
+          "customer",
+          "customers",
+          "client",
+          "zákazník",
+          "zákazníci",
+          "klient"
+        ],
+        "extension": {
+          "ttrKind": "role"
+        },
+        "style": {
+          "color": "#F2A200"
+        },
+        "owners": [
+          "sales-team"
+        ],
+        "domains": [
+          "Sales"
+        ]
+      },
+      "reviewers": [
+        "petr.novak"
+      ]
+    },
+    {
+      "qname": "cn.event.Sale",
+      "glossary": "Concepts",
+      "fields": {
+        "extension": {
+          "ttrKind": "event"
+        },
+        "style": {
+          "color": "#F2A200"
+        },
+        "domains": [
+          "Sales"
+        ]
+      }
+    },
+    {
+      "qname": "cn.event.OrderPlaced",
+      "glossary": "Concepts",
+      "fields": {
+        "extension": {
+          "ttrKind": "event"
+        },
+        "style": {
+          "color": "#F2A200"
+        },
+        "domains": [
+          "Sales"
+        ]
+      }
+    },
+    {
+      "qname": "cn.phase.DebtorCustomer",
+      "glossary": "Concepts",
+      "fields": {
+        "extension": {
+          "ttrKind": "phase"
+        },
+        "parent": "cn.role.Customer"
+      }
+    },
+    {
+      "qname": "er.entity.customer",
+      "glossary": "Entities",
+      "fields": {
+        "style": {
+          "color": "#16283F"
+        },
+        "owners": [
+          "sales-team"
+        ],
+        "domains": [
+          "Sales"
+        ]
+      }
+    }
+  ],
+  "table": {
+    "fqn": "hartland-pg.hartland_cz.public.customer",
+    "qname": "db.dbo.customer",
+    "fields": {
+      "owners": [
+        "sales-team"
+      ],
+      "domains": [
+        "Sales"
+      ]
+    }
+  },
+  "metric": {
+    "qname": "md.measure.revenue",
+    "fields": {
+      "description": "What customers paid for the goods on a sale line.",
+      "relatedMetrics": [
+        "md.measure.quantity",
+        "md.measure.orderCount",
+        "md.measure.lineCount",
+        "md.measure.returnAmount"
+      ],
+      "glossaryTerm": "cn.event.Sale",
+      "domains": [
+        "Sales"
+      ]
+    }
+  },
+  "relations": [
+    [
+      "cn.event.Sale",
+      "involves",
+      "cn.role.Customer"
+    ],
+    [
+      "cn.phase.DebtorCustomer",
+      "phaseOf",
+      "cn.role.Customer"
+    ],
+    [
+      "cn.role.Customer",
+      "definedBy",
+      "cn.event.OrderPlaced"
+    ],
+    [
+      "er.entity.customer",
+      "grounds",
+      "cn.role.Customer"
+    ]
+  ],
+  "tasks": [
+    {
+      "value": "klient",
+      "why": "Our contracts say klient.",
+      "stage": "published",
+      "status": "Completed",
+      "comments": [
+        [
+          "petr.novak",
+          "Agreed."
+        ],
+        [
+          "tatrman-maintainer",
+          "Model check passed."
+        ],
+        [
+          "tatrman-maintainer",
+          "Published with the model."
+        ]
+      ]
+    },
+    {
+      "value": "kupující",
+      "why": "The web shop says kupující.",
+      "stage": "publication",
+      "status": "InProgress",
+      "comments": [
+        [
+          "petr.novak",
+          "This is how the business says it."
+        ],
+        [
+          "tatrman-maintainer",
+          "Opened a pull request in the model repository: one line in the Czech lexicon."
+        ],
+        [
+          "tatrman-maintainer",
+          "Model check: the model loads, the lints pass, and no agreed question of the Sales area changed its grounding. Waiting for the model owner to merge."
+        ]
+      ]
+    },
+    {
+      "value": "odběratel",
+      "why": "Asked in the Golem's chat; the asker confirmed it means Customer.",
+      "stage": "review",
+      "status": "Open",
+      "comments": []
+    }
+  ],
+  "announcement": {
+    "name": "ttr-model-published",
+    "displayName": "Model published",
+    "description": "Published with the model: the synonym klient for Customer."
+  }
+}

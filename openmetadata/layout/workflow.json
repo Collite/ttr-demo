@@ -1,0 +1,174 @@
+{
+  "name": "ttrSuggestionWorkflow",
+  "displayName": "Suggestion",
+  "description": "A suggestion to change the model: business review, then publication with the model.",
+  "config": {
+    "storeStageStatus": true
+  },
+  "trigger": {
+    "type": "noOp",
+    "config": {},
+    "output": [
+      "relatedEntity",
+      "updatedBy"
+    ]
+  },
+  "nodes": [
+    {
+      "subType": "startEvent",
+      "type": "startEvent",
+      "name": "SuggestionStart",
+      "displayName": "Suggested"
+    },
+    {
+      "subType": "userApprovalTask",
+      "type": "userTask",
+      "name": "BusinessReview",
+      "displayName": "Business review",
+      "config": {
+        "assignees": {
+          "addReviewers": true,
+          "addOwners": false,
+          "candidates": [],
+          "emptyAssigneeStrategy": "none"
+        },
+        "approvalThreshold": 1,
+        "rejectionThreshold": 1,
+        "stageId": "review",
+        "stageDisplayName": "Business review",
+        "taskStatus": "Open",
+        "assigneeStrategy": "reviewers-and-assignees",
+        "transitionMetadata": [
+          {
+            "id": "approve",
+            "label": "Approve",
+            "targetStageId": "publication",
+            "targetTaskStatus": "InProgress",
+            "requiresComment": false
+          },
+          {
+            "id": "reject",
+            "label": "Reject",
+            "targetStageId": "rejected",
+            "targetTaskStatus": "Rejected",
+            "resolutionType": "Rejected",
+            "requiresComment": true
+          }
+        ]
+      },
+      "input": [
+        "relatedEntity"
+      ],
+      "inputNamespaceMap": {
+        "relatedEntity": "global"
+      },
+      "output": [
+        "updatedBy"
+      ],
+      "branches": [
+        "true",
+        "false"
+      ]
+    },
+    {
+      "subType": "userApprovalTask",
+      "type": "userTask",
+      "name": "Publication",
+      "displayName": "Awaiting publication",
+      "config": {
+        "assignees": {
+          "addReviewers": false,
+          "addOwners": false,
+          "candidates": [
+            {
+              "name": "tatrman-maintainer",
+              "type": "user"
+            }
+          ],
+          "emptyAssigneeStrategy": "none"
+        },
+        "approvalThreshold": 1,
+        "rejectionThreshold": 1,
+        "stageId": "publication",
+        "stageDisplayName": "Awaiting publication",
+        "taskStatus": "InProgress",
+        "assigneeStrategy": "assignees",
+        "transitionMetadata": [
+          {
+            "id": "publish",
+            "label": "Published with the model",
+            "targetStageId": "published",
+            "targetTaskStatus": "Completed",
+            "resolutionType": "Completed",
+            "requiresComment": false
+          },
+          {
+            "id": "refuse",
+            "label": "Refused by the model check",
+            "targetStageId": "refused",
+            "targetTaskStatus": "Rejected",
+            "resolutionType": "Rejected",
+            "requiresComment": true
+          }
+        ]
+      },
+      "input": [
+        "relatedEntity"
+      ],
+      "inputNamespaceMap": {
+        "relatedEntity": "global"
+      },
+      "output": [
+        "updatedBy"
+      ],
+      "branches": [
+        "true",
+        "false"
+      ]
+    },
+    {
+      "subType": "endEvent",
+      "type": "endEvent",
+      "name": "PublishedEnd",
+      "displayName": "Published"
+    },
+    {
+      "subType": "endEvent",
+      "type": "endEvent",
+      "name": "RejectedEnd",
+      "displayName": "Rejected"
+    },
+    {
+      "subType": "endEvent",
+      "type": "endEvent",
+      "name": "RefusedEnd",
+      "displayName": "Refused by the model check"
+    }
+  ],
+  "edges": [
+    {
+      "from": "SuggestionStart",
+      "to": "BusinessReview"
+    },
+    {
+      "from": "BusinessReview",
+      "to": "Publication",
+      "condition": "approve"
+    },
+    {
+      "from": "BusinessReview",
+      "to": "RejectedEnd",
+      "condition": "reject"
+    },
+    {
+      "from": "Publication",
+      "to": "PublishedEnd",
+      "condition": "publish"
+    },
+    {
+      "from": "Publication",
+      "to": "RefusedEnd",
+      "condition": "refuse"
+    }
+  ]
+}
