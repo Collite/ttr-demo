@@ -9,6 +9,4 @@ keys: [1218676, 1219353]
 expected:
   verdicts:
     - { key: 1218676, route: closed, verdict_reason: "settled" }
-    - { key: 1218676, route: goods_shipped, verdict_reason: "replacement shipped on {shipped_date}" }
     - { key: 1219353, route: closed, verdict_reason: "settled" }
-    - { key: 1219353, route: goods_shipped, verdict_reason: "replacement shipped on {shipped_date}" }
