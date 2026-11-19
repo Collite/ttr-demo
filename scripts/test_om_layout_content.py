@@ -288,6 +288,33 @@ class ApprovalTests(unittest.TestCase):
         self.fake, self.output = FakeCatalog(), []
         self.layout = make_layout(self.fake, env={}, output=self.output.append)
 
+    def test_apply_waits_for_asynchronously_created_reviewer_approval(self):
+        class DelayedApproval(FakeCatalog):
+            pending = None
+            polls = 0
+            def write(self, method, path, body=None):
+                result = super().write(method, path, body)
+                if method == 'PATCH' and path.startswith('glossaryTerms/') and any(
+                        p['path'] == '/reviewers' and p.get('value') for p in body):
+                    self.pending = self.values.pop('tasks/name/APPROVAL')
+                    self.customer_key = next(k for k,v in self.values.items() if v.get('id') == path.split('/')[1])
+                    self.values[self.customer_key]['entityStatus'] = 'Approved'
+                return result
+            def get(self, path, missing=False):
+                if self.pending and path.startswith('glossaryTerms?'):
+                    self.polls += 1
+                    if self.polls == 3:
+                        self.values['tasks/name/APPROVAL'] = self.pending
+                        self.values[self.customer_key]['entityStatus'] = 'In Review'
+                        self.pending = None
+                return super().get(path, missing)
+        from unittest.mock import patch
+        fake = DelayedApproval('hartland')
+        with patch('om_layout_content.time.sleep'):
+            self.assertEqual(0, make_layout(fake, env={}, output=lambda _:None).run('apply'))
+        self.assertEqual('Approved', fake.values['tasks/name/APPROVAL']['status'])
+        self.assertEqual(3, fake.polls)
+
     def test_reviewers_raise_an_approval_and_apply_approves_once(self):
         self.assertEqual(0, self.layout.run('apply'))
         customer = self.layout.customer()

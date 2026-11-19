@@ -377,7 +377,18 @@ class Content:
             desired = {'reviewers': []}
         else:
             desired = {'reviewers': [self.reference('users', 'petr.novak', 'user')]}
-        yield self.patch_fields('Customer reviewer Petr', 'glossaryTerms', customer, desired)
+        operation = self.patch_fields('Customer reviewer Petr', 'glossaryTerms', customer, desired)
+        if desired['reviewers'] and operation.action != 'unchanged':
+            def write_reviewer():
+                self.catalog.write(operation.method, operation.path, operation.body)
+                # OM raises the status-approval task asynchronously after the PATCH.
+                for _ in range(40):
+                    if self.customer().get('entityStatus') == 'In Review' and self.approval_tasks():
+                        return
+                    time.sleep(.25)
+                raise self.error('Customer reviewer approval task did not become ready')
+            operation.executor = write_reviewer
+        yield operation
 
     def wait_customer_approved(self):
         for _ in range(40):
