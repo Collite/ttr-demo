@@ -9,6 +9,22 @@ import om_layout as om
 
 
 class AccountTests(unittest.TestCase):
+    def test_user_persona_references_include_names_for_server_sorting(self):
+        class NamedPersonas(FakeCatalog):
+            def write(self, method, path, body=None):
+                if method == 'PATCH' and path.startswith('users/'):
+                    for operation in body:
+                        if operation['path'] == '/personas':
+                            if any(not p.get('name') for p in operation['value']):
+                                raise AssertionError('OM sorts persona references by name')
+                return super().write(method, path, body)
+        fake = NamedPersonas('hartland')
+        layout = make_layout(fake, output=lambda _:None, env={})
+        self.assertEqual(0, layout.run('apply'))
+        # Exercise the existing-user update path as well as fresh account creation.
+        fake.values['users/name/petr.novak']['personas'] = []
+        self.assertEqual(0, layout.run('apply'))
+
     def test_plan_does_not_create_passwords_or_log_credentials(self):
         fake, output = FakeCatalog(), []
         layout = make_layout(fake, output=output.append, env={'OM_DEMO_PASSWORD': 'not-a-real-password'})
@@ -40,6 +56,41 @@ class FrozenContentTests(unittest.TestCase):
     def setUp(self):
         self.fake, self.output = FakeCatalog(), []
         self.layout = make_layout(self.fake, output=self.output.append, env={})
+
+    def test_missing_neighbours_skip_fields_and_relations_without_creating_replacements(self):
+        optional = ['cn.event.Sale', 'cn.event.OrderPlaced', 'cn.phase.DebtorCustomer',
+                    'er.entity.customer', 'db.dbo.customer', 'md.measure.revenue', 'md.measure.quantity']
+        for qname in optional:
+            with self.subTest(qname=qname):
+                fake, output = FakeCatalog('hartland'), []
+                key = next(k for k,v in fake.values.items() if v.get('extension',{}).get('ttrQname') == qname)
+                missing = fake.values.pop(key)
+                layout = make_layout(fake, output=output.append, env={})
+                self.assertEqual(0, layout.run('plan'))
+                self.assertIn('skip ' + qname + ': not in this catalog', output)
+                self.assertEqual([], fake.writes)
+                self.assertEqual(0, layout.run('apply'))
+                self.assertNotIn(key, fake.values)
+                self.assertFalse(any(w[1].split('?')[0].endswith('/' + missing['id']) for w in fake.writes))
+                self.assertFalse(any(w[0] == 'POST' and w[1] in ('glossaryTerms','tables','metrics') for w in fake.writes))
+                output.clear()
+                fake.writes.clear()
+                self.assertEqual(0, layout.run('verify'))
+                self.assertEqual(16, len(output))
+                self.assertTrue(any(line.startswith('ok ') and '; skip ' + qname + ': not in this catalog' in line for line in output))
+                self.assertEqual([], fake.writes)
+
+    def test_missing_customer_and_duplicate_neighbour_are_errors(self):
+        for qname in ('cn.role.Customer', 'cn.event.OrderPlaced'):
+            with self.subTest(qname=qname):
+                fake = FakeCatalog()
+                key = next(k for k,v in fake.values.items() if v.get('extension',{}).get('ttrQname') == qname)
+                if qname == 'cn.role.Customer':
+                    del fake.values[key]
+                else:
+                    fake.values[key + '-duplicate'] = dict(fake.values[key], id='duplicate')
+                with self.assertRaisesRegex(om.LayoutError, 'expected one projected term: ' + qname):
+                    make_layout(fake, output=lambda _:None).objects()
 
     def test_reviewers_follow_all_tasks_and_other_fields_precede_them(self):
         self.assertEqual(0, self.layout.run('apply'))
@@ -148,12 +199,28 @@ class FrozenContentTests(unittest.TestCase):
         if source.exists():
             self.assertEqual(source.read_bytes(), (self.layout.pack / 'change-1-golem-chat.html').read_bytes())
         self.layout.run('apply')
-        built = (self.layout.pack / 'build/change-1-golem-chat.html').read_text()
+        built = (self.layout.pack / 'build/bp-dsk/change-1-golem-chat.html').read_text()
         task = self.layout.task_for(self.layout.content['tasks'][2])
         self.assertIn('/glossary/demo%20Concepts.cn.role.Customer/activity_feed/tasks', built)
         self.assertIn(task['taskId'], built)
         self.assertNotIn('/tasks/' + task['taskId'], built)
         self.assertNotIn('{{TASK_', built)
+
+    def test_each_targets_chat_build_preserves_the_other_page(self):
+        fake = FakeCatalog()
+        for target in ('bp-dsk', 'hartland', 'bp-dsk'):
+            catalog = FakeCatalog(target)
+            catalog.pack = fake.pack
+            layout = make_layout(catalog, output=lambda _: None, env={})
+            other = 'hartland' if target == 'bp-dsk' else 'bp-dsk'
+            other_path = fake.pack / 'build' / other / 'change-1-golem-chat.html'
+            before = other_path.read_bytes() if other_path.exists() else None
+            self.assertEqual(0, layout.run('apply'))
+            built = (fake.pack / 'build' / target / 'change-1-golem-chat.html').read_text()
+            self.assertIn(om.ADDRESSES[target] + '/glossary/' + catalog.world + '%20Concepts', built)
+            self.assertNotIn(om.ADDRESSES[other], built)
+            if before is not None:
+                self.assertEqual(before, other_path.read_bytes())
 
 class ActorTests(unittest.TestCase):
     def test_person_and_bot_tokens_stay_in_memory_and_login_failure_uses_admin(self):
@@ -220,6 +287,33 @@ class ApprovalTests(unittest.TestCase):
     def setUp(self):
         self.fake, self.output = FakeCatalog(), []
         self.layout = make_layout(self.fake, env={}, output=self.output.append)
+
+    def test_apply_waits_for_asynchronously_created_reviewer_approval(self):
+        class DelayedApproval(FakeCatalog):
+            pending = None
+            polls = 0
+            def write(self, method, path, body=None):
+                result = super().write(method, path, body)
+                if method == 'PATCH' and path.startswith('glossaryTerms/') and any(
+                        p['path'] == '/reviewers' and p.get('value') for p in body):
+                    self.pending = self.values.pop('tasks/name/APPROVAL')
+                    self.customer_key = next(k for k,v in self.values.items() if v.get('id') == path.split('/')[1])
+                    self.values[self.customer_key]['entityStatus'] = 'Approved'
+                return result
+            def get(self, path, missing=False):
+                if self.pending and path.startswith('glossaryTerms?'):
+                    self.polls += 1
+                    if self.polls == 3:
+                        self.values['tasks/name/APPROVAL'] = self.pending
+                        self.values[self.customer_key]['entityStatus'] = 'In Review'
+                        self.pending = None
+                return super().get(path, missing)
+        from unittest.mock import patch
+        fake = DelayedApproval('hartland')
+        with patch('om_layout_content.time.sleep'):
+            self.assertEqual(0, make_layout(fake, env={}, output=lambda _:None).run('apply'))
+        self.assertEqual('Approved', fake.values['tasks/name/APPROVAL']['status'])
+        self.assertEqual(3, fake.polls)
 
     def test_reviewers_raise_an_approval_and_apply_approves_once(self):
         self.assertEqual(0, self.layout.run('apply'))

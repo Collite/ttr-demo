@@ -31,6 +31,13 @@ def subset(actual, desired, field=None):
 
 
 class Content:
+    def missing_object(self, qname):
+        if self.check_skips is not None:
+            self.check_skips.add(qname)
+        elif qname not in self.reported_missing:
+            self.output('skip ' + qname + ': not in this catalog')
+            self.reported_missing.add(qname)
+
     def listing(self, resource, fields='', **filters):
         items, after, seen = [], None, set()
         while True:
@@ -65,7 +72,11 @@ class Content:
 
     def reference(self, resource, name, kind):
         item = self.named(resource, name)
-        return ref(item, kind) if item else {'id': 'new:' + name, 'type': kind}
+        result = ref(item, kind) if item else {'id': 'new:' + name, 'type': kind}
+        if kind == 'persona':
+            # OM 2.0.6 sorts patched user personas by EntityReference.name.
+            result['name'] = name
+        return result
 
     def accounts_and_team(self):
         for person in self.content['accounts']:
@@ -153,7 +164,11 @@ class Content:
         for spec in self.content['terms']:
             matches = [t for t in all_terms if t.get('extension', {}).get('ttrQname') == spec['qname']
                        and t.get('glossary', {}).get('name') == world + ' ' + spec['glossary']]
-            self.require(len(matches) == 1, 'expected one projected term: ' + spec['qname'])
+            self.require(len(matches) <= 1, 'expected one projected term: ' + spec['qname'])
+            if not matches and spec['qname'] != 'cn.role.Customer':
+                self.missing_object(spec['qname'])
+                continue
+            self.require(bool(matches), 'expected one projected term: ' + spec['qname'])
             terms[spec['qname']] = matches[0]
         return terms
 
@@ -163,7 +178,10 @@ class Content:
     def metric_object(self, qname, metrics=None):
         matches = [m for m in (self.metric_objects() if metrics is None else metrics)
                    if m.get('extension', {}).get('ttrQname') == qname]
-        self.require(len(matches) == 1, 'expected one projected metric: ' + qname)
+        self.require(len(matches) <= 1, 'expected one projected metric: ' + qname)
+        if not matches:
+            self.missing_object(qname)
+            return None
         return matches[0]
 
     def fields(self, current, spec, terms):
@@ -177,28 +195,36 @@ class Content:
         if 'parent' in desired:
             desired['parent'] = ref(terms[desired['parent']], 'glossaryTerm')
         if 'relatedMetrics' in desired:
-            desired['relatedMetrics'] = [ref(self.metric_object(q), 'metric') for q in desired['relatedMetrics']]
+            metrics = [self.metric_object(q) for q in desired['relatedMetrics']]
+            desired['relatedMetrics'] = [ref(m, 'metric') for m in metrics if m is not None]
         if 'glossaryTerm' in desired:
-            sale = terms[desired.pop('glossaryTerm')]
-            kept = [t for t in current.get('tags', []) if t.get('tagFQN') != sale['fullyQualifiedName']]
-            desired['tags'] = kept + [{'tagFQN': sale['fullyQualifiedName'], 'source': 'Glossary',
-                                      'labelType': 'Manual', 'state': 'Confirmed'}]
+            sale = terms.get(desired.pop('glossaryTerm'))
+            if sale:
+                kept = [t for t in current.get('tags', []) if t.get('tagFQN') != sale['fullyQualifiedName']]
+                desired['tags'] = kept + [{'tagFQN': sale['fullyQualifiedName'], 'source': 'Glossary',
+                                          'labelType': 'Manual', 'state': 'Confirmed'}]
         return desired
 
     def content_except_reviewers(self):
         terms = self.objects()
         for spec in self.content['terms']:
+            if spec['qname'] not in terms:
+                continue
             current = terms[spec['qname']]
             desired = self.fields(current, spec, terms)
             yield self.patch_fields('term ' + spec['qname'], 'glossaryTerms', current, desired)
         spec = self.content['table']
         table = self.named('tables', spec['fqn'], 'extension,owners,domains')
-        self.require(table and table.get('extension', {}).get('ttrQname') == spec['qname'],
-                     'expected projected CZ customer table')
-        yield self.patch_fields('CZ customer table', 'tables', table, self.fields(table, spec, terms))
+        if table is None:
+            self.missing_object(spec['qname'])
+        else:
+            self.require(table.get('extension', {}).get('ttrQname') == spec['qname'],
+                         'expected projected CZ customer table')
+            yield self.patch_fields('CZ customer table', 'tables', table, self.fields(table, spec, terms))
         spec = self.content['metric']
         metric = self.metric_object(spec['qname'])
-        yield self.patch_fields('metric ' + spec['qname'], 'metrics', metric, self.fields(metric, spec, terms))
+        if metric is not None:
+            yield self.patch_fields('metric ' + spec['qname'], 'metrics', metric, self.fields(metric, spec, terms))
 
     def relation_value(self, current, target, relation_type):
         # Replace only the plain/owned edge of this pair, preserving every other edge.
@@ -217,6 +243,8 @@ class Content:
         for source, relation_type, target in self.content['relations']:
             # Re-read for every pair: patching one end hydrates the reciprocal end on OM.
             terms = self.objects()
+            if source not in terms or target not in terms:
+                continue
             for a, b, typ in [(source, target, relation_type),
                               (target, source, types[relation_type]['inverseRelation'])]:
                 current = self.named('glossaryTerms', terms[a]['fullyQualifiedName'], 'relatedTerms')
@@ -349,7 +377,18 @@ class Content:
             desired = {'reviewers': []}
         else:
             desired = {'reviewers': [self.reference('users', 'petr.novak', 'user')]}
-        yield self.patch_fields('Customer reviewer Petr', 'glossaryTerms', customer, desired)
+        operation = self.patch_fields('Customer reviewer Petr', 'glossaryTerms', customer, desired)
+        if desired['reviewers'] and operation.action != 'unchanged':
+            def write_reviewer():
+                self.catalog.write(operation.method, operation.path, operation.body)
+                # OM raises the status-approval task asynchronously after the PATCH.
+                for _ in range(40):
+                    if self.customer().get('entityStatus') == 'In Review' and self.approval_tasks():
+                        return
+                    time.sleep(.25)
+                raise self.error('Customer reviewer approval task did not become ready')
+            operation.executor = write_reviewer
+        yield operation
 
     def wait_customer_approved(self):
         for _ in range(40):
@@ -422,13 +461,16 @@ class Content:
 
     def chat_page(self):
         desired = self.chat_value()
-        path = self.pack / 'build/change-1-golem-chat.html'
+        path = self.chat_path()
         def build():
             self.require(desired is not None, 'chat task is missing')
-            path.parent.mkdir(exist_ok=True)
+            path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(desired)
         yield self.operation('offline chat page', '', '', None, path.read_text() if path.exists() else None,
                              desired or 'pending odběratel task', build)
+
+    def chat_path(self):
+        return self.pack / 'build' / self.target / 'change-1-golem-chat.html'
 
     def content_checks(self):
         def workflow():
@@ -459,7 +501,9 @@ class Content:
 
         def phase():
             terms = self.objects()
-            item = terms['cn.phase.DebtorCustomer']
+            item = terms.get('cn.phase.DebtorCustomer')
+            if item is None:
+                return True
             return subset(item.get('parent'), ref(terms['cn.role.Customer'], 'glossaryTerm'))
 
         def assets():
@@ -476,7 +520,7 @@ class Content:
                         and any(a['id'] == item['id'] for a in self.announcement_list()))
 
         def chat():
-            path = self.pack / 'build/change-1-golem-chat.html'
+            path = self.chat_path()
             wanted = self.chat_value()
             open_tasks = self.listing('tasks', 'about,payload',
                 aboutEntity=self.customer()['fullyQualifiedName'], statusGroup='open')

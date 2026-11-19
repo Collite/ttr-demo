@@ -1,7 +1,8 @@
 # OpenMetadata layout pack
 
-LD P1·S1.3, OpenMetadata 2.0.6. Stdlib Python only. The allow-list in `targets.json`
-enables bp-dsk; hartland is disabled until a showing is explicitly requested.
+LD P2·S2.1, OpenMetadata 2.0.6. Stdlib Python only. The allow-list in `targets.json`
+enables bp-dsk and the hartland showing called by Bora, both world `demo` after
+the Hartland projection repair (XM S3.4, AR D-83).
 Neither a pin nor an image is changed by this pack.
 
 Set `OM_TOKEN` or `OM_TOKEN_FILE` (the latter names a readable token file).
@@ -26,6 +27,11 @@ It edits only the named projected terms, CZ customer table and revenue metric in
 `content.json`. Unrelated fields, custom properties and relation edges are retained.
 The admin belongs to all three personas and stays on Stock view.
 
+Customer must exist. A missing neighbour, table or metric is skipped with its
+dependent fields and relations, never created as a replacement (LD-C10). `plan`
+names each missing qname; `verify` names any skips beside the affected check.
+Duplicate qnames and a table whose qname does not match remain errors.
+
 `apply` follows LD-C12: fields before tasks; reviewers afterwards, so the terms
 are approved through their own OpenMetadata approval task after reviewers are set.
 Customer found In Review on a later run is repaired through that task. No status is
@@ -46,11 +52,12 @@ An unavailable bot token uses the same fallback. Reference lists compare as sets
 so server ordering does not cause repeated updates.
 
 The HTML chat source is copied unchanged from the frozen planning asset. Apply
-writes `build/change-1-golem-chat.html` with the odběratel task URL and number;
+writes `build/<target>/change-1-golem-chat.html` with the odběratel task URL and number;
 open that file locally. The supported Customer Changes/tasks address opens its
 newest open task, odběratel (raised last); check 15 confirms that it is still first.
 Nothing on the page loads from the network. Plans do not
-write it. All generated output is ignored by Git.
+write it. Building one target leaves the other target's page alone. All generated
+output is ignored by Git. The glossaries are `<world> Concepts` and `<world> Entities`.
 
 `remove` previews deletion of owned objects and requires `--execute` to perform
 it. It never deletes or reverses projected terms, tables or metrics. It prints
@@ -91,4 +98,14 @@ as Petr, and open the generated chat file in a second tab. Apply after any
 projection run. The sheet gives all ten addresses, the named account and what to
 point at; it does not perform task actions. A completely empty catalog first
 needs the existing scan/projection rig in `design/demo-openmetadata.md`. The pack
-never creates projected objects. Hartland remains disabled until P2 is called.
+never creates projected objects.
+
+For the called hartland showing, set `OM_TOKEN_FILE` to that catalog's own admin
+token and use `just om-layout plan hartland`, `just om-layout apply hartland`, then
+`just om-layout verify hartland`. First check that neither hartland glossary has
+reviewers and no projection Job is running
+(`kubectl --context hartland -n openmetadata get jobs`). Leave the projection alone.
+Both catalogs hold `demo Concepts` and `demo Entities`. The chat is
+`build/hartland/change-1-golem-chat.html`; bp-dsk's is
+`build/bp-dsk/change-1-golem-chat.html`. Switch back to bp-dsk's own token and CA
+bundle when verifying bp-dsk. The show sheet describes the morning-of-showing check.
