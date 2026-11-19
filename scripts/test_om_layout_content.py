@@ -184,3 +184,31 @@ class ActorTests(unittest.TestCase):
         fake.write = denied
         self.assertIs(fake, layout.actor('petr.novak'))
         self.assertIn('admin performs its actions', output[-1])
+
+
+class ReferenceSetTests(unittest.TestCase):
+    def test_reference_order_does_not_update_or_fail_verification(self):
+        fake = FakeCatalog()
+        layout = make_layout(fake, env={}, output=lambda _:None)
+        self.assertEqual(0, layout.run('apply'))
+        metric = fake.values['metrics/name/revenue']
+        metric['relatedMetrics'].reverse()
+        for index, item in enumerate(metric['relatedMetrics']):
+            item.update(name=str(index), href='server-only')
+        fake.writes.clear()
+        self.assertEqual(0, layout.run('verify'))
+        self.assertEqual(0, layout.run('apply'))
+        self.assertFalse(any(w[1].startswith('metrics/') for w in fake.writes))
+        metric['relatedMetrics'].pop()
+        self.assertEqual(1, layout.run('verify'))
+
+    def test_all_owned_reference_lists_are_sets_but_ui_and_comments_stay_ordered(self):
+        from om_layout_content import subset, REFERENCE_LISTS
+        for field in REFERENCE_LISTS:
+            with self.subTest(field=field):
+                self.assertTrue(subset({field:[{'id':'b','name':'B'},{'id':'a'}]},
+                                       {field:[{'id':'a'},{'id':'b'}]}))
+                self.assertFalse(subset({field:[{'id':'a'},{'id':'extra'}]},
+                                        {field:[{'id':'a'},{'id':'b'}]}))
+        for field in ('comments','nodes','tabs','navigation','synonyms'):
+            self.assertFalse(subset({field:['b','a']},{field:['a','b']}))

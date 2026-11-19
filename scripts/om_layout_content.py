@@ -13,11 +13,18 @@ def ref(item, kind):
     return {'id': item['id'], 'type': kind}
 
 
-def subset(actual, desired):
+REFERENCE_LISTS = {"relatedTerms", "relatedMetrics", "reviewers", "owners", "domains", "tags", "personas"}
+
+
+def subset(actual, desired, field=None):
     """Compare authored fields while tolerating server reference/default metadata."""
     if isinstance(desired, dict):
-        return isinstance(actual, dict) and all(subset(actual.get(k), v) for k, v in desired.items())
+        return isinstance(actual, dict) and all(subset(actual.get(k), v, k) for k, v in desired.items())
     if isinstance(desired, list):
+        if field in REFERENCE_LISTS:
+            return (isinstance(actual, list) and
+                    all(any(subset(a, d) for a in actual) for d in desired) and
+                    all(any(subset(a, d) for d in desired) for a in actual))
         return isinstance(actual, list) and len(actual) == len(desired) and all(
             subset(a, b) for a, b in zip(actual, desired))
     return actual == desired
