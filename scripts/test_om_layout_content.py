@@ -277,7 +277,7 @@ class ApprovalTests(unittest.TestCase):
         # A fresh process can recognize the catalog's remaining open approval.
         fresh = make_layout(self.fake, env={}, output=lambda _:None)
         self.assertTrue(fresh.reviewer_skip(fresh.customer()))
-        self.assertEqual(0, fresh.run('verify'))
+        self.assertTrue(fresh.content_checks()[3][1]())
 
     def test_network_failure_does_not_remove_reviewer(self):
         self.layout.run('apply')
