@@ -172,7 +172,11 @@ class Layout:
                           current, desired)]
 
     def relation_types(self):
-        return []
+        current = self.catalog.get('system/settings/glossaryTermRelationSettings')['config_value']
+        desired = merge_relations(current, read_json(self.pack / 'relation-types.json'))
+        return [Operation('relation types and inverses', 'PUT', 'system/settings',
+                          {'config_type': 'glossaryTermRelationSettings', 'config_value': desired},
+                          current, desired)]
 
     def personas_and_documents(self):
         for desired in read_json(self.pack / 'personas.json'):

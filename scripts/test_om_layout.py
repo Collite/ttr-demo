@@ -123,6 +123,21 @@ class FrameTests(unittest.TestCase):
             om.main(['apply', '--target', 'bp-dsk', '--execute'], {})
 
 
+class RelationTests(unittest.TestCase):
+    def test_four_reciprocal_pairs_are_associative_cross_glossary_and_not_symmetric(self):
+        items = om.read_json(om.PACK / 'relation-types.json')
+        by_name = {item['name']: item for item in items}
+        self.assertEqual(8, len(by_name))
+        for name, inverse in [('involves', 'involvedIn'), ('phaseOf', 'hasPhase'),
+                              ('definedBy', 'defines'), ('grounds', 'groundedBy')]:
+            self.assertEqual(inverse, by_name[name]['inverseRelation'])
+            self.assertEqual(name, by_name[inverse]['inverseRelation'])
+        for item in items:
+            self.assertEqual('associative', item['category'])
+            self.assertIs(False, item['isSymmetric'])
+            self.assertIs(True, item['isCrossGlossaryAllowed'])
+
+
 class PersonaTests(unittest.TestCase):
     def test_export_has_only_create_fields_and_original_ui_keys(self):
         for path in (om.PACK / 'persona-ui').glob('*.json'):
