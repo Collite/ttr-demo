@@ -123,5 +123,33 @@ class FrameTests(unittest.TestCase):
             om.main(['apply', '--target', 'bp-dsk', '--execute'], {})
 
 
+class SkinTests(unittest.TestCase):
+    def test_theme_keeps_unowned_values_and_embeds_svg(self):
+        current = {'customTheme': {'errorColor': '#112233', 'infoColor': '#445566',
+                                  'successColor': '#778899', 'primaryColor': '#000000'},
+                   'customLogoConfig': {}}
+        layout = om.Layout(FakeCatalog(), output=lambda _: None)
+        desired = layout.theme_value(current)
+        self.assertEqual('#16283F', desired['customTheme']['primaryColor'])
+        self.assertEqual('#16283F', desired['customTheme']['panelBackgroundColor'])
+        self.assertEqual('#F2A200', desired['customTheme']['warningColor'])
+        self.assertEqual('', desired['customTheme']['selectedColor'])
+        self.assertEqual('', desired['customTheme']['hoverColor'])
+        for key in ('errorColor', 'infoColor', 'successColor'):
+            self.assertEqual(current['customTheme'][key], desired['customTheme'][key])
+        for value in desired['customLogoConfig'].values():
+            self.assertTrue(value.startswith('data:image/svg+xml;base64,'))
+        self.assertEqual(desired, layout.theme_value(desired))
+        self.assertEqual('#000000', current['customTheme']['primaryColor'])
+
+    def test_theme_remove_clears_only_owned_fields(self):
+        layout = om.Layout(FakeCatalog(), output=lambda _: None)
+        original = {'customTheme': {'errorColor': '#123456'}, 'customLogoConfig': {}}
+        removed = layout.theme_value(layout.theme_value(original), removing=True)
+        self.assertEqual('#123456', removed['customTheme']['errorColor'])
+        self.assertEqual('', removed['customTheme']['primaryColor'])
+        self.assertTrue(all(value == '' for value in removed['customLogoConfig'].values()))
+
+
 if __name__ == '__main__':
     unittest.main()

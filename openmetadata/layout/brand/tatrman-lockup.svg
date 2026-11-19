@@ -1,0 +1,47 @@
+<!--
+  Tatrman compact lockup (mark + wordmark) — for product UI, headers and small
+  placements. The wide variant (+ three-line descriptor) is for covers and first
+  slides, not for app chrome.
+  Source of truth: project/common/graphics/tatrman.html
+
+  Wordmark font: Calibri Bold — chosen because it ships with Office and carries
+  full Czech diacritics, so nothing breaks in pptx. Carlito is the metric-compatible
+  free clone, then the usual fallbacks; a renderer that has none of them still lays
+  out at roughly the right width.
+
+  Structure + wordmark are `currentColor` (charcoal on white, white on Stage Navy);
+  yellow and the string grey are fixed brand constants.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 530 200" role="img" aria-label="Tatrman">
+  <defs>
+    <linearGradient id="tatrmanYellowLockup" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFCB2E"/>
+      <stop offset="1" stop-color="#F2A200"/>
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(0,10) scale(0.75)">
+    <!-- control bar (the model) -->
+    <rect x="62" y="29.5" width="116" height="13" rx="6.5" fill="currentColor" transform="rotate(-7 120 36)"/>
+
+    <!-- strings (deterministic bindings) -->
+    <g stroke="#96989B" stroke-width="2.4" stroke-linecap="round" fill="none">
+      <path d="M 78 41.5 L 95 119"/>
+      <path d="M 120 36.5 L 120 70"/>
+      <path d="M 162 31.5 L 152 136"/>
+    </g>
+
+    <!-- head -->
+    <circle cx="120" cy="88" r="17" fill="url(#tatrmanYellowLockup)"/>
+    <circle cx="113.6" cy="86" r="2.3" fill="#4A4B4D"/>
+    <circle cx="126.4" cy="86" r="2.3" fill="#4A4B4D"/>
+
+    <!-- body: table rows -->
+    <rect x="93" y="112" width="52" height="13" rx="6.5" fill="currentColor" transform="rotate(-5 119 118.5)"/>
+    <rect x="90" y="130" width="64" height="13" rx="6.5" fill="url(#tatrmanYellowLockup)" transform="rotate(4 122 136.5)"/>
+    <rect x="99" y="148" width="44" height="13" rx="6.5" fill="currentColor" transform="rotate(-3 121 154.5)"/>
+  </g>
+
+  <text x="196" y="121" font-family="Calibri, Carlito, 'DejaVu Sans', Verdana, Arial, sans-serif"
+        font-size="64" font-weight="bold" fill="currentColor">Tatrman</text>
+</svg>

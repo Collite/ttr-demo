@@ -1,0 +1,46 @@
+<!--
+  Tatrman mark — Concept A, "Na nitích" (the adopted lead candidate).
+  Source of truth: project/common/graphics/tatrman.html (Brand exploration v1, 2026-07-10).
+
+  A marionette assembled from table rows, held by a precise control bar:
+    bar     = the model            strings = deterministic bindings
+    rows    = your tables          yellow head = the one who answers
+
+  Colour logic, verbatim from the manual: yellow marks the LIVING parts (the head
+  and one row); charcoal/white is STRUCTURE; the strings stay grey — never yellow,
+  because they are infrastructure, not the character.
+
+  Structure is drawn in `currentColor` so one file serves both surfaces: set
+  `color: #4A4B4D` on light, `color: #FFFFFF` on Stage Navy. The yellow and the
+  string grey are fixed — they are brand constants, not theme-dependent.
+
+  Don't: no drop shadows, no outlines, no rotating the bar past ±8°, no extra limbs.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Tatrman">
+  <defs>
+    <linearGradient id="tatrmanYellow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFCB2E"/>
+      <stop offset="1" stop-color="#F2A200"/>
+    </linearGradient>
+  </defs>
+
+  <!-- control bar (the model) -->
+  <rect x="62" y="29.5" width="116" height="13" rx="6.5" fill="currentColor" transform="rotate(-7 120 36)"/>
+
+  <!-- strings (deterministic bindings) — Mid Gray, never yellow -->
+  <g stroke="#96989B" stroke-width="2.4" stroke-linecap="round" fill="none">
+    <path d="M 78 41.5 L 95 119"/>
+    <path d="M 120 36.5 L 120 70"/>
+    <path d="M 162 31.5 L 152 136"/>
+  </g>
+
+  <!-- head (the one who answers) -->
+  <circle cx="120" cy="88" r="17" fill="url(#tatrmanYellow)"/>
+  <circle cx="113.6" cy="86" r="2.3" fill="#4A4B4D"/>
+  <circle cx="126.4" cy="86" r="2.3" fill="#4A4B4D"/>
+
+  <!-- body: table rows, caught mid-transformation -->
+  <rect x="93" y="112" width="52" height="13" rx="6.5" fill="currentColor" transform="rotate(-5 119 118.5)"/>
+  <rect x="90" y="130" width="64" height="13" rx="6.5" fill="url(#tatrmanYellow)" transform="rotate(4 122 136.5)"/>
+  <rect x="99" y="148" width="44" height="13" rx="6.5" fill="currentColor" transform="rotate(-3 121 154.5)"/>
+</svg>

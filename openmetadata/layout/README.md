@@ -30,3 +30,11 @@ The API shapes follow OpenMetadata's official `2.0.6-release` schemas:
 [theme](https://github.com/open-metadata/OpenMetadata/blob/2.0.6-release/openmetadata-spec/src/main/resources/json/schema/configuration/uiThemePreference.json),
 [relations](https://github.com/open-metadata/OpenMetadata/blob/2.0.6-release/openmetadata-spec/src/main/resources/json/schema/configuration/glossaryTermRelationSettings.json),
 [personas](https://github.com/open-metadata/OpenMetadata/blob/2.0.6-release/openmetadata-spec/src/main/resources/json/schema/api/teams/createPersona.json).
+
+Brand SVGs are copied verbatim from `Collite/kantheon`,
+`frontends/iris/src/assets/brand/`, source commit
+`3b9245e8f7ef16e130fbbd0bf78c8b0106716439`. They are encoded as SVG data URLs.
+Only primary/panel/warning/selected/hover colors and the three image fields are
+owned; error, success and info are preserved. If a field fails the browser check,
+its path is emptied in `theme.json` and `imageSkips` records the reason, printed
+by `plan`. No image hosting is required.

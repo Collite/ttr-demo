@@ -1,6 +1,7 @@
 """Apply the LD layout pack to an explicitly enabled, allow-listed catalog (stdlib only)."""
 
 import argparse
+import base64
 import copy
 import json
 import os
@@ -141,13 +142,34 @@ class Layout:
         require(self.admin.get('isAdmin') is True, 'layout requires an admin token')
 
     def operations(self):
-        result = []
         for step in ORDER:
-            result.extend(getattr(self, step, lambda: [])())
+            yield from getattr(self, step, lambda: [])()
+
+    def theme_value(self, current, removing=False):
+        configured = read_json(self.pack / 'theme.json')
+        result = copy.deepcopy(current)
+        colors = result.setdefault('customTheme', {})
+        for key, value in configured['customTheme'].items():
+            colors[key] = '' if removing else value
+        logos = result.setdefault('customLogoConfig', {})
+        for key, value in configured['customLogoConfig'].items():
+            if removing or not value:
+                logos[key] = ''
+            else:
+                asset = self.pack / value
+                require(asset.resolve().is_relative_to((self.pack / 'brand').resolve()),
+                        'brand image outside pack')
+                logos[key] = 'data:image/svg+xml;base64,' + base64.b64encode(asset.read_bytes()).decode()
         return result
 
     def theme(self):
-        return []
+        current = self.catalog.get('system/settings/customUiThemePreference')['config_value']
+        desired = self.theme_value(current)
+        for field, reason in read_json(self.pack / 'theme.json').get('imageSkips', {}).items():
+            self.output(f'skip {field}: {reason}')
+        return [Operation('theme', 'PUT', 'system/settings',
+                          {'config_type': 'customUiThemePreference', 'config_value': desired},
+                          current, desired)]
 
     def relation_types(self):
         return []
