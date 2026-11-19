@@ -270,6 +270,22 @@ class Layout(Content):
         self.output('exported persona-ui/' + path.name)
         return 0
 
+    def page_layouts(self):
+        """LD-C13 check 16: both stored documents have the pages and exact Table tabs."""
+        for persona in PERSONAS:
+            document = self.catalog.get('docStore/name/persona.' + persona, missing=True) or {}
+            pages = document.get('data', {}).get('pages', [])
+            for page_type in ('Table', 'Metric', 'LandingPage'):
+                if sum(page.get('pageType') == page_type for page in pages) != 1:
+                    return False
+            table = next(page for page in pages if page.get('pageType') == 'Table')
+            tabs = table.get('tabs', [])
+            if [tab.get('id') for tab in tabs] != ['schema', 'activity_feed', 'lineage', 'custom_properties']:
+                return False
+            if tabs[0].get('displayName') != 'Columns':
+                return False
+        return True
+
     def verify(self, applying=False):
         def theme():
             actual = self.catalog.get('system/settings/customUiThemePreference')['config_value']
@@ -338,7 +354,9 @@ class Layout(Content):
         failed = 0
         for number, (name, check) in enumerate((('theme colours', theme), ('three personas', personas),
                 ('two documents: navigation order and hidden set', documents),
-                ('term page: six tab names', tabs), ('four relation types and inverses', relation_types)) + tuple(self.content_checks()), 1):
+                ('term page: six tab names', tabs), ('four relation types and inverses', relation_types))
+                + tuple(self.content_checks())
+                + (('Table, Metric and Home layouts; Table tabs', self.page_layouts),), 1):
             try:
                 ok = check()
             except Exception:

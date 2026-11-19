@@ -128,7 +128,7 @@ class FrozenContentTests(unittest.TestCase):
         self.fake.writes.clear()
         self.output.clear()
         self.assertEqual(2, self.layout.run('verify'))
-        self.assertEqual(15, len(self.output))
+        self.assertEqual(16, len(self.output))
         self.assertTrue(any(l.startswith('FAIL 9 ') for l in self.output))
         self.assertEqual([], self.fake.writes)
 

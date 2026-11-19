@@ -358,6 +358,43 @@ class RelationTests(unittest.TestCase):
 
 
 class PersonaTests(unittest.TestCase):
+    def test_check_16_fails_for_each_missing_page_in_either_stored_document(self):
+        for name in om.PERSONAS:
+            for page_type in ('Table', 'Metric', 'LandingPage'):
+                with self.subTest(persona=name, page=page_type):
+                    fake = FakeCatalog()
+                    output = []
+                    layout = make_layout(fake, output=output.append)
+                    self.assertEqual(0, layout.run('apply'))
+                    document = fake.values['docStore/name/persona.' + name]
+                    document['data']['pages'] = [p for p in document['data']['pages']
+                                                 if p['pageType'] != page_type]
+                    fake.writes.clear()
+                    output.clear()
+                    self.assertEqual(1, layout.run('verify'))
+                    self.assertEqual(['FAIL 16 Table, Metric and Home layouts; Table tabs'],
+                                     [line for line in output if line.startswith('FAIL ')])
+                    self.assertEqual([], fake.writes)
+
+    def test_check_16_rejects_removed_table_tabs_and_wrong_columns_label(self):
+        for name in om.PERSONAS:
+            for violation in ('sample_data', 'table_queries', 'profiler', 'label'):
+                with self.subTest(persona=name, violation=violation):
+                    fake = FakeCatalog()
+                    output = []
+                    layout = make_layout(fake, output=output.append)
+                    self.assertEqual(0, layout.run('apply'))
+                    table = next(p for p in fake.values['docStore/name/persona.' + name]['data']['pages']
+                                 if p['pageType'] == 'Table')
+                    if violation == 'label':
+                        table['tabs'][0]['displayName'] = 'Schema'
+                    else:
+                        table['tabs'].append({'id': violation, 'layout': []})
+                    output.clear()
+                    self.assertEqual(1, layout.run('verify'))
+                    self.assertEqual(['FAIL 16 Table, Metric and Home layouts; Table tabs'],
+                                     [line for line in output if line.startswith('FAIL ')])
+
     def test_export_strips_server_metadata_preserves_ui_keys_and_sorts_keys(self):
         fake = FakeCatalog()
         layout = make_layout(fake, output=lambda _: None)
