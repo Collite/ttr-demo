@@ -38,3 +38,10 @@ Only primary/panel/warning/selected/hover colors and the three image fields are
 owned; error, success and info are preserved. If a field fails the browser check,
 its path is emptied in `theme.json` and `imageSkips` records the reason, printed
 by `plan`. No image hosting is required.
+
+`persona-ui/` is the bp-dsk document snapshot read on 2026-11-19, before any pack
+write: navigation and GlossaryTerm only, as authored on 2026-11-17. Server ids,
+versions, timestamps, hrefs and change history are omitted. Tab `id`, navigation
+`id` and widget `i` remain: these are UI keys, not server entity identities.
+The stored navigation titles are retained even though OM ignores their text;
+Settings is the stock bottom menu. Table, Metric and Home are left for S1.3.

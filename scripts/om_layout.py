@@ -175,7 +175,48 @@ class Layout:
         return []
 
     def personas_and_documents(self):
-        return []
+        for desired in read_json(self.pack / 'personas.json'):
+            name = desired['name']
+            current = self.catalog.get('personas/name/' + quote(name, safe=''), missing=True)
+            projected = None if current is None else {k: current.get(k) for k in desired}
+            if current is None:
+                method, path, body = 'PUT', 'personas', desired
+            else:
+                method, path = 'PATCH', 'personas/' + quote(current['id'], safe='')
+                body = [{'op': 'add', 'path': '/' + k, 'value': v}
+                        for k, v in desired.items() if current.get(k) != v]
+            yield Operation('persona ' + name, method, path, body, projected, desired)
+        for path in sorted((self.pack / 'persona-ui').glob('*.json')):
+            desired = read_json(path)
+            fqn = desired['fullyQualifiedName']
+            require(fqn == 'persona.' + path.stem and
+                    path.stem in {'ttr-model-steward', 'ttr-model-reader'},
+                    'layout document outside pack ownership')
+            current = self.catalog.get('docStore/name/' + quote(fqn, safe=''), missing=True)
+            projected = None if current is None else {k: current.get(k) for k in desired}
+            yield Operation('document ' + fqn, 'PUT', 'docStore', desired, projected, desired)
+        yield self.membership()
+
+    def membership(self):
+        admin = self.catalog.get('users/loggedInUser?fields=personas,defaultPersona')
+        refs = copy.deepcopy(admin.get('personas') or [])
+        current_ids = {ref['id'] for ref in refs}
+        stock = None
+        for persona in read_json(self.pack / 'personas.json'):
+            name = persona['name']
+            item = self.catalog.get('personas/name/' + quote(name, safe=''), missing=True)
+            ref = {'id': item['id'] if item else 'new:' + name, 'type': 'persona'}
+            if ref['id'] not in {r['id'] for r in refs}:
+                refs.append(ref)
+            if name == 'ttr-stock-view':
+                stock = ref
+        current = {'personas': sorted(current_ids),
+                   'defaultPersona': (admin.get('defaultPersona') or {}).get('id')}
+        desired = {'personas': sorted(ref['id'] for ref in refs), 'defaultPersona': stock['id']}
+        body = [{'op': 'add', 'path': '/personas', 'value': refs},
+                {'op': 'add', 'path': '/defaultPersona', 'value': stock}]
+        return Operation('admin personas and Stock view', 'PATCH',
+                         'users/' + quote(admin['id'], safe=''), body, current, desired)
 
     def verify(self, applying=False):
         return 0

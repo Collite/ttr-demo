@@ -123,6 +123,32 @@ class FrameTests(unittest.TestCase):
             om.main(['apply', '--target', 'bp-dsk', '--execute'], {})
 
 
+class PersonaTests(unittest.TestCase):
+    def test_export_has_only_create_fields_and_original_ui_keys(self):
+        for path in (om.PACK / 'persona-ui').glob('*.json'):
+            doc = om.read_json(path)
+            self.assertEqual({'name', 'fullyQualifiedName', 'entityType', 'data'}, set(doc))
+            self.assertEqual(['GlossaryTerm'], [p['pageType'] for p in doc['data']['pages']])
+            tabs = doc['data']['pages'][0]['tabs']
+            self.assertEqual(['overview', 'glossary_terms', 'assets', 'relations_graph',
+                              'activity_feed', 'custom_properties'], [t['id'] for t in tabs])
+            self.assertTrue(tabs[0]['layout'][0]['children'])
+
+    def test_membership_preserves_other_personas_and_chooses_stock(self):
+        fake = FakeCatalog()
+        admin = fake.values['users/loggedInUser?fields=personas,defaultPersona']
+        admin['personas'] = [{'id': 'other-id', 'type': 'persona', 'name': 'other'}]
+        for i, persona in enumerate(om.read_json(om.PACK / 'personas.json')):
+            fake.values['personas/name/' + persona['name']] = dict(persona, id=str(i))
+        operation = om.Layout(fake).membership()
+        self.assertEqual('other-id', operation.body[0]['value'][0]['id'])
+        self.assertEqual('2', operation.body[1]['value']['id'])
+        self.assertEqual(4, len(operation.body[0]['value']))
+        admin['personas'] = operation.body[0]['value']
+        admin['defaultPersona'] = operation.body[1]['value']
+        self.assertEqual('unchanged', om.Layout(fake).membership().action)
+
+
 class SkinTests(unittest.TestCase):
     def test_theme_keeps_unowned_values_and_embeds_svg(self):
         current = {'customTheme': {'errorColor': '#112233', 'infoColor': '#445566',
