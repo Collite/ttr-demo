@@ -19,6 +19,14 @@ class FakeCatalog:
             'users/loggedInUser?fields=personas,defaultPersona': {
                 'id': 'admin-id', 'isAdmin': True, 'personas': [],
             },
+            'system/settings/customUiThemePreference': {
+                'config_type': 'customUiThemePreference',
+                'config_value': {'customTheme': {'errorColor': '#ab1234'}, 'customLogoConfig': {}}},
+            'system/settings/glossaryTermRelationSettings': {
+                'config_type': 'glossaryTermRelationSettings',
+                'config_value': {'relationTypes': [
+                    {'name': 'system' + str(i), 'isSystemDefined': True, 'opaque': [i, {'x': True}]}
+                    for i in range(10)] + [{'name': 'unrelated', 'isSymmetric': True}]}},
         }
 
     def get(self, path, missing=False):
@@ -26,7 +34,27 @@ class FakeCatalog:
 
     def write(self, method, path, body=None):
         self.writes.append((method, path, copy.deepcopy(body)))
-        self.values[path] = copy.deepcopy(body)
+        if path == 'system/settings':
+            self.values[path + '/' + body['config_type']] = copy.deepcopy(body)
+        elif method == 'PUT' and path in ('personas', 'docStore'):
+            key = body.get('fullyQualifiedName', body['name'])
+            existing = self.values.get(path + '/name/' + key, {})
+            self.values[path + '/name/' + key] = dict(copy.deepcopy(body),
+                id=existing.get('id', path + '-id-' + key), version=0.1, updatedAt=123)
+        elif method in ('PATCH', 'DELETE'):
+            identity = path.split('/')[1].split('?')[0]
+            key = next(k for k, value in self.values.items() if value and value.get('id') == identity)
+            if method == 'DELETE':
+                del self.values[key]
+            else:
+                for op in body:
+                    field = op['path'][1:]
+                    if op['op'] == 'remove':
+                        self.values[key].pop(field, None)
+                    else:
+                        self.values[key][field] = copy.deepcopy(op['value'])
+        else:
+            self.values[path] = copy.deepcopy(body)
 
 
 class FrameTests(unittest.TestCase):
@@ -121,6 +149,89 @@ class FrameTests(unittest.TestCase):
     def test_execute_is_rejected_for_other_verbs(self):
         with self.assertRaisesRegex(om.LayoutError, 'only for remove'):
             om.main(['apply', '--target', 'bp-dsk', '--execute'], {})
+
+
+class PackTests(unittest.TestCase):
+    def setUp(self):
+        self.fake = FakeCatalog()
+        self.output = []
+        self.layout = om.Layout(self.fake, output=self.output.append)
+
+    def test_whole_plan_is_read_only_and_lists_real_objects(self):
+        self.assertEqual(0, self.layout.run('plan'))
+        self.assertEqual([], self.fake.writes)
+        self.assertTrue(any(line.startswith('create persona ') for line in self.output))
+        self.assertTrue(any(line.startswith('create document ') for line in self.output))
+
+    def test_apply_twice_then_plan_is_unchanged_and_keeps_system_types_byte_identical(self):
+        before = json.dumps(self.fake.values['system/settings/glossaryTermRelationSettings']['config_value']['relationTypes'])
+        self.assertEqual(0, self.layout.run('apply'))
+        first_writes = len(self.fake.writes)
+        self.output.clear()
+        self.assertEqual(0, self.layout.run('apply'))
+        self.assertEqual(first_writes, len(self.fake.writes))
+        self.assertTrue(all(line.startswith('unchanged ') for line in self.output), self.output)
+        self.output.clear()
+        self.layout.run('plan')
+        self.assertTrue(all(line.startswith('unchanged ') for line in self.output), self.output)
+        after = self.fake.values['system/settings/glossaryTermRelationSettings']['config_value']['relationTypes']
+        self.assertEqual(before, json.dumps(after[:11]))
+        self.assertEqual(8, len(after[11:]))
+
+    def test_remove_preview_with_every_object_present_has_no_writes(self):
+        self.layout.run('apply')
+        before = copy.deepcopy(self.fake.values)
+        self.fake.writes.clear()
+        self.output.clear()
+        self.layout.run('remove')
+        self.assertEqual([], self.fake.writes)
+        self.assertEqual(before, self.fake.values)
+        self.assertTrue(any(line.startswith('would delete document ') for line in self.output))
+        self.assertTrue(any(line.startswith('would delete persona ') for line in self.output))
+        self.assertTrue(any('relation types' in line for line in self.output))
+
+    def test_remove_execute_only_deletes_owned_objects_and_preserves_unowned_settings(self):
+        self.layout.run('apply')
+        self.fake.values['personas/name/someone-else'] = {'id': 'someone-id', 'name': 'someone-else'}
+        admin = self.fake.values['users/loggedInUser?fields=personas,defaultPersona']
+        admin['personas'].append({'id': 'someone-id', 'type': 'persona'})
+        self.layout.run('remove', execute=True)
+        self.assertIn('personas/name/someone-else', self.fake.values)
+        self.assertEqual([{'id': 'someone-id', 'type': 'persona'}], admin['personas'])
+        self.assertNotIn('defaultPersona', admin)
+        self.assertFalse(any(k.startswith('docStore/') for k in self.fake.values))
+        theme = self.fake.values['system/settings/customUiThemePreference']['config_value']
+        self.assertEqual('#ab1234', theme['customTheme']['errorColor'])
+        self.assertEqual('', theme['customTheme']['primaryColor'])
+        self.assertEqual(11, len(self.fake.values['system/settings/glossaryTermRelationSettings']['config_value']['relationTypes']))
+        self.fake.writes.clear()
+        self.layout.run('remove', execute=True)
+        self.assertEqual([], self.fake.writes)
+
+    def test_verify_reports_each_contract_violation_and_returns_failed_count(self):
+        self.layout.run('apply')
+        self.fake.values['system/settings/customUiThemePreference']['config_value']['customTheme']['hoverColor'] = '#ffffff'
+        self.fake.values['personas/name/ttr-model-reader']['displayName'] = 'Wrong'
+        doc = self.fake.values['docStore/name/persona.ttr-model-steward']
+        doc['data']['navigation'][0]['isHidden'] = True
+        doc['data']['pages'][0]['tabs'][1]['displayName'] = 'Wrong'
+        self.fake.values['system/settings/glossaryTermRelationSettings']['config_value']['relationTypes'][-1].pop('inverseRelation')
+        self.output.clear()
+        self.fake.writes.clear()
+        self.assertEqual(5, self.layout.run('verify'))
+        self.assertEqual(5, sum(line.startswith('FAIL ') for line in self.output))
+        self.assertEqual([], self.fake.writes)
+
+    def test_existing_personas_are_patched_and_other_fields_survive(self):
+        self.fake.values['personas/name/ttr-model-steward'] = {
+            'id': 'existing-id', 'name': 'ttr-model-steward', 'displayName': 'Old',
+            'description': 'Keep this', 'users': [{'id': 'someone-id'}]}
+        self.layout.run('apply')
+        persona = self.fake.values['personas/name/ttr-model-steward']
+        self.assertEqual('existing-id', persona['id'])
+        self.assertEqual('Keep this', persona['description'])
+        self.assertEqual([{'id': 'someone-id'}], persona['users'])
+        self.assertEqual('Model steward', persona['displayName'])
 
 
 class RelationTests(unittest.TestCase):

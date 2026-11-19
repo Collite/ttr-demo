@@ -223,7 +223,84 @@ class Layout:
                          'users/' + quote(admin['id'], safe=''), body, current, desired)
 
     def verify(self, applying=False):
-        return 0
+        def theme():
+            actual = self.catalog.get('system/settings/customUiThemePreference')['config_value']
+            wanted = {'primaryColor': '#16283F', 'panelBackgroundColor': '#16283F',
+                      'warningColor': '#F2A200', 'selectedColor': '', 'hoverColor': ''}
+            return all(actual.get('customTheme', {}).get(k) == v for k, v in wanted.items())
+
+        def personas():
+            expected = {'ttr-model-steward': 'Model steward',
+                        'ttr-model-reader': 'Model reader', 'ttr-stock-view': 'Stock view'}
+            return all((self.catalog.get('personas/name/' + name, missing=True) or {})
+                       .get('displayName') == label for name, label in expected.items())
+
+        def documents():
+            for name in ('ttr-model-steward', 'ttr-model-reader'):
+                doc = self.catalog.get('docStore/name/persona.' + name, missing=True)
+                if not doc or doc.get('entityType') != 'Page':
+                    return False
+                nav = doc.get('data', {}).get('navigation', [])
+                visible = [n['id'] for n in nav if not n.get('isHidden', False)]
+                if visible != ['/my-data', 'governance', '/explore', '/data-marketplace-section']:
+                    return False
+                groups = {n['id']: n for n in nav}
+                for group, expected in [('governance', ['/glossary', '/governance/ontology', '/metrics']),
+                                        ('/data-marketplace-section', ['/domain'])]:
+                    if [n['id'] for n in groups[group].get('children', [])
+                            if not n.get('isHidden', False)] != expected:
+                        return False
+                # Include all hidden entries and ordering from the captured document.
+                wanted = read_json(self.pack / 'persona-ui' / (name + '.json'))
+                def signature(items):
+                    return [(n['id'], n.get('isHidden', False), signature(n.get('children', [])))
+                            for n in items]
+                if signature(nav) != signature(wanted['data']['navigation']):
+                    return False
+            return True
+
+        def tabs():
+            expected = [('overview', 'Overview'), ('glossary_terms', 'Narrower terms'),
+                        ('assets', 'Bound data'), ('relations_graph', 'Model map'),
+                        ('activity_feed', 'Changes'), ('custom_properties', 'Custom properties')]
+            for name in ('ttr-model-steward', 'ttr-model-reader'):
+                doc = self.catalog.get('docStore/name/persona.' + name, missing=True) or {}
+                pages = [p for p in doc.get('data', {}).get('pages', [])
+                         if p.get('pageType') == 'GlossaryTerm']
+                if len(pages) != 1 or [(t.get('id'), t.get('displayName'))
+                                      for t in pages[0].get('tabs', [])] != expected:
+                    return False
+            return True
+
+        def relation_types():
+            types = self.catalog.get('system/settings/glossaryTermRelationSettings')['config_value']['relationTypes']
+            names = [item['name'] for item in types]
+            by_name = {item['name']: item for item in types}
+            for forward, inverse in [('involves', 'involvedIn'), ('phaseOf', 'hasPhase'),
+                                     ('definedBy', 'defines'), ('grounds', 'groundedBy')]:
+                for name, other in ((forward, inverse), (inverse, forward)):
+                    item = by_name.get(name, {})
+                    if (names.count(name) != 1 or item.get('inverseRelation') != other
+                            or item.get('category') != 'associative'
+                            or item.get('isSymmetric') is not False
+                            or item.get('isCrossGlossaryAllowed') is not True):
+                        return False
+            return True
+
+        failed = 0
+        for number, (name, check) in enumerate((('theme colours', theme), ('three personas', personas),
+                ('two documents: navigation order and hidden set', documents),
+                ('term page: six tab names', tabs), ('four relation types and inverses', relation_types)), 1):
+            try:
+                ok = check()
+            except Exception:
+                ok = False
+            failed += not ok
+            status = 'ok' if ok else 'FAIL'
+            # Every successful second-apply line begins unchanged, including its checks.
+            prefix = 'unchanged verify' if applying and ok else status
+            self.output(f'{prefix} {number} {name}' + (' ok' if applying and ok else ''))
+        return failed
 
     def run(self, verb='plan', execute=False):
         require(verb in ('plan', 'apply', 'verify', 'remove'), 'unknown verb')
@@ -237,7 +314,48 @@ class Layout:
                 self.catalog.write(operation.method, operation.path, operation.body)
         return self.verify(applying=True) if verb == 'apply' else 0
 
+    def removal_operations(self):
+        owned = {p['name'] for p in read_json(self.pack / 'personas.json')}
+        admin = self.catalog.get('users/loggedInUser?fields=personas,defaultPersona')
+        personas = [self.catalog.get('personas/name/' + name, missing=True) for name in sorted(owned)]
+        ids = {p['id'] for p in personas if p}
+        refs = admin.get('personas') or []
+        kept = [ref for ref in refs if ref['id'] not in ids]
+        patch = []
+        if kept != refs:
+            patch.append({'op': 'add', 'path': '/personas', 'value': kept})
+        if (admin.get('defaultPersona') or {}).get('id') in ids:
+            patch.append({'op': 'remove', 'path': '/defaultPersona'})
+        if patch:
+            yield ('update admin persona membership', 'PATCH', 'users/' + quote(admin['id'], safe=''), patch)
+        for name in ('ttr-model-steward', 'ttr-model-reader'):
+            doc = self.catalog.get('docStore/name/persona.' + name, missing=True)
+            if doc:
+                yield ('delete document persona.' + name, 'DELETE', 'docStore/' + quote(doc['id'], safe=''), None)
+        for persona in personas:
+            if persona:
+                yield ('delete persona ' + persona['name'], 'DELETE',
+                       'personas/' + quote(persona['id'], safe='') + '?hardDelete=true', None)
+        setting = self.catalog.get('system/settings/glossaryTermRelationSettings')
+        old = setting['config_value']
+        owned_types = {t['name'] for t in read_json(self.pack / 'relation-types.json')}
+        new = copy.deepcopy(old)
+        new['relationTypes'] = [t for t in old['relationTypes']
+                                if t['name'] not in owned_types or t.get('isSystemDefined')]
+        if new != old:
+            yield ('delete relation types and inverses', 'PUT', 'system/settings',
+                   {'config_type': 'glossaryTermRelationSettings', 'config_value': new})
+        old = self.catalog.get('system/settings/customUiThemePreference')['config_value']
+        new = self.theme_value(old, removing=True)
+        if new != old:
+            yield ('update theme: clear owned values', 'PUT', 'system/settings',
+                   {'config_type': 'customUiThemePreference', 'config_value': new})
+
     def remove(self, execute=False):
+        for label, method, path, body in self.removal_operations():
+            self.output(label if execute else 'would ' + label)
+            if execute:
+                self.catalog.write(method, path, body)
         return 0
 
 
