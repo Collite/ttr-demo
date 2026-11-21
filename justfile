@@ -135,6 +135,31 @@ load-model cli="../ttr-loader/packages/kotlin/ttr-metadata-cli/build/install/ttr
     while IFS='=' read -r key value; do export "$key=$value"; done <<<"$pins"
     {{cli}} load "$(pwd)" --strict --expect-version "$VELES_TTR_METADATA" --json
 
+# MW P5 reader CLI (Java 21). Pass commands and arguments directly, for example: just reader-cli snapshot --help.
+[positional-arguments]
+reader-cli +args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    version=0.22.13
+    sha=eea6c83f04e8a5e2d8d8ac38cf25781d6c2516d1d25288c84b4db777c30cb13d
+    jar="build/reader-cli/ttr-metadata-cli-$version.jar"
+    artifact="$jar"
+    if [ ! -f "$jar" ]; then
+      mkdir -p "$(dirname "$jar")"
+      artifact="$(mktemp "$jar.XXXXXXXX")"
+      trap 'rm -f "$artifact"' EXIT
+      curl -fsSL -o "$artifact" "https://github.com/Collite/ttr-core/releases/download/grammar/v$version/${jar##*/}"
+    fi
+    if ! printf '%s  %s\n' "$sha" "$artifact" | shasum -a 256 -c --status; then
+      echo "reader-cli: SHA-256 mismatch for $jar" >&2
+      exit 1
+    fi
+    if [ "$artifact" != "$jar" ]; then
+      mv "$artifact" "$jar"
+      trap - EXIT
+    fi
+    exec java -jar "$jar" "$@"
+
 # Build the loader `load-model` runs — the loader veles serves with, not the ref's toolchain: ttr-metadata-cli from
 # ttr-core at grammar/v<[veles].ttr-metadata>, stamped with that version as a release is (-Pversion; without it every
 # module says 0.0.1-LOCAL and --expect-version fails). Needs ../ttr-loader at that tag; when it is not, prints the
