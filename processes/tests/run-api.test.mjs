@@ -35,11 +35,15 @@ function* walk(el) {
   for (const child of el.flowElements ?? []) yield* walk(child);
 }
 
-/** The run-level perform/outcome calls of one composed process: [{id, name, verb, path, body}]. */
-async function runActionCalls(file) {
+async function readProcess(file) {
   const moddle = new BpmnModdle({ camunda });
   const { rootElement } = await moddle.fromXML(await readFile(file, 'utf8'), 'bpmn:Definitions');
-  const proc = rootElement.rootElements.find((e) => e.$type === 'bpmn:Process');
+  return rootElement.rootElements.find((e) => e.$type === 'bpmn:Process');
+}
+
+/** The run-level perform/outcome calls of one composed process: [{id, name, verb, path, body}]. */
+async function runActionCalls(file) {
+  const proc = await readProcess(file);
   const calls = [];
   for (const task of walk(proc)) {
     if (task.$type !== 'bpmn:ServiceTask') continue;
@@ -55,6 +59,70 @@ async function runActionCalls(file) {
   }
   return calls;
 }
+
+const releaseOrder = path.join(root, 'processes', 'cz', 'release_order.bpmn');
+const originalRunId = '00000000-0000-4000-8000-000000000001';
+const instanceId = 'process-instance-1';
+const taskId = 'approval-task-1';
+
+test('cz/release_order: the committed timer branch sends the original approval and the same evidence on retry', async () => {
+  const proc = await readProcess(releaseOrder);
+  const timer = [...walk(proc)].find((e) => e.id === 's41_release_confirmed_lapsed');
+  const approval = timer.attachedToRef;
+  const fallback = timer.outgoing[0].targetRef;
+  assert.equal(timer.cancelActivity, true);
+  assert.equal(fallback.asyncBefore, true, 'the timer history must commit before the hold call');
+  assert.equal(fallback.$parent, approval.$parent, 'the fallback keeps the approval row scope');
+  const rowInputs = approval.$parent.extensionElements.values.find((v) => v.$type === 'camunda:InputOutput');
+  assert.ok(rowInputs.inputParameters.some((v) => v.name === 'ttrTaskId'), 'task ID has a slot in the row scope');
+  const listener = approval.extensionElements.values.find((v) => v.$type === 'camunda:TaskListener' && v.event === 'create');
+  assert.match(listener.script.value, /task\.execution\.setVariable\('ttrTaskId', task\.id\)/);
+
+  const connector = fallback.extensionElements.values.find((v) => v.$type === 'camunda:Connector');
+  const input = (name) => connector.inputOutput.inputParameters.find((p) => p.name === name).value;
+  assert.equal(input('method'), 'POST');
+  assert.equal(new URL(evaluate(input('url'), {})).pathname, '/automation/deployments/release_event_cz/actions/hold/perform');
+  assert.ok(fallback.extensionElements.values.some((v) => v.$type === 'camunda:FailedJobRetryTimeCycle'));
+  for (const order of [4711, '004711']) {
+    const attempt = () => evaluate(input('payload'), {
+      ttrRunId: originalRunId, ttrTaskId: taskId, ttrRow: anyRow(order), execution: { processInstanceId: instanceId },
+    });
+    const first = attempt();
+    const body = JSON.parse(first);
+    assert.deepEqual(body, {
+      key: { order }, params: { department: 'Sales' }, origin: 'engine',
+      idempotencyKey: `${instanceId}:lapsed:${JSON.stringify(order)}`,
+      expiry: { originalRunId, action: 'release_confirmed', key: { order_number: order }, instanceId, taskId,
+        timerActivityId: timer.id },
+    });
+    assert.equal(attempt(), first);
+  }
+});
+
+test('cz/release_order: human completion opens the answer with the assignee and task ID', async () => {
+  const proc = await readProcess(releaseOrder);
+  const timer = [...walk(proc)].find((e) => e.id === 's41_release_confirmed_lapsed');
+  const approval = timer.attachedToRef;
+  const listener = approval.extensionElements.values.find((v) => v.$type === 'camunda:TaskListener' && v.event === 'complete');
+  assert.match(listener.script.value, /task\.execution\.setVariable\('ttrAnsweredBy', task\.assignee\)/);
+  assert.equal(approval.outgoing.length, 1);
+  const answerStep = approval.outgoing[0].targetRef;
+  assert.notEqual(answerStep, timer.outgoing[0].targetRef);
+  const io = answerStep.extensionElements.values.find((v) => v.$type === 'camunda:InputOutput');
+  const payload = io.inputParameters.find((p) => p.name === 'ttrAnswerOpenBody').value;
+  const result = JSON.parse(evaluate(payload, {
+    ttrTaskId: taskId, ttrAnsweredBy: 'sales-user', ttrRow: anyRow(4711), ttrAnchor: originalRunId,
+    execution: {
+      processInstanceId: instanceId, processBusinessKey: 'order:4711', processDefinitionId: 'release-order-1',
+      processEngineServices: { repositoryService: { getProcessDefinition: () => ({ deploymentId: 'deployment-1' }) } },
+    },
+  }).toString());
+  assert.deepEqual(result.port.key, { order_number: 4711 });
+  assert.deepEqual(result.engine, { instanceId, businessKey: 'order:4711', deploymentId: 'deployment-1', taskId,
+    answeredBy: 'sales-user' });
+  assert.equal(result.idempotencyKey, `${originalRunId}:answer:${taskId}`);
+  assert.equal(result.expiry, undefined);
+});
 
 for (const set of Object.keys(sets).filter((k) => !k.startsWith('_'))) {
   const counts = { perform: 0, outcome: 0 };

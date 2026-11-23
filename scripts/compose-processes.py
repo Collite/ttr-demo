@@ -137,12 +137,19 @@ if (code == 409) throw BpmnError.getConstructor(String, String).newInstance('TTR
 if (code >= 400 && code < 500 && code != 408 && code != 429) throw BpmnError.getConstructor(String, String).newInstance('TTR_REFUSED', '{what}: HTTP ' + code + ': ' + response.toString().take(256))
 if (code < 200 || code >= 300) throw new IllegalStateException('{what}: HTTP ' + code)
 def SpinClass; try {{ SpinClass = Class.forName('org.cibseven.spin.Spin') }} catch (ClassNotFoundException e) {{ SpinClass = Class.forName('org.camunda.spin.Spin') }}
-return SpinClass.JSON(response)
+{result}
 """
 
 
-def http_result(what: str) -> str:
-    return HTTP_RESULT_GROOVY.format(what=what.replace("\\", "\\\\").replace("'", "\\'"))
+def http_result(what: str, *, require_applied: bool = False) -> str:
+    result = "return SpinClass.JSON(response)"
+    if require_applied:
+        result = """def result = SpinClass.JSON(response)
+if (!result.hasProp('outcome') || result.prop('outcome').stringValue() != 'applied') {
+    throw new IllegalStateException('approval expiry did not apply the Sales hold')
+}
+return result"""
+    return HTTP_RESULT_GROOVY.format(what=what.replace("\\", "\\\\").replace("'", "\\'"), result=result)
 
 
 class Bpmn:
@@ -391,7 +398,8 @@ def start_guard(doc: Bpmn, start: ET.Element, action: str, key_expr: str, labels
     doc.edge("s41_pending_yes", [(sx + sw + 35, sy + 43), (sx + sw + 35, sy + 90)])
 
 
-def approvals(doc: Bpmn, lapses: dict, labels: dict, egress: str, deployment: str, world: str) -> list[str]:
+def approvals(doc: Bpmn, lapses: dict, labels: dict, egress: str, deployment: str, world: str,
+              *, verified_expiry: bool = False) -> list[str]:
     """Every approval user task of the skeleton (a userTask with a ttrAction input) gets the D-98 guard, its due date,
     the task-visible variables and — when `lapses` names the action — a timer boundary that performs the fallback."""
     done = []
@@ -409,7 +417,11 @@ def approvals(doc: Bpmn, lapses: dict, labels: dict, egress: str, deployment: st
         if spec and spec.get("label"):
             task.set("name", spec["label"])
         task.set(q("camunda:dueDate"), "${ttrApprovalDue}")
-        groovy(ext(task), "camunda:taskListener", {"event": "create"}, TASK_VISIBLE_GROOVY.format(action=action))
+        create_script = TASK_VISIBLE_GROOVY.format(action=action)
+        if spec and verified_expiry:
+            # ttrTaskId is declared in the enclosing approval row and survives cancellation of the task (D-267).
+            create_script += "task.execution.setVariable('ttrTaskId', task.id)\n"
+        groovy(ext(task), "camunda:taskListener", {"event": "create"}, create_script)
 
         # the guard and the due date sit on the flow that opens the task
         into = doc.flows_into(tid)
@@ -445,9 +457,15 @@ def approvals(doc: Bpmn, lapses: dict, labels: dict, egress: str, deployment: st
                           {"id": f"{n}_perform", "name": spec["perform_label"], q("camunda:asyncBefore"): "true"})
             key_json = "".join(f'.prop("{k}", ttrRow.prop("{v}"))' for k, v in perform["key"].items())
             params_json = "".join(f'.prop("{k}", "{v}")' for k, v in perform.get("params", {}).items())
-            payload = ('${S(\'{}\').prop("key", S(\'{}\')' + key_json + ').prop("params", S(\'{}\')' + params_json + ')'
+            payload = (f'${{S(\'{{}}\').prop("key", S(\'{{}}\'){key_json}).prop("params", S(\'{{}}\'){params_json})'
                        '.prop("origin", "engine").prop("idempotencyKey", execution.processInstanceId.concat(":lapsed:")'
-                       f'.concat(ttrRow.prop("{key_col}").toString())).toString()}}')
+                       f'.concat(ttrRow.prop("{key_col}").toString()))')
+            if verified_expiry:
+                payload += (f'.prop("expiry", S(\'{{}}\').prop("originalRunId", ttrRunId).prop("action", "{action}")'
+                            f'.prop("key", S(\'{{}}\').prop("{key_col}", ttrRow.prop("{key_col}")))'
+                            '.prop("instanceId", execution.processInstanceId).prop("taskId", ttrTaskId)'
+                            f'.prop("timerActivityId", "{timer.get("id")}"))')
+            payload += '.toString()}'
             e = ext(act)
             conn = ET.SubElement(e, q("camunda:connector"))
             ET.SubElement(conn, q("camunda:connectorId")).text = "http-connector"
@@ -460,7 +478,7 @@ def approvals(doc: Bpmn, lapses: dict, labels: dict, egress: str, deployment: st
             ET.SubElement(m, q("camunda:entry"), {"key": "Content-Type"}).text = "application/json"
             ET.SubElement(io, q("camunda:inputParameter"), {"name": "payload"}).text = payload
             groovy(io, "camunda:outputParameter", {"name": "ttrLapsed"},
-                   http_result(f"perform {perform['action']} after the lapse"))
+                   http_result(f"perform {perform['action']} after the lapse", require_applied=verified_expiry))
             ET.SubElement(io, q("camunda:outputParameter"), {"name": "ttrLapsedCode"}).text = "${statusCode}"
             ET.SubElement(e, q("camunda:failedJobRetryTimeCycle")).text = "R3/PT15S"
             doc.flow(scope, f"{n}_lapsed_perform", timer.get("id"), act.get("id"))
@@ -578,7 +596,8 @@ def compose_release_order(s: dict) -> Bpmn:
     recipients(doc, s["mail"])
     start = message_start(doc, "objednávka založena" if lang == "cs" else "order placed", "order_placed")
     start_guard(doc, start, "release_confirmed", "ttrInput['key']['order_number'].toString()", labels)
-    approvals(doc, release_lapses(lang), labels, egress, deployment, s["world"])
+    approvals(doc, release_lapses(lang), labels, egress, deployment, s["world"],
+              verified_expiry=deployment == "release_event_cz")
     return doc
 
 

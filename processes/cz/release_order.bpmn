@@ -1543,6 +1543,7 @@ task.execution.setVariable('ttrAnsweredBy', task.assignee)</camunda:script>
                 <camunda:script scriptFormat="groovy">// AU-hartland S4.1 (authored): what Hebe and the D-98 guard read from the task itself (HE-8): the action and its key.
 task.setVariableLocal('ttr_action', 'release_confirmed')
 task.setVariableLocal('ttr_about', String.valueOf(task.getVariable('ttrKey')))
+task.execution.setVariable('ttrTaskId', task.id)
 </camunda:script>
               </camunda:taskListener>
             </bpmn:extensionElements>
@@ -1688,7 +1689,7 @@ execution.setVariableLocal('ttrApprovalDue', java.util.Date.from(due.toInstant()
                       <camunda:entry key="Content-Type">application/json</camunda:entry>
                     </camunda:map>
                   </camunda:inputParameter>
-                  <camunda:inputParameter name="payload">${S('{}').prop("key", S('{}').prop("order", ttrRow.prop("order_number"))).prop("params", S('{}').prop("department", "Sales")).prop("origin", "engine").prop("idempotencyKey", execution.processInstanceId.concat(":lapsed:").concat(ttrRow.prop("order_number").toString())).toString()}</camunda:inputParameter>
+                  <camunda:inputParameter name="payload">${S('{}').prop("key", S('{}').prop("order", ttrRow.prop("order_number"))).prop("params", S('{}').prop("department", "Sales")).prop("origin", "engine").prop("idempotencyKey", execution.processInstanceId.concat(":lapsed:").concat(ttrRow.prop("order_number").toString())).prop("expiry", S('{}').prop("originalRunId", ttrRunId).prop("action", "release_confirmed").prop("key", S('{}').prop("order_number", ttrRow.prop("order_number"))).prop("instanceId", execution.processInstanceId).prop("taskId", ttrTaskId).prop("timerActivityId", "s41_release_confirmed_lapsed")).toString()}</camunda:inputParameter>
                   <camunda:outputParameter name="ttrLapsed">
                     <camunda:script scriptFormat="groovy">def BpmnError; try { BpmnError = Class.forName('org.cibseven.bpm.engine.delegate.BpmnError') } catch (ClassNotFoundException e) { BpmnError = Class.forName('org.camunda.bpm.engine.delegate.BpmnError') }
 def code = ((Number) statusCode).intValue()
@@ -1696,7 +1697,11 @@ if (code == 409) throw BpmnError.getConstructor(String, String).newInstance('TTR
 if (code &gt;= 400 &amp;&amp; code &lt; 500 &amp;&amp; code != 408 &amp;&amp; code != 429) throw BpmnError.getConstructor(String, String).newInstance('TTR_REFUSED', 'perform hold after the lapse: HTTP ' + code + ': ' + response.toString().take(256))
 if (code &lt; 200 || code &gt;= 300) throw new IllegalStateException('perform hold after the lapse: HTTP ' + code)
 def SpinClass; try { SpinClass = Class.forName('org.cibseven.spin.Spin') } catch (ClassNotFoundException e) { SpinClass = Class.forName('org.camunda.spin.Spin') }
-return SpinClass.JSON(response)
+def result = SpinClass.JSON(response)
+if (!result.hasProp('outcome') || result.prop('outcome').stringValue() != 'applied') {
+    throw new IllegalStateException('approval expiry did not apply the Sales hold')
+}
+return result
 </camunda:script>
                   </camunda:outputParameter>
                   <camunda:outputParameter name="ttrLapsedCode">${statusCode}</camunda:outputParameter>
