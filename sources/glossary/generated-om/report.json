@@ -1,0 +1,331 @@
+{
+    "frontEnd": "csv",
+    "profile": "om-glossary/1",
+    "packages": [
+        {
+            "package": "glossary",
+            "model": "cn",
+            "file": "glossary/cn.ttrm",
+            "defs": 12
+        },
+        {
+            "package": "glossary",
+            "model": "lexicon",
+            "file": "glossary/lexicon.en.ttrm",
+            "defs": 8
+        }
+    ],
+    "ignored": [
+        {
+            "file": "trade.csv",
+            "line": 2,
+            "column": 94,
+            "path": "/rows/0/reviewers",
+            "reason": "OM reviewers"
+        },
+        {
+            "file": "trade.csv",
+            "line": 2,
+            "column": 128,
+            "path": "/rows/0/owner",
+            "reason": "OM owner (no cn property)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 3,
+            "column": 2,
+            "path": "/rows/1/parent",
+            "reason": "the parent FQN; is_a waits for the S5.5 adapter to give its last part (S5.2 Found (i))"
+        },
+        {
+            "file": "trade.csv",
+            "line": 3,
+            "column": 122,
+            "path": "/rows/1/reviewers",
+            "reason": "OM reviewers"
+        },
+        {
+            "file": "trade.csv",
+            "line": 3,
+            "column": 156,
+            "path": "/rows/1/owner",
+            "reason": "OM owner (no cn property)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 4,
+            "column": 2,
+            "path": "/rows/2/parent",
+            "reason": "the parent FQN; is_a waits for the S5.5 adapter to give its last part (S5.2 Found (i))"
+        },
+        {
+            "file": "trade.csv",
+            "line": 4,
+            "column": 145,
+            "path": "/rows/2/synonyms",
+            "reason": "lexicon entries (the reader's lexicon key)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 4,
+            "column": 168,
+            "path": "/rows/2/reviewers",
+            "reason": "OM reviewers"
+        },
+        {
+            "file": "trade.csv",
+            "line": 4,
+            "column": 202,
+            "path": "/rows/2/owner",
+            "reason": "OM owner (no cn property)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 5,
+            "column": 2,
+            "path": "/rows/3/parent",
+            "reason": "the parent FQN; is_a waits for the S5.5 adapter to give its last part (S5.2 Found (i))"
+        },
+        {
+            "file": "trade.csv",
+            "line": 5,
+            "column": 120,
+            "path": "/rows/3/synonyms",
+            "reason": "lexicon entries (the reader's lexicon key)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 5,
+            "column": 148,
+            "path": "/rows/3/relatedTerms",
+            "reason": "a ;-separated FQN list; relations wait for the S5.5 adapter to give a list of names (S5.2 Found (i))"
+        },
+        {
+            "file": "trade.csv",
+            "line": 5,
+            "column": 179,
+            "path": "/rows/3/tags",
+            "reason": "OM classification tags"
+        },
+        {
+            "file": "trade.csv",
+            "line": 5,
+            "column": 201,
+            "path": "/rows/3/reviewers",
+            "reason": "OM reviewers"
+        },
+        {
+            "file": "trade.csv",
+            "line": 5,
+            "column": 235,
+            "path": "/rows/3/owner",
+            "reason": "OM owner (no cn property)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 6,
+            "column": 2,
+            "path": "/rows/4/parent",
+            "reason": "the parent FQN; is_a waits for the S5.5 adapter to give its last part (S5.2 Found (i))"
+        },
+        {
+            "file": "trade.csv",
+            "line": 6,
+            "column": 129,
+            "path": "/rows/4/synonyms",
+            "reason": "lexicon entries (the reader's lexicon key)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 6,
+            "column": 151,
+            "path": "/rows/4/relatedTerms",
+            "reason": "a ;-separated FQN list; relations wait for the S5.5 adapter to give a list of names (S5.2 Found (i))"
+        },
+        {
+            "file": "trade.csv",
+            "line": 6,
+            "column": 184,
+            "path": "/rows/4/reviewers",
+            "reason": "OM reviewers"
+        },
+        {
+            "file": "trade.csv",
+            "line": 6,
+            "column": 218,
+            "path": "/rows/4/owner",
+            "reason": "OM owner (no cn property)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 7,
+            "column": 85,
+            "path": "/rows/5/synonyms",
+            "reason": "lexicon entries (the reader's lexicon key)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 7,
+            "column": 113,
+            "path": "/rows/5/relatedTerms",
+            "reason": "a ;-separated FQN list; relations wait for the S5.5 adapter to give a list of names (S5.2 Found (i))"
+        },
+        {
+            "file": "trade.csv",
+            "line": 7,
+            "column": 148,
+            "path": "/rows/5/reviewers",
+            "reason": "OM reviewers"
+        },
+        {
+            "file": "trade.csv",
+            "line": 7,
+            "column": 182,
+            "path": "/rows/5/owner",
+            "reason": "OM owner (no cn property)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 8,
+            "column": 100,
+            "path": "/rows/6/relatedTerms",
+            "reason": "a ;-separated FQN list; relations wait for the S5.5 adapter to give a list of names (S5.2 Found (i))"
+        },
+        {
+            "file": "trade.csv",
+            "line": 8,
+            "column": 148,
+            "path": "/rows/6/reviewers",
+            "reason": "OM reviewers"
+        },
+        {
+            "file": "trade.csv",
+            "line": 8,
+            "column": 182,
+            "path": "/rows/6/owner",
+            "reason": "OM owner (no cn property)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 9,
+            "column": 136,
+            "path": "/rows/7/synonyms",
+            "reason": "lexicon entries (the reader's lexicon key)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 9,
+            "column": 156,
+            "path": "/rows/7/relatedTerms",
+            "reason": "a ;-separated FQN list; relations wait for the S5.5 adapter to give a list of names (S5.2 Found (i))"
+        },
+        {
+            "file": "trade.csv",
+            "line": 9,
+            "column": 187,
+            "path": "/rows/7/reviewers",
+            "reason": "OM reviewers"
+        },
+        {
+            "file": "trade.csv",
+            "line": 9,
+            "column": 221,
+            "path": "/rows/7/owner",
+            "reason": "OM owner (no cn property)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 10,
+            "column": 101,
+            "path": "/rows/8/synonyms",
+            "reason": "lexicon entries (the reader's lexicon key)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 10,
+            "column": 121,
+            "path": "/rows/8/relatedTerms",
+            "reason": "a ;-separated FQN list; relations wait for the S5.5 adapter to give a list of names (S5.2 Found (i))"
+        },
+        {
+            "file": "trade.csv",
+            "line": 10,
+            "column": 154,
+            "path": "/rows/8/reviewers",
+            "reason": "OM reviewers"
+        },
+        {
+            "file": "trade.csv",
+            "line": 10,
+            "column": 188,
+            "path": "/rows/8/owner",
+            "reason": "OM owner (no cn property)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 11,
+            "column": 101,
+            "path": "/rows/9/reviewers",
+            "reason": "OM reviewers"
+        },
+        {
+            "file": "trade.csv",
+            "line": 11,
+            "column": 135,
+            "path": "/rows/9/owner",
+            "reason": "OM owner (no cn property)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 12,
+            "column": 1,
+            "path": "/rows/10",
+            "record": "Quotation",
+            "reason": "kind mapping null (/glossaryStatus = Draft)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 13,
+            "column": 97,
+            "path": "/rows/11/synonyms",
+            "reason": "lexicon entries (the reader's lexicon key)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 13,
+            "column": 121,
+            "path": "/rows/11/reviewers",
+            "reason": "OM reviewers"
+        },
+        {
+            "file": "trade.csv",
+            "line": 13,
+            "column": 155,
+            "path": "/rows/11/owner",
+            "reason": "OM owner (no cn property)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 14,
+            "column": 105,
+            "path": "/rows/12/synonyms",
+            "reason": "lexicon entries (the reader's lexicon key)"
+        },
+        {
+            "file": "trade.csv",
+            "line": 14,
+            "column": 126,
+            "path": "/rows/12/reviewers",
+            "reason": "OM reviewers"
+        },
+        {
+            "file": "trade.csv",
+            "line": 14,
+            "column": 160,
+            "path": "/rows/12/owner",
+            "reason": "OM owner (no cn property)"
+        }
+    ],
+    "overridden": [],
+    "warnings": []
+}

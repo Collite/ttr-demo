@@ -1,0 +1,17 @@
+{
+  "generated-from": "generated-from: ../trade.csv@dea6d93e9bd0b88015ea598aa5f1ee5fcda0d5e75261ae97e656445c2254c215 profile om-glossary/1 generator 0.22.13 — do not edit",
+  "entries": [
+    {"qname":"glossary.cn.kind.Customer","kind":"kind","sourceName":"Customer","locator":"Customer"},
+    {"qname":"glossary.cn.kind.Invoice","kind":"kind","sourceName":"Invoice","locator":"Invoice"},
+    {"qname":"glossary.cn.kind.Order","kind":"kind","sourceName":"Order","locator":"Order"},
+    {"qname":"glossary.cn.kind.Organisation","kind":"kind","sourceName":"Organisation","locator":"Organisation"},
+    {"qname":"glossary.cn.kind.Party","kind":"kind","sourceName":"Party","locator":"Party"},
+    {"qname":"glossary.cn.kind.Payment","kind":"kind","sourceName":"Payment","locator":"Payment"},
+    {"qname":"glossary.cn.kind.Person","kind":"kind","sourceName":"Person","locator":"Person"},
+    {"qname":"glossary.cn.kind.Product","kind":"kind","sourceName":"Product","locator":"Product"},
+    {"qname":"glossary.cn.kind.Purchase","kind":"kind","sourceName":"Purchase","locator":"Purchase"},
+    {"qname":"glossary.cn.kind.Shipment","kind":"kind","sourceName":"Shipment","locator":"Shipment"},
+    {"qname":"glossary.cn.kind.Supplier","kind":"kind","sourceName":"Supplier","locator":"Supplier"},
+    {"qname":"glossary.cn.kind.Warehouse","kind":"kind","sourceName":"Warehouse","locator":"Warehouse"}
+  ]
+}

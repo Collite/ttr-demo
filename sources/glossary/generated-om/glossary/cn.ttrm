@@ -1,0 +1,16 @@
+// generated-from: ../../trade.csv@dea6d93e9bd0b88015ea598aa5f1ee5fcda0d5e75261ae97e656445c2254c215 profile om-glossary/1 generator 0.22.13 — do not edit
+package glossary
+model cn
+
+def kind Customer { description: { en: "A party that buys from us." }, label: { en: "customer" }, abstract: true }
+def kind Invoice { description: { en: "A demand for payment for an order." }, label: { en: "invoice" }, abstract: true }
+def kind Order { description: { en: "A customer's request to buy products." }, label: { en: "order" }, abstract: true }
+def kind Organisation { description: { en: "A company or institution acting as a party." }, label: { en: "organisation" }, abstract: true }
+def kind Party { description: { en: "Anyone the business deals with." }, label: { en: "party" }, abstract: true }
+def kind Payment { description: { en: "Money received against an invoice." }, label: { en: "payment" }, abstract: true }
+def kind Person { description: { en: "A human being acting as a party." }, label: { en: "person" }, abstract: true }
+def kind Product { description: { en: "Something we sell." }, label: { en: "product" }, abstract: true }
+def kind Purchase { description: { en: "A customer buying from us: the event that makes a party a customer." }, label: { en: "purchase" }, abstract: true }
+def kind Shipment { description: { en: "Products sent to a customer." }, label: { en: "shipment" }, abstract: true }
+def kind Supplier { description: { en: "An organisation we buy from." }, label: { en: "supplier" }, abstract: true }
+def kind Warehouse { description: { en: "A place where products are stored." }, label: { en: "warehouse" }, abstract: true }

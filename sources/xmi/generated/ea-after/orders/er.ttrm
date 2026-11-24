@@ -1,0 +1,36 @@
+// generated-from: ../../../ea/orders-renamed.xmi@679282fc2df332c368e0555db9885e43ee2859a76d2864e8149fce7df9876334 profile ea-erd/1 generator 0.22.13 — do not edit
+package orders
+model er
+
+def entity Customer { description: "A person or company that places orders.",
+    attributes: [
+        def attribute id { type: int, },
+        def attribute email { type: String, optional: true, description: "Where order confirmations go.", },
+    ]
+}
+
+def entity KeyAccount {
+    attributes: [
+        def attribute discount { type: BigDecimal, },
+    ]
+}
+
+def entity Product {
+    attributes: [
+        def attribute sku { type: String, },
+    ]
+}
+
+def entity PurchaseOrder { description: "A customer's request for products.",
+    attributes: [
+        def attribute order_no { type: String, },
+        def attribute placed { type: Date, },
+    ]
+}
+
+def relation lists { from: orders.er.entity.PurchaseOrder, to: orders.er.entity.Product, cardinality: { from: "0..*", to: "1..*" },
+}
+
+def relation placed_by { description: "Every order is placed by exactly one customer.", from: orders.er.entity.PurchaseOrder, to: orders.er.entity.Customer, cardinality: { from: "0..*", to: "1" },
+}
+
