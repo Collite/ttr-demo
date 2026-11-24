@@ -5,7 +5,7 @@ fixtures. The generated trees include reports and provenance sidecars.
 
 | Input | Expected coverage |
 | --- | --- |
-| `om/shop-tables.json` | Tables and composite FK |
+| `om/snapshot/` | Tables and composite FK |
 | `glossary/trade.ttl` | SKOS broader and related edges, English and Czech lexicons, role/event overlay |
 | `glossary/trade.csv` | OM glossary approvals, skipped terms and synonyms |
 | `xmi/carried-world/` | Core's 15-definition round-trip control for the MDG writer's carried CN, ER and MD subset |

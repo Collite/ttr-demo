@@ -1,5 +1,5 @@
 {
-  "generated-from": "generated-from: ../shop-tables.json@dee706dff1aa715c1ab9d42dc14d694577d081ff30e0f8ef046fbb85583e4e62 profile om-tables/1 generator 0.22.13 — do not edit",
+  "generated-from": "generated-from: ../snapshot@2ad57ab19339f5f237ba04e3e017943abe5b57290c44b977294d46c61163acb9 profile om-tables/1 generator 0.22.13 — do not edit",
   "entries": [
     {"qname":"om.db.dbo.customers","kind":"table","sourceName":"demo_pg.shop.public.customers","locator":"customers"},
     {"qname":"om.db.dbo.customers.created_at","kind":"column","sourceName":"demo_pg.shop.public.customers.created_at","locator":"customers/created_at"},
