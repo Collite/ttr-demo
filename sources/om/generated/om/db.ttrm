@@ -1,4 +1,4 @@
-// generated-from: ../../snapshot@2ad57ab19339f5f237ba04e3e017943abe5b57290c44b977294d46c61163acb9 profile om-tables/1 generator 0.22.13 — do not edit
+// generated-from: ../../snapshot@eeabce3b83a70a53254d96a4f1924e555add469f277fc8a8acd80dde91aa7ee6 profile om-tables/1 generator 0.22.13 — do not edit
 package om
 model db
 
@@ -8,6 +8,22 @@ def table customers { description: "People and companies who place orders.",
         def column email { type: { type: text, length: 254 }, description: "Sign-in e-mail address.", },
         def column display_name { type: { type: text, length: 120 }, optional: true, },
         def column created_at { type: datetime, description: "When the account was opened.", },
+    ]
+}
+
+def fk fk_order_line_notes_1 { from: [om.db.dbo.order_line_notes.order_id, om.db.dbo.order_line_notes.line_no], to: [om.db.dbo.order_lines.order_id, om.db.dbo.order_lines.line_no],
+}
+
+def fk fk_order_lines_1 { from: [om.db.dbo.order_lines.order_id], to: [om.db.dbo.orders.order_id],
+}
+
+def fk fk_orders_1 { from: [om.db.dbo.orders.customer_id], to: [om.db.dbo.customers.customer_id],
+}
+
+def table order_line_notes {
+    columns: [
+        def column order_id { type: bigint, },
+        def column line_no { type: int, },
     ]
 }
 

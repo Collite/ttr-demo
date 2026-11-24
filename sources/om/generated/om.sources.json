@@ -1,11 +1,17 @@
 {
-  "generated-from": "generated-from: ../snapshot@2ad57ab19339f5f237ba04e3e017943abe5b57290c44b977294d46c61163acb9 profile om-tables/1 generator 0.22.13 — do not edit",
+  "generated-from": "generated-from: ../snapshot@eeabce3b83a70a53254d96a4f1924e555add469f277fc8a8acd80dde91aa7ee6 profile om-tables/1 generator 0.22.13 — do not edit",
   "entries": [
     {"qname":"om.db.dbo.customers","kind":"table","sourceName":"demo_pg.shop.public.customers","locator":"customers"},
     {"qname":"om.db.dbo.customers.created_at","kind":"column","sourceName":"demo_pg.shop.public.customers.created_at","locator":"customers/created_at"},
     {"qname":"om.db.dbo.customers.customer_id","kind":"column","sourceName":"demo_pg.shop.public.customers.customer_id","locator":"customers/customer_id"},
     {"qname":"om.db.dbo.customers.display_name","kind":"column","sourceName":"demo_pg.shop.public.customers.display_name","locator":"customers/display_name"},
     {"qname":"om.db.dbo.customers.email","kind":"column","sourceName":"demo_pg.shop.public.customers.email","locator":"customers/email"},
+    {"qname":"om.db.dbo.fk_order_line_notes_1","kind":"fk","sourceName":"fk_order_line_notes_1","locator":"fk_order_line_notes_1"},
+    {"qname":"om.db.dbo.fk_order_lines_1","kind":"fk","sourceName":"fk_order_lines_1","locator":"fk_order_lines_1"},
+    {"qname":"om.db.dbo.fk_orders_1","kind":"fk","sourceName":"fk_orders_1","locator":"fk_orders_1"},
+    {"qname":"om.db.dbo.order_line_notes","kind":"table","sourceName":"demo_pg.shop.public.order_line_notes","locator":"order_line_notes"},
+    {"qname":"om.db.dbo.order_line_notes.line_no","kind":"column","sourceName":"demo_pg.shop.public.order_line_notes.line_no","locator":"order_line_notes/line_no"},
+    {"qname":"om.db.dbo.order_line_notes.order_id","kind":"column","sourceName":"demo_pg.shop.public.order_line_notes.order_id","locator":"order_line_notes/order_id"},
     {"qname":"om.db.dbo.order_lines","kind":"table","sourceName":"demo_pg.shop.public.order_lines","locator":"order_lines"},
     {"qname":"om.db.dbo.order_lines.line_no","kind":"column","sourceName":"demo_pg.shop.public.order_lines.line_no","locator":"order_lines/line_no"},
     {"qname":"om.db.dbo.order_lines.order_id","kind":"column","sourceName":"demo_pg.shop.public.order_lines.order_id","locator":"order_lines/order_id"},

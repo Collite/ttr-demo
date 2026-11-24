@@ -6,7 +6,7 @@
             "package": "om",
             "model": "db",
             "file": "om/db.ttrm",
-            "defs": 3
+            "defs": 7
         }
     ],
     "ignored": [
@@ -740,7 +740,28 @@
         },
         {
             "file": "shop-tables.json",
-            "line": 370,
+            "line": 371,
+            "column": 7,
+            "path": "/data/3/fullyQualifiedName",
+            "reason": "the sidecar's sourceName"
+        },
+        {
+            "file": "shop-tables.json",
+            "line": 375,
+            "column": 11,
+            "path": "/data/3/columns/0/fullyQualifiedName",
+            "reason": "the sidecar's sourceName"
+        },
+        {
+            "file": "shop-tables.json",
+            "line": 380,
+            "column": 11,
+            "path": "/data/3/columns/1/fullyQualifiedName",
+            "reason": "the sidecar's sourceName"
+        },
+        {
+            "file": "shop-tables.json",
+            "line": 386,
             "column": 3,
             "path": "/paging",
             "reason": "export paging"

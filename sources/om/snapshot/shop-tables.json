@@ -365,9 +365,56 @@
         },
         "date": "2026-11-01"
       }
+    },
+    {
+      "name": "order_line_notes",
+      "fullyQualifiedName": "demo_pg.shop.public.order_line_notes",
+      "columns": [
+        {
+          "name": "order_id",
+          "fullyQualifiedName": "demo_pg.shop.public.order_line_notes.order_id",
+          "dataType": "BIGINT"
+        },
+        {
+          "name": "line_no",
+          "fullyQualifiedName": "demo_pg.shop.public.order_line_notes.line_no",
+          "dataType": "INT"
+        }
+      ]
     }
   ],
   "paging": {
     "total": 3
-  }
+  },
+  "foreignKeys": [
+    {
+      "name": "fk_order_line_notes_1",
+      "columns": [
+        "demo_pg.shop.public.order_line_notes.order_id",
+        "demo_pg.shop.public.order_line_notes.line_no"
+      ],
+      "referredColumns": [
+        "demo_pg.shop.public.order_lines.order_id",
+        "demo_pg.shop.public.order_lines.line_no"
+      ]
+    },
+    {
+      "name": "fk_order_lines_1",
+      "columns": [
+        "demo_pg.shop.public.order_lines.order_id"
+      ],
+      "referredColumns": [
+        "demo_pg.shop.public.orders.order_id"
+      ]
+    },
+    {
+      "name": "fk_orders_1",
+      "columns": [
+        "demo_pg.shop.public.orders.customer_id"
+      ],
+      "referredColumns": [
+        "demo_pg.shop.public.customers.customer_id"
+      ]
+    }
+  ]
 }
