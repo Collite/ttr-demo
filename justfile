@@ -140,8 +140,8 @@ load-model cli="../ttr-loader/packages/kotlin/ttr-metadata-cli/build/install/ttr
 reader-cli +args:
     #!/usr/bin/env bash
     set -euo pipefail
-    version=0.22.13
-    sha=eea6c83f04e8a5e2d8d8ac38cf25781d6c2516d1d25288c84b4db777c30cb13d
+    version=0.22.15
+    sha=c2f3afe58fc4ee1479b06bd89a5f208af31412523a01db632c2da5bce468408c
     jar="build/reader-cli/ttr-metadata-cli-$version.jar"
     artifact="$jar"
     if [ ! -f "$jar" ]; then
